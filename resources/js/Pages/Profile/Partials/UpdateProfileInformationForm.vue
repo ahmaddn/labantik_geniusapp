@@ -1,5 +1,9 @@
 <script setup>
 import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { ref } from "vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
+import Button from "@/Components/UI/Button.vue";
+import Toast from "@/Components/UI/Toast.vue";
 
 defineProps({
     mustVerifyEmail: {
@@ -11,11 +15,34 @@ defineProps({
 });
 
 const user = usePage().props.auth.user;
+const showToast = ref(false);
+const toastMessage = ref("");
+const toastType = ref("success");
 
 const form = useForm({
     name: user.name,
     email: user.email,
 });
+
+const updateProfile = () => {
+    form.patch(route("profile.update"), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toastMessage.value = "Profil berhasil diperbarui!";
+            toastType.value = "success";
+            showToast.value = true;
+        },
+        onError: () => {
+            toastMessage.value = "Terjadi kesalahan saat memperbarui profil!";
+            toastType.value = "error";
+            showToast.value = true;
+        },
+    });
+};
+
+const handleToastClose = () => {
+    showToast.value = false;
+};
 </script>
 
 <template>
@@ -26,60 +53,31 @@ const form = useForm({
             </p>
         </header>
 
-        <form
-            @submit.prevent="form.patch(route('profile.update'))"
-            class="space-y-5"
-        >
-            <div>
-                <label
-                    for="name"
-                    class="block text-sm font-bold text-gray-700 mb-2"
-                >
-                    Nama
-                </label>
+        <form @submit.prevent="updateProfile" class="space-y-5">
+            <InputField
+                id="name"
+                v-model="form.name"
+                type="text"
+                label="Nama"
+                icon="pi-user"
+                required
+                autofocus
+                autocomplete="name"
+                :error="form.errors.name"
+                border-color="blue"
+            />
 
-                <input
-                    id="name"
-                    type="text"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-
-                <p
-                    v-if="form.errors.name"
-                    class="mt-2 text-sm text-red-600 font-medium"
-                >
-                    {{ form.errors.name }}
-                </p>
-            </div>
-
-            <div>
-                <label
-                    for="email"
-                    class="block text-sm font-bold text-gray-700 mb-2"
-                >
-                    Email
-                </label>
-
-                <input
-                    id="email"
-                    type="email"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
-                <p
-                    v-if="form.errors.email"
-                    class="mt-2 text-sm text-red-600 font-medium"
-                >
-                    {{ form.errors.email }}
-                </p>
-            </div>
+            <InputField
+                id="email"
+                v-model="form.email"
+                type="email"
+                label="Email"
+                icon="pi-envelope"
+                required
+                autocomplete="username"
+                :error="form.errors.email"
+                border-color="blue"
+            />
 
             <div
                 v-if="mustVerifyEmail && user.email_verified_at === null"
@@ -108,30 +106,26 @@ const form = useForm({
             </div>
 
             <div class="flex items-center gap-4 pt-4">
-                <button
+                <Button
                     type="submit"
+                    variant="primary"
+                    size="lg"
+                    icon="pi-save"
                     :disabled="form.processing"
-                    class="bg-blue-500 text-white px-6 py-3 rounded-xl font-bold border-4 border-blue-600 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <i class="pi pi-save mr-2"></i>
                     Simpan
-                </button>
-
-                <Transition
-                    enter-active-class="transition ease-in-out duration-300"
-                    enter-from-class="opacity-0 transform scale-95"
-                    leave-active-class="transition ease-in-out duration-300"
-                    leave-to-class="opacity-0 transform scale-95"
-                >
-                    <div
-                        v-if="form.recentlySuccessful"
-                        class="bg-green-500 text-white px-6 py-3 rounded-2xl shadow-playful border-4 border-green-600 font-bold"
-                    >
-                        <i class="pi pi-check-circle mr-2"></i>
-                        Tersimpan!
-                    </div>
-                </Transition>
+                </Button>
             </div>
         </form>
+
+        <!-- Toast with Auto-Hide -->
+        <Toast
+            :show="showToast"
+            :message="toastMessage"
+            :type="toastType"
+            :dismissable="true"
+            :duration="3000"
+            @close="handleToastClose"
+        />
     </section>
 </template>

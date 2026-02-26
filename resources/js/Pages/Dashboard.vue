@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
+import Card from "@/Components/UI/Card.vue";
 
 const stats = ref([
     {
@@ -10,10 +11,8 @@ const stats = ref([
         change: "+12%",
         trend: "up",
         icon: "pi-book",
-        bgColor: "bg-purple-100",
-        iconBg: "bg-purple-400",
-        borderColor: "border-purple-300",
-        textColor: "text-purple-600",
+        iconColor: "purple",
+        borderColor: "purple",
     },
     {
         id: 2,
@@ -22,10 +21,8 @@ const stats = ref([
         change: "+8%",
         trend: "up",
         icon: "pi-users",
-        bgColor: "bg-blue-100",
-        iconBg: "bg-blue-400",
-        borderColor: "border-blue-300",
-        textColor: "text-blue-600",
+        iconColor: "blue",
+        borderColor: "blue",
     },
     {
         id: 3,
@@ -34,10 +31,8 @@ const stats = ref([
         change: "15 pending",
         trend: "neutral",
         icon: "pi-file-edit",
-        bgColor: "bg-orange-100",
-        iconBg: "bg-orange-400",
-        borderColor: "border-orange-300",
-        textColor: "text-orange-600",
+        iconColor: "orange",
+        borderColor: "orange",
     },
     {
         id: 4,
@@ -46,10 +41,8 @@ const stats = ref([
         change: "+5%",
         trend: "up",
         icon: "pi-chart-line",
-        bgColor: "bg-green-100",
-        iconBg: "bg-green-400",
-        borderColor: "border-green-300",
-        textColor: "text-green-600",
+        iconColor: "green",
+        borderColor: "green",
     },
 ]);
 </script>
@@ -94,46 +87,28 @@ const stats = ref([
             </div>
         </div>
 
-        <!-- Stats -->
+        <!-- Stats menggunakan Card -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div
+            <Card
                 v-for="stat in stats"
                 :key="stat.id"
-                class="rounded-3xl p-6 shadow-playful border-4 transition-all hover:scale-105 hover:shadow-playful-lg"
-                :class="[stat.bgColor, stat.borderColor]"
+                variant="playful"
+                :title="stat.title"
+                :icon="stat.icon"
+                :icon-color="stat.iconColor"
+                :border-color="stat.borderColor"
+                :badge="stat.change"
+                :badge-color="stat.trend === 'up' ? 'green' : 'yellow'"
+                :hoverable="true"
             >
-                <div class="flex items-start justify-between mb-4">
-                    <div
-                        class="w-14 h-14 rounded-2xl flex items-center justify-center border-4 border-white shadow-md"
-                        :class="stat.iconBg"
-                    >
-                        <i
-                            :class="['pi', stat.icon, 'text-white text-2xl']"
-                        ></i>
-                    </div>
-                    <span
-                        class="px-3 py-1 rounded-full text-xs font-bold border-2"
-                        :class="
-                            stat.trend === 'up'
-                                ? 'bg-green-200 text-green-700 border-green-400'
-                                : 'bg-yellow-200 text-yellow-700 border-yellow-400'
-                        "
-                    >
-                        {{ stat.change }}
-                    </span>
-                </div>
-
-                <h3 class="text-gray-600 text-sm font-bold mb-1 font-heading">
-                    {{ stat.title }}
-                </h3>
-
+                <!-- Stat Value -->
                 <p
                     class="text-4xl font-heading font-bold"
-                    :class="stat.textColor"
+                    :class="`text-${stat.iconColor}-600`"
                 >
                     {{ stat.value }}
                 </p>
-            </div>
+            </Card>
         </div>
     </AppLayout>
 </template>

@@ -2,14 +2,34 @@
 import { ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import AuthLayout from "@/Layouts/AuthLayout.vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
+import Button from "@/Components/UI/Button.vue";
+import Toast from "@/Components/UI/Toast.vue";
+
+const showToast = ref(false);
+const toastMessage = ref("");
+const toastType = ref("success");
 
 const form = useForm({ password: "" });
-const showPassword = ref(false);
 
 const submit = () => {
     form.post(route("password.confirm"), {
         onFinish: () => form.reset(),
+        onSuccess: () => {
+            toastMessage.value = "Password confirmed successfully!";
+            toastType.value = "success";
+            showToast.value = true;
+        },
+        onError: () => {
+            toastMessage.value = "Invalid password!";
+            toastType.value = "error";
+            showToast.value = true;
+        },
     });
+};
+
+const handleToastClose = () => {
+    showToast.value = false;
 };
 </script>
 
@@ -29,56 +49,36 @@ const submit = () => {
         </div>
 
         <form @submit.prevent="submit" class="space-y-5">
-            <div>
-                <label
-                    class="block text-sm font-bold text-gray-700 mb-2 font-heading"
-                >
-                    Password
-                </label>
+            <InputField
+                v-model="form.password"
+                type="password"
+                label="Password"
+                icon="pi-lock"
+                required
+                :error="form.errors.password"
+                border-color="blue"
+            />
 
-                <div class="relative">
-                    <i
-                        class="pi pi-lock absolute left-5 top-1/2 -translate-y-1/2 text-purple-400"
-                    ></i>
-                    <input
-                        v-model="form.password"
-                        :type="showPassword ? 'text' : 'password'"
-                        class="w-full pl-14 pr-14 py-4 bg-purple-50 border-4 border-purple-200 rounded-2xl focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
-                        required
-                    />
-
-                    <button
-                        type="button"
-                        @click="showPassword = !showPassword"
-                        class="absolute right-5 top-1/2 -translate-y-1/2"
-                    >
-                        <i
-                            :class="[
-                                'pi',
-                                showPassword ? 'pi-eye-slash' : 'pi-eye',
-                                'text-purple-500',
-                            ]"
-                        ></i>
-                    </button>
-                </div>
-
-                <p
-                    v-if="form.errors.password"
-                    class="mt-2 text-sm text-red-500 font-bold"
-                >
-                    {{ form.errors.password }}
-                </p>
-            </div>
-
-            <button
+            <Button
                 type="submit"
-                :disabled="form.processing"
-                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl border-4 border-blue-600 transition-all hover:scale-105 flex items-center justify-center gap-2"
+                variant="primary"
+                size="lg"
+                full-width
+                :loading="form.processing"
+                :icon="form.processing ? 'pi-spinner pi-spin' : 'pi-check'"
             >
-                <i v-if="!form.processing" class="pi pi-check"></i>
-                <i v-else class="pi pi-spin pi-spinner"></i>
                 {{ form.processing ? "Confirming..." : "Confirm" }}
-            </button>
+            </Button>
         </form>
+
+        <!-- Toast with Auto-Hide -->
+        <Toast
+            :show="showToast"
+            :message="toastMessage"
+            :type="toastType"
+            :dismissable="true"
+            :duration="3000"
+            @close="handleToastClose"
+        />
     </AuthLayout>
 </template>

@@ -4,31 +4,23 @@ import DataTable from "@/Components/UI/DataTable.vue";
 import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
+import SelectField from "@/Components/UI/Forms/SelectField.vue";
+import Button from "@/Components/UI/Button.vue";
 import { ref, watch, onMounted, onUnmounted } from "vue";
 
 const users = ref([
     { id: 1, name: "Ahmad", email: "ahmad@email.com", role: "Admin" },
     { id: 2, name: "Siti", email: "siti@email.com", role: "Guru" },
     { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
 ]);
+
+// Role options untuk select
+const roleOptions = [
+    { value: "Admin", label: "Admin" },
+    { value: "Guru", label: "Guru" },
+    { value: "Siswa", label: "Siswa" },
+];
 
 // Konfigurasi kolom untuk DataTable
 const columns = [
@@ -175,13 +167,14 @@ const handleTableAction = ({ action, data }) => {
                     </div>
 
                     <!-- Kanan -->
-                    <button
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        icon="pi-plus"
                         @click="openCreate"
-                        class="bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold border-4 border-blue-600 hover:scale-105 transition-transform flex items-center gap-2"
                     >
-                        <i class="pi pi-plus"></i>
                         Tambah Pengguna
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -204,43 +197,55 @@ const handleTableAction = ({ action, data }) => {
             @close="showDialog = false"
         >
             <div class="space-y-4">
-                <input
+                <InputField
                     v-model="form.name"
                     type="text"
+                    label="Nama Lengkap"
                     placeholder="Nama Lengkap"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
+                    icon="pi-user"
+                    required
+                    border-color="blue"
                 />
 
-                <input
+                <InputField
                     v-model="form.email"
                     type="email"
+                    label="Email"
                     placeholder="Email"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
+                    icon="pi-envelope"
+                    required
+                    border-color="blue"
                 />
 
-                <input
+                <SelectField
                     v-model="form.role"
-                    type="text"
-                    placeholder="Role (Admin/Guru/Siswa)"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
+                    :options="roleOptions"
+                    label="Role"
+                    placeholder="Pilih Role"
+                    icon="pi-shield"
+                    required
+                    border-color="blue"
                 />
             </div>
 
             <template #footer>
                 <div class="flex justify-end gap-3">
-                    <button
+                    <Button
+                        variant="light"
+                        size="md"
                         @click="showDialog = false"
-                        class="px-5 py-2 rounded-xl font-bold border-4 border-gray-300 hover:scale-105 transition-transform"
                     >
                         Batal
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
+                        variant="primary"
+                        size="md"
+                        icon="pi-save"
                         @click="saveUser"
-                        class="bg-blue-500 text-white px-5 py-2 rounded-xl font-bold border-4 border-blue-600 hover:scale-105 transition-transform"
                     >
                         Simpan
-                    </button>
+                    </Button>
                 </div>
             </template>
         </Modal>

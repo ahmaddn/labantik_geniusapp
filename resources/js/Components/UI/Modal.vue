@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits } from "vue";
+import { watch } from "vue";
 
 const props = defineProps({
     show: {
@@ -8,49 +8,53 @@ const props = defineProps({
     },
     title: {
         type: String,
-        required: true,
+        default: "",
     },
     maxWidth: {
         type: String,
-        default: "md", // sm, md, lg, xl
-        validator: (value) => ["sm", "md", "lg", "xl"].includes(value),
-    },
-    closeable: {
-        type: Boolean,
-        default: true,
+        default: "2xl", // default: max-w-2xl
+        validator: (value) =>
+            ["sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl"].includes(
+                value,
+            ),
     },
     borderColor: {
         type: String,
-        default: "blue", // blue, red, green, yellow
+        default: "blue",
+        validator: (value) =>
+            ["blue", "green", "yellow", "red", "purple"].includes(value),
     },
 });
 
 const emit = defineEmits(["close"]);
 
-const close = () => {
-    if (props.closeable) {
-        emit("close");
-    }
-};
-
-const getMaxWidthClass = (width) => {
-    const classes = {
+const getMaxWidthClass = (size) => {
+    const sizes = {
         sm: "max-w-sm",
         md: "max-w-md",
         lg: "max-w-lg",
         xl: "max-w-xl",
+        "2xl": "max-w-2xl",
+        "3xl": "max-w-3xl",
+        "4xl": "max-w-4xl",
+        "5xl": "max-w-5xl",
     };
-    return classes[width] || classes.md;
+    return sizes[size];
 };
 
 const getBorderColorClass = (color) => {
-    const classes = {
-        blue: "border-blue-400",
-        red: "border-red-400",
-        green: "border-green-400",
-        yellow: "border-yellow-400",
+    const colors = {
+        blue: "border-blue-200",
+        green: "border-green-200",
+        yellow: "border-yellow-200",
+        red: "border-red-200",
+        purple: "border-purple-200",
     };
-    return classes[color] || classes.blue;
+    return colors[color];
+};
+
+const closeModal = () => {
+    emit("close");
 };
 </script>
 
@@ -59,8 +63,8 @@ const getBorderColorClass = (color) => {
     <Transition name="fade">
         <div
             v-if="show"
-            class="fixed inset-0 bg-black/40 z-50"
-            @click="close"
+            @click="closeModal"
+            class="fixed inset-0 bg-black bg-opacity-50 z-40"
         ></div>
     </Transition>
 
@@ -79,9 +83,17 @@ const getBorderColorClass = (color) => {
                 ]"
             >
                 <!-- Header -->
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">
-                    {{ title }}
-                </h2>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        {{ title }}
+                    </h2>
+                    <button
+                        @click="closeModal"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <i class="pi pi-times text-xl"></i>
+                    </button>
+                </div>
 
                 <!-- Content Slot -->
                 <slot></slot>
@@ -96,10 +108,18 @@ const getBorderColorClass = (color) => {
 </template>
 
 <style scoped>
+.shadow-playful-lg {
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 8px 10px -6px rgba(0, 0, 0, 0.1),
+        0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.25s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
@@ -108,13 +128,16 @@ const getBorderColorClass = (color) => {
 .modal-enter-active {
     transition: all 0.3s ease;
 }
+
 .modal-enter-from {
     opacity: 0;
     transform: scale(0.9) translateY(20px);
 }
+
 .modal-leave-active {
     transition: all 0.2s ease;
 }
+
 .modal-leave-to {
     opacity: 0;
     transform: scale(0.9) translateY(20px);

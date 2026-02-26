@@ -1,11 +1,19 @@
 <script setup>
+import { ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import AuthLayout from "@/Layouts/AuthLayout.vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
+import Button from "@/Components/UI/Button.vue";
+import Toast from "@/Components/UI/Toast.vue";
 
 const props = defineProps({
     email: String,
     token: String,
 });
+
+const showToast = ref(false);
+const toastMessage = ref("");
+const toastType = ref("success");
 
 const form = useForm({
     token: props.token,
@@ -15,7 +23,22 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route("password.update"));
+    form.post(route("password.store"), {
+        onSuccess: () => {
+            toastMessage.value = "Password reset successfully!";
+            toastType.value = "success";
+            showToast.value = true;
+        },
+        onError: () => {
+            toastMessage.value = "Failed to reset password!";
+            toastType.value = "error";
+            showToast.value = true;
+        },
+    });
+};
+
+const handleToastClose = () => {
+    showToast.value = false;
 };
 </script>
 
@@ -23,81 +46,72 @@ const submit = () => {
     <AuthLayout>
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-white mb-2">Reset Password</h1>
-            <p class="text-slate-400">Enter your new password below</p>
+            <h1
+                class="text-4xl font-heading font-bold text-gray-800 mb-2 flex items-center gap-3"
+            >
+                <i class="pi pi-key text-blue-500 text-3xl"></i>
+                Reset Password
+            </h1>
+            <p class="text-gray-600 font-medium flex items-center gap-2">
+                <i class="pi pi-info-circle text-gray-400"></i>
+                Enter your new password below
+            </p>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="submit" class="space-y-6">
-            <!-- Email -->
-            <div>
-                <input
-                    v-model="form.email"
-                    type="email"
-                    class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                    :class="{
-                        'border-red-500 focus:border-red-500 focus:ring-red-500/20':
-                            form.errors.email,
-                    }"
-                    placeholder="Email"
-                    required
-                />
-                <p v-if="form.errors.email" class="mt-2 text-sm text-red-400">
-                    {{ form.errors.email }}
-                </p>
-            </div>
+        <form @submit.prevent="submit" class="space-y-5">
+            <InputField
+                v-model="form.email"
+                type="email"
+                label="Email Address"
+                icon="pi-envelope"
+                required
+                :error="form.errors.email"
+                border-color="blue"
+            />
 
-            <!-- Password -->
-            <div>
-                <input
-                    v-model="form.password"
-                    type="password"
-                    class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                    :class="{
-                        'border-red-500 focus:border-red-500 focus:ring-red-500/20':
-                            form.errors.password,
-                    }"
-                    placeholder="New Password"
-                    required
-                />
-                <p
-                    v-if="form.errors.password"
-                    class="mt-2 text-sm text-red-400"
-                >
-                    {{ form.errors.password }}
-                </p>
-            </div>
+            <InputField
+                v-model="form.password"
+                type="password"
+                label="New Password"
+                icon="pi-lock"
+                placeholder="New Password"
+                required
+                :error="form.errors.password"
+                border-color="blue"
+            />
 
-            <!-- Confirm Password -->
-            <div>
-                <input
-                    v-model="form.password_confirmation"
-                    type="password"
-                    class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                    :class="{
-                        'border-red-500 focus:border-red-500 focus:ring-red-500/20':
-                            form.errors.password_confirmation,
-                    }"
-                    placeholder="Confirm Password"
-                    required
-                />
-                <p
-                    v-if="form.errors.password_confirmation"
-                    class="mt-2 text-sm text-red-400"
-                >
-                    {{ form.errors.password_confirmation }}
-                </p>
-            </div>
+            <InputField
+                v-model="form.password_confirmation"
+                type="password"
+                label="Confirm Password"
+                icon="pi-lock"
+                placeholder="Confirm Password"
+                required
+                :error="form.errors.password_confirmation"
+                border-color="blue"
+            />
 
-            <!-- Submit Button -->
-            <button
+            <Button
                 type="submit"
-                :disabled="form.processing"
-                class="w-full py-3.5 px-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900 transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                variant="primary"
+                size="lg"
+                full-width
+                :loading="form.processing"
+                :icon="form.processing ? 'pi-spinner pi-spin' : 'pi-key'"
             >
-                <span v-if="!form.processing"> Reset Password </span>
-                <span v-else> Processing... </span>
-            </button>
+                {{ form.processing ? "Processing..." : "Reset Password" }}
+            </Button>
         </form>
+
+        <!-- Toast with Auto-Hide -->
+        <Toast
+            :show="showToast"
+            :message="toastMessage"
+            :type="toastType"
+            :dismissable="true"
+            :duration="3000"
+            @close="handleToastClose"
+        />
     </AuthLayout>
 </template>

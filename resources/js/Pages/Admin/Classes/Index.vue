@@ -4,6 +4,10 @@ import { ref, watch, onMounted, onUnmounted } from "vue";
 import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
+import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
+import Button from "@/Components/UI/Button.vue";
+import Card from "@/Components/UI/Card.vue";
 
 const classes = ref([
     { id: 1, name: "Mathematics", description: "Basic algebra and geometry" },
@@ -18,6 +22,7 @@ const isEdit = ref(false);
 const selectedId = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
+const cardVariant = ref("playful"); // Toggle between 'playful' and 'normal'
 
 const showToast = (message) => {
     successMessage.value = message;
@@ -96,6 +101,10 @@ const saveClass = () => {
 
     showDialog.value = false;
 };
+
+const toggleCardVariant = () => {
+    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
+};
 </script>
 
 <template>
@@ -130,52 +139,70 @@ const saveClass = () => {
 
                     <!-- Kanan -->
                     <div class="flex items-center gap-3">
-                        <button
-                            @click="openCreate"
-                            class="bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold border-4 border-blue-600 hover:scale-105 transition-transform flex items-center gap-2"
+                        <!-- Toggle Card Style -->
+                        <Button
+                            :variant="
+                                cardVariant === 'playful' ? 'warning' : 'light'
+                            "
+                            size="md"
+                            :icon="
+                                cardVariant === 'playful'
+                                    ? 'pi-star-fill'
+                                    : 'pi-star'
+                            "
+                            @click="toggleCardVariant"
                         >
-                            <i class="pi pi-plus"></i>
+                            {{
+                                cardVariant === "playful" ? "Playful" : "Normal"
+                            }}
+                        </Button>
+
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            icon="pi-plus"
+                            @click="openCreate"
+                        >
                             Tambah Kelas
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
 
-            <!-- Grid -->
+            <!-- Grid menggunakan Card -->
             <TransitionGroup
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-                <div
+                <Card
                     v-for="classItem in classes"
                     :key="classItem.id"
-                    class="bg-white rounded-3xl shadow-playful border-4 border-blue-200 p-6 hover:scale-105 transition-all"
+                    :variant="cardVariant"
+                    :title="classItem.name"
+                    :subtitle="classItem.description"
+                    icon="pi-book"
+                    icon-color="blue"
+                    border-color="blue"
                 >
-                    <h2 class="text-xl font-bold text-gray-800 mb-2">
-                        {{ classItem.name }}
-                    </h2>
+                    <template #footer>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <Button
+                                variant="warning"
+                                size="md"
+                                icon="pi-pencil"
+                                @click="openEdit(classItem)"
+                            />
 
-                    <p class="text-gray-600 mb-6">
-                        {{ classItem.description }}
-                    </p>
-
-                    <div class="flex justify-end gap-2">
-                        <button
-                            @click="openEdit(classItem)"
-                            class="bg-yellow-400 text-white px-4 py-2 rounded-xl border-4 border-yellow-500 font-bold hover:scale-105 transition-transform"
-                        >
-                            <i class="pi pi-pencil"></i>
-                        </button>
-
-                        <button
-                            @click="confirmDelete(classItem.id)"
-                            class="bg-red-400 text-white px-4 py-2 rounded-xl border-4 border-red-500 font-bold hover:scale-105 transition-transform"
-                        >
-                            <i class="pi pi-trash"></i>
-                        </button>
-                    </div>
-                </div>
+                            <Button
+                                variant="danger"
+                                size="md"
+                                icon="pi-trash"
+                                @click="confirmDelete(classItem.id)"
+                            />
+                        </div>
+                    </template>
+                </Card>
             </TransitionGroup>
         </div>
 
@@ -186,36 +213,43 @@ const saveClass = () => {
             @close="showDialog = false"
         >
             <div class="space-y-4">
-                <input
+                <InputField
                     v-model="form.name"
                     type="text"
+                    label="Nama Kelas"
                     placeholder="Nama Kelas (Contoh: 2A)"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
+                    icon="pi-book"
+                    required
+                    border-color="blue"
                 />
 
-                <textarea
+                <TextareaField
                     v-model="form.description"
-                    rows="3"
+                    label="Deskripsi"
                     placeholder="Penjelasan singkat tentang kelas ini"
-                    class="w-full px-4 py-3 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium"
+                    :rows="3"
+                    border-color="blue"
                 />
             </div>
 
             <template #footer>
                 <div class="flex justify-end gap-3">
-                    <button
+                    <Button
+                        variant="light"
+                        size="md"
                         @click="showDialog = false"
-                        class="px-5 py-2 rounded-xl font-bold border-4 border-gray-300 hover:scale-105 transition-transform"
                     >
                         Batal
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
+                        variant="primary"
+                        size="md"
+                        icon="pi-save"
                         @click="saveClass"
-                        class="bg-blue-500 text-white px-5 py-2 rounded-xl font-bold border-4 border-blue-600 hover:scale-105 transition-transform"
                     >
                         Simpan
-                    </button>
+                    </Button>
                 </div>
             </template>
         </Modal>
@@ -233,63 +267,3 @@ const saveClass = () => {
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>
-<style>
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.25s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
-
-.modal-enter-active {
-    transition: all 0.3s ease;
-}
-.modal-enter-from {
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-}
-.modal-leave-active {
-    transition: all 0.2s ease;
-}
-.modal-leave-to {
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-}
-
-.toast-enter-active,
-.toast-leave-active {
-    transition: all 0.3s ease;
-}
-
-.toast-enter-from {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.toast-leave-to {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.card-enter-active,
-.card-leave-active {
-    transition: all 0.4s ease;
-}
-
-.card-enter-from {
-    opacity: 0;
-    transform: scale(0.8) translateY(20px);
-}
-
-.card-leave-to {
-    opacity: 0;
-    transform: scale(0.8) translateY(-20px);
-}
-
-/* animasi geser posisi */
-.card-move {
-    transition: transform 0.4s ease;
-}
-</style>
