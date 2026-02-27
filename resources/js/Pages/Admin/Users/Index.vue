@@ -8,6 +8,16 @@ import InputField from "@/Components/UI/Forms/InputField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import { ref, watch, onMounted, onUnmounted } from "vue";
+import {
+    Users,
+    User,
+    Mail,
+    Shield,
+    Plus,
+    Pencil,
+    Trash2,
+    Save,
+} from "lucide-vue-next";
 
 const users = ref([
     { id: 1, name: "Ahmad", email: "ahmad@email.com", role: "Admin" },
@@ -33,12 +43,12 @@ const columns = [
 const actions = [
     {
         name: "edit",
-        icon: "pi-pencil",
+        icon: Pencil,
         class: "bg-yellow-400 border-yellow-500",
     },
     {
         name: "delete",
-        icon: "pi-trash",
+        icon: Trash2,
         class: "bg-red-400 border-red-500",
     },
 ];
@@ -151,7 +161,7 @@ const handleTableAction = ({ action, data }) => {
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-users text-blue-600 text-2xl"></i>
+                            <Users class="text-blue-600 w-6 h-6" />
                         </div>
 
                         <div>
@@ -170,7 +180,7 @@ const handleTableAction = ({ action, data }) => {
                     <Button
                         variant="primary"
                         size="lg"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="openCreate"
                     >
                         Tambah Pengguna
@@ -202,7 +212,7 @@ const handleTableAction = ({ action, data }) => {
                     type="text"
                     label="Nama Lengkap"
                     placeholder="Nama Lengkap"
-                    icon="pi-user"
+                    :icon="User"
                     required
                     border-color="blue"
                 />
@@ -212,7 +222,7 @@ const handleTableAction = ({ action, data }) => {
                     type="email"
                     label="Email"
                     placeholder="Email"
-                    icon="pi-envelope"
+                    :icon="Mail"
                     required
                     border-color="blue"
                 />
@@ -222,7 +232,7 @@ const handleTableAction = ({ action, data }) => {
                     :options="roleOptions"
                     label="Role"
                     placeholder="Pilih Role"
-                    icon="pi-shield"
+                    :icon="Shield"
                     required
                     border-color="blue"
                 />
@@ -241,7 +251,7 @@ const handleTableAction = ({ action, data }) => {
                     <Button
                         variant="primary"
                         size="md"
-                        icon="pi-save"
+                        :icon="Save"
                         @click="saveUser"
                     >
                         Simpan

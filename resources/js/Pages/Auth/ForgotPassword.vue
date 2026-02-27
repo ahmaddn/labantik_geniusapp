@@ -5,7 +5,7 @@ import AuthLayout from "@/Layouts/AuthLayout.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
-
+import { CircleCheck, Info, LoaderCircle, Mail, Send } from "lucide-vue-next";
 defineProps({ status: String });
 
 const showToast = ref(false);
@@ -43,11 +43,11 @@ const handleToastClose = () => {
             <h1
                 class="text-4xl font-heading font-bold text-gray-800 mb-2 flex items-center gap-3"
             >
-                <i class="pi pi-envelope text-blue-500 text-3xl"></i>
+                <Mail class="text-blue-500 w-8 h-8" />
                 Forgot Password
             </h1>
             <p class="text-gray-600 font-medium flex items-center gap-2">
-                <i class="pi pi-info-circle text-gray-400"></i>
+                <Info class="text-gray-400 w-4 h-4" />
                 We'll send reset instructions to your email
             </p>
         </div>
@@ -57,7 +57,7 @@ const handleToastClose = () => {
             v-if="status"
             class="mb-6 p-4 bg-green-100 border-4 border-green-300 rounded-2xl flex items-center gap-2"
         >
-            <i class="pi pi-check-circle text-green-600"></i>
+            <CircleCheck class="text-green-600 w-5 h-5" />
             <p class="text-green-700 font-bold text-sm">{{ status }}</p>
         </div>
 
@@ -66,7 +66,7 @@ const handleToastClose = () => {
                 v-model="form.email"
                 type="email"
                 label="Email Address"
-                icon="pi-envelope"
+                :icon="Mail"
                 required
                 :error="form.errors.email"
                 border-color="blue"
@@ -78,11 +78,10 @@ const handleToastClose = () => {
                 size="lg"
                 full-width
                 :loading="form.processing"
-                :icon="form.processing ? 'pi-spinner pi-spin' : 'pi-send'"
+                :icon="form.processing ? LoaderCircle : Send"
             >
                 {{ form.processing ? "Sending..." : "Send Reset Link" }}
             </Button>
-
             <div class="text-center">
                 <Link
                     :href="route('login')"

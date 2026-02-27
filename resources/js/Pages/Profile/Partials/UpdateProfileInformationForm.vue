@@ -4,14 +4,11 @@ import { ref } from "vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import { User, Mail, Info, CheckCircle, Save } from "lucide-vue-next";
 
 defineProps({
-    mustVerifyEmail: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
+    mustVerifyEmail: { type: Boolean },
+    status: { type: String },
 });
 
 const user = usePage().props.auth.user;
@@ -59,7 +56,7 @@ const handleToastClose = () => {
                 v-model="form.name"
                 type="text"
                 label="Nama"
-                icon="pi-user"
+                :icon="User"
                 required
                 autofocus
                 autocomplete="name"
@@ -72,7 +69,7 @@ const handleToastClose = () => {
                 v-model="form.email"
                 type="email"
                 label="Email"
-                icon="pi-envelope"
+                :icon="Mail"
                 required
                 autocomplete="username"
                 :error="form.errors.email"
@@ -83,8 +80,10 @@ const handleToastClose = () => {
                 v-if="mustVerifyEmail && user.email_verified_at === null"
                 class="bg-yellow-100 border-4 border-yellow-300 rounded-2xl p-4"
             >
-                <p class="text-sm text-gray-800 font-medium">
-                    <i class="pi pi-info-circle mr-2 text-yellow-600"></i>
+                <p
+                    class="text-sm text-gray-800 font-medium flex items-center gap-2"
+                >
+                    <Info class="text-yellow-600 w-4 h-4" />
                     Email Anda belum diverifikasi.
                     <Link
                         :href="route('verification.send')"
@@ -98,9 +97,9 @@ const handleToastClose = () => {
 
                 <div
                     v-show="status === 'verification-link-sent'"
-                    class="mt-3 text-sm font-bold text-green-700 bg-green-100 border-4 border-green-300 rounded-xl p-3"
+                    class="mt-3 text-sm font-bold text-green-700 bg-green-100 border-4 border-green-300 rounded-xl p-3 flex items-center gap-2"
                 >
-                    <i class="pi pi-check-circle mr-2"></i>
+                    <CheckCircle class="w-4 h-4" />
                     Link verifikasi baru telah dikirim ke email Anda.
                 </div>
             </div>
@@ -110,7 +109,7 @@ const handleToastClose = () => {
                     type="submit"
                     variant="primary"
                     size="lg"
-                    icon="pi-save"
+                    :icon="Save"
                     :disabled="form.processing"
                 >
                     Simpan

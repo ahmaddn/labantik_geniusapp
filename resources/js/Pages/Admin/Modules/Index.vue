@@ -8,6 +8,18 @@ import Toast from "@/Components/UI/Toast.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import FileUpload from "@/Components/UI/Forms/FileUpload.vue";
 import Button from "@/Components/UI/Button.vue";
+import Card from "@/Components/UI/Card.vue";
+import {
+    Plus,
+    Flag,
+    FileText,
+    HelpCircle,
+    Image,
+    X,
+    Pencil,
+    Trash2,
+    GraduationCap,
+} from "lucide-vue-next";
 
 // Props dari backend
 const props = defineProps({
@@ -160,7 +172,7 @@ const removeThumbnail = () => {
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-book text-blue-600 text-2xl"></i>
+                            <GraduationCap class="text-blue-600 w-6 h-6" />
                         </div>
 
                         <div>
@@ -180,7 +192,7 @@ const removeThumbnail = () => {
                         <Button
                             variant="primary"
                             size="lg"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="openCreate"
                         >
                             Tambah Module
@@ -195,82 +207,82 @@ const removeThumbnail = () => {
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-                <div
+                <Card
                     v-for="module in modules"
                     :key="module.id"
-                    class="bg-white rounded-3xl shadow-playful border-4 border-blue-200 p-6 hover:scale-105 transition-all cursor-pointer"
+                    :variant="cardVariant"
+                    :title="module.title"
+                    :subtitle="module.description"
+                    :icon="GraduationCap"
+                    icon-color="purple"
+                    border-color="blue"
                     @click="goToShowModule(module.id)"
+                    class="cursor-pointer hover:scale-105 transition-all"
                 >
                     <!-- Thumbnail -->
-                    <div
-                        v-if="module.thumbnail"
-                        class="w-full h-32 bg-gray-200 rounded-2xl mb-4 overflow-hidden"
-                    >
-                        <img
-                            :src="module.thumbnail"
-                            :alt="module.title"
-                            class="w-full h-full object-cover"
-                        />
-                    </div>
-
-                    <h2 class="text-xl font-bold text-gray-800 mb-2">
-                        {{ module.title }}
-                    </h2>
-
-                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
-                        {{ module.description }}
-                    </p>
+                    <template v-if="module.thumbnail">
+                        <div
+                            class="w-full h-32 bg-gray-200 rounded-2xl mb-4 overflow-hidden"
+                        >
+                            <img
+                                :src="module.thumbnail"
+                                :alt="module.title"
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
+                    </template>
 
                     <!-- Stats -->
                     <div class="space-y-2 mb-6">
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i class="pi pi-flag text-purple-500"></i>
+                            <Flag class="text-purple-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{ module.missionsCount }} Missions
                             </span>
                         </div>
+
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i class="pi pi-file text-green-500"></i>
+                            <FileText class="text-green-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{ module.materialsCount }} Materials
                             </span>
                         </div>
+
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i
-                                class="pi pi-question-circle text-orange-500"
-                            ></i>
+                            <HelpCircle class="text-orange-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{ module.quizzesCount }} Quizzes
                             </span>
                         </div>
                     </div>
 
-                    <!-- Edit/Delete -->
-                    <div
-                        class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
-                        @click.stop
-                    >
-                        <Button
-                            variant="warning"
-                            size="md"
-                            icon="pi-pencil"
-                            @click="openEdit(module)"
-                        />
+                    <template #footer>
+                        <div
+                            class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
+                            @click.stop
+                        >
+                            <Button
+                                variant="warning"
+                                size="md"
+                                :icon="Pencil"
+                                @click="openEdit(module)"
+                            />
 
-                        <Button
-                            variant="danger"
-                            size="md"
-                            icon="pi-trash"
-                            @click="confirmDelete(module.id)"
-                        />
-                    </div>
-                </div>
+                            <Button
+                                variant="danger"
+                                size="md"
+                                :icon="Trash2"
+                                @click="confirmDelete(module.id)"
+                            />
+                        </div>
+                    </template>
+                </Card>
             </TransitionGroup>
         </div>
 
@@ -324,7 +336,7 @@ const removeThumbnail = () => {
                             class="flex items-center justify-between bg-blue-50 p-3 rounded-xl border-2 border-blue-200"
                         >
                             <div class="flex items-center gap-2">
-                                <i class="pi pi-image text-blue-500"></i>
+                                <Image class="text-blue-500 w-4 h-4" />
                                 <span class="text-sm font-medium">
                                     {{
                                         typeof moduleForm.thumbnail === "string"
@@ -336,7 +348,7 @@ const removeThumbnail = () => {
                             <Button
                                 variant="danger"
                                 size="sm"
-                                icon="pi-times"
+                                :icon="X"
                                 @click="removeThumbnail"
                             />
                         </div>
@@ -382,27 +394,3 @@ const removeThumbnail = () => {
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>
-
-<style scoped>
-.card-enter-active,
-.card-leave-active {
-    transition: all 0.3s ease;
-}
-
-.card-enter-from {
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-}
-
-.card-leave-to {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-}
-
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-</style>

@@ -1,6 +1,14 @@
 <script setup>
 import { computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
+import {
+    Home,
+    Palette,
+    GraduationCap,
+    BookOpen,
+    Users,
+    X,
+} from "lucide-vue-next";
 
 defineProps({
     open: Boolean,
@@ -30,7 +38,7 @@ const menuItems = [
     {
         name: "Dashboard",
         route: "dashboard",
-        icon: "pi-home",
+        icon: Home,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
@@ -39,7 +47,7 @@ const menuItems = [
     {
         name: "Template Desain Modul",
         route: "admin.templates.index",
-        icon: "pi-palette",
+        icon: Palette,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
@@ -48,7 +56,7 @@ const menuItems = [
     {
         name: "Modul",
         route: "admin.modules.index",
-        icon: "pi-graduation-cap",
+        icon: GraduationCap,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
@@ -57,7 +65,7 @@ const menuItems = [
     {
         name: "Kelas",
         route: "admin.classes.index",
-        icon: "pi-book",
+        icon: BookOpen,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
@@ -66,7 +74,7 @@ const menuItems = [
     {
         name: "Pengguna",
         route: "admin.users.index",
-        icon: "pi-users",
+        icon: Users,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
@@ -101,7 +109,7 @@ const menuItems = [
                     <div
                         class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center"
                     >
-                        <i class="pi pi-book text-white text-xl"></i>
+                        <BookOpen class="text-white" :size="20" />
                     </div>
 
                     <span
@@ -118,7 +126,7 @@ const menuItems = [
                     @click="$emit('close')"
                     class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-600"
                 >
-                    <i class="pi pi-times"></i>
+                    <X :size="18" />
                 </button>
             </div>
 
@@ -145,16 +153,15 @@ const menuItems = [
                                 : item.bgColor + ' ' + item.borderColor
                         "
                     >
-                        <i
+                        <component
+                            :is="item.icon"
+                            :size="20"
                             :class="[
-                                'pi',
-                                item.icon,
-                                'text-xl',
                                 isActive(item.route)
                                     ? 'text-white'
                                     : item.iconColor,
                             ]"
-                        ></i>
+                        />
                     </div>
 
                     <span

@@ -1,5 +1,11 @@
 <script setup>
 import { ref, computed } from "vue";
+import {
+    ChevronUp,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-vue-next";
 
 const props = defineProps({
     columns: {
@@ -22,7 +28,7 @@ const props = defineProps({
     actions: {
         type: Array,
         default: () => [],
-        // Format: [{ name: 'edit', icon: 'pi-pencil', class: 'bg-yellow-400 border-yellow-500' }, ...]
+        // Format: [{ name: 'edit', icon: IconComponent, class: 'bg-yellow-400 border-yellow-500' }, ...]
     },
     emptyMessage: {
         type: String,
@@ -145,17 +151,18 @@ const handleAction = (actionName, row) => {
                             @click="column.sortable ? sort(column.key) : null"
                         >
                             {{ column.label }}
-                            <i
+                            <component
                                 v-if="
                                     column.sortable && sortField === column.key
                                 "
-                                :class="
+                                :is="
                                     sortDirection === 'asc'
-                                        ? 'pi pi-sort-up'
-                                        : 'pi pi-sort-down'
+                                        ? ChevronUp
+                                        : ChevronDown
                                 "
-                                class="ml-2 text-blue-600"
-                            ></i>
+                                :size="16"
+                                class="ml-2 text-blue-600 inline"
+                            />
                         </th>
                         <th
                             v-if="actions.length > 0"
@@ -200,10 +207,11 @@ const handleAction = (actionName, row) => {
                                     ]"
                                     :title="action.label"
                                 >
-                                    <i
+                                    <component
                                         v-if="action.icon"
-                                        :class="['pi', action.icon]"
-                                    ></i>
+                                        :is="action.icon"
+                                        :size="16"
+                                    />
                                     <span v-if="action.label && !action.icon">{{
                                         action.label
                                     }}</span>
@@ -255,7 +263,7 @@ const handleAction = (actionName, row) => {
                     :disabled="currentPage === 1"
                     class="px-4 py-2 rounded-xl border-4 border-blue-300 font-bold hover:bg-blue-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <i class="pi pi-chevron-left"></i>
+                    <ChevronLeft :size="16" />
                 </button>
 
                 <button
@@ -277,7 +285,7 @@ const handleAction = (actionName, row) => {
                     :disabled="currentPage === totalPages"
                     class="px-4 py-2 rounded-xl border-4 border-blue-300 font-bold hover:bg-blue-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <i class="pi pi-chevron-right"></i>
+                    <ChevronRight :size="16" />
                 </button>
             </div>
         </div>

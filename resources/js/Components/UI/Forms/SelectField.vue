@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { ChevronDown } from "lucide-vue-next";
 
 const props = defineProps({
     modelValue: {
@@ -32,7 +33,7 @@ const props = defineProps({
         default: false,
     },
     icon: {
-        type: String,
+        type: [String, Object, Function],
         default: "",
     },
     borderColor: {
@@ -85,14 +86,12 @@ const getBorderColorClass = computed(() => {
         <!-- Select Container -->
         <div class="relative">
             <!-- Icon -->
-            <i
+            <component
                 v-if="icon"
-                :class="[
-                    'pi',
-                    icon,
-                    'absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none',
-                ]"
-            ></i>
+                :is="icon"
+                :size="16"
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
 
             <!-- Select Field -->
             <select
@@ -130,9 +129,10 @@ const getBorderColorClass = computed(() => {
             </select>
 
             <!-- Dropdown Arrow -->
-            <i
-                class="pi pi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            ></i>
+            <ChevronDown
+                :size="16"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
         </div>
 
         <!-- Error Message -->

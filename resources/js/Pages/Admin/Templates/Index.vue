@@ -7,6 +7,17 @@ import Toast from "@/Components/UI/Toast.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import FileUpload from "@/Components/UI/Forms/FileUpload.vue";
 import Button from "@/Components/UI/Button.vue";
+import {
+    Palette,
+    Plus,
+    Volume2,
+    Images,
+    Star,
+    Image,
+    X,
+    Pencil,
+    Trash2,
+} from "lucide-vue-next";
 
 const templates = ref([
     {
@@ -201,7 +212,7 @@ const saveTemplate = () => {
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-palette text-blue-600 text-2xl"></i>
+                            <Palette class="text-blue-600 w-6 h-6" />
                         </div>
 
                         <div>
@@ -222,7 +233,7 @@ const saveTemplate = () => {
                         <Button
                             variant="primary"
                             size="lg"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="openCreate"
                         >
                             Tambah Template
@@ -251,7 +262,7 @@ const saveTemplate = () => {
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i class="pi pi-volume-up text-blue-500"></i>
+                            <Volume2 class="text-blue-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{
                                     template.backsound
@@ -267,7 +278,7 @@ const saveTemplate = () => {
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i class="pi pi-images text-green-500"></i>
+                            <Images class="text-green-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{ template.backgroundImages.length }}
                                 Background
@@ -280,7 +291,7 @@ const saveTemplate = () => {
                         <div
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
-                            <i class="pi pi-star text-yellow-500"></i>
+                            <Star class="text-yellow-500 w-4 h-4" />
                             <span class="font-medium">
                                 {{ template.mascots.length }} Maskot
                             </span>
@@ -291,14 +302,14 @@ const saveTemplate = () => {
                         <Button
                             variant="warning"
                             size="md"
-                            icon="pi-pencil"
+                            :icon="Pencil"
                             @click="openEdit(template)"
                         />
 
                         <Button
                             variant="danger"
                             size="md"
-                            icon="pi-trash"
+                            :icon="Trash2"
                             @click="confirmDelete(template.id)"
                         />
                     </div>
@@ -330,7 +341,7 @@ const saveTemplate = () => {
                             class="flex items-center justify-between bg-blue-50 p-3 rounded-xl border-2 border-blue-200"
                         >
                             <div class="flex items-center gap-2">
-                                <i class="pi pi-volume-up text-blue-500"></i>
+                                <Volume2 class="text-blue-500 w-4 h-4" />
                                 <span class="text-sm font-medium">{{
                                     form.backsound.name
                                 }}</span>
@@ -338,7 +349,7 @@ const saveTemplate = () => {
                             <Button
                                 variant="danger"
                                 size="sm"
-                                icon="pi-times"
+                                :icon="X"
                                 @click="removeBacksound"
                             />
                         </div>
@@ -365,7 +376,7 @@ const saveTemplate = () => {
                             class="flex items-center justify-between bg-green-50 p-3 rounded-xl border-2 border-green-200"
                         >
                             <div class="flex items-center gap-2">
-                                <i class="pi pi-image text-green-500"></i>
+                                <Image class="text-green-500 w-4 h-4" />
                                 <span class="text-sm font-medium">{{
                                     bg.name
                                 }}</span>
@@ -373,7 +384,7 @@ const saveTemplate = () => {
                             <Button
                                 variant="danger"
                                 size="sm"
-                                icon="pi-times"
+                                :icon="X"
                                 @click="removeBackground(bg.id)"
                             />
                         </div>
@@ -398,7 +409,7 @@ const saveTemplate = () => {
                             class="flex items-center justify-between bg-yellow-50 p-3 rounded-xl border-2 border-yellow-200"
                         >
                             <div class="flex items-center gap-2">
-                                <i class="pi pi-star text-yellow-500"></i>
+                                <Star class="text-yellow-500 w-4 h-4" />
                                 <span class="text-sm font-medium">{{
                                     mascot.name
                                 }}</span>
@@ -406,7 +417,7 @@ const saveTemplate = () => {
                             <Button
                                 variant="danger"
                                 size="sm"
-                                icon="pi-times"
+                                :icon="X"
                                 @click="removeMascot(mascot.id)"
                             />
                         </div>

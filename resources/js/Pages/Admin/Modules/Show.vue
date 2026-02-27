@@ -6,6 +6,16 @@ import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import {
+    ArrowLeft,
+    Flag,
+    FileText,
+    HelpCircle,
+    Plus,
+    Inbox,
+    Star,
+    Trash2,
+} from "lucide-vue-next";
 
 // Props dari backend
 const props = defineProps({
@@ -56,7 +66,6 @@ const confirmDeleteMission = (missionId) => {
 };
 
 const deleteMission = () => {
-    // Implementasi delete ke backend
     console.log("Delete mission:", selectedMissionId.value);
     showDeleteDialog.value = false;
     showToast("Mission berhasil dihapus.");
@@ -79,7 +88,7 @@ const toggleCardVariant = () => {
                         @click="goBack"
                         class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 hover:bg-blue-200 transition-all"
                     >
-                        <i class="pi pi-arrow-left text-blue-600 text-xl"></i>
+                        <ArrowLeft class="text-blue-600 w-5 h-5" />
                     </button>
 
                     <div class="flex-1">
@@ -97,7 +106,7 @@ const toggleCardVariant = () => {
                             <div
                                 class="flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-xl border-2 border-purple-200"
                             >
-                                <i class="pi pi-flag text-purple-500"></i>
+                                <Flag class="text-purple-500 w-4 h-4" />
                                 <span class="text-sm font-medium text-gray-700">
                                     {{ missions.length }} Missions
                                 </span>
@@ -105,7 +114,7 @@ const toggleCardVariant = () => {
                             <div
                                 class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl border-2 border-green-200"
                             >
-                                <i class="pi pi-file text-green-500"></i>
+                                <FileText class="text-green-500 w-4 h-4" />
                                 <span class="text-sm font-medium text-gray-700">
                                     {{ module.materials_count || 0 }} Materials
                                 </span>
@@ -113,9 +122,7 @@ const toggleCardVariant = () => {
                             <div
                                 class="flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-xl border-2 border-orange-200"
                             >
-                                <i
-                                    class="pi pi-question-circle text-orange-500"
-                                ></i>
+                                <HelpCircle class="text-orange-500 w-4 h-4" />
                                 <span class="text-sm font-medium text-gray-700">
                                     {{ module.quizzes_count || 0 }} Quizzes
                                 </span>
@@ -130,11 +137,7 @@ const toggleCardVariant = () => {
                                 cardVariant === 'playful' ? 'warning' : 'light'
                             "
                             size="md"
-                            :icon="
-                                cardVariant === 'playful'
-                                    ? 'pi-star-fill'
-                                    : 'pi-star'
-                            "
+                            :icon="Star"
                             @click="toggleCardVariant"
                         >
                             {{
@@ -145,7 +148,7 @@ const toggleCardVariant = () => {
                         <Button
                             variant="success"
                             size="lg"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="goToAddMission"
                         >
                             Tambah Mission
@@ -174,7 +177,7 @@ const toggleCardVariant = () => {
                     v-if="missions.length === 0"
                     class="bg-white rounded-3xl border-4 border-purple-200 shadow-playful p-12 text-center"
                 >
-                    <i class="pi pi-inbox text-gray-300 text-6xl mb-4"></i>
+                    <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
                         Belum ada Mission
                     </h3>
@@ -185,7 +188,7 @@ const toggleCardVariant = () => {
                     <Button
                         variant="success"
                         size="lg"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="goToAddMission"
                     >
                         Tambah Mission Pertama
@@ -205,7 +208,7 @@ const toggleCardVariant = () => {
                         :variant="cardVariant"
                         :title="mission.name"
                         :subtitle="mission.description"
-                        icon="pi-flag"
+                        :icon="Flag"
                         icon-color="purple"
                         border-color="purple"
                         :badge="`#${mission.order_number}`"
@@ -219,7 +222,7 @@ const toggleCardVariant = () => {
                             <div
                                 class="flex items-center gap-2 text-sm text-gray-600"
                             >
-                                <i class="pi pi-file text-green-500"></i>
+                                <FileText class="text-green-500 w-4 h-4" />
                                 <span class="font-medium">
                                     {{ mission.materials_count || 0 }} Materials
                                 </span>
@@ -227,9 +230,7 @@ const toggleCardVariant = () => {
                             <div
                                 class="flex items-center gap-2 text-sm text-gray-600"
                             >
-                                <i
-                                    class="pi pi-question-circle text-orange-500"
-                                ></i>
+                                <HelpCircle class="text-orange-500 w-4 h-4" />
                                 <span class="font-medium">
                                     {{ mission.quizzes_count || 0 }} Quizzes
                                 </span>
@@ -242,7 +243,7 @@ const toggleCardVariant = () => {
                                 <Button
                                     variant="danger"
                                     size="sm"
-                                    icon="pi-trash"
+                                    :icon="Trash2"
                                     @click.stop="
                                         confirmDeleteMission(mission.id)
                                     "

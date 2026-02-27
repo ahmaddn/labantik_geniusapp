@@ -1,5 +1,6 @@
 <script setup>
 import { watch } from "vue";
+import { X } from "lucide-vue-next";
 
 const props = defineProps({
     show: {
@@ -91,7 +92,7 @@ const closeModal = () => {
                         @click="closeModal"
                         class="text-gray-400 hover:text-gray-600 transition-colors"
                     >
-                        <i class="pi pi-times text-xl"></i>
+                        <X :size="20" />
                     </button>
                 </div>
 

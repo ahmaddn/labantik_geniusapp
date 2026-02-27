@@ -8,6 +8,7 @@ import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
+import { BookOpen, Star, Plus, Pencil, Trash2, Save } from "lucide-vue-next";
 
 const classes = ref([
     { id: 1, name: "Mathematics", description: "Basic algebra and geometry" },
@@ -122,7 +123,7 @@ const toggleCardVariant = () => {
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-book text-blue-600 text-2xl"></i>
+                            <BookOpen class="text-blue-600 w-6 h-6" />
                         </div>
 
                         <div>
@@ -145,11 +146,7 @@ const toggleCardVariant = () => {
                                 cardVariant === 'playful' ? 'warning' : 'light'
                             "
                             size="md"
-                            :icon="
-                                cardVariant === 'playful'
-                                    ? 'pi-star-fill'
-                                    : 'pi-star'
-                            "
+                            :icon="Star"
                             @click="toggleCardVariant"
                         >
                             {{
@@ -160,7 +157,7 @@ const toggleCardVariant = () => {
                         <Button
                             variant="primary"
                             size="lg"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="openCreate"
                         >
                             Tambah Kelas
@@ -181,7 +178,7 @@ const toggleCardVariant = () => {
                     :variant="cardVariant"
                     :title="classItem.name"
                     :subtitle="classItem.description"
-                    icon="pi-book"
+                    :icon="BookOpen"
                     icon-color="blue"
                     border-color="blue"
                 >
@@ -190,14 +187,14 @@ const toggleCardVariant = () => {
                             <Button
                                 variant="warning"
                                 size="md"
-                                icon="pi-pencil"
+                                :icon="Pencil"
                                 @click="openEdit(classItem)"
                             />
 
                             <Button
                                 variant="danger"
                                 size="md"
-                                icon="pi-trash"
+                                :icon="Trash2"
                                 @click="confirmDelete(classItem.id)"
                             />
                         </div>
@@ -218,7 +215,7 @@ const toggleCardVariant = () => {
                     type="text"
                     label="Nama Kelas"
                     placeholder="Nama Kelas (Contoh: 2A)"
-                    icon="pi-book"
+                    :icon="BookOpen"
                     required
                     border-color="blue"
                 />
@@ -245,7 +242,7 @@ const toggleCardVariant = () => {
                     <Button
                         variant="primary"
                         size="md"
-                        icon="pi-save"
+                        :icon="Save"
                         @click="saveClass"
                     >
                         Simpan

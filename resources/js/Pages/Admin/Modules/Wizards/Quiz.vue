@@ -7,30 +7,33 @@ import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
-import ReusableCard from "@/Components/UI/ReusableCard.vue";
+import Card from "@/Components/UI/Card.vue";
+import {
+    HelpCircle,
+    Star,
+    Info,
+    Question,
+    List,
+    LayoutGrid,
+    Box,
+    CheckCircle,
+    Clock,
+    Tag,
+    Plus,
+    Check,
+    ArrowLeft,
+    ArrowRight,
+    Trash2,
+    AlertTriangle,
+} from "lucide-vue-next";
 
 // Props
 const props = defineProps({
-    moduleId: {
-        type: Number,
-        required: true,
-    },
-    missionId: {
-        type: Number,
-        required: true,
-    },
-    moduleName: {
-        type: String,
-        default: "Module",
-    },
-    missionName: {
-        type: String,
-        default: "Mission",
-    },
-    moduleTemplate: {
-        type: Object,
-        default: null,
-    },
+    moduleId: { type: Number, required: true },
+    missionId: { type: Number, required: true },
+    moduleName: { type: String, default: "Module" },
+    missionName: { type: String, default: "Mission" },
+    moduleTemplate: { type: Object, default: null },
 });
 
 // Wizard state
@@ -39,42 +42,28 @@ const successMessage = ref("");
 const showSuccess = ref(false);
 const cardVariant = ref("playful");
 
-// Form untuk Quiz
 const quizForm = ref({
     title: "",
     description: "",
     time_limit: 30,
-    type: "multiple_choice", // multiple_choice or drag_drop
-    mascot_id: null, // Mascot untuk quiz
+    type: "multiple_choice",
+    mascot_id: null,
 });
 
-// Questions for Multiple Choice
 const quizQuestions = ref([]);
 const currentQuestion = ref({
     question_text: "",
     type: "multiple_choice",
     order_number: 1,
 });
-
 const questionOptions = ref([]);
-const currentOption = ref({
-    option_text: "",
-    is_correct: false,
-});
+const currentOption = ref({ option_text: "", is_correct: false });
 
-// Drag & Drop Groups
 const dragDropGroups = ref([]);
-const currentDragDropGroup = ref({
-    group_name: "",
-});
-
+const currentDragDropGroup = ref({ group_name: "" });
 const dragDropItems = ref([]);
-const currentDragDropItem = ref({
-    item_text: "",
-    correct_group_id: null,
-});
+const currentDragDropItem = ref({ item_text: "", correct_group_id: null });
 
-// Computed
 const mascotOptions = computed(() => {
     if (!props.moduleTemplate?.mascots) return [];
     return props.moduleTemplate.mascots.map((m) => ({
@@ -95,7 +84,6 @@ const groupOptions = computed(() => {
     }));
 });
 
-// Toast notification
 const showToast = (message) => {
     successMessage.value = message;
     showSuccess.value = true;
@@ -104,7 +92,6 @@ const showToast = (message) => {
     }, 2500);
 };
 
-// Wizard navigation
 const nextStep = () => {
     if (wizardStep.value === 1) {
         if (!quizForm.value.title.trim()) {
@@ -116,8 +103,6 @@ const nextStep = () => {
             return;
         }
     }
-
-    // Skip step 2 jika tipe drag_drop
     if (wizardStep.value === 1 && quizForm.value.type === "drag_drop") {
         wizardStep.value = 3;
     } else {
@@ -133,22 +118,16 @@ const prevStep = () => {
     }
 };
 
-// Multiple Choice Operations
 const addOption = () => {
     if (!currentOption.value.option_text.trim()) {
         showToast("Teks opsi harus diisi!");
         return;
     }
-
     questionOptions.value.push({
         ...currentOption.value,
         id: Date.now() + Math.random(),
     });
-
-    currentOption.value = {
-        option_text: "",
-        is_correct: false,
-    };
+    currentOption.value = { option_text: "", is_correct: false };
 };
 
 const removeOption = (id) => {
@@ -160,33 +139,26 @@ const addQuestion = () => {
         showToast("Teks pertanyaan harus diisi!");
         return;
     }
-
     if (questionOptions.value.length < 2) {
         showToast("Minimal 2 opsi jawaban diperlukan!");
         return;
     }
-
-    const hasCorrectAnswer = questionOptions.value.some((o) => o.is_correct);
-    if (!hasCorrectAnswer) {
+    if (!questionOptions.value.some((o) => o.is_correct)) {
         showToast("Minimal 1 opsi harus ditandai sebagai jawaban benar!");
         return;
     }
 
-    const question = {
+    quizQuestions.value.push({
         ...currentQuestion.value,
         id: Date.now(),
         options: [...questionOptions.value],
-    };
-
-    quizQuestions.value.push(question);
-
+    });
     currentQuestion.value = {
         question_text: "",
         type: "multiple_choice",
         order_number: quizQuestions.value.length + 1,
     };
     questionOptions.value = [];
-
     showToast("Pertanyaan ditambahkan!");
 };
 
@@ -194,28 +166,21 @@ const removeQuestion = (id) => {
     quizQuestions.value = quizQuestions.value.filter((q) => q.id !== id);
 };
 
-// Drag & Drop Operations
 const addDragDropGroup = () => {
     if (!currentDragDropGroup.value.group_name.trim()) {
         showToast("Nama grup harus diisi!");
         return;
     }
-
     dragDropGroups.value.push({
         ...currentDragDropGroup.value,
         id: Date.now() + Math.random(),
     });
-
-    currentDragDropGroup.value = {
-        group_name: "",
-    };
-
+    currentDragDropGroup.value = { group_name: "" };
     showToast("Grup ditambahkan!");
 };
 
 const removeDragDropGroup = (id) => {
     dragDropGroups.value = dragDropGroups.value.filter((g) => g.id !== id);
-    // Also remove items that belong to this group
     dragDropItems.value = dragDropItems.value.filter(
         (i) => i.correct_group_id !== id,
     );
@@ -226,22 +191,15 @@ const addDragDropItem = () => {
         showToast("Teks item harus diisi!");
         return;
     }
-
     if (!currentDragDropItem.value.correct_group_id) {
         showToast("Pilih grup yang benar untuk item ini!");
         return;
     }
-
     dragDropItems.value.push({
         ...currentDragDropItem.value,
         id: Date.now() + Math.random(),
     });
-
-    currentDragDropItem.value = {
-        item_text: "",
-        correct_group_id: null,
-    };
-
+    currentDragDropItem.value = { item_text: "", correct_group_id: null };
     showToast("Item ditambahkan!");
 };
 
@@ -257,7 +215,6 @@ const finalSave = () => {
         showToast("Tambahkan minimal 1 pertanyaan!");
         return;
     }
-
     if (quizForm.value.type === "drag_drop") {
         if (dragDropGroups.value.length < 2) {
             showToast("Tambahkan minimal 2 grup!");
@@ -326,9 +283,7 @@ const getGroupName = (groupId) => {
                                     : 'bg-orange-50 p-2 rounded-lg',
                             ]"
                         >
-                            <i
-                                class="pi pi-question-circle text-orange-600 text-2xl"
-                            ></i>
+                            <HelpCircle class="text-orange-600 w-6 h-6" />
                         </div>
                         <div>
                             <h1
@@ -348,11 +303,7 @@ const getGroupName = (groupId) => {
                             cardVariant === 'playful' ? 'warning' : 'light'
                         "
                         size="md"
-                        :icon="
-                            cardVariant === 'playful'
-                                ? 'pi-star-fill'
-                                : 'pi-star'
-                        "
+                        :icon="Star"
                         @click="toggleCardVariant"
                     >
                         {{ cardVariant === "playful" ? "Playful" : "Normal" }}
@@ -390,13 +341,11 @@ const getGroupName = (groupId) => {
                         >
                             2
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700">
-                            {{
-                                quizForm.type === "multiple_choice"
-                                    ? "Pertanyaan"
-                                    : "Grup"
-                            }}
-                        </span>
+                        <span class="ml-2 text-sm font-medium text-gray-700">{{
+                            quizForm.type === "multiple_choice"
+                                ? "Pertanyaan"
+                                : "Grup"
+                        }}</span>
                     </div>
                     <div class="h-1 w-20 bg-gray-300"></div>
                     <div class="flex items-center">
@@ -410,13 +359,9 @@ const getGroupName = (groupId) => {
                         >
                             3
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700">
-                            {{
-                                quizForm.type === "drag_drop"
-                                    ? "Items"
-                                    : "Review"
-                            }}
-                        </span>
+                        <span class="ml-2 text-sm font-medium text-gray-700">{{
+                            quizForm.type === "drag_drop" ? "Items" : "Review"
+                        }}</span>
                     </div>
                     <div
                         v-if="quizForm.type === 'drag_drop'"
@@ -445,11 +390,11 @@ const getGroupName = (groupId) => {
 
             <!-- Step 1: Info Quiz -->
             <div v-if="wizardStep === 1" class="max-w-3xl mx-auto">
-                <ReusableCard
+                <Card
                     :variant="cardVariant"
                     title="Informasi Quiz"
                     subtitle="Isi detail quiz"
-                    icon="pi-info-circle"
+                    :icon="Info"
                     icon-color="orange"
                     border-color="orange"
                     :hoverable="false"
@@ -492,7 +437,6 @@ const getGroupName = (groupId) => {
                             border-color="orange"
                         />
 
-                        <!-- Pilih Maskot -->
                         <div v-if="mascotOptions.length > 0">
                             <SelectField
                                 v-model="quizForm.mascot_id"
@@ -503,7 +447,6 @@ const getGroupName = (groupId) => {
                                 border-color="yellow"
                             />
 
-                            <!-- Preview Maskot -->
                             <div v-if="quizForm.mascot_id" class="mt-3">
                                 <div
                                     class="bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200 flex items-center gap-4"
@@ -541,8 +484,10 @@ const getGroupName = (groupId) => {
                             v-else
                             class="bg-red-50 p-4 rounded-xl border-2 border-red-200"
                         >
-                            <p class="text-sm text-red-700">
-                                <i class="pi pi-exclamation-triangle mr-2"></i>
+                            <p
+                                class="text-sm text-red-700 flex items-center gap-2"
+                            >
+                                <AlertTriangle class="w-4 h-4" />
                                 Template modul ini belum memiliki maskot.
                             </p>
                         </div>
@@ -561,17 +506,15 @@ const getGroupName = (groupId) => {
                             >
                                 Batal
                             </Button>
-
                             <Button
                                 variant="primary"
                                 size="md"
                                 @click="nextStep"
+                                >Lanjut</Button
                             >
-                                Lanjut
-                            </Button>
                         </div>
                     </template>
-                </ReusableCard>
+                </Card>
             </div>
 
             <!-- Step 2: Multiple Choice Questions -->
@@ -581,10 +524,10 @@ const getGroupName = (groupId) => {
             >
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Form Pertanyaan -->
-                    <ReusableCard
+                    <Card
                         :variant="cardVariant"
                         title="Buat Pertanyaan"
-                        icon="pi-question"
+                        :icon="HelpCircle"
                         icon-color="blue"
                         border-color="blue"
                         :hoverable="false"
@@ -622,7 +565,7 @@ const getGroupName = (groupId) => {
                                     <Button
                                         variant="success"
                                         size="sm"
-                                        icon="pi-plus"
+                                        :icon="Plus"
                                         @click="addOption"
                                     >
                                         Tambah Opsi
@@ -647,10 +590,10 @@ const getGroupName = (groupId) => {
                                     ]"
                                 >
                                     <div class="flex items-center gap-2">
-                                        <i
+                                        <CheckCircle
                                             v-if="option.is_correct"
-                                            class="pi pi-check-circle text-green-600"
-                                        ></i>
+                                            class="text-green-600 w-4 h-4"
+                                        />
                                         <span class="text-sm">{{
                                             option.option_text
                                         }}</span>
@@ -658,7 +601,7 @@ const getGroupName = (groupId) => {
                                     <Button
                                         variant="danger"
                                         size="xs"
-                                        icon="pi-times"
+                                        :icon="Trash2"
                                         @click="removeOption(option.id)"
                                     />
                                 </div>
@@ -667,23 +610,23 @@ const getGroupName = (groupId) => {
                             <Button
                                 variant="primary"
                                 size="md"
-                                icon="pi-plus"
+                                :icon="Plus"
                                 @click="addQuestion"
                                 class="w-full"
                             >
                                 Tambah Pertanyaan
                             </Button>
                         </div>
-                    </ReusableCard>
+                    </Card>
 
                     <!-- List Pertanyaan -->
                     <div>
-                        <ReusableCard
+                        <Card
                             :variant="cardVariant"
                             title="Daftar Pertanyaan"
                             :badge="`${quizQuestions.length} Pertanyaan`"
                             badge-color="green"
-                            icon="pi-list"
+                            :icon="List"
                             icon-color="green"
                             border-color="green"
                             :hoverable="false"
@@ -711,7 +654,7 @@ const getGroupName = (groupId) => {
                                         <Button
                                             variant="danger"
                                             size="xs"
-                                            icon="pi-trash"
+                                            :icon="Trash2"
                                             @click="removeQuestion(question.id)"
                                         />
                                     </div>
@@ -723,17 +666,17 @@ const getGroupName = (groupId) => {
                                     </div>
                                 </div>
                             </div>
-                        </ReusableCard>
+                        </Card>
                     </div>
                 </div>
 
                 <div class="flex justify-between mt-6">
-                    <Button variant="light" size="md" @click="prevStep">
-                        Kembali
-                    </Button>
-                    <Button variant="primary" size="md" @click="nextStep">
-                        Lanjut Review
-                    </Button>
+                    <Button variant="light" size="md" @click="prevStep"
+                        >Kembali</Button
+                    >
+                    <Button variant="primary" size="md" @click="nextStep"
+                        >Lanjut Review</Button
+                    >
                 </div>
             </div>
 
@@ -742,11 +685,11 @@ const getGroupName = (groupId) => {
                 v-if="wizardStep === 2 && quizForm.type === 'drag_drop'"
                 class="max-w-3xl mx-auto"
             >
-                <ReusableCard
+                <Card
                     :variant="cardVariant"
                     title="Buat Grup"
                     subtitle="Buat grup untuk drag & drop"
-                    icon="pi-th-large"
+                    :icon="LayoutGrid"
                     icon-color="purple"
                     border-color="purple"
                     :hoverable="false"
@@ -762,13 +705,12 @@ const getGroupName = (groupId) => {
                         <Button
                             variant="primary"
                             size="md"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="addDragDropGroup"
                         >
                             Tambah Grup
                         </Button>
 
-                        <!-- List Groups -->
                         <div v-if="dragDropGroups.length > 0" class="space-y-2">
                             <h4 class="font-bold text-sm">
                                 Grup yang sudah dibuat:
@@ -784,7 +726,7 @@ const getGroupName = (groupId) => {
                                 <Button
                                     variant="danger"
                                     size="xs"
-                                    icon="pi-trash"
+                                    :icon="Trash2"
                                     @click="removeDragDropGroup(group.id)"
                                 />
                             </div>
@@ -793,19 +735,18 @@ const getGroupName = (groupId) => {
 
                     <template #footer>
                         <div class="flex justify-between mt-6">
-                            <Button variant="light" size="md" @click="prevStep">
-                                Kembali
-                            </Button>
+                            <Button variant="light" size="md" @click="prevStep"
+                                >Kembali</Button
+                            >
                             <Button
                                 variant="primary"
                                 size="md"
                                 @click="nextStep"
+                                >Lanjut ke Items</Button
                             >
-                                Lanjut ke Items
-                            </Button>
                         </div>
                     </template>
-                </ReusableCard>
+                </Card>
             </div>
 
             <!-- Step 3 for Drag & Drop: Items -->
@@ -813,11 +754,11 @@ const getGroupName = (groupId) => {
                 v-if="wizardStep === 3 && quizForm.type === 'drag_drop'"
                 class="max-w-3xl mx-auto"
             >
-                <ReusableCard
+                <Card
                     :variant="cardVariant"
                     title="Buat Item"
                     subtitle="Buat item yang akan di-drag ke grup"
-                    icon="pi-box"
+                    :icon="Box"
                     icon-color="green"
                     border-color="green"
                     :hoverable="false"
@@ -841,13 +782,12 @@ const getGroupName = (groupId) => {
                         <Button
                             variant="success"
                             size="md"
-                            icon="pi-plus"
+                            :icon="Plus"
                             @click="addDragDropItem"
                         >
                             Tambah Item
                         </Button>
 
-                        <!-- List Items -->
                         <div v-if="dragDropItems.length > 0" class="space-y-2">
                             <h4 class="font-bold text-sm">
                                 Item yang sudah dibuat:
@@ -871,7 +811,7 @@ const getGroupName = (groupId) => {
                                 <Button
                                     variant="danger"
                                     size="xs"
-                                    icon="pi-trash"
+                                    :icon="Trash2"
                                     @click="removeDragDropItem(item.id)"
                                 />
                             </div>
@@ -880,19 +820,18 @@ const getGroupName = (groupId) => {
 
                     <template #footer>
                         <div class="flex justify-between mt-6">
-                            <Button variant="light" size="md" @click="prevStep">
-                                Kembali
-                            </Button>
+                            <Button variant="light" size="md" @click="prevStep"
+                                >Kembali</Button
+                            >
                             <Button
                                 variant="primary"
                                 size="md"
                                 @click="nextStep"
+                                >Lanjut Review</Button
                             >
-                                Lanjut Review
-                            </Button>
                         </div>
                     </template>
-                </ReusableCard>
+                </Card>
             </div>
 
             <!-- Step 3/4: Review & Save -->
@@ -903,11 +842,11 @@ const getGroupName = (groupId) => {
                 "
                 class="max-w-4xl mx-auto"
             >
-                <ReusableCard
+                <Card
                     :variant="cardVariant"
                     title="Review Quiz"
                     subtitle="Periksa kembali quiz yang akan disimpan"
-                    icon="pi-check-circle"
+                    :icon="CheckCircle"
                     icon-color="blue"
                     border-color="blue"
                     :hoverable="false"
@@ -924,13 +863,13 @@ const getGroupName = (groupId) => {
                                 {{ quizForm.description }}
                             </p>
                             <div class="flex items-center gap-4 text-sm">
-                                <span
-                                    ><i class="pi pi-clock mr-1"></i
-                                    >{{ quizForm.time_limit }}s</span
+                                <span class="flex items-center gap-1"
+                                    ><Clock class="w-4 h-4" />{{
+                                        quizForm.time_limit
+                                    }}s</span
                                 >
-                                <span
-                                    ><i class="pi pi-tag mr-1"></i
-                                    >{{
+                                <span class="flex items-center gap-1"
+                                    ><Tag class="w-4 h-4" />{{
                                         quizForm.type === "multiple_choice"
                                             ? "Multiple Choice"
                                             : "Drag & Drop"
@@ -938,7 +877,6 @@ const getGroupName = (groupId) => {
                                 >
                             </div>
 
-                            <!-- Maskot -->
                             <div
                                 v-if="quizForm.mascot_id"
                                 class="mt-3 flex items-center gap-3 bg-yellow-50 p-2 rounded-lg border border-yellow-200"
@@ -980,20 +918,20 @@ const getGroupName = (groupId) => {
 
                     <template #footer>
                         <div class="flex justify-between mt-6">
-                            <Button variant="light" size="md" @click="prevStep">
-                                Kembali
-                            </Button>
+                            <Button variant="light" size="md" @click="prevStep"
+                                >Kembali</Button
+                            >
                             <Button
                                 variant="success"
                                 size="lg"
-                                icon="pi-check"
+                                :icon="Check"
                                 @click="finalSave"
                             >
                                 Simpan Quiz
                             </Button>
                         </div>
                     </template>
-                </ReusableCard>
+                </Card>
             </div>
         </div>
 

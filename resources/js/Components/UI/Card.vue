@@ -16,7 +16,7 @@ const props = defineProps({
         default: "",
     },
     icon: {
-        type: String,
+        type: [String, Object, Function],
         default: "",
     },
     iconColor: {
@@ -126,12 +126,13 @@ const handleAction = (action, index) => {
         <!-- Header with Icon -->
         <div class="flex items-start gap-3 mb-4">
             <div v-if="icon" :class="iconBgClasses">
-                <i
+                <component
+                    :is="icon"
                     :class="[
-                        `pi ${icon} text-${iconColor}-600`,
-                        variant === 'playful' ? 'text-2xl' : 'text-xl',
+                        `text-${iconColor}-600`,
+                        variant === 'playful' ? 'w-6 h-6' : 'w-5 h-5',
                     ]"
-                ></i>
+                />
             </div>
 
             <div class="flex-1 min-w-0">

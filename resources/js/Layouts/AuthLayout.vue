@@ -1,5 +1,6 @@
 <script setup>
 const appName = import.meta.env.VITE_APP_NAME || "Genius";
+import { Book, School } from "lucide-vue-next";
 </script>
 
 <template>
@@ -17,7 +18,7 @@ const appName = import.meta.env.VITE_APP_NAME || "Genius";
                     <div
                         class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg"
                     >
-                        <i class="pi pi-book text-blue-600 text-2xl"></i>
+                        <School class="text-blue-600 w-8 h-8" />
                     </div>
                     <h1 class="text-4xl font-bold">
                         {{ appName }}
@@ -41,7 +42,7 @@ const appName = import.meta.env.VITE_APP_NAME || "Genius";
                     <div
                         class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center"
                     >
-                        <i class="pi pi-book text-white text-xl"></i>
+                        <Book class="text-white w-6 h-6" />
                     </div>
                     <span class="text-blue-600 text-2xl font-bold">
                         {{ appName }}

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
+import { Eye, EyeOff } from "lucide-vue-next";
 
 const props = defineProps({
     modelValue: {
@@ -41,7 +42,7 @@ const props = defineProps({
         default: false,
     },
     icon: {
-        type: String,
+        type: [String, Object, Function],
         default: "",
     },
     borderColor: {
@@ -99,14 +100,12 @@ const getBorderColorClass = computed(() => {
         <!-- Input Container -->
         <div class="relative">
             <!-- Left Icon -->
-            <i
+            <component
                 v-if="icon"
-                :class="[
-                    'pi',
-                    icon,
-                    'absolute left-4 top-1/2 -translate-y-1/2 text-gray-400',
-                ]"
-            ></i>
+                :is="icon"
+                :size="16"
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
             <!-- Input Field -->
             <input
@@ -136,13 +135,7 @@ const getBorderColorClass = computed(() => {
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
                 :disabled="disabled"
             >
-                <i
-                    :class="[
-                        'pi',
-                        showPassword ? 'pi-eye-slash' : 'pi-eye',
-                        'text-lg',
-                    ]"
-                ></i>
+                <component :is="showPassword ? EyeOff : Eye" :size="18" />
             </button>
         </div>
 

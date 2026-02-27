@@ -5,17 +5,21 @@ import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import {
+    ArrowLeft,
+    ArrowRight,
+    Check,
+    Plus,
+    Pencil,
+    Trash2,
+    Info,
+    PlusCircle,
+} from "lucide-vue-next";
 
 // Props
 const props = defineProps({
-    moduleId: {
-        type: Number,
-        required: true,
-    },
-    moduleName: {
-        type: String,
-        default: "Module",
-    },
+    moduleId: { type: Number, required: true },
+    moduleName: { type: String, default: "Module" },
 });
 
 // Wizard state
@@ -34,7 +38,6 @@ const missionForm = ref({
 // List missions yang akan disimpan
 const missions = ref([]);
 
-// Toast notification
 const showToast = (message) => {
     successMessage.value = message;
     showSuccess.value = true;
@@ -43,7 +46,6 @@ const showToast = (message) => {
     }, 2500);
 };
 
-// Wizard navigation
 const nextStep = () => {
     if (!missionForm.value.name.trim()) {
         showToast("Nama mission harus diisi!");
@@ -56,7 +58,6 @@ const prevStep = () => {
     wizardStep.value = 1;
 };
 
-// Mission operations
 const addMission = () => {
     if (!missionForm.value.name.trim()) {
         showToast("Nama mission harus diisi!");
@@ -68,20 +69,17 @@ const addMission = () => {
         id: Date.now(),
         module_id: props.moduleId,
     });
-
     missionForm.value = {
         name: "",
         description: "",
         order_number: missions.value.length + 1,
         maxval_id: null,
     };
-
     showToast("Mission ditambahkan ke list.");
 };
 
 const removeMission = (id) => {
     missions.value = missions.value.filter((m) => m.id !== id);
-    // Update order numbers
     missions.value.forEach((m, index) => {
         m.order_number = index + 1;
     });
@@ -92,19 +90,13 @@ const editMission = (mission) => {
     missions.value = missions.value.filter((m) => m.id !== mission.id);
 };
 
-// Save all missions
 const saveMissions = () => {
     if (missions.value.length === 0) {
         showToast("Minimal tambahkan 1 mission!");
         return;
     }
-
-    // Di sini bisa kirim ke backend
     console.log("Saving missions:", missions.value);
-
     showToast(`${missions.value.length} Mission berhasil ditambahkan.`);
-
-    // Redirect kembali ke module show setelah 1 detik
     setTimeout(() => {
         router.visit(route("admin.modules.show", props.moduleId));
     }, 1000);
@@ -114,7 +106,6 @@ const cancel = () => {
     router.visit(route("admin.modules.show", props.moduleId));
 };
 
-// Computed
 const wizardTitle = computed(() => {
     return wizardStep.value === 1
         ? "Step 1: Info Dasar Mission"
@@ -134,7 +125,7 @@ const wizardTitle = computed(() => {
                         @click="cancel"
                         class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 hover:bg-purple-200 transition-all"
                     >
-                        <i class="pi pi-arrow-left text-purple-600 text-xl"></i>
+                        <ArrowLeft class="text-purple-600 w-5 h-5" />
                     </button>
 
                     <div class="flex-1">
@@ -241,9 +232,7 @@ const wizardTitle = computed(() => {
                         class="bg-purple-50 p-4 rounded-xl border-2 border-purple-200"
                     >
                         <div class="flex items-start gap-3">
-                            <i
-                                class="pi pi-info-circle text-purple-500 text-xl mt-1"
-                            ></i>
+                            <Info class="text-purple-500 w-5 h-5 mt-1" />
                             <div class="text-sm text-gray-700">
                                 <p class="font-medium mb-1">Tips:</p>
                                 <ul class="list-disc list-inside space-y-1">
@@ -276,7 +265,7 @@ const wizardTitle = computed(() => {
                         <h3
                             class="font-bold text-gray-800 mb-4 flex items-center gap-2"
                         >
-                            <i class="pi pi-plus-circle text-purple-500"></i>
+                            <PlusCircle class="text-purple-500 w-5 h-5" />
                             Tambah Mission Baru
                         </h3>
 
@@ -317,7 +306,7 @@ const wizardTitle = computed(() => {
                                     <Button
                                         variant="success"
                                         size="md"
-                                        icon="pi-plus"
+                                        :icon="Plus"
                                         @click="addMission"
                                     >
                                         Tambah ke List
@@ -372,13 +361,13 @@ const wizardTitle = computed(() => {
                                     <Button
                                         variant="warning"
                                         size="sm"
-                                        icon="pi-pencil"
+                                        :icon="Pencil"
                                         @click="editMission(mission)"
                                     />
                                     <Button
                                         variant="danger"
                                         size="sm"
-                                        icon="pi-trash"
+                                        :icon="Trash2"
                                         @click="removeMission(mission.id)"
                                     />
                                 </div>
@@ -387,7 +376,7 @@ const wizardTitle = computed(() => {
                     </div>
 
                     <div v-else class="text-center py-12 text-gray-400">
-                        <i class="pi pi-inbox text-5xl mb-3"></i>
+                        <ArrowLeft class="w-12 h-12 mb-3 mx-auto opacity-30" />
                         <p class="text-lg">Belum ada mission ditambahkan</p>
                         <p class="text-sm">
                             Gunakan form di atas untuk menambahkan mission
@@ -404,7 +393,7 @@ const wizardTitle = computed(() => {
                             v-if="wizardStep > 1"
                             variant="light"
                             size="lg"
-                            icon="pi-arrow-left"
+                            :icon="ArrowLeft"
                             @click="prevStep"
                         >
                             Kembali
@@ -420,7 +409,7 @@ const wizardTitle = computed(() => {
                             v-if="wizardStep < 2"
                             variant="primary"
                             size="lg"
-                            icon="pi-arrow-right"
+                            :icon="ArrowRight"
                             icon-pos="right"
                             @click="nextStep"
                         >
@@ -431,7 +420,7 @@ const wizardTitle = computed(() => {
                             v-else
                             variant="success"
                             size="lg"
-                            icon="pi-check"
+                            :icon="Check"
                             @click="saveMissions"
                         >
                             Simpan Semua Mission

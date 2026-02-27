@@ -1,6 +1,14 @@
 <script setup>
 import { ref, computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
+import {
+    Menu,
+    ChevronUp,
+    ChevronDown,
+    User,
+    Settings,
+    LogOut,
+} from "lucide-vue-next";
 
 defineProps({
     sidebarOpen: Boolean,
@@ -60,7 +68,7 @@ const toggleProfileMenu = (event) => {
                     class="w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-all hover:scale-110 border-2 border-blue-300"
                     type="button"
                 >
-                    <i class="pi pi-bars text-xl"></i>
+                    <Menu :size="20" />
                 </button>
             </div>
 
@@ -88,14 +96,11 @@ const toggleProfileMenu = (event) => {
                                 {{ $page.props.auth.user.role }}
                             </p>
                         </div>
-                        <i
-                            class="pi text-sm text-blue-600 hidden sm:block transition-transform duration-200"
-                            :class="
-                                showProfileMenu
-                                    ? 'pi-chevron-up'
-                                    : 'pi-chevron-down'
-                            "
-                        ></i>
+                        <component
+                            :is="showProfileMenu ? ChevronUp : ChevronDown"
+                            :size="16"
+                            class="text-blue-600 hidden sm:block transition-transform duration-200"
+                        />
                     </button>
 
                     <!-- Profile Dropdown Menu -->
@@ -137,9 +142,10 @@ const toggleProfileMenu = (event) => {
                                     <div
                                         class="w-10 h-10 rounded-2xl bg-blue-100 border-2 border-blue-300 flex items-center justify-center"
                                     >
-                                        <i
-                                            class="pi pi-user text-blue-600 text-base"
-                                        ></i>
+                                        <User
+                                            class="text-blue-600"
+                                            :size="16"
+                                        />
                                     </div>
                                     <span class="text-sm font-bold font-heading"
                                         >My Profile</span
@@ -153,9 +159,10 @@ const toggleProfileMenu = (event) => {
                                     <div
                                         class="w-10 h-10 rounded-2xl bg-purple-100 border-2 border-purple-300 flex items-center justify-center"
                                     >
-                                        <i
-                                            class="pi pi-cog text-purple-600 text-base"
-                                        ></i>
+                                        <Settings
+                                            class="text-purple-600"
+                                            :size="16"
+                                        />
                                     </div>
                                     <span class="text-sm font-bold font-heading"
                                         >Settings</span
@@ -175,7 +182,7 @@ const toggleProfileMenu = (event) => {
                                     <div
                                         class="w-10 h-10 rounded-2xl bg-red-100 border-2 border-red-300 flex items-center justify-center"
                                     >
-                                        <i class="pi pi-sign-out text-base"></i>
+                                        <LogOut :size="16" />
                                     </div>
                                     <span class="text-sm font-bold font-heading"
                                         >Logout</span

@@ -7,31 +7,29 @@ import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
-import ReusableCard from "@/Components/UI/ReusableCard.vue";
+import Card from "@/Components/UI/Card.vue";
+import {
+    FileEdit,
+    Star,
+    Plus,
+    ArrowLeft,
+    ArrowRight,
+    Check,
+    List,
+    FileText,
+    Pencil,
+    Trash2,
+    AlertTriangle,
+    Inbox,
+} from "lucide-vue-next";
 
 // Props
 const props = defineProps({
-    moduleId: {
-        type: Number,
-        required: true,
-    },
-    missionId: {
-        type: Number,
-        required: true,
-    },
-    moduleName: {
-        type: String,
-        default: "Module",
-    },
-    missionName: {
-        type: String,
-        default: "Mission",
-    },
-    moduleTemplate: {
-        type: Object,
-        default: null,
-        // Berisi: { id, name, backsound, backgroundImages, mascots }
-    },
+    moduleId: { type: Number, required: true },
+    missionId: { type: Number, required: true },
+    moduleName: { type: String, default: "Module" },
+    missionName: { type: String, default: "Mission" },
+    moduleTemplate: { type: Object, default: null },
 });
 
 // Wizard state
@@ -46,7 +44,7 @@ const materialForm = ref({
     description: "",
     content: "",
     type: "text",
-    mascot_id: null, // ID maskot yang dipilih dari template
+    mascot_id: null,
 });
 
 // List materials yang akan disimpan
@@ -61,13 +59,11 @@ const mascotOptions = computed(() => {
     }));
 });
 
-// Get selected mascot info
 const getSelectedMascot = (mascotId) => {
     if (!props.moduleTemplate?.mascots) return null;
     return props.moduleTemplate.mascots.find((m) => m.id === mascotId);
 };
 
-// Toast notification
 const showToast = (message) => {
     successMessage.value = message;
     showSuccess.value = true;
@@ -76,7 +72,6 @@ const showToast = (message) => {
     }, 2500);
 };
 
-// Wizard navigation
 const nextStep = () => {
     if (!materialForm.value.title.trim()) {
         showToast("Judul material harus diisi!");
@@ -89,13 +84,11 @@ const prevStep = () => {
     wizardStep.value = 1;
 };
 
-// Material operations
 const addMaterial = () => {
     if (!materialForm.value.title.trim()) {
         showToast("Judul material harus diisi!");
         return;
     }
-
     if (!materialForm.value.mascot_id && mascotOptions.value.length > 0) {
         showToast("Pilih maskot untuk material ini!");
         return;
@@ -106,7 +99,6 @@ const addMaterial = () => {
         id: Date.now(),
         mission_id: props.missionId,
     });
-
     materialForm.value = {
         title: "",
         description: "",
@@ -114,7 +106,6 @@ const addMaterial = () => {
         type: "text",
         mascot_id: null,
     };
-
     showToast("Material ditambahkan ke list.");
 };
 
@@ -133,12 +124,9 @@ const finalSave = () => {
         showToast("Tambahkan minimal 1 material!");
         return;
     }
-
     router.post(
         `/modules/${props.moduleId}/missions/${props.missionId}/materials`,
-        {
-            materials: materials.value,
-        },
+        { materials: materials.value },
         {
             onSuccess: () => {
                 showToast("Semua material berhasil disimpan.");
@@ -176,9 +164,7 @@ const toggleCardVariant = () => {
                                     : 'bg-green-50 p-2 rounded-lg',
                             ]"
                         >
-                            <i
-                                class="pi pi-file-edit text-green-600 text-2xl"
-                            ></i>
+                            <FileEdit class="text-green-600 w-6 h-6" />
                         </div>
                         <div>
                             <h1
@@ -198,11 +184,7 @@ const toggleCardVariant = () => {
                             cardVariant === 'playful' ? 'warning' : 'light'
                         "
                         size="md"
-                        :icon="
-                            cardVariant === 'playful'
-                                ? 'pi-star-fill'
-                                : 'pi-star'
-                        "
+                        :icon="Star"
                         @click="toggleCardVariant"
                     >
                         {{ cardVariant === "playful" ? "Playful" : "Normal" }}
@@ -249,17 +231,16 @@ const toggleCardVariant = () => {
 
             <!-- Step 1: Form Material -->
             <div v-if="wizardStep === 1" class="max-w-3xl mx-auto">
-                <ReusableCard
+                <Card
                     :variant="cardVariant"
                     title="Form Material Baru"
                     subtitle="Isi informasi material"
-                    icon="pi-file-edit"
+                    :icon="FileEdit"
                     icon-color="green"
                     border-color="green"
                     :hoverable="false"
                 >
                     <div class="space-y-5">
-                        <!-- Judul -->
                         <InputField
                             v-model="materialForm.title"
                             label="Judul Material"
@@ -268,7 +249,6 @@ const toggleCardVariant = () => {
                             border-color="green"
                         />
 
-                        <!-- Deskripsi -->
                         <TextareaField
                             v-model="materialForm.description"
                             label="Deskripsi Singkat"
@@ -277,7 +257,6 @@ const toggleCardVariant = () => {
                             border-color="green"
                         />
 
-                        <!-- Konten Material -->
                         <TextareaField
                             v-model="materialForm.content"
                             label="Konten Material"
@@ -286,7 +265,6 @@ const toggleCardVariant = () => {
                             border-color="green"
                         />
 
-                        <!-- Pilih Maskot (dari template modul) -->
                         <div v-if="mascotOptions.length > 0">
                             <SelectField
                                 v-model="materialForm.mascot_id"
@@ -297,7 +275,6 @@ const toggleCardVariant = () => {
                                 border-color="yellow"
                             />
 
-                            <!-- Preview Maskot -->
                             <div v-if="materialForm.mascot_id" class="mt-3">
                                 <div
                                     class="bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200 flex items-center gap-4"
@@ -335,8 +312,10 @@ const toggleCardVariant = () => {
                             v-else
                             class="bg-red-50 p-4 rounded-xl border-2 border-red-200"
                         >
-                            <p class="text-sm text-red-700">
-                                <i class="pi pi-exclamation-triangle mr-2"></i>
+                            <p
+                                class="text-sm text-red-700 flex items-center gap-2"
+                            >
+                                <AlertTriangle class="w-4 h-4" />
                                 Template modul ini belum memiliki maskot.
                                 Silakan tambahkan maskot di template terlebih
                                 dahulu.
@@ -362,7 +341,7 @@ const toggleCardVariant = () => {
                                 <Button
                                     variant="success"
                                     size="md"
-                                    icon="pi-plus"
+                                    :icon="Plus"
                                     @click="addMaterial"
                                 >
                                     Tambah ke List
@@ -378,18 +357,18 @@ const toggleCardVariant = () => {
                             </div>
                         </div>
                     </template>
-                </ReusableCard>
+                </Card>
             </div>
 
             <!-- Step 2: Review Materials -->
             <div v-if="wizardStep === 2">
                 <div class="max-w-5xl mx-auto space-y-6">
                     <!-- Info -->
-                    <ReusableCard
+                    <Card
                         :variant="cardVariant"
                         title="Review Material"
                         subtitle="Periksa kembali material yang akan disimpan"
-                        icon="pi-list"
+                        :icon="List"
                         icon-color="blue"
                         border-color="blue"
                         :hoverable="false"
@@ -401,13 +380,13 @@ const toggleCardVariant = () => {
                         tag="div"
                         class="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
-                        <ReusableCard
+                        <Card
                             v-for="material in materials"
                             :key="material.id"
                             :variant="cardVariant"
                             :title="material.title"
                             :subtitle="material.description"
-                            icon="pi-file"
+                            :icon="FileText"
                             icon-color="green"
                             border-color="green"
                         >
@@ -453,18 +432,18 @@ const toggleCardVariant = () => {
                                     <Button
                                         variant="warning"
                                         size="sm"
-                                        icon="pi-pencil"
+                                        :icon="Pencil"
                                         @click="editMaterial(material)"
                                     />
                                     <Button
                                         variant="danger"
                                         size="sm"
-                                        icon="pi-trash"
+                                        :icon="Trash2"
                                         @click="removeMaterial(material.id)"
                                     />
                                 </div>
                             </template>
-                        </ReusableCard>
+                        </Card>
                     </TransitionGroup>
 
                     <!-- Empty State -->
@@ -472,14 +451,14 @@ const toggleCardVariant = () => {
                         v-if="materials.length === 0"
                         class="text-center py-12"
                     >
-                        <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+                        <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                         <p class="text-gray-500">
                             Belum ada material yang ditambahkan
                         </p>
                         <Button
                             variant="primary"
                             size="md"
-                            icon="pi-arrow-left"
+                            :icon="ArrowLeft"
                             @click="prevStep"
                             class="mt-4"
                         >
@@ -495,7 +474,7 @@ const toggleCardVariant = () => {
                         <Button
                             variant="light"
                             size="lg"
-                            icon="pi-arrow-left"
+                            :icon="ArrowLeft"
                             @click="prevStep"
                         >
                             Kembali
@@ -504,7 +483,7 @@ const toggleCardVariant = () => {
                         <Button
                             variant="success"
                             size="lg"
-                            icon="pi-check"
+                            :icon="Check"
                             @click="finalSave"
                         >
                             Simpan Semua Material ({{ materials.length }})

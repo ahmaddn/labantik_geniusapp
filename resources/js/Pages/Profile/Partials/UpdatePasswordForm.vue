@@ -4,6 +4,7 @@ import { ref } from "vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import { Lock, Save } from "lucide-vue-next";
 
 const showToast = ref(false);
 const toastMessage = ref("");
@@ -61,7 +62,7 @@ const handleToastClose = () => {
                 v-model="form.current_password"
                 type="password"
                 label="Password Saat Ini"
-                icon="pi-lock"
+                :icon="Lock"
                 autocomplete="current-password"
                 :error="form.errors.current_password"
                 border-color="blue"
@@ -72,7 +73,7 @@ const handleToastClose = () => {
                 v-model="form.password"
                 type="password"
                 label="Password Baru"
-                icon="pi-lock"
+                :icon="Lock"
                 autocomplete="new-password"
                 :error="form.errors.password"
                 border-color="blue"
@@ -83,7 +84,7 @@ const handleToastClose = () => {
                 v-model="form.password_confirmation"
                 type="password"
                 label="Konfirmasi Password Baru"
-                icon="pi-lock"
+                :icon="Lock"
                 autocomplete="new-password"
                 :error="form.errors.password_confirmation"
                 border-color="blue"
@@ -94,7 +95,7 @@ const handleToastClose = () => {
                     type="submit"
                     variant="primary"
                     size="lg"
-                    icon="pi-save"
+                    :icon="Save"
                     :disabled="form.processing"
                 >
                     Simpan Password

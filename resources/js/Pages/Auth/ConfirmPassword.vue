@@ -5,6 +5,7 @@ import AuthLayout from "@/Layouts/AuthLayout.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import { Shield, Lock, Check } from "lucide-vue-next";
 
 const showToast = ref(false);
 const toastMessage = ref("");
@@ -39,11 +40,11 @@ const handleToastClose = () => {
             <h1
                 class="text-4xl font-heading font-bold text-gray-800 mb-2 flex items-center gap-3"
             >
-                <i class="pi pi-shield text-blue-500 text-3xl"></i>
+                <Shield class="text-blue-500 w-8 h-8" />
                 Confirm Password
             </h1>
             <p class="text-gray-600 font-medium flex items-center gap-2">
-                <i class="pi pi-lock text-gray-400"></i>
+                <Lock class="text-gray-400 w-4 h-4" />
                 This is a secure area
             </p>
         </div>
@@ -53,7 +54,7 @@ const handleToastClose = () => {
                 v-model="form.password"
                 type="password"
                 label="Password"
-                icon="pi-lock"
+                :icon="Lock"
                 required
                 :error="form.errors.password"
                 border-color="blue"
@@ -65,7 +66,7 @@ const handleToastClose = () => {
                 size="lg"
                 full-width
                 :loading="form.processing"
-                :icon="form.processing ? 'pi-spinner pi-spin' : 'pi-check'"
+                :icon="form.processing ? null : Check"
             >
                 {{ form.processing ? "Confirming..." : "Confirm" }}
             </Button>

@@ -1,5 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, watch } from "vue";
+import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-vue-next";
 
 const props = defineProps({
     show: {
@@ -59,12 +60,12 @@ const getTypeClasses = (type) => {
     return classes[type] || classes.success;
 };
 
-const getIconClass = (type) => {
+const getIconComponent = (type) => {
     const icons = {
-        success: "pi-check-circle",
-        error: "pi-times-circle",
-        warning: "pi-exclamation-triangle",
-        info: "pi-info-circle",
+        success: CheckCircle,
+        error: XCircle,
+        warning: AlertTriangle,
+        info: Info,
     };
     return icons[type] || icons.success;
 };
@@ -89,7 +90,11 @@ const handleClose = () => {
             ]"
         >
             <!-- Icon -->
-            <i :class="['pi', getIconClass(type), 'text-xl flex-shrink-0']"></i>
+            <component
+                :is="getIconComponent(type)"
+                :size="20"
+                class="flex-shrink-0"
+            />
 
             <!-- Message -->
             <span class="flex-1">{{ message }}</span>
@@ -101,7 +106,7 @@ const handleClose = () => {
                 class="ml-2 hover:bg-white/20 rounded-lg p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 flex-shrink-0"
                 aria-label="Close notification"
             >
-                <i class="pi pi-times text-base"></i>
+                <X :size="16" />
             </button>
         </div>
     </Transition>

@@ -4,15 +4,14 @@ import { ref } from "vue";
 import Button from "@/Components/UI/Button.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import { Trash2 } from "lucide-vue-next";
 
 const showConfirmDialog = ref(false);
 const showToast = ref(false);
 const toastMessage = ref("");
 const toastType = ref("success");
 
-const form = useForm({
-    password: "",
-});
+const form = useForm({ password: "" });
 
 const confirmUserDeletion = () => {
     showConfirmDialog.value = true;
@@ -60,7 +59,7 @@ const handleToastClose = () => {
         <Button
             variant="danger"
             size="lg"
-            icon="pi-trash"
+            :icon="Trash2"
             @click="confirmUserDeletion"
         >
             Hapus Akun

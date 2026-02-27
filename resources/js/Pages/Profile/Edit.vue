@@ -4,6 +4,7 @@ import DeleteUserForm from "./Partials/DeleteUserForm.vue";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm.vue";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm.vue";
 import { Head } from "@inertiajs/vue3";
+import { User, Lock, AlertTriangle } from "lucide-vue-next";
 
 defineProps({
     mustVerifyEmail: {
@@ -32,7 +33,7 @@ defineProps({
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-user text-blue-600 text-2xl"></i>
+                            <User class="text-blue-600 w-6 h-6" />
                         </div>
 
                         <div>
@@ -58,7 +59,7 @@ defineProps({
                         <div
                             class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                         >
-                            <i class="pi pi-id-card text-blue-600 text-xl"></i>
+                            <User class="text-blue-600 w-6 h-6" />
                         </div>
                         <h2
                             class="text-xl font-heading font-bold text-gray-800"
@@ -80,7 +81,7 @@ defineProps({
                         <div
                             class="bg-green-100 p-3 rounded-2xl border-2 border-green-300"
                         >
-                            <i class="pi pi-lock text-green-600 text-xl"></i>
+                            <Lock class="text-green-600 w-6 h-6" />
                         </div>
                         <h2
                             class="text-xl font-heading font-bold text-gray-800"
@@ -99,9 +100,7 @@ defineProps({
                         <div
                             class="bg-red-100 p-3 rounded-2xl border-2 border-red-300"
                         >
-                            <i
-                                class="pi pi-exclamation-triangle text-red-600 text-xl"
-                            ></i>
+                            <AlertTriangle class="text-red-600 w-6 h-6" />
                         </div>
                         <h2
                             class="text-xl font-heading font-bold text-gray-800"

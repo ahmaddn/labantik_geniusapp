@@ -5,39 +5,42 @@ import { router } from "@inertiajs/vue3";
 import Button from "@/Components/UI/Button.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import {
+    ArrowLeft,
+    ChevronRight,
+    Plus,
+    FileText,
+    FileEdit,
+    Video,
+    FileType,
+    HelpCircle,
+    Clock,
+    User,
+    Calendar,
+    Tag,
+    List,
+    Inbox,
+    Trash2,
+} from "lucide-vue-next";
 
 // Props dari backend
 const props = defineProps({
-    module: {
-        type: Object,
-        required: true,
-    },
-    mission: {
-        type: Object,
-        required: true,
-    },
-    materials: {
-        type: Array,
-        default: () => [],
-    },
-    quizzes: {
-        type: Array,
-        default: () => [],
-    },
+    module: { type: Object, required: true },
+    mission: { type: Object, required: true },
+    materials: { type: Array, default: () => [] },
+    quizzes: { type: Array, default: () => [] },
 });
 
 // State management
 const showDeleteDialog = ref(false);
-const deleteType = ref(""); // 'material' or 'quiz'
+const deleteType = ref("");
 const selectedItemId = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
 
-// Sort materials and quizzes by created_at (sudah sorted dari backend)
 const sortedMaterials = computed(() => props.materials);
 const sortedQuizzes = computed(() => props.quizzes);
 
-// Toast notification
 const showToast = (message) => {
     successMessage.value = message;
     showSuccess.value = true;
@@ -46,24 +49,20 @@ const showToast = (message) => {
     }, 2500);
 };
 
-// Navigate functions
 const goBack = () => {
     router.visit(route("admin.modules.show", props.module.id));
 };
-
 const goToAddMaterial = () => {
     router.visit(
         route("admin.modules.material", [props.module.id, props.mission.id]),
     );
 };
-
 const goToAddQuiz = () => {
     router.visit(
         route("admin.modules.quiz", [props.module.id, props.mission.id]),
     );
 };
 
-// Delete functions
 const confirmDeleteMaterial = (materialId) => {
     deleteType.value = "material";
     selectedItemId.value = materialId;
@@ -77,7 +76,6 @@ const confirmDeleteQuiz = (quizId) => {
 };
 
 const deleteItem = () => {
-    // Implementasi delete ke backend
     console.log(`Delete ${deleteType.value}:`, selectedItemId.value);
     showDeleteDialog.value = false;
     showToast(
@@ -87,14 +85,9 @@ const deleteItem = () => {
     );
 };
 
-// Helper functions
 const getMaterialIcon = (type) => {
-    const icons = {
-        text: "pi-file-edit",
-        video: "pi-video",
-        pdf: "pi-file-pdf",
-    };
-    return icons[type] || "pi-file";
+    const icons = { text: FileEdit, video: Video, pdf: FileType };
+    return icons[type] || FileText;
 };
 
 const getMaterialColor = (type) => {
@@ -139,7 +132,7 @@ const formatDate = (dateString) => {
                         @click="goBack"
                         class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 hover:bg-purple-200 transition-all"
                     >
-                        <i class="pi pi-arrow-left text-purple-600 text-xl"></i>
+                        <ArrowLeft class="text-purple-600 w-5 h-5" />
                     </button>
 
                     <div class="flex-1">
@@ -148,7 +141,7 @@ const formatDate = (dateString) => {
                             class="flex items-center gap-2 text-sm text-gray-500 mb-2"
                         >
                             <span>{{ module.title }}</span>
-                            <i class="pi pi-chevron-right text-xs"></i>
+                            <ChevronRight class="w-3 h-3" />
                             <span class="text-purple-600 font-medium">
                                 Mission {{ mission.order_number }}
                             </span>
@@ -173,7 +166,7 @@ const formatDate = (dateString) => {
                     <Button
                         variant="success"
                         size="md"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="goToAddMaterial"
                     >
                         Tambah Material
@@ -181,7 +174,7 @@ const formatDate = (dateString) => {
                     <Button
                         variant="warning"
                         size="md"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="goToAddQuiz"
                     >
                         Tambah Quiz
@@ -197,7 +190,7 @@ const formatDate = (dateString) => {
                     <h2
                         class="text-xl font-bold text-gray-800 flex items-center gap-2"
                     >
-                        <i class="pi pi-file text-green-600"></i>
+                        <FileText class="text-green-600 w-5 h-5" />
                         Materials
                     </h2>
                     <span
@@ -212,7 +205,7 @@ const formatDate = (dateString) => {
                     v-if="sortedMaterials.length === 0"
                     class="bg-white rounded-3xl border-4 border-green-200 shadow-playful p-12 text-center"
                 >
-                    <i class="pi pi-inbox text-gray-300 text-6xl mb-4"></i>
+                    <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
                         Belum ada Material
                     </h3>
@@ -222,7 +215,7 @@ const formatDate = (dateString) => {
                     <Button
                         variant="success"
                         size="lg"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="goToAddMaterial"
                     >
                         Tambah Material
@@ -238,13 +231,13 @@ const formatDate = (dateString) => {
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex items-start gap-4 flex-1">
-                                <i
+                                <component
+                                    :is="getMaterialIcon(material.type)"
                                     :class="[
-                                        'text-3xl mt-1',
-                                        getMaterialIcon(material.type),
+                                        'w-8 h-8 mt-1',
                                         getMaterialColor(material.type),
                                     ]"
-                                ></i>
+                                />
                                 <div class="flex-1">
                                     <h3
                                         class="text-xl font-bold text-gray-800 mb-2"
@@ -261,17 +254,19 @@ const formatDate = (dateString) => {
                                         >
                                             {{ material.type.toUpperCase() }}
                                         </span>
-                                        <span class="text-xs text-gray-500">
-                                            <i class="pi pi-clock mr-1"></i>
+                                        <span
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <Clock class="w-3 h-3" />
                                             {{
                                                 formatDate(material.created_at)
                                             }}
                                         </span>
                                         <span
                                             v-if="material.created_by"
-                                            class="text-xs text-gray-500"
+                                            class="text-xs text-gray-500 flex items-center gap-1"
                                         >
-                                            <i class="pi pi-user mr-1"></i>
+                                            <User class="w-3 h-3" />
                                             {{ material.created_by }}
                                         </span>
                                     </div>
@@ -289,7 +284,7 @@ const formatDate = (dateString) => {
                                 <Button
                                     variant="danger"
                                     size="md"
-                                    icon="pi-trash"
+                                    :icon="Trash2"
                                     @click="confirmDeleteMaterial(material.id)"
                                 />
                             </div>
@@ -306,7 +301,7 @@ const formatDate = (dateString) => {
                     <h2
                         class="text-xl font-bold text-gray-800 flex items-center gap-2"
                     >
-                        <i class="pi pi-question-circle text-orange-600"></i>
+                        <HelpCircle class="text-orange-600 w-5 h-5" />
                         Quizzes
                     </h2>
                     <span
@@ -321,7 +316,7 @@ const formatDate = (dateString) => {
                     v-if="sortedQuizzes.length === 0"
                     class="bg-white rounded-3xl border-4 border-orange-200 shadow-playful p-12 text-center"
                 >
-                    <i class="pi pi-inbox text-gray-300 text-6xl mb-4"></i>
+                    <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
                         Belum ada Quiz
                     </h3>
@@ -331,7 +326,7 @@ const formatDate = (dateString) => {
                     <Button
                         variant="warning"
                         size="lg"
-                        icon="pi-plus"
+                        :icon="Plus"
                         @click="goToAddQuiz"
                     >
                         Tambah Quiz
@@ -347,9 +342,9 @@ const formatDate = (dateString) => {
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex items-start gap-4 flex-1">
-                                <i
-                                    class="pi pi-question-circle text-orange-500 text-3xl mt-1"
-                                ></i>
+                                <HelpCircle
+                                    class="text-orange-500 w-8 h-8 mt-1"
+                                />
                                 <div class="flex-1">
                                     <h3
                                         class="text-xl font-bold text-gray-800 mb-2"
@@ -372,12 +367,16 @@ const formatDate = (dateString) => {
                                                     : "DRAG & DROP"
                                             }}
                                         </span>
-                                        <span class="text-xs text-gray-500">
-                                            <i class="pi pi-clock mr-1"></i>
+                                        <span
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <Clock class="w-3 h-3" />
                                             {{ quiz.time_limit }} menit
                                         </span>
-                                        <span class="text-xs text-gray-500">
-                                            <i class="pi pi-calendar mr-1"></i>
+                                        <span
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <Calendar class="w-3 h-3" />
                                             {{ formatDate(quiz.created_at) }}
                                         </span>
                                     </div>
@@ -391,16 +390,18 @@ const formatDate = (dateString) => {
 
                                     <!-- Quiz Stats -->
                                     <div class="flex gap-4 mt-3">
-                                        <span class="text-xs text-gray-500">
-                                            <i class="pi pi-list mr-1"></i>
+                                        <span
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <List class="w-3 h-3" />
                                             {{ quiz.questions_count || 0 }}
                                             Pertanyaan
                                         </span>
                                         <span
                                             v-if="quiz.category"
-                                            class="text-xs text-gray-500"
+                                            class="text-xs text-gray-500 flex items-center gap-1"
                                         >
-                                            <i class="pi pi-tag mr-1"></i>
+                                            <Tag class="w-3 h-3" />
                                             {{ quiz.category }}
                                         </span>
                                     </div>
@@ -411,7 +412,7 @@ const formatDate = (dateString) => {
                                 <Button
                                     variant="danger"
                                     size="md"
-                                    icon="pi-trash"
+                                    :icon="Trash2"
                                     @click="confirmDeleteQuiz(quiz.id)"
                                 />
                             </div>

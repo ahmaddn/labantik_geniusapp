@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { Loader2 } from "lucide-vue-next";
 
 const props = defineProps({
     variant: {
@@ -23,8 +24,8 @@ const props = defineProps({
         validator: (value) => ["sm", "md", "lg", "xl"].includes(value),
     },
     icon: {
-        type: String,
-        default: "",
+        type: [Object, Function],
+        default: null,
     },
     iconPosition: {
         type: String,
@@ -85,6 +86,11 @@ const getSizeClass = computed(() => {
     };
     return sizes[props.size];
 });
+
+const iconSize = computed(() => {
+    const sizes = { sm: 14, md: 16, lg: 18, xl: 20 };
+    return sizes[props.size];
+});
 </script>
 
 <template>
@@ -102,19 +108,23 @@ const getSizeClass = computed(() => {
                 : 'hover:scale-105 active:scale-95 cursor-pointer',
         ]"
     >
-        <!-- Loading Spinner -->
-        <i v-if="loading" class="pi pi-spinner pi-spin"></i>
-
         <!-- Left Icon -->
-        <i
-            v-else-if="icon && iconPosition === 'left'"
-            :class="['pi', icon]"
-        ></i>
+        <component
+            v-if="icon && iconPosition === 'left'"
+            :is="icon"
+            :size="iconSize"
+            :class="loading ? 'animate-spin' : ''"
+        />
 
-        <!-- Slot Content -->
-        <slot></slot>
+        <!-- Slot -->
+        <slot />
 
         <!-- Right Icon -->
-        <i v-if="icon && iconPosition === 'right'" :class="['pi', icon]"></i>
+        <component
+            v-if="icon && iconPosition === 'right'"
+            :is="icon"
+            :size="iconSize"
+            :class="loading ? 'animate-spin' : ''"
+        />
     </button>
 </template>

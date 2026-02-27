@@ -2,6 +2,15 @@
 import { ref } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Card from "@/Components/UI/Card.vue";
+import {
+    BookOpen,
+    Users,
+    FileEdit,
+    TrendingUp,
+    User,
+    Lightbulb,
+    Plus,
+} from "lucide-vue-next";
 
 const stats = ref([
     {
@@ -10,7 +19,7 @@ const stats = ref([
         value: "24",
         change: "+12%",
         trend: "up",
-        icon: "pi-book",
+        icon: BookOpen,
         iconColor: "purple",
         borderColor: "purple",
     },
@@ -20,7 +29,7 @@ const stats = ref([
         value: "1,248",
         change: "+8%",
         trend: "up",
-        icon: "pi-users",
+        icon: Users,
         iconColor: "blue",
         borderColor: "blue",
     },
@@ -30,7 +39,7 @@ const stats = ref([
         value: "89",
         change: "15 pending",
         trend: "neutral",
-        icon: "pi-file-edit",
+        icon: FileEdit,
         iconColor: "orange",
         borderColor: "orange",
     },
@@ -40,7 +49,7 @@ const stats = ref([
         value: "87%",
         change: "+5%",
         trend: "up",
-        icon: "pi-chart-line",
+        icon: TrendingUp,
         iconColor: "green",
         borderColor: "green",
     },
@@ -61,16 +70,14 @@ const stats = ref([
                     <h1
                         class="text-2xl md:text-3xl lg:text-4xl font-heading font-bold text-white mb-2 flex items-center gap-3"
                     >
-                        <i
-                            class="pi pi-user text-white text-2xl md:text-3xl"
-                        ></i>
+                        <User class="text-white w-8 h-8 md:w-9 md:h-9" />
                         Selamat Datang Kembali, {{ $page.props.auth.user.name }}
                     </h1>
 
                     <p
                         class="text-blue-100 text-base md:text-lg font-medium flex items-center gap-2"
                     >
-                        <i class="pi pi-lightbulb text-blue-200"></i>
+                        <Lightbulb class="text-blue-200 w-5 h-5" />
                         Siap mengelola kegiatan hari ini?
                     </p>
                 </div>
@@ -80,7 +87,7 @@ const stats = ref([
                     <button
                         class="bg-white text-blue-600 px-5 md:px-6 py-3 rounded-2xl font-bold shadow-playful hover:scale-105 transition-transform border-4 border-blue-300 flex items-center gap-2"
                     >
-                        <i class="pi pi-plus"></i>
+                        <Plus class="w-5 h-5" />
                         Tambah Modul
                     </button>
                 </div>

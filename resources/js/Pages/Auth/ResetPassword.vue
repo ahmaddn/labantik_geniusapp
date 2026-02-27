@@ -5,6 +5,7 @@ import AuthLayout from "@/Layouts/AuthLayout.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import { KeyRound, Info, Mail, Lock } from "lucide-vue-next";
 
 const props = defineProps({
     email: String,
@@ -49,11 +50,11 @@ const handleToastClose = () => {
             <h1
                 class="text-4xl font-heading font-bold text-gray-800 mb-2 flex items-center gap-3"
             >
-                <i class="pi pi-key text-blue-500 text-3xl"></i>
+                <KeyRound class="text-blue-500 w-8 h-8" />
                 Reset Password
             </h1>
             <p class="text-gray-600 font-medium flex items-center gap-2">
-                <i class="pi pi-info-circle text-gray-400"></i>
+                <Info class="text-gray-400 w-4 h-4" />
                 Enter your new password below
             </p>
         </div>
@@ -64,7 +65,7 @@ const handleToastClose = () => {
                 v-model="form.email"
                 type="email"
                 label="Email Address"
-                icon="pi-envelope"
+                :icon="Mail"
                 required
                 :error="form.errors.email"
                 border-color="blue"
@@ -74,7 +75,7 @@ const handleToastClose = () => {
                 v-model="form.password"
                 type="password"
                 label="New Password"
-                icon="pi-lock"
+                :icon="Lock"
                 placeholder="New Password"
                 required
                 :error="form.errors.password"
@@ -85,7 +86,7 @@ const handleToastClose = () => {
                 v-model="form.password_confirmation"
                 type="password"
                 label="Confirm Password"
-                icon="pi-lock"
+                :icon="Lock"
                 placeholder="Confirm Password"
                 required
                 :error="form.errors.password_confirmation"
@@ -98,7 +99,7 @@ const handleToastClose = () => {
                 size="lg"
                 full-width
                 :loading="form.processing"
-                :icon="form.processing ? 'pi-spinner pi-spin' : 'pi-key'"
+                :icon="form.processing ? null : KeyRound"
             >
                 {{ form.processing ? "Processing..." : "Reset Password" }}
             </Button>
