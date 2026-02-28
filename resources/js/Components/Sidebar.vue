@@ -10,6 +10,7 @@ import {
     X,
 } from "lucide-vue-next";
 
+
 defineProps({
     open: Boolean,
     isMobile: Boolean,
@@ -74,6 +75,15 @@ const menuItems = [
     {
         name: "Pengguna",
         route: "admin.users.index",
+        icon: Users,
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
+        borderColor: "border-blue-300",
+        activeColor: "bg-blue-500",
+    },
+    {
+        name: "Playground",
+        route: "playground.index",
         icon: Users,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
