@@ -11,7 +11,7 @@ class PlaygroundController extends Controller
 {
       public function index(): Response
     {
-        return Inertia::render('Admin/Playground/Index');
+        return Inertia::render('Student/Playground/Index');
     }
 
     /**
@@ -52,7 +52,7 @@ class PlaygroundController extends Controller
             return redirect()->route('playground.index');
         }
 
-        return Inertia::render('Admin/Playground/Quiz', [
+        return Inertia::render('Student/Playground/Quiz', [
             'player' => session('player'),
         ]);
     }
