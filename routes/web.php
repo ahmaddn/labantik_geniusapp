@@ -27,36 +27,44 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     // Kelas
     Route::name('classes.')->group(function () {
         Route::get('/classes', [ClassesController::class, 'index'])->name('index');
+        Route::post('/classes', [ClassesController::class, 'store'])->name('store');
+        Route::put('/classes/{class}', [ClassesController::class, 'update'])->name('update');
+        Route::delete('/classes/{class}', [ClassesController::class, 'destroy'])->name('destroy');
     });
 
     // Template Desain Modul
     Route::name('templates.')->group(function () {
+        // web.php
         Route::get('/templates', [TemplatesController::class, 'index'])->name('index');
+        Route::post('/templates', [TemplatesController::class, 'store'])->name('store');
+        Route::put('/templates/{templates}', [TemplatesController::class, 'update'])->name('update');
+        Route::delete('/templates/{templates}', [TemplatesController::class, 'destroy'])->name('destroy');
+        Route::get('/templates/{templates}', [TemplatesController::class, 'show'])->name('show');
+
+        // Hapus backgrounds dan mascots individual jika ada
+        Route::delete('/backgrounds/{background}', [TemplatesController::class, 'destroyBackground'])->name('backgrounds.destroy');
+        Route::delete('/mascots/{mascot}', [TemplatesController::class, 'destroyMascot'])->name('mascots.destroy');
     });
 
     // Pengguna
     Route::name('users.')->group(function () {
         Route::get('/users', [UsersController::class, 'index'])->name('index');
+        Route::post('/users', [UsersController::class, 'store'])->name('store');
+        Route::put('/users/{user}', [UsersController::class, 'update'])->name('update');
+        Route::delete('/users/{user}', [UsersController::class, 'destroy'])->name('destroy');
     });
     // Modul
     Route::name('modules.')->group(function () {
-        // Module List (Index)
         Route::get('/modules', [ModulesController::class, 'index'])->name('index');
 
-        // Show Module Detail (with Missions list)
-        Route::get('/modules/{id}', [ModulesController::class, 'show'])->name('show');
-
-        // Show Mission Detail (with Materials & Quizzes list)
-        Route::get('/modules/{moduleId}/mission/{missionId}', [ModulesController::class, 'showMission'])->name('mission.show');
-
-        // Create Mission Wizard
+        // ⚠️ CRITICAL: CREATE routes MUST be BEFORE show routes!
         Route::get('/modules/{id}/mission/create', [ModulesController::class, 'createMission'])->name('mission');
-
-        // Create Material Wizard
         Route::get('/modules/{moduleId}/mission/{missionId}/material/create', [ModulesController::class, 'createMaterial'])->name('material');
-
-        // Create Quiz Wizard
         Route::get('/modules/{moduleId}/mission/{missionId}/quiz/create', [ModulesController::class, 'createQuiz'])->name('quiz');
+
+        // Show routes go AFTER create routes
+        Route::get('/modules/{id}', [ModulesController::class, 'show'])->name('show');
+        Route::get('/modules/{moduleId}/mission/{missionId}', [ModulesController::class, 'showMission'])->name('mission.show');
     });
 });
 

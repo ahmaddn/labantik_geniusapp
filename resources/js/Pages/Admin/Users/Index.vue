@@ -17,19 +17,33 @@ import {
     Pencil,
     Trash2,
     Save,
+    BookOpen,
+    LockIcon,
 } from "lucide-vue-next";
+import { useForm, usePage } from "@inertiajs/vue3";
 
-const users = ref([
-    { id: 1, name: "Ahmad", email: "ahmad@email.com", role: "Admin" },
-    { id: 2, name: "Siti", email: "siti@email.com", role: "Guru" },
-    { id: 3, name: "Budi", email: "budi@email.com", role: "Siswa" },
-]);
+const toastType = ref("success"); // ← ini sudah benar
+const showDialog = ref(false);
+const showDeleteDialog = ref(false);
+const isEdit = ref(false);
+const selectedUser = ref(null);
+const successMessage = ref("");
+const showSuccess = ref(false);
+const selectedId = ref(null);
+
+const props = defineProps({
+    users: {
+        type: Array,
+    },
+});
+
+const page = usePage();
 
 // Role options untuk select
 const roleOptions = [
-    { value: "Admin", label: "Admin" },
-    { value: "Guru", label: "Guru" },
-    { value: "Siswa", label: "Siswa" },
+    { value: "admin", label: "Admin" },
+    { value: "guru", label: "Guru" },
+    { value: "siswa", label: "Siswa" },
 ];
 
 // Konfigurasi kolom untuk DataTable
@@ -37,6 +51,18 @@ const columns = [
     { key: "name", label: "Nama", sortable: true },
     { key: "email", label: "Email", sortable: true },
     { key: "role", label: "Peran", sortable: true },
+    {
+        key: "class",
+        label: "Kelas",
+        sortable: false,
+        formatter: (value) => value?.name || "-",
+    },
+    {
+        key: "created_by",
+        label: "Dibuat Oleh",
+        sortable: false,
+        formatter: (value) => value?.name || "-",
+    },
 ];
 
 // Konfigurasi action buttons untuk DataTable
@@ -53,24 +79,100 @@ const actions = [
     },
 ];
 
-const showDialog = ref(false);
-const showDeleteDialog = ref(false);
-const isEdit = ref(false);
-const selectedUser = ref(null);
-const successMessage = ref("");
-const showSuccess = ref(false);
-
-const form = ref({
+const editId = ref(null);
+const form = useForm({
     id: null,
     name: "",
     email: "",
     role: "",
+    password: "",
+    class_id: "",
 });
 
 const lockScroll = (state) => {
     document.body.style.overflow = state ? "hidden" : "";
 };
 
+const showToast = (message, type = "success") => {
+    successMessage.value = message;
+    toastType.value = type;
+    showSuccess.value = true;
+    setTimeout(() => (showSuccess.value = false), 2500);
+};
+
+const openCreate = () => {
+    isEdit.value = false;
+    form.reset();
+    showDialog.value = true;
+};
+
+const openEdit = (userItem) => {
+    isEdit.value = true;
+    editId.value = userItem.id;
+    form.name = userItem.name;
+    form.email = userItem.email;
+    form.role = userItem.role;
+    form.class_id = userItem.class_id || "";
+    showDialog.value = true;
+};
+
+const confirmDelete = (id) => {
+    selectedId.value = id;
+    showDeleteDialog.value = true;
+};
+
+// Helper untuk ambil pesan error pertama dari object errors
+const getFirstError = (errors) => {
+    return Object.values(errors)[0] ?? "Terjadi kesalahan.";
+};
+
+const saveUser = () => {
+    if (!form.name.trim() || !form.email.trim() || !form.role) {
+        showToast("Semua kolom wajib diisi.", "error");
+        return;
+    }
+
+    const options = {
+        onError: (errors) => showToast(getFirstError(errors), "error"),
+        onSuccess: () => {
+            showDialog.value = false;
+            form.reset();
+        },
+    };
+
+    if (isEdit.value) {
+        form.put(route("admin.users.update", editId.value), options);
+    } else {
+        form.post(route("admin.users.store"), options);
+    }
+};
+
+const deleteUser = () => {
+    form.delete(route("admin.users.destroy", selectedId.value), {
+        onError: (errors) => showToast(getFirstError(errors), "error"),
+        onSuccess: () => {
+            showDeleteDialog.value = false;
+        },
+    });
+};
+
+// Handler untuk action dari DataTable
+const handleTableAction = ({ action, data }) => {
+    if (action === "edit") {
+        openEdit(data);
+    } else if (action === "delete") {
+        confirmDelete(data);
+    }
+};
+
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.success) showToast(flash.success, "success");
+        if (flash?.error) showToast(flash.error, "error");
+        if (flash?.message) showToast(flash.message, "info");
+    },
+);
 watch(showDialog, (val) => lockScroll(val));
 watch(showDeleteDialog, (val) => lockScroll(val));
 
@@ -88,62 +190,6 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener("keydown", handleEsc);
 });
-
-const showToast = (message) => {
-    successMessage.value = message;
-    showSuccess.value = true;
-    setTimeout(() => (showSuccess.value = false), 2500);
-};
-
-const openCreate = () => {
-    isEdit.value = false;
-    form.value = { id: null, name: "", email: "", role: "" };
-    showDialog.value = true;
-};
-
-const openEdit = (user) => {
-    isEdit.value = true;
-    form.value = { ...user };
-    showDialog.value = true;
-};
-
-const confirmDelete = (user) => {
-    selectedUser.value = user;
-    showDeleteDialog.value = true;
-};
-
-const deleteUser = () => {
-    users.value = users.value.filter((u) => u.id !== selectedUser.value.id);
-    showDeleteDialog.value = false;
-    showToast("Data pengguna berhasil dihapus.");
-};
-
-const saveUser = () => {
-    if (!form.value.name || !form.value.email) return;
-
-    if (isEdit.value) {
-        const index = users.value.findIndex((u) => u.id === form.value.id);
-        users.value[index] = { ...form.value };
-        showToast("Data pengguna diperbarui.");
-    } else {
-        users.value.push({
-            ...form.value,
-            id: Date.now(),
-        });
-        showToast("Pengguna baru ditambahkan.");
-    }
-
-    showDialog.value = false;
-};
-
-// Handler untuk action dari DataTable
-const handleTableAction = ({ action, data }) => {
-    if (action === "edit") {
-        openEdit(data);
-    } else if (action === "delete") {
-        confirmDelete(data);
-    }
-};
 </script>
 
 <template>
@@ -191,7 +237,7 @@ const handleTableAction = ({ action, data }) => {
             <!-- DataTable Component -->
             <DataTable
                 :columns="columns"
-                :data="users"
+                :data="props.users"
                 :actions="actions"
                 :per-page-options="[5, 10, 15, 20]"
                 :initial-per-page="5"
@@ -227,12 +273,39 @@ const handleTableAction = ({ action, data }) => {
                     border-color="blue"
                 />
 
+                <InputField
+                    v-if="!isEdit"
+                    v-model="form.password"
+                    type="password"
+                    label="Password"
+                    placeholder="Password"
+                    :icon="LockIcon"
+                    required
+                    border-color="blue"
+                />
+
                 <SelectField
                     v-model="form.role"
                     :options="roleOptions"
                     label="Role"
                     placeholder="Pilih Role"
                     :icon="Shield"
+                    required
+                    border-color="blue"
+                />
+
+                <SelectField
+                    v-if="form.role === 'siswa'"
+                    v-model="form.class_id"
+                    :options="
+                        page.props.classes.map((cls) => ({
+                            value: cls.id,
+                            label: cls.name,
+                        }))
+                    "
+                    label="Kelas"
+                    placeholder="Pilih Kelas"
+                    :icon="BookOpen"
                     required
                     border-color="blue"
                 />
@@ -270,6 +343,11 @@ const handleTableAction = ({ action, data }) => {
         />
 
         <!-- Toast Notification -->
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast
+            :show="showSuccess"
+            :message="successMessage"
+            :type="toastType"
+            @close="showSuccess = false"
+        />
     </AppLayout>
 </template>

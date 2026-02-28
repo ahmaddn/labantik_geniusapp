@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('classes', function (Blueprint $table) {
+        Schema::create('mascots', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
-            $table->text('description')->nullable();
+            $table->string('name_pose');
+            $table->string('image');
+            $table->uuid('template_id')->index();
             $table->timestamps();
+
+            $table->foreign('template_id')->references('id')->on('templates');
         });
     }
 
@@ -24,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::dropIfExists('mascots');
     }
 };

@@ -38,8 +38,28 @@ const selectedItemId = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
 
-const sortedMaterials = computed(() => props.materials);
-const sortedQuizzes = computed(() => props.quizzes);
+// Combine materials and quizzes, sorted by creation date
+const sortedItems = computed(() => {
+    const materials = props.materials.map((item) => ({
+        ...item,
+        itemType: "material",
+    }));
+    const quizzes = props.quizzes.map((item) => ({
+        ...item,
+        itemType: "quiz",
+    }));
+
+    const combined = [...materials, ...quizzes];
+
+    // Sort by created_at in descending order (newest first)
+    return combined.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    );
+});
+
+const totalItems = computed(
+    () => props.materials.length + props.quizzes.length,
+);
 
 const showToast = (message) => {
     successMessage.value = message;
@@ -182,100 +202,126 @@ const formatDate = (dateString) => {
                 </div>
             </div>
 
-            <!-- Materials Section -->
-            <div class="mb-8">
+            <!-- Combined Materials & Quizzes Section -->
+            <div>
                 <div
-                    class="bg-green-100 rounded-2xl p-4 flex items-center justify-between mb-4"
+                    class="bg-gradient-to-r from-green-100 to-orange-100 rounded-2xl p-4 flex items-center justify-between mb-4"
                 >
                     <h2
                         class="text-xl font-bold text-gray-800 flex items-center gap-2"
                     >
                         <FileText class="text-green-600 w-5 h-5" />
-                        Materials
+                        Materials & Quizzes
                     </h2>
                     <span
-                        class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold"
+                        class="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold"
                     >
-                        {{ sortedMaterials.length }}
+                        {{ totalItems }}
                     </span>
                 </div>
 
-                <!-- Empty State Materials -->
+                <!-- Empty State -->
                 <div
-                    v-if="sortedMaterials.length === 0"
-                    class="bg-white rounded-3xl border-4 border-green-200 shadow-playful p-12 text-center"
+                    v-if="sortedItems.length === 0"
+                    class="bg-white rounded-3xl border-4 border-purple-200 shadow-playful p-12 text-center"
                 >
                     <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
-                        Belum ada Material
+                        Belum ada Material atau Quiz
                     </h3>
                     <p class="text-gray-500 mb-6">
-                        Tambahkan material pembelajaran untuk mission ini
+                        Tambahkan material pembelajaran atau quiz untuk mission
+                        ini
                     </p>
-                    <Button
-                        variant="success"
-                        size="lg"
-                        :icon="Plus"
-                        @click="goToAddMaterial"
-                    >
-                        Tambah Material
-                    </Button>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            :icon="Plus"
+                            @click="goToAddMaterial"
+                        >
+                            Tambah Material
+                        </Button>
+                        <Button
+                            variant="warning"
+                            size="lg"
+                            :icon="Plus"
+                            @click="goToAddQuiz"
+                        >
+                            Tambah Quiz
+                        </Button>
+                    </div>
                 </div>
 
-                <!-- Materials List -->
+                <!-- Items List -->
                 <TransitionGroup v-else name="card" tag="div" class="space-y-4">
+                    <!-- Material Card -->
                     <div
-                        v-for="material in sortedMaterials"
-                        :key="material.id"
-                        class="bg-white rounded-3xl border-4 border-green-200 shadow-playful p-6 hover:border-green-400 transition-all"
+                        v-for="item in sortedItems"
+                        :key="`${item.itemType}-${item.id}`"
+                        :class="[
+                            'bg-white rounded-3xl border-4 shadow-playful p-6 transition-all',
+                            item.itemType === 'material'
+                                ? 'border-green-200 hover:border-green-400'
+                                : 'border-orange-200 hover:border-orange-400',
+                        ]"
                     >
-                        <div class="flex items-start justify-between gap-4">
+                        <!-- Material Item -->
+                        <div
+                            v-if="item.itemType === 'material'"
+                            class="flex items-start justify-between gap-4"
+                        >
                             <div class="flex items-start gap-4 flex-1">
                                 <component
-                                    :is="getMaterialIcon(material.type)"
+                                    :is="getMaterialIcon(item.type)"
                                     :class="[
                                         'w-8 h-8 mt-1',
-                                        getMaterialColor(material.type),
+                                        getMaterialColor(item.type),
                                     ]"
                                 />
                                 <div class="flex-1">
-                                    <h3
-                                        class="text-xl font-bold text-gray-800 mb-2"
-                                    >
-                                        {{ material.title }}
-                                    </h3>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span
+                                            class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-300 font-medium"
+                                        >
+                                            MATERIAL
+                                        </span>
+                                        <h3
+                                            class="text-xl font-bold text-gray-800"
+                                        >
+                                            {{ item.title }}
+                                        </h3>
+                                    </div>
 
                                     <div class="flex items-center gap-3 mb-3">
                                         <span
                                             :class="[
                                                 'text-xs px-3 py-1 rounded-full border font-medium',
-                                                getMaterialBadge(material.type),
+                                                getMaterialBadge(item.type),
                                             ]"
                                         >
-                                            {{ material.type.toUpperCase() }}
+                                            {{ item.type.toUpperCase() }}
                                         </span>
                                         <span
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <Clock class="w-3 h-3" />
-                                            {{
-                                                formatDate(material.created_at)
-                                            }}
+                                            {{ formatDate(item.created_at) }}
                                         </span>
                                         <span
-                                            v-if="material.created_by"
+                                            v-if="item.created_by"
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <User class="w-3 h-3" />
-                                            {{ material.created_by }}
+                                            {{ item.created_by }}
                                         </span>
                                     </div>
 
                                     <p
-                                        v-if="material.description"
+                                        v-if="item.description"
                                         class="text-sm text-gray-600 line-clamp-2"
                                     >
-                                        {{ material.description }}
+                                        {{ item.description }}
                                     </p>
                                 </div>
                             </div>
@@ -285,84 +331,45 @@ const formatDate = (dateString) => {
                                     variant="danger"
                                     size="md"
                                     :icon="Trash2"
-                                    @click="confirmDeleteMaterial(material.id)"
+                                    @click="confirmDeleteMaterial(item.id)"
                                 />
                             </div>
                         </div>
-                    </div>
-                </TransitionGroup>
-            </div>
 
-            <!-- Quizzes Section -->
-            <div>
-                <div
-                    class="bg-orange-100 rounded-2xl p-4 flex items-center justify-between mb-4"
-                >
-                    <h2
-                        class="text-xl font-bold text-gray-800 flex items-center gap-2"
-                    >
-                        <HelpCircle class="text-orange-600 w-5 h-5" />
-                        Quizzes
-                    </h2>
-                    <span
-                        class="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold"
-                    >
-                        {{ sortedQuizzes.length }}
-                    </span>
-                </div>
-
-                <!-- Empty State Quizzes -->
-                <div
-                    v-if="sortedQuizzes.length === 0"
-                    class="bg-white rounded-3xl border-4 border-orange-200 shadow-playful p-12 text-center"
-                >
-                    <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
-                    <h3 class="text-xl font-bold text-gray-700 mb-2">
-                        Belum ada Quiz
-                    </h3>
-                    <p class="text-gray-500 mb-6">
-                        Tambahkan quiz untuk menguji pemahaman siswa
-                    </p>
-                    <Button
-                        variant="warning"
-                        size="lg"
-                        :icon="Plus"
-                        @click="goToAddQuiz"
-                    >
-                        Tambah Quiz
-                    </Button>
-                </div>
-
-                <!-- Quizzes List -->
-                <TransitionGroup v-else name="card" tag="div" class="space-y-4">
-                    <div
-                        v-for="quiz in sortedQuizzes"
-                        :key="quiz.id"
-                        class="bg-white rounded-3xl border-4 border-orange-200 shadow-playful p-6 hover:border-orange-400 transition-all"
-                    >
-                        <div class="flex items-start justify-between gap-4">
+                        <!-- Quiz Item -->
+                        <div
+                            v-else
+                            class="flex items-start justify-between gap-4"
+                        >
                             <div class="flex items-start gap-4 flex-1">
                                 <HelpCircle
                                     class="text-orange-500 w-8 h-8 mt-1"
                                 />
                                 <div class="flex-1">
-                                    <h3
-                                        class="text-xl font-bold text-gray-800 mb-2"
-                                    >
-                                        {{ quiz.title }}
-                                    </h3>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span
+                                            class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium"
+                                        >
+                                            QUIZ
+                                        </span>
+                                        <h3
+                                            class="text-xl font-bold text-gray-800"
+                                        >
+                                            {{ item.title }}
+                                        </h3>
+                                    </div>
 
                                     <div class="flex items-center gap-3 mb-3">
                                         <span
                                             :class="[
                                                 'text-xs px-3 py-1 rounded-full border font-medium',
-                                                quiz.type === 'multiple_choice'
+                                                item.type === 'multiple_choice'
                                                     ? 'bg-blue-100 text-blue-700 border-blue-300'
                                                     : 'bg-purple-100 text-purple-700 border-purple-300',
                                             ]"
                                         >
                                             {{
-                                                quiz.type === "multiple_choice"
+                                                item.type === "multiple_choice"
                                                     ? "MULTIPLE CHOICE"
                                                     : "DRAG & DROP"
                                             }}
@@ -371,21 +378,21 @@ const formatDate = (dateString) => {
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <Clock class="w-3 h-3" />
-                                            {{ quiz.time_limit }} menit
+                                            {{ item.time_limit }} menit
                                         </span>
                                         <span
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <Calendar class="w-3 h-3" />
-                                            {{ formatDate(quiz.created_at) }}
+                                            {{ formatDate(item.created_at) }}
                                         </span>
                                     </div>
 
                                     <p
-                                        v-if="quiz.description"
+                                        v-if="item.description"
                                         class="text-sm text-gray-600 line-clamp-2"
                                     >
-                                        {{ quiz.description }}
+                                        {{ item.description }}
                                     </p>
 
                                     <!-- Quiz Stats -->
@@ -394,15 +401,15 @@ const formatDate = (dateString) => {
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <List class="w-3 h-3" />
-                                            {{ quiz.questions_count || 0 }}
+                                            {{ item.questions_count || 0 }}
                                             Pertanyaan
                                         </span>
                                         <span
-                                            v-if="quiz.category"
+                                            v-if="item.category"
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <Tag class="w-3 h-3" />
-                                            {{ quiz.category }}
+                                            {{ item.category }}
                                         </span>
                                     </div>
                                 </div>
@@ -413,7 +420,7 @@ const formatDate = (dateString) => {
                                     variant="danger"
                                     size="md"
                                     :icon="Trash2"
-                                    @click="confirmDeleteQuiz(quiz.id)"
+                                    @click="confirmDeleteQuiz(item.id)"
                                 />
                             </div>
                         </div>

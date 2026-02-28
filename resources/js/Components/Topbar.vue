@@ -151,23 +151,6 @@ const toggleProfileMenu = (event) => {
                                         >My Profile</span
                                     >
                                 </Link>
-                                <Link
-                                    :href="route('profile.edit')"
-                                    class="flex items-center gap-3 px-5 py-3 hover:bg-purple-50 text-gray-700 transition-all"
-                                    @click="showProfileMenu = false"
-                                >
-                                    <div
-                                        class="w-10 h-10 rounded-2xl bg-purple-100 border-2 border-purple-300 flex items-center justify-center"
-                                    >
-                                        <Settings
-                                            class="text-purple-600"
-                                            :size="16"
-                                        />
-                                    </div>
-                                    <span class="text-sm font-bold font-heading"
-                                        >Settings</span
-                                    >
-                                </Link>
                             </div>
 
                             <!-- Logout -->
