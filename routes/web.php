@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ClassesController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\PlaygroundController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,17 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+
+Route::get('/playground', [PlaygroundController::class, 'index'])
+    ->name('playground.index');
+
+// POST saat klik "Mulai Petualangan"
+Route::post('/playground/start', [PlaygroundController::class, 'start'])
+    ->name('playground.start');
+
+// Halaman quiz (setelah start berhasil)
+Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])
+    ->name('playground.quiz');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
