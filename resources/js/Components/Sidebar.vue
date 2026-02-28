@@ -10,6 +10,7 @@ import {
     X,
 } from "lucide-vue-next";
 
+
 defineProps({
     open: Boolean,
     isMobile: Boolean,
