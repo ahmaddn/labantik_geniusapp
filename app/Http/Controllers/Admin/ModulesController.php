@@ -3,267 +3,191 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Learning_modules;
+use App\Models\Missions;
+use App\Models\Templates;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ModulesController extends Controller
 {
     /**
-     * Display a listing of modules
+     * Display a listing of modules.
      */
     public function index()
     {
-        // Data dummy modules
-        $modules = [
-            [
-                'id' => 1,
-                'title' => 'Pengenalan JavaScript',
-                'description' => 'Modul dasar JavaScript untuk pemula',
-                'content' => 'Konten lengkap modul JavaScript',
-                'thumbnail' => '/images/js-thumb.jpg',
-                'created_by' => 'Admin',
-                'maxval_id' => 1,
-                'missionsCount' => 3,
-                'materialsCount' => 5,
-                'quizzesCount' => 2,
-                'created_at' => '2024-01-15 10:00:00',
-            ],
-            [
-                'id' => 2,
-                'title' => 'Pemrograman PHP',
-                'description' => 'Belajar PHP dari dasar hingga advanced',
-                'content' => 'Konten lengkap modul PHP',
-                'thumbnail' => '/images/php-thumb.jpg',
-                'created_by' => 'Admin',
-                'maxval_id' => 2,
-                'missionsCount' => 4,
-                'materialsCount' => 8,
-                'quizzesCount' => 3,
-                'created_at' => '2024-01-20 14:30:00',
-            ],
-        ];
+        $modules = Learning_modules::with(['template:id,name', 'createdBy:id,name'])
+            ->latest()
+            ->get()
+            ->map(fn($m) => [
+                'id'          => $m->id,
+                'name'        => $m->name,
+                'description' => $m->description,
+                'content'     => $m->content,
+                'quotes'      => $m->quotes,
+                'thumbnail'   => $m->thumbnail ? Storage::url($m->thumbnail) : null,
+                'template_id' => $m->template_id,
+                'created_by'  => $m->created_by,
+                'is_active'   => $m->is_active, // ✅ Tambahkan ini
+                'template'    => $m->template,
+                'createdBy'   => $m->createdBy,
+                'created_at'  => $m->created_at,
+            ]);
+
+        $templates = Templates::select('id', 'name')->latest()->get();
 
         return Inertia::render('Admin/Modules/Index', [
-            'modules' => $modules
+            'modules'   => $modules,
+            'templates' => $templates,
         ]);
     }
 
     /**
-     * Show module detail with missions list
+     * Store a newly created module.
      */
-    public function show($id)
+    public function store(Request $request)
     {
-        // Data dummy module
-        $module = [
-            'id' => (int)$id,
-            'title' => 'Pengenalan JavaScript',
-            'description' => 'Modul dasar JavaScript untuk pemula',
-            'content' => 'Konten lengkap modul JavaScript',
-            'thumbnail' => '/images/js-thumb.jpg',
-            'created_by' => 'Admin',
-            'materials_count' => 5,
-            'quizzes_count' => 2,
-            'created_at' => '2024-01-15 10:00:00',
-        ];
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'content'     => 'nullable|string',
+            'quotes'      => 'nullable|string|max:500',
+            'template_id' => 'nullable|exists:templates,id',
+            'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
+            'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
+        ], [
+            'name.required'      => 'Nama modul wajib diisi.',
+            'thumbnail.image'    => 'File harus berupa gambar.',
+            'thumbnail.max'      => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists' => 'Template tidak ditemukan.',
+        ]);
 
-        // Data dummy missions
-        $missions = [
-            [
-                'id' => 1,
-                'module_id' => (int)$id,
-                'name' => 'Variabel dan Tipe Data',
-                'description' => 'Memahami konsep variabel dan berbagai tipe data di JavaScript',
-                'order_number' => 1,
-                'materials_count' => 2,
-                'quizzes_count' => 1,
-                'created_at' => '2024-01-16 09:00:00',
-            ],
-            [
-                'id' => 2,
-                'module_id' => (int)$id,
-                'name' => 'Function dan Scope',
-                'description' => 'Belajar membuat dan menggunakan function dalam JavaScript',
-                'order_number' => 2,
-                'materials_count' => 3,
-                'quizzes_count' => 1,
-                'created_at' => '2024-01-17 10:30:00',
-            ],
-            [
-                'id' => 3,
-                'module_id' => (int)$id,
-                'name' => 'Array dan Object',
-                'description' => 'Mengenal struktur data array dan object',
-                'order_number' => 3,
-                'materials_count' => 0,
-                'quizzes_count' => 0,
-                'created_at' => '2024-01-18 11:00:00',
-            ],
-        ];
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')
+                ->store('modules/thumbnails', 'public');
+        }
+
+        Learning_modules::create([
+            'name'        => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'content'     => $validated['content'] ?? null,
+            'quotes'      => $validated['quotes'] ?? null,
+            'template_id' => $validated['template_id'] ?? null,
+            'thumbnail'   => $thumbnailPath,
+            'created_by'  => Auth::id(),
+            'is_active'   => $validated['is_active'] ?? false, // ✅ Tambahkan ini
+        ]);
+
+        return redirect()->route('admin.modules.index')
+            ->with('success', 'Modul berhasil ditambahkan.');
+    }
+
+    /**
+     * Show module detail with missions list.
+     */
+    public function show(Learning_modules $modules)
+    {
+        $missions = Missions::where('module_id', $modules->id)
+            ->orderBy('order_number')
+            ->get()
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'name' => $m->name,
+                'order_number' => $m->order_number,
+            ]);
 
         return Inertia::render('Admin/Modules/Show', [
-            'module' => $module,
-            'missions' => $missions
+            'module' => [
+                'id' => $modules->id,
+                'name' => $modules->name,
+                'description' => $modules->description,
+            ],
+            'missions' => $missions,
         ]);
     }
 
     /**
-     * Show create mission wizard
-     * Route: /admin/modules/{moduleId}/mission/create
+     * Update the specified module.
      */
-    public function createMission($id)
+    public function update(Request $request, Learning_modules $modules)
     {
-        // Get module data
-        $module = [
-            'id' => (int)$id,
-            'title' => 'Pengenalan JavaScript',
-        ];
-
-        // Render Mission creation wizard
-        return Inertia::render('Admin/Modules/Wizards/Mission', [
-            'moduleId' => (int)$id,
-            'moduleName' => $module['title']
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'content'     => 'nullable|string',
+            'quotes'      => 'nullable|string|max:500',
+            'template_id' => 'nullable|exists:templates,id',
+            'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
+            'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
+        ], [
+            'name.required'      => 'Nama modul wajib diisi.',
+            'thumbnail.image'    => 'File harus berupa gambar.',
+            'thumbnail.max'      => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists' => 'Template tidak ditemukan.',
         ]);
+
+        $thumbnailPath = $modules->thumbnail;
+
+        if ($request->hasFile('thumbnail')) {
+            // Hapus thumbnail lama jika ada
+            if ($modules->thumbnail && Storage::disk('public')->exists($modules->thumbnail)) {
+                Storage::disk('public')->delete($modules->thumbnail);
+            }
+            $thumbnailPath = $request->file('thumbnail')
+                ->store('modules/thumbnails', 'public');
+        }
+
+        // Jika thumbnail di-remove dari frontend (kirim thumbnail_remove=1)
+        if ($request->boolean('thumbnail_remove') && $modules->thumbnail) {
+            if (Storage::disk('public')->exists($modules->thumbnail)) {
+                Storage::disk('public')->delete($modules->thumbnail);
+            }
+            $thumbnailPath = null;
+        }
+
+        $modules->update([
+            'name'        => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'content'     => $validated['content'] ?? null,
+            'quotes'      => $validated['quotes'] ?? null,
+            'template_id' => $validated['template_id'] ?? null,
+            'thumbnail'   => $thumbnailPath,
+            'is_active'   => $validated['is_active'] ?? $modules->is_active, // ✅ Tambahkan ini
+        ]);
+
+        return redirect()->route('admin.modules.index')
+            ->with('success', 'Modul berhasil diperbarui.');
     }
 
     /**
-     * Show mission detail with materials and quizzes list
-     * Route: /admin/modules/{moduleId}/mission/{missionId}
+     * Toggle module active status (quick toggle).
      */
-    public function showMission($moduleId, $missionId)
+    public function toggleActive(Learning_modules $modules)
     {
-        // Data dummy module
-        $module = [
-            'id' => (int)$moduleId,
-            'title' => 'Pengenalan JavaScript',
-            'description' => 'Modul dasar JavaScript untuk pemula',
-        ];
-
-        // Data dummy mission
-        $mission = [
-            'id' => (int)$missionId,
-            'module_id' => (int)$moduleId,
-            'name' => 'Variabel dan Tipe Data',
-            'description' => 'Memahami konsep variabel dan berbagai tipe data di JavaScript',
-            'order_number' => 1,
-            'created_at' => '2024-01-16 09:00:00',
-        ];
-
-        // Data dummy materials (sorted by created_at)
-        $materials = [
-            [
-                'id' => 1,
-                'mission_id' => (int)$missionId,
-                'title' => 'Pengenalan Variabel',
-                'description' => 'Memahami konsep dasar variabel dalam JavaScript',
-                'content' => 'Konten tentang variabel...',
-                'type' => 'text',
-                'created_by' => 'Admin',
-                'created_at' => '2024-01-16 10:00:00',
-            ],
-            [
-                'id' => 2,
-                'mission_id' => (int)$missionId,
-                'title' => 'Video Tutorial: Tipe Data',
-                'description' => 'Video pembelajaran tentang tipe data JavaScript',
-                'content' => 'https://youtube.com/example',
-                'type' => 'video',
-                'created_by' => 'Instructor',
-                'created_at' => '2024-01-16 11:30:00',
-            ],
-            [
-                'id' => 3,
-                'mission_id' => (int)$missionId,
-                'title' => 'Panduan Lengkap Variabel',
-                'description' => 'Dokumen PDF panduan lengkap variabel',
-                'content' => '/files/variabel-guide.pdf',
-                'type' => 'pdf',
-                'created_by' => 'Admin',
-                'created_at' => '2024-01-16 14:00:00',
-            ],
-        ];
-
-        // Data dummy quizzes (sorted by created_at)
-        $quizzes = [
-            [
-                'id' => 1,
-                'mission_id' => (int)$missionId,
-                'title' => 'Quiz: Variabel dan Tipe Data',
-                'description' => 'Uji pemahaman tentang variabel dan tipe data',
-                'time_limit' => 30,
-                'category' => 'Fundamental',
-                'type' => 'multiple_choice',
-                'questions_count' => 10,
-                'created_at' => '2024-01-16 15:00:00',
-            ],
-            [
-                'id' => 2,
-                'mission_id' => (int)$missionId,
-                'title' => 'Drag & Drop: Tipe Data',
-                'description' => 'Cocokkan tipe data dengan contohnya',
-                'time_limit' => 15,
-                'category' => 'Praktik',
-                'type' => 'drag_drop',
-                'questions_count' => 5,
-                'created_at' => '2024-01-17 09:00:00',
-            ],
-        ];
-
-        return Inertia::render('Admin/Modules/ShowMission', [
-            'module' => $module,
-            'mission' => $mission,
-            'materials' => $materials,
-            'quizzes' => $quizzes
+        $modules->update([
+            'is_active' => !$modules->is_active
         ]);
+
+        return redirect()->back()
+            ->with('success', 'Status modul berhasil diubah.');
     }
 
     /**
-     * Show create material wizard
-     * Route: /admin/modules/{moduleId}/mission/{missionId}/material/create
+     * Remove the specified module.
      */
-    public function createMaterial($moduleId, $missionId)
+    public function destroy(Learning_modules $modules)
     {
-        // Get module and mission data
-        $module = [
-            'id' => (int)$moduleId,
-            'title' => 'Pengenalan JavaScript',
-        ];
+        // Hapus thumbnail dari storage jika ada
+        if ($modules->thumbnail && Storage::disk('public')->exists($modules->thumbnail)) {
+            Storage::disk('public')->delete($modules->thumbnail);
+        }
 
-        $mission = [
-            'id' => (int)$missionId,
-            'name' => 'Variabel dan Tipe Data',
-        ];
+        $modules->delete();
 
-        return Inertia::render('Admin/Modules/Wizards/Material', [
-            'moduleId' => (int)$moduleId,
-            'missionId' => (int)$missionId,
-            'moduleName' => $module['title'],
-            'missionName' => $mission['name'],
-            'moduleTemplate' => null, // Add template data if needed
-        ]);
-    }
-
-    /**
-     * Show create quiz wizard
-     * Route: /admin/modules/{moduleId}/mission/{missionId}/quiz/create
-     */
-    public function createQuiz($moduleId, $missionId)
-    {
-        // Get module and mission data
-        $module = [
-            'id' => (int)$moduleId,
-            'title' => 'Pengenalan JavaScript',
-        ];
-
-        $mission = [
-            'id' => (int)$missionId,
-            'name' => 'Variabel dan Tipe Data',
-        ];
-
-        return Inertia::render('Admin/Modules/Wizards/Quiz', [
-            'moduleId' => (int)$moduleId,
-            'missionId' => (int)$missionId,
-            'moduleName' => $module['title'],
-            'missionName' => $mission['name']
-        ]);
+        return redirect()->route('admin.modules.index')
+            ->with('success', 'Modul berhasil dihapus.');
     }
 }

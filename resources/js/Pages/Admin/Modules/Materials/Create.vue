@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
@@ -13,7 +13,6 @@ import {
     Star,
     Plus,
     ArrowLeft,
-    ArrowRight,
     Check,
     List,
     FileText,
@@ -21,15 +20,14 @@ import {
     Trash2,
     AlertTriangle,
     Inbox,
+    Image as ImageIcon,
 } from "lucide-vue-next";
 
-// Props
+// Props — sesuai controller create()
 const props = defineProps({
-    moduleId: { type: Number, required: true },
-    missionId: { type: Number, required: true },
-    moduleName: { type: String, default: "Module" },
-    missionName: { type: String, default: "Mission" },
-    moduleTemplate: { type: Object, default: null },
+    module: { type: Object, required: true }, // { id, name }
+    mission: { type: Object, required: true }, // { id, name, order_number }
+    mascots: { type: Array, default: () => [] },
 });
 
 // Wizard state
@@ -38,31 +36,29 @@ const successMessage = ref("");
 const showSuccess = ref(false);
 const cardVariant = ref("playful");
 
-// Form untuk Material
+// Form Material
+// CATATAN MIGRATION: TIDAK ada kolom thumbnail, hanya image
 const materialForm = ref({
     title: "",
     description: "",
     content: "",
-    type: "text",
     mascot_id: null,
+    image: null, // File object
 });
 
-// List materials yang akan disimpan
+// Preview image
+const imagePreview = ref(null);
+
+// List materials yang akan disimpan (multi-add sebelum submit)
 const materials = ref([]);
 
-// Computed untuk options maskot dari template
+// Mascot options
 const mascotOptions = computed(() => {
-    if (!props.moduleTemplate?.mascots) return [];
-    return props.moduleTemplate.mascots.map((m) => ({
-        value: m.id,
-        label: m.name,
-    }));
+    if (!props.mascots || props.mascots.length === 0) return [];
+    return props.mascots.map((m) => ({ value: m.id, label: m.name }));
 });
-
-const getSelectedMascot = (mascotId) => {
-    if (!props.moduleTemplate?.mascots) return null;
-    return props.moduleTemplate.mascots.find((m) => m.id === mascotId);
-};
+const getSelectedMascot = (mascotId) =>
+    props.mascots.find((m) => m.id == mascotId) || null;
 
 const showToast = (message) => {
     successMessage.value = message;
@@ -72,40 +68,55 @@ const showToast = (message) => {
     }, 2500);
 };
 
-const nextStep = () => {
-    if (!materialForm.value.title.trim()) {
-        showToast("Judul material harus diisi!");
-        return;
+// Handle image upload (hanya 1 gambar — sesuai migration hanya kolom 'image')
+const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        materialForm.value.image = file;
+        imagePreview.value = URL.createObjectURL(file);
     }
-    wizardStep.value = 2;
+};
+const removeImage = () => {
+    materialForm.value.image = null;
+    imagePreview.value = null;
 };
 
+const validateForm = () => {
+    if (!materialForm.value.title.trim()) {
+        showToast("Judul material harus diisi!");
+        return false;
+    }
+    if (!materialForm.value.content.trim()) {
+        showToast("Konten material harus diisi!");
+        return false;
+    }
+    return true;
+};
+
+const nextStep = () => {
+    if (!validateForm()) return;
+    wizardStep.value = 2;
+};
 const prevStep = () => {
     wizardStep.value = 1;
 };
 
+// Tambah ke list (belum submit ke server)
 const addMaterial = () => {
-    if (!materialForm.value.title.trim()) {
-        showToast("Judul material harus diisi!");
-        return;
-    }
-    if (!materialForm.value.mascot_id && mascotOptions.value.length > 0) {
-        showToast("Pilih maskot untuk material ini!");
-        return;
-    }
-
+    if (!validateForm()) return;
     materials.value.push({
         ...materialForm.value,
         id: Date.now(),
-        mission_id: props.missionId,
+        imagePreview: imagePreview.value,
     });
     materialForm.value = {
         title: "",
         description: "",
         content: "",
-        type: "text",
         mascot_id: null,
+        image: null,
     };
+    imagePreview.value = null;
     showToast("Material ditambahkan ke list.");
 };
 
@@ -116,22 +127,52 @@ const removeMaterial = (id) => {
 
 const editMaterial = (material) => {
     materialForm.value = { ...material };
+    imagePreview.value = material.imagePreview;
     materials.value = materials.value.filter((m) => m.id !== material.id);
+    wizardStep.value = 1;
 };
 
+// Final save — kirim ke controller store() via FormData (karena ada file upload)
 const finalSave = () => {
     if (materials.value.length === 0) {
         showToast("Tambahkan minimal 1 material!");
         return;
     }
+
+    const formData = new FormData();
+
+    materials.value.forEach((material, index) => {
+        formData.append(`materials[${index}][title]`, material.title);
+        formData.append(
+            `materials[${index}][description]`,
+            material.description || "",
+        );
+        formData.append(`materials[${index}][content]`, material.content);
+        formData.append(
+            `materials[${index}][mascot_id]`,
+            material.mascot_id || "",
+        );
+        if (material.image) {
+            formData.append(`materials[${index}][image]`, material.image);
+        }
+    });
+
     router.post(
-        `/modules/${props.moduleId}/missions/${props.missionId}/materials`,
-        { materials: materials.value },
+        route("admin.modules.missions.materials.store", [
+            props.module.id,
+            props.mission.id,
+        ]),
+        formData,
         {
             onSuccess: () => {
                 showToast("Semua material berhasil disimpan.");
                 setTimeout(() => {
-                    router.visit(`/modules/${props.moduleId}/missions`);
+                    router.visit(
+                        route("admin.modules.missions.show", [
+                            props.module.id,
+                            props.mission.id,
+                        ]),
+                    );
                 }, 1500);
             },
         },
@@ -146,7 +187,7 @@ const toggleCardVariant = () => {
 <template>
     <AppLayout>
         <div class="p-5">
-            <!-- Header -->
+            <!-- ===== HEADER ===== -->
             <div
                 :class="[
                     'rounded-3xl p-5 mb-8',
@@ -170,15 +211,13 @@ const toggleCardVariant = () => {
                             <h1
                                 class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
                             >
-                                Buat Material untuk {{ missionName }}
+                                Buat Material untuk {{ mission.name }}
                             </h1>
                             <p class="text-sm text-gray-500">
-                                Modul: {{ moduleName }} | Template:
-                                {{ moduleTemplate?.name || "No Template" }}
+                                Modul: {{ module.name }}
                             </p>
                         </div>
                     </div>
-
                     <Button
                         :variant="
                             cardVariant === 'playful' ? 'warning' : 'light'
@@ -192,7 +231,7 @@ const toggleCardVariant = () => {
                 </div>
             </div>
 
-            <!-- Wizard Progress -->
+            <!-- ===== WIZARD PROGRESS ===== -->
             <div class="mb-8">
                 <div class="flex items-center justify-center gap-4">
                     <div class="flex items-center">
@@ -229,12 +268,12 @@ const toggleCardVariant = () => {
                 </div>
             </div>
 
-            <!-- Step 1: Form Material -->
-            <div v-if="wizardStep === 1" class="max-w-3xl mx-auto">
+            <!-- ===== STEP 1: Form Material ===== -->
+            <div v-if="wizardStep === 1">
                 <Card
                     :variant="cardVariant"
-                    title="Form Material Baru"
-                    subtitle="Isi informasi material"
+                    title="Form Material"
+                    subtitle="Isi informasi material pembelajaran"
                     :icon="FileEdit"
                     icon-color="green"
                     border-color="green"
@@ -242,49 +281,91 @@ const toggleCardVariant = () => {
                 >
                     <div class="space-y-5">
                         <InputField
-                            v-model="materialForm.title"
                             label="Judul Material"
-                            placeholder="Contoh: Pengenalan Angka 1-10"
+                            v-model="materialForm.title"
+                            placeholder="Contoh: Pengenalan Fotosintesis"
                             required
-                            border-color="green"
                         />
-
                         <TextareaField
-                            v-model="materialForm.description"
                             label="Deskripsi Singkat"
-                            placeholder="Jelaskan materi ini..."
+                            v-model="materialForm.description"
+                            placeholder="Deskripsi singkat tentang material ini..."
                             rows="3"
-                            border-color="green"
                         />
-
                         <TextareaField
-                            v-model="materialForm.content"
                             label="Konten Material"
+                            v-model="materialForm.content"
                             placeholder="Tulis konten pembelajaran di sini..."
-                            rows="6"
-                            border-color="green"
+                            rows="8"
+                            required
                         />
 
-                        <div v-if="mascotOptions.length > 0">
-                            <SelectField
-                                v-model="materialForm.mascot_id"
-                                label="Pilih Maskot Pendamping"
-                                :options="mascotOptions"
-                                placeholder="-- Pilih Maskot --"
-                                required
-                                border-color="yellow"
-                            />
-
-                            <div v-if="materialForm.mascot_id" class="mt-3">
+                        <!-- Image Upload — sesuai migration hanya kolom 'image' (tidak ada thumbnail) -->
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Gambar (Opsional)</label
+                            >
+                            <div class="space-y-3">
                                 <div
-                                    class="bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200 flex items-center gap-4"
+                                    v-if="imagePreview"
+                                    class="relative inline-block"
                                 >
                                     <img
-                                        :src="
-                                            getSelectedMascot(
-                                                materialForm.mascot_id,
-                                            )?.url
-                                        "
+                                        :src="imagePreview"
+                                        alt="Preview"
+                                        class="h-32 w-32 object-cover rounded-lg border-2 border-gray-300"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="removeImage"
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <label
+                                    class="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border-2 border-blue-200"
+                                >
+                                    <ImageIcon class="w-5 h-5 mr-2" />
+                                    Pilih Gambar
+                                    <input
+                                        type="file"
+                                        @change="handleImageChange"
+                                        accept="image/*"
+                                        class="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Mascot Selection -->
+                        <div v-if="mascotOptions.length > 0">
+                            <SelectField
+                                label="Pilih Maskot"
+                                v-model="materialForm.mascot_id"
+                                :options="mascotOptions"
+                                placeholder="Pilih maskot untuk material ini"
+                            />
+                            <div
+                                v-if="materialForm.mascot_id"
+                                class="mt-3 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        :src="`/storage/${getSelectedMascot(materialForm.mascot_id)?.image}`"
                                         :alt="
                                             getSelectedMascot(
                                                 materialForm.mascot_id,
@@ -307,7 +388,6 @@ const toggleCardVariant = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div
                             v-else
                             class="bg-red-50 p-4 rounded-xl border-2 border-red-200"
@@ -330,40 +410,38 @@ const toggleCardVariant = () => {
                                 size="md"
                                 @click="
                                     router.visit(
-                                        `/modules/${moduleId}/missions`,
+                                        route('admin.modules.missions.show', [
+                                            module.id,
+                                            mission.id,
+                                        ]),
                                     )
                                 "
                             >
                                 Batal
                             </Button>
-
                             <div class="flex gap-3">
                                 <Button
                                     variant="success"
                                     size="md"
                                     :icon="Plus"
                                     @click="addMaterial"
+                                    >Tambah ke List</Button
                                 >
-                                    Tambah ke List
-                                </Button>
-
                                 <Button
                                     variant="primary"
                                     size="md"
                                     @click="nextStep"
+                                    >Lanjut Review</Button
                                 >
-                                    Lanjut Review
-                                </Button>
                             </div>
                         </div>
                     </template>
                 </Card>
             </div>
 
-            <!-- Step 2: Review Materials -->
+            <!-- ===== STEP 2: Review Materials ===== -->
             <div v-if="wizardStep === 2">
                 <div class="max-w-5xl mx-auto space-y-6">
-                    <!-- Info -->
                     <Card
                         :variant="cardVariant"
                         title="Review Material"
@@ -390,7 +468,7 @@ const toggleCardVariant = () => {
                             icon-color="green"
                             border-color="green"
                         >
-                            <!-- Maskot Info -->
+                            <!-- Mascot Info -->
                             <div class="mb-3">
                                 <div
                                     class="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200"
@@ -401,23 +479,27 @@ const toggleCardVariant = () => {
                                                 material.mascot_id,
                                             )
                                         "
-                                        :src="
-                                            getSelectedMascot(
-                                                material.mascot_id,
-                                            ).url
-                                        "
+                                        :src="`/storage/${getSelectedMascot(material.mascot_id)?.image}`"
                                         class="w-8 h-8 object-contain rounded"
                                     />
                                     <span
                                         class="text-sm font-medium text-yellow-700"
-                                    >
-                                        {{
+                                        >{{
                                             getSelectedMascot(
                                                 material.mascot_id,
                                             )?.name || "No Mascot"
-                                        }}
-                                    </span>
+                                        }}</span
+                                    >
                                 </div>
+                            </div>
+
+                            <!-- Image Preview -->
+                            <div v-if="material.imagePreview" class="mb-3">
+                                <img
+                                    :src="material.imagePreview"
+                                    alt="Material image"
+                                    class="w-full h-32 object-cover rounded-lg"
+                                />
                             </div>
 
                             <!-- Content Preview -->
@@ -476,10 +558,8 @@ const toggleCardVariant = () => {
                             size="lg"
                             :icon="ArrowLeft"
                             @click="prevStep"
+                            >Kembali</Button
                         >
-                            Kembali
-                        </Button>
-
                         <Button
                             variant="success"
                             size="lg"
@@ -492,8 +572,6 @@ const toggleCardVariant = () => {
                 </div>
             </div>
         </div>
-
-        <!-- Toast Notification -->
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>

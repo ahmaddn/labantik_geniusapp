@@ -5,16 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Templates extends Model
+class Learning_modules extends Model
 {
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
+        'template_id',
         'name',
-        'backsound',
-        'created_by'
+        'description',
+        'content',
+        'quotes',
+        'is_active',
+        'thumbnail',
+        'created_by',
     ];
 
     protected static function booted(): void
@@ -26,16 +30,10 @@ class Templates extends Model
         });
     }
 
-    public function backgrounds()
+    public function template()
     {
-        return $this->hasMany(Backgrounds::class, 'template_id');
+        return $this->belongsTo(Templates::class, 'template_id');
     }
-
-    public function mascots()
-    {
-        return $this->hasMany(Mascots::class, 'template_id');
-    }
-
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

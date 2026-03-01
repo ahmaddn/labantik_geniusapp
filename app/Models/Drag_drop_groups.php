@@ -5,16 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Templates extends Model
+class Drag_drop_groups extends Model
 {
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
-        'name',
-        'backsound',
-        'created_by'
+        'question_id',
+        'group_name',
     ];
 
     protected static function booted(): void
@@ -24,20 +22,20 @@ class Templates extends Model
                 $model->id = Str::uuid();
             }
         });
+
+        // Auto delete related items when group is deleted
+        static::deleting(function ($model) {
+            $model->items()->delete();
+        });
     }
 
-    public function backgrounds()
+    public function question()
     {
-        return $this->hasMany(Backgrounds::class, 'template_id');
+        return $this->belongsTo(Questions::class, 'question_id');
     }
 
-    public function mascots()
+    public function items()
     {
-        return $this->hasMany(Mascots::class, 'template_id');
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->hasMany(Drag_drop_items::class, 'drag_drop_group_id');
     }
 }

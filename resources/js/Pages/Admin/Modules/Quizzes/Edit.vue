@@ -22,15 +22,15 @@ import {
     Check,
     Trash2,
     AlertTriangle,
+    Pencil,
 } from "lucide-vue-next";
 
-// Props
+// Props — sesuai controller edit()
 const props = defineProps({
-    moduleId: { type: Number, required: true },
-    missionId: { type: Number, required: true },
-    moduleName: { type: String, default: "Module" },
-    missionName: { type: String, default: "Mission" },
-    moduleTemplate: { type: Object, default: null },
+    module: { type: Object, required: true }, // { id, name, template }
+    mission: { type: Object, required: true }, // { id, name }
+    quiz: { type: Object, required: true }, // quiz dengan relations (questions, options, drag_drop_groups, drag_drop_items)
+    mascots: { type: Array, default: () => [] },
 });
 
 // Wizard state
@@ -39,47 +39,94 @@ const successMessage = ref("");
 const showSuccess = ref(false);
 const cardVariant = ref("playful");
 
+// Form — pre-populate dari quiz existing
 const quizForm = ref({
-    title: "",
-    description: "",
-    time_limit: 30,
-    type: "multiple_choice",
-    mascot_id: null,
+    title: props.quiz.title || "",
+    description: props.quiz.description || "",
+    time_limit: props.quiz.time_limit || 30,
+    type: props.quiz.type || "multiple_choices",
+    category: props.quiz.category || "mission",
 });
 
-const quizQuestions = ref([]);
+// --- Multiple Choice / True-False / Case Study State ---
+// Pre-populate dari existing questions
+const quizQuestions = ref(
+    (props.quiz.questions || []).map((q) => ({
+        id: q.id || Date.now() + Math.random(),
+        question_text: q.question_text || "",
+        mascot_id: q.mascot_id || null,
+        image: q.image || null,
+        options: (q.options || []).map((o) => ({
+            id: o.id || Date.now() + Math.random(),
+            option_text: o.option_text || "",
+            is_correct: !!o.is_correct,
+            feedback: o.feedback || "",
+        })),
+    })),
+);
 const currentQuestion = ref({
     question_text: "",
-    type: "multiple_choice",
-    order_number: 1,
+    mascot_id: null,
+    image: null,
 });
 const questionOptions = ref([]);
-const currentOption = ref({ option_text: "", is_correct: false });
+const currentOption = ref({ option_text: "", is_correct: false, feedback: "" });
 
-const dragDropGroups = ref([]);
+// --- Drag & Drop State ---
+// Pre-populate dari question pertama jika tipe drag_drop
+const firstDdQ =
+    props.quiz.type === "drag_drop" ? props.quiz.questions?.[0] || null : null;
+
+const dragDropQuestionText = ref(firstDdQ?.question_text || "");
+const dragDropMascotId = ref(firstDdQ?.mascot_id || null);
+
+// Build groups — simpan original_id agar bisa dipakai sebagai referensi item
+const dragDropGroups = ref(
+    (firstDdQ?.drag_drop_groups || []).map((g) => ({
+        local_id: g.id, // pakai id DB sebagai local_id karena sudah unique
+        group_name: g.group_name,
+    })),
+);
+
+// Build items — cari group_local_id berdasarkan drag_drop_group_id
+const dragDropItems = ref(
+    (firstDdQ?.drag_drop_items || []).map((item) => ({
+        id: item.id || Date.now() + Math.random(),
+        item_text: item.item_text || "",
+        group_local_id: item.drag_drop_group_id, // cocok dengan local_id group di atas
+    })),
+);
+
 const currentDragDropGroup = ref({ group_name: "" });
-const dragDropItems = ref([]);
-const currentDragDropItem = ref({ item_text: "", correct_group_id: null });
+const currentDragDropItem = ref({ item_text: "", group_local_id: null });
 
-const mascotOptions = computed(() => {
-    if (!props.moduleTemplate?.mascots) return [];
-    return props.moduleTemplate.mascots.map((m) => ({
-        value: m.id,
-        label: m.name,
-    }));
-});
+// Computed
+const mascotOptions = computed(() =>
+    props.mascots.map((m) => ({ value: m.id, label: m.name })),
+);
+const getSelectedMascot = (mascotId) =>
+    props.mascots.find((m) => m.id == mascotId) || null;
 
-const getSelectedMascot = (mascotId) => {
-    if (!props.moduleTemplate?.mascots) return null;
-    return props.moduleTemplate.mascots.find((m) => m.id === mascotId);
-};
-
-const groupOptions = computed(() => {
-    return dragDropGroups.value.map((g) => ({
-        value: g.id,
+const groupSelectOptions = computed(() =>
+    dragDropGroups.value.map((g) => ({
+        value: g.local_id,
         label: g.group_name,
-    }));
-});
+    })),
+);
+
+const isDragDrop = computed(() => quizForm.value.type === "drag_drop");
+
+const quizTypeOptions = [
+    { value: "multiple_choices", label: "Multiple Choice" },
+    { value: "drag_drop", label: "Drag & Drop" },
+    { value: "true_false", label: "True / False" },
+    { value: "case_study", label: "Case Study" },
+];
+const categoryOptions = [
+    { value: "pretest", label: "Pretest" },
+    { value: "mission", label: "Mission" },
+    { value: "posttest", label: "Posttest" },
+];
 
 const showToast = (message) => {
     successMessage.value = message;
@@ -89,32 +136,29 @@ const showToast = (message) => {
     }, 2500);
 };
 
+// Navigasi wizard
 const nextStep = () => {
     if (wizardStep.value === 1) {
         if (!quizForm.value.title.trim()) {
             showToast("Judul quiz harus diisi!");
             return;
         }
-        if (!quizForm.value.mascot_id && mascotOptions.value.length > 0) {
-            showToast("Pilih maskot untuk quiz!");
+        if (isDragDrop.value) {
+            wizardStep.value = 3;
             return;
         }
     }
-    if (wizardStep.value === 1 && quizForm.value.type === "drag_drop") {
-        wizardStep.value = 3;
-    } else {
-        wizardStep.value++;
-    }
+    wizardStep.value++;
 };
-
 const prevStep = () => {
-    if (wizardStep.value === 3 && quizForm.value.type === "drag_drop") {
+    if (wizardStep.value === 3 && isDragDrop.value) {
         wizardStep.value = 1;
-    } else {
-        wizardStep.value--;
+        return;
     }
+    wizardStep.value--;
 };
 
+// --- Multiple Choice Methods ---
 const addOption = () => {
     if (!currentOption.value.option_text.trim()) {
         showToast("Teks opsi harus diisi!");
@@ -124,13 +168,11 @@ const addOption = () => {
         ...currentOption.value,
         id: Date.now() + Math.random(),
     });
-    currentOption.value = { option_text: "", is_correct: false };
+    currentOption.value = { option_text: "", is_correct: false, feedback: "" };
 };
-
 const removeOption = (id) => {
     questionOptions.value = questionOptions.value.filter((o) => o.id !== id);
 };
-
 const addQuestion = () => {
     if (!currentQuestion.value.question_text.trim()) {
         showToast("Teks pertanyaan harus diisi!");
@@ -144,51 +186,46 @@ const addQuestion = () => {
         showToast("Minimal 1 opsi harus ditandai sebagai jawaban benar!");
         return;
     }
-
     quizQuestions.value.push({
         ...currentQuestion.value,
         id: Date.now(),
         options: [...questionOptions.value],
     });
-    currentQuestion.value = {
-        question_text: "",
-        type: "multiple_choice",
-        order_number: quizQuestions.value.length + 1,
-    };
+    currentQuestion.value = { question_text: "", mascot_id: null, image: null };
     questionOptions.value = [];
     showToast("Pertanyaan ditambahkan!");
 };
-
 const removeQuestion = (id) => {
     quizQuestions.value = quizQuestions.value.filter((q) => q.id !== id);
 };
 
+// --- Drag & Drop Methods ---
 const addDragDropGroup = () => {
     if (!currentDragDropGroup.value.group_name.trim()) {
         showToast("Nama grup harus diisi!");
         return;
     }
     dragDropGroups.value.push({
-        ...currentDragDropGroup.value,
-        id: Date.now() + Math.random(),
+        group_name: currentDragDropGroup.value.group_name,
+        local_id: Date.now() + Math.random(),
     });
     currentDragDropGroup.value = { group_name: "" };
     showToast("Grup ditambahkan!");
 };
-
-const removeDragDropGroup = (id) => {
-    dragDropGroups.value = dragDropGroups.value.filter((g) => g.id !== id);
+const removeDragDropGroup = (local_id) => {
+    dragDropGroups.value = dragDropGroups.value.filter(
+        (g) => g.local_id !== local_id,
+    );
     dragDropItems.value = dragDropItems.value.filter(
-        (i) => i.correct_group_id !== id,
+        (i) => i.group_local_id !== local_id,
     );
 };
-
 const addDragDropItem = () => {
     if (!currentDragDropItem.value.item_text.trim()) {
         showToast("Teks item harus diisi!");
         return;
     }
-    if (!currentDragDropItem.value.correct_group_id) {
+    if (!currentDragDropItem.value.group_local_id) {
         showToast("Pilih grup yang benar untuk item ini!");
         return;
     }
@@ -196,23 +233,22 @@ const addDragDropItem = () => {
         ...currentDragDropItem.value,
         id: Date.now() + Math.random(),
     });
-    currentDragDropItem.value = { item_text: "", correct_group_id: null };
+    currentDragDropItem.value = { item_text: "", group_local_id: null };
     showToast("Item ditambahkan!");
 };
-
 const removeDragDropItem = (id) => {
     dragDropItems.value = dragDropItems.value.filter((i) => i.id !== id);
 };
+const getGroupName = (local_id) =>
+    dragDropGroups.value.find((g) => g.local_id === local_id)?.group_name || "";
 
+// --- Final Save (Update) --- sesuai controller update() validation
 const finalSave = () => {
-    if (
-        quizForm.value.type === "multiple_choice" &&
-        quizQuestions.value.length === 0
-    ) {
+    if (!isDragDrop.value && quizQuestions.value.length === 0) {
         showToast("Tambahkan minimal 1 pertanyaan!");
         return;
     }
-    if (quizForm.value.type === "drag_drop") {
+    if (isDragDrop.value) {
         if (dragDropGroups.value.length < 2) {
             showToast("Tambahkan minimal 2 grup!");
             return;
@@ -223,46 +259,73 @@ const finalSave = () => {
         }
     }
 
-    const payload = {
-        quiz: quizForm.value,
-        questions:
-            quizForm.value.type === "multiple_choice"
-                ? quizQuestions.value
-                : [],
-        drag_drop_groups:
-            quizForm.value.type === "drag_drop" ? dragDropGroups.value : [],
-        drag_drop_items:
-            quizForm.value.type === "drag_drop" ? dragDropItems.value : [],
-    };
+    let questions = [];
 
-    router.post(
-        `/modules/${props.moduleId}/missions/${props.missionId}/quiz`,
-        payload,
-        {
-            onSuccess: () => {
-                showToast("Quiz berhasil disimpan.");
-                setTimeout(() => {
-                    router.visit(`/modules/${props.moduleId}/missions`);
-                }, 1500);
+    if (isDragDrop.value) {
+        const groupIndexMap = {};
+        dragDropGroups.value.forEach((g, idx) => {
+            groupIndexMap[g.local_id] = idx;
+        });
+
+        questions = [
+            {
+                question_text:
+                    dragDropQuestionText.value || quizForm.value.title,
+                mascot_id: dragDropMascotId.value,
+                image: null,
+                drag_drop_groups: dragDropGroups.value.map((g) => ({
+                    group_name: g.group_name,
+                })),
+                drag_drop_items: dragDropItems.value.map((i) => ({
+                    item_text: i.item_text,
+                    item_image: null,
+                    group_index: groupIndexMap[i.group_local_id],
+                })),
             },
+        ];
+    } else {
+        questions = quizQuestions.value.map((q, index) => ({
+            question_text: q.question_text,
+            mascot_id: q.mascot_id,
+            image: q.image,
+            order_number: index + 1,
+            options: q.options.map((o) => ({
+                option_text: o.option_text,
+                is_correct: o.is_correct,
+                feedback: o.feedback || null,
+            })),
+        }));
+    }
+
+    // Kirim sebagai PUT via _method spoofing (Inertia)
+    router.post(
+        route("admin.modules.missions.quiz.update", [
+            props.module.id,
+            props.mission.id,
+            props.quiz.id,
+        ]),
+        {
+            _method: "PUT",
+            title: quizForm.value.title,
+            description: quizForm.value.description,
+            type: quizForm.value.type,
+            time_limit: quizForm.value.time_limit,
+            category: quizForm.value.category,
+            questions,
         },
+        { onSuccess: () => showToast("Quiz berhasil diperbarui.") },
     );
 };
 
 const toggleCardVariant = () => {
     cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
 };
-
-const getGroupName = (groupId) => {
-    const group = dragDropGroups.value.find((g) => g.id === groupId);
-    return group?.group_name || "";
-};
 </script>
 
 <template>
     <AppLayout>
         <div class="p-5">
-            <!-- Header -->
+            <!-- ===== HEADER ===== -->
             <div
                 :class="[
                     'rounded-3xl p-5 mb-8',
@@ -280,21 +343,20 @@ const getGroupName = (groupId) => {
                                     : 'bg-orange-50 p-2 rounded-lg',
                             ]"
                         >
-                            <HelpCircle class="text-orange-600 w-6 h-6" />
+                            <Pencil class="text-orange-600 w-6 h-6" />
                         </div>
                         <div>
                             <h1
                                 class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
                             >
-                                Buat Quiz untuk {{ missionName }}
+                                Edit Quiz: {{ quiz.title }}
                             </h1>
                             <p class="text-sm text-gray-500">
-                                Modul: {{ moduleName }} | Template:
-                                {{ moduleTemplate?.name || "No Template" }}
+                                Modul: {{ module.name }} | Misi:
+                                {{ mission.name }}
                             </p>
                         </div>
                     </div>
-
                     <Button
                         :variant="
                             cardVariant === 'playful' ? 'warning' : 'light'
@@ -308,7 +370,7 @@ const getGroupName = (groupId) => {
                 </div>
             </div>
 
-            <!-- Wizard Progress -->
+            <!-- ===== WIZARD PROGRESS ===== -->
             <div class="mb-8">
                 <div class="flex items-center justify-center gap-4">
                     <div class="flex items-center">
@@ -339,9 +401,7 @@ const getGroupName = (groupId) => {
                             2
                         </div>
                         <span class="ml-2 text-sm font-medium text-gray-700">{{
-                            quizForm.type === "multiple_choice"
-                                ? "Pertanyaan"
-                                : "Grup"
+                            isDragDrop ? "Grup" : "Pertanyaan"
                         }}</span>
                     </div>
                     <div class="h-1 w-20 bg-gray-300"></div>
@@ -357,40 +417,36 @@ const getGroupName = (groupId) => {
                             3
                         </div>
                         <span class="ml-2 text-sm font-medium text-gray-700">{{
-                            quizForm.type === "drag_drop" ? "Items" : "Review"
+                            isDragDrop ? "Items" : "Review"
                         }}</span>
                     </div>
-                    <div
-                        v-if="quizForm.type === 'drag_drop'"
-                        class="h-1 w-20 bg-gray-300"
-                    ></div>
-                    <div
-                        v-if="quizForm.type === 'drag_drop'"
-                        class="flex items-center"
-                    >
-                        <div
-                            :class="[
-                                'w-10 h-10 rounded-full flex items-center justify-center font-bold',
-                                wizardStep === 4
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-300 text-gray-600',
-                            ]"
-                        >
-                            4
+                    <template v-if="isDragDrop">
+                        <div class="h-1 w-20 bg-gray-300"></div>
+                        <div class="flex items-center">
+                            <div
+                                :class="[
+                                    'w-10 h-10 rounded-full flex items-center justify-center font-bold',
+                                    wizardStep === 4
+                                        ? 'bg-orange-500 text-white'
+                                        : 'bg-gray-300 text-gray-600',
+                                ]"
+                            >
+                                4
+                            </div>
+                            <span class="ml-2 text-sm font-medium text-gray-700"
+                                >Review</span
+                            >
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700"
-                            >Review</span
-                        >
-                    </div>
+                    </template>
                 </div>
             </div>
 
-            <!-- Step 1: Info Quiz -->
+            <!-- ===== STEP 1: Info Quiz ===== -->
             <div v-if="wizardStep === 1" class="max-w-3xl mx-auto">
                 <Card
                     :variant="cardVariant"
                     title="Informasi Quiz"
-                    subtitle="Isi detail quiz"
+                    subtitle="Edit detail quiz"
                     :icon="Info"
                     icon-color="orange"
                     border-color="orange"
@@ -404,7 +460,6 @@ const getGroupName = (groupId) => {
                             required
                             border-color="orange"
                         />
-
                         <TextareaField
                             v-model="quizForm.description"
                             label="Deskripsi Quiz"
@@ -412,7 +467,6 @@ const getGroupName = (groupId) => {
                             rows="3"
                             border-color="orange"
                         />
-
                         <InputField
                             v-model.number="quizForm.time_limit"
                             type="number"
@@ -420,65 +474,22 @@ const getGroupName = (groupId) => {
                             placeholder="30"
                             border-color="orange"
                         />
-
-                        <SelectField
-                            v-model="quizForm.type"
-                            label="Tipe Quiz"
-                            :options="[
-                                {
-                                    value: 'multiple_choice',
-                                    label: 'Multiple Choice',
-                                },
-                                { value: 'drag_drop', label: 'Drag & Drop' },
-                            ]"
-                            border-color="orange"
-                        />
-
-                        <div v-if="mascotOptions.length > 0">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <SelectField
-                                v-model="quizForm.mascot_id"
-                                label="Pilih Maskot Quiz"
-                                :options="mascotOptions"
-                                placeholder="-- Pilih Maskot --"
-                                required
-                                border-color="yellow"
+                                v-model="quizForm.type"
+                                label="Tipe Quiz"
+                                :options="quizTypeOptions"
+                                border-color="orange"
                             />
-
-                            <div v-if="quizForm.mascot_id" class="mt-3">
-                                <div
-                                    class="bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200 flex items-center gap-4"
-                                >
-                                    <img
-                                        :src="
-                                            getSelectedMascot(
-                                                quizForm.mascot_id,
-                                            )?.url
-                                        "
-                                        :alt="
-                                            getSelectedMascot(
-                                                quizForm.mascot_id,
-                                            )?.name
-                                        "
-                                        class="w-16 h-16 object-contain rounded-lg"
-                                    />
-                                    <div>
-                                        <h4 class="font-bold text-yellow-800">
-                                            {{
-                                                getSelectedMascot(
-                                                    quizForm.mascot_id,
-                                                )?.name
-                                            }}
-                                        </h4>
-                                        <p class="text-sm text-yellow-600">
-                                            Maskot akan muncul di quiz
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            <SelectField
+                                v-model="quizForm.category"
+                                label="Kategori"
+                                :options="categoryOptions"
+                                border-color="orange"
+                            />
                         </div>
-
                         <div
-                            v-else
+                            v-if="mascotOptions.length === 0"
                             class="bg-red-50 p-4 rounded-xl border-2 border-red-200"
                         >
                             <p
@@ -488,8 +499,16 @@ const getGroupName = (groupId) => {
                                 Template modul ini belum memiliki maskot.
                             </p>
                         </div>
+                        <div
+                            v-else
+                            class="bg-blue-50 p-3 rounded-xl border border-blue-200"
+                        >
+                            <p class="text-sm text-blue-700">
+                                ℹ️ Maskot dipilih per pertanyaan pada langkah
+                                berikutnya.
+                            </p>
+                        </div>
                     </div>
-
                     <template #footer>
                         <div class="flex justify-between mt-6">
                             <Button
@@ -497,7 +516,10 @@ const getGroupName = (groupId) => {
                                 size="md"
                                 @click="
                                     router.visit(
-                                        `/modules/${moduleId}/missions`,
+                                        route('admin.modules.missions.show', [
+                                            module.id,
+                                            mission.id,
+                                        ]),
                                     )
                                 "
                             >
@@ -514,16 +536,16 @@ const getGroupName = (groupId) => {
                 </Card>
             </div>
 
-            <!-- Step 2: Multiple Choice Questions -->
+            <!-- ===== STEP 2: Pertanyaan (non drag_drop) ===== -->
             <div
-                v-if="wizardStep === 2 && quizForm.type === 'multiple_choice'"
+                v-if="wizardStep === 2 && !isDragDrop"
                 class="max-w-5xl mx-auto"
             >
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Form Pertanyaan -->
+                    <!-- Form Pertanyaan Baru -->
                     <Card
                         :variant="cardVariant"
-                        title="Buat Pertanyaan"
+                        title="Tambah Pertanyaan"
                         :icon="HelpCircle"
                         icon-color="blue"
                         border-color="blue"
@@ -538,7 +560,42 @@ const getGroupName = (groupId) => {
                                 border-color="blue"
                             />
 
-                            <!-- Form Opsi -->
+                            <div v-if="mascotOptions.length > 0">
+                                <SelectField
+                                    v-model="currentQuestion.mascot_id"
+                                    label="Maskot (Opsional)"
+                                    :options="mascotOptions"
+                                    placeholder="-- Pilih Maskot --"
+                                    border-color="yellow"
+                                />
+                                <div
+                                    v-if="currentQuestion.mascot_id"
+                                    class="mt-2 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-200 flex items-center gap-3"
+                                >
+                                    <img
+                                        :src="
+                                            getSelectedMascot(
+                                                currentQuestion.mascot_id,
+                                            )?.url
+                                        "
+                                        :alt="
+                                            getSelectedMascot(
+                                                currentQuestion.mascot_id,
+                                            )?.name
+                                        "
+                                        class="w-10 h-10 object-contain rounded-lg"
+                                    />
+                                    <span
+                                        class="font-bold text-sm text-yellow-800"
+                                        >{{
+                                            getSelectedMascot(
+                                                currentQuestion.mascot_id,
+                                            )?.name
+                                        }}</span
+                                    >
+                                </div>
+                            </div>
+
                             <div class="border-t pt-4">
                                 <h4 class="font-bold text-sm mb-3">
                                     Tambah Opsi Jawaban
@@ -548,6 +605,11 @@ const getGroupName = (groupId) => {
                                         v-model="currentOption.option_text"
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
+                                    />
+                                    <InputField
+                                        v-model="currentOption.feedback"
+                                        placeholder="Feedback (opsional)"
+                                        border-color="gray"
                                     />
                                     <label class="flex items-center gap-2">
                                         <input
@@ -564,13 +626,11 @@ const getGroupName = (groupId) => {
                                         size="sm"
                                         :icon="Plus"
                                         @click="addOption"
+                                        >Tambah Opsi</Button
                                     >
-                                        Tambah Opsi
-                                    </Button>
                                 </div>
                             </div>
 
-                            <!-- List Opsi -->
                             <div
                                 v-if="questionOptions.length > 0"
                                 class="space-y-2"
@@ -589,11 +649,19 @@ const getGroupName = (groupId) => {
                                     <div class="flex items-center gap-2">
                                         <CheckCircle
                                             v-if="option.is_correct"
-                                            class="text-green-600 w-4 h-4"
+                                            class="text-green-600 w-4 h-4 shrink-0"
                                         />
-                                        <span class="text-sm">{{
-                                            option.option_text
-                                        }}</span>
+                                        <div>
+                                            <span class="text-sm">{{
+                                                option.option_text
+                                            }}</span>
+                                            <p
+                                                v-if="option.feedback"
+                                                class="text-xs text-gray-500"
+                                            >
+                                                {{ option.feedback }}
+                                            </p>
+                                        </div>
                                     </div>
                                     <Button
                                         variant="danger"
@@ -610,63 +678,58 @@ const getGroupName = (groupId) => {
                                 :icon="Plus"
                                 @click="addQuestion"
                                 class="w-full"
+                                >Tambah Pertanyaan</Button
                             >
-                                Tambah Pertanyaan
-                            </Button>
                         </div>
                     </Card>
 
-                    <!-- List Pertanyaan -->
-                    <div>
-                        <Card
-                            :variant="cardVariant"
-                            title="Daftar Pertanyaan"
-                            :badge="`${quizQuestions.length} Pertanyaan`"
-                            badge-color="green"
-                            :icon="List"
-                            icon-color="green"
-                            border-color="green"
-                            :hoverable="false"
+                    <!-- Daftar Pertanyaan -->
+                    <Card
+                        :variant="cardVariant"
+                        title="Daftar Pertanyaan"
+                        :badge="`${quizQuestions.length} Pertanyaan`"
+                        badge-color="green"
+                        :icon="List"
+                        icon-color="green"
+                        border-color="green"
+                        :hoverable="false"
+                    >
+                        <div
+                            v-if="quizQuestions.length === 0"
+                            class="text-center py-8 text-gray-500"
                         >
+                            Belum ada pertanyaan
+                        </div>
+                        <div v-else class="space-y-3">
                             <div
-                                v-if="quizQuestions.length === 0"
-                                class="text-center py-8 text-gray-500"
+                                v-for="(question, index) in quizQuestions"
+                                :key="question.id"
+                                class="p-3 bg-blue-50 rounded-lg border-2 border-blue-200"
                             >
-                                Belum ada pertanyaan
-                            </div>
-
-                            <div v-else class="space-y-3">
                                 <div
-                                    v-for="(question, index) in quizQuestions"
-                                    :key="question.id"
-                                    class="p-3 bg-blue-50 rounded-lg border-2 border-blue-200"
+                                    class="flex justify-between items-start mb-2"
                                 >
-                                    <div
-                                        class="flex justify-between items-start mb-2"
+                                    <span
+                                        class="font-bold text-sm text-blue-800"
+                                        >Q{{ index + 1 }}</span
                                     >
-                                        <span
-                                            class="font-bold text-sm text-blue-800"
-                                            >Q{{ index + 1 }}</span
-                                        >
-                                        <Button
-                                            variant="danger"
-                                            size="xs"
-                                            :icon="Trash2"
-                                            @click="removeQuestion(question.id)"
-                                        />
-                                    </div>
-                                    <p class="text-sm mb-2">
-                                        {{ question.question_text }}
-                                    </p>
-                                    <div class="text-xs text-blue-600">
-                                        {{ question.options.length }} opsi
-                                    </div>
+                                    <Button
+                                        variant="danger"
+                                        size="xs"
+                                        :icon="Trash2"
+                                        @click="removeQuestion(question.id)"
+                                    />
+                                </div>
+                                <p class="text-sm mb-1">
+                                    {{ question.question_text }}
+                                </p>
+                                <div class="text-xs text-blue-600">
+                                    {{ question.options.length }} opsi
                                 </div>
                             </div>
-                        </Card>
-                    </div>
+                        </div>
+                    </Card>
                 </div>
-
                 <div class="flex justify-between mt-6">
                     <Button variant="light" size="md" @click="prevStep"
                         >Kembali</Button
@@ -677,44 +740,83 @@ const getGroupName = (groupId) => {
                 </div>
             </div>
 
-            <!-- Step 2 for Drag & Drop: Groups -->
+            <!-- ===== STEP 3: Drag & Drop — Grup ===== -->
             <div
-                v-if="wizardStep === 2 && quizForm.type === 'drag_drop'"
+                v-if="wizardStep === 3 && isDragDrop"
                 class="max-w-3xl mx-auto"
             >
                 <Card
                     :variant="cardVariant"
-                    title="Buat Grup"
-                    subtitle="Buat grup untuk drag & drop"
+                    title="Edit Grup"
+                    subtitle="Kelola grup untuk drag & drop"
                     :icon="LayoutGrid"
                     icon-color="purple"
                     border-color="purple"
                     :hoverable="false"
                 >
                     <div class="space-y-4">
-                        <InputField
-                            v-model="currentDragDropGroup.group_name"
-                            label="Nama Grup"
-                            placeholder="Contoh: Angka Genap"
-                            border-color="purple"
+                        <TextareaField
+                            v-model="dragDropQuestionText"
+                            label="Instruksi / Teks Pertanyaan"
+                            placeholder="Contoh: Kelompokkan item berikut!"
+                            rows="2"
+                            border-color="blue"
                         />
 
-                        <Button
-                            variant="primary"
-                            size="md"
-                            :icon="Plus"
-                            @click="addDragDropGroup"
-                        >
-                            Tambah Grup
-                        </Button>
+                        <div v-if="mascotOptions.length > 0">
+                            <SelectField
+                                v-model="dragDropMascotId"
+                                label="Maskot (Opsional)"
+                                :options="mascotOptions"
+                                placeholder="-- Pilih Maskot --"
+                                border-color="yellow"
+                            />
+                            <div
+                                v-if="dragDropMascotId"
+                                class="mt-2 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-200 flex items-center gap-3"
+                            >
+                                <img
+                                    :src="
+                                        getSelectedMascot(dragDropMascotId)?.url
+                                    "
+                                    :alt="
+                                        getSelectedMascot(dragDropMascotId)
+                                            ?.name
+                                    "
+                                    class="w-10 h-10 object-contain rounded-lg"
+                                />
+                                <span
+                                    class="font-bold text-sm text-yellow-800"
+                                    >{{
+                                        getSelectedMascot(dragDropMascotId)
+                                            ?.name
+                                    }}</span
+                                >
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <InputField
+                                v-model="currentDragDropGroup.group_name"
+                                label="Nama Grup Baru"
+                                placeholder="Contoh: Angka Genap"
+                                border-color="purple"
+                            />
+                            <Button
+                                variant="primary"
+                                size="md"
+                                :icon="Plus"
+                                @click="addDragDropGroup"
+                                class="mt-3"
+                                >Tambah Grup</Button
+                            >
+                        </div>
 
                         <div v-if="dragDropGroups.length > 0" class="space-y-2">
-                            <h4 class="font-bold text-sm">
-                                Grup yang sudah dibuat:
-                            </h4>
+                            <h4 class="font-bold text-sm">Grup saat ini:</h4>
                             <div
                                 v-for="group in dragDropGroups"
-                                :key="group.id"
+                                :key="group.local_id"
                                 class="p-3 bg-purple-50 rounded-lg border-2 border-purple-200 flex items-center justify-between"
                             >
                                 <span class="font-medium">{{
@@ -724,12 +826,11 @@ const getGroupName = (groupId) => {
                                     variant="danger"
                                     size="xs"
                                     :icon="Trash2"
-                                    @click="removeDragDropGroup(group.id)"
+                                    @click="removeDragDropGroup(group.local_id)"
                                 />
                             </div>
                         </div>
                     </div>
-
                     <template #footer>
                         <div class="flex justify-between mt-6">
                             <Button variant="light" size="md" @click="prevStep"
@@ -746,15 +847,15 @@ const getGroupName = (groupId) => {
                 </Card>
             </div>
 
-            <!-- Step 3 for Drag & Drop: Items -->
+            <!-- ===== STEP 4: Drag & Drop — Items ===== -->
             <div
-                v-if="wizardStep === 3 && quizForm.type === 'drag_drop'"
+                v-if="wizardStep === 4 && isDragDrop"
                 class="max-w-3xl mx-auto"
             >
                 <Card
                     :variant="cardVariant"
-                    title="Buat Item"
-                    subtitle="Buat item yang akan di-drag ke grup"
+                    title="Edit Item"
+                    subtitle="Kelola item yang akan di-drag ke grup"
                     :icon="Box"
                     icon-color="green"
                     border-color="green"
@@ -763,32 +864,27 @@ const getGroupName = (groupId) => {
                     <div class="space-y-4">
                         <InputField
                             v-model="currentDragDropItem.item_text"
-                            label="Teks Item"
+                            label="Teks Item Baru"
                             placeholder="Contoh: 2"
                             border-color="green"
                         />
-
                         <SelectField
-                            v-model="currentDragDropItem.correct_group_id"
+                            v-model="currentDragDropItem.group_local_id"
                             label="Grup yang Benar"
-                            :options="groupOptions"
+                            :options="groupSelectOptions"
                             placeholder="-- Pilih Grup --"
                             border-color="purple"
                         />
-
                         <Button
                             variant="success"
                             size="md"
                             :icon="Plus"
                             @click="addDragDropItem"
+                            >Tambah Item</Button
                         >
-                            Tambah Item
-                        </Button>
 
                         <div v-if="dragDropItems.length > 0" class="space-y-2">
-                            <h4 class="font-bold text-sm">
-                                Item yang sudah dibuat:
-                            </h4>
+                            <h4 class="font-bold text-sm">Item saat ini:</h4>
                             <div
                                 v-for="item in dragDropItems"
                                 :key="item.id"
@@ -800,9 +896,7 @@ const getGroupName = (groupId) => {
                                     </div>
                                     <div class="text-xs text-gray-600">
                                         →
-                                        {{
-                                            getGroupName(item.correct_group_id)
-                                        }}
+                                        {{ getGroupName(item.group_local_id) }}
                                     </div>
                                 </div>
                                 <Button
@@ -814,7 +908,6 @@ const getGroupName = (groupId) => {
                             </div>
                         </div>
                     </div>
-
                     <template #footer>
                         <div class="flex justify-between mt-6">
                             <Button variant="light" size="md" @click="prevStep"
@@ -831,35 +924,36 @@ const getGroupName = (groupId) => {
                 </Card>
             </div>
 
-            <!-- Step 3/4: Review & Save -->
+            <!-- ===== REVIEW ===== -->
             <div
                 v-if="
-                    (wizardStep === 3 && quizForm.type === 'multiple_choice') ||
-                    (wizardStep === 4 && quizForm.type === 'drag_drop')
+                    (wizardStep === 3 && !isDragDrop) ||
+                    (wizardStep === 5 && isDragDrop)
                 "
                 class="max-w-4xl mx-auto"
             >
                 <Card
                     :variant="cardVariant"
                     title="Review Quiz"
-                    subtitle="Periksa kembali quiz yang akan disimpan"
+                    subtitle="Periksa kembali perubahan yang akan disimpan"
                     :icon="CheckCircle"
                     icon-color="blue"
                     border-color="blue"
                     :hoverable="false"
                 >
                     <div class="space-y-4">
-                        <!-- Quiz Info -->
                         <div
                             class="bg-orange-50 p-4 rounded-xl border-2 border-orange-200"
                         >
                             <h3 class="font-bold text-lg mb-2">
                                 {{ quizForm.title }}
                             </h3>
-                            <p class="text-sm text-gray-600 mb-2">
+                            <p class="text-sm text-gray-600 mb-3">
                                 {{ quizForm.description }}
                             </p>
-                            <div class="flex items-center gap-4 text-sm">
+                            <div
+                                class="flex flex-wrap items-center gap-3 text-sm"
+                            >
                                 <span class="flex items-center gap-1"
                                     ><Clock class="w-4 h-4" />{{
                                         quizForm.time_limit
@@ -867,52 +961,32 @@ const getGroupName = (groupId) => {
                                 >
                                 <span class="flex items-center gap-1"
                                     ><Tag class="w-4 h-4" />{{
-                                        quizForm.type === "multiple_choice"
-                                            ? "Multiple Choice"
-                                            : "Drag & Drop"
+                                        quizTypeOptions.find(
+                                            (t) => t.value === quizForm.type,
+                                        )?.label
                                     }}</span
                                 >
-                            </div>
-
-                            <div
-                                v-if="quizForm.mascot_id"
-                                class="mt-3 flex items-center gap-3 bg-yellow-50 p-2 rounded-lg border border-yellow-200"
-                            >
-                                <img
-                                    :src="
-                                        getSelectedMascot(quizForm.mascot_id)
-                                            ?.url
-                                    "
-                                    class="w-10 h-10 object-contain rounded"
-                                />
                                 <span
-                                    class="text-sm font-medium text-yellow-700"
+                                    class="px-2 py-0.5 bg-orange-200 rounded-full text-xs font-semibold capitalize"
+                                    >{{ quizForm.category }}</span
                                 >
-                                    {{
-                                        getSelectedMascot(quizForm.mascot_id)
-                                            ?.name
-                                    }}
-                                </span>
                             </div>
                         </div>
-
-                        <!-- Summary -->
                         <div
                             class="bg-blue-50 p-4 rounded-xl border-2 border-blue-200"
                         >
-                            <div v-if="quizForm.type === 'multiple_choice'">
+                            <p v-if="!isDragDrop">
                                 <strong>{{ quizQuestions.length }}</strong>
-                                pertanyaan multiple choice
-                            </div>
-                            <div v-else>
+                                pertanyaan
+                            </p>
+                            <p v-else>
                                 <strong>{{ dragDropGroups.length }}</strong>
                                 grup dan
                                 <strong>{{ dragDropItems.length }}</strong> item
                                 drag & drop
-                            </div>
+                            </p>
                         </div>
                     </div>
-
                     <template #footer>
                         <div class="flex justify-between mt-6">
                             <Button variant="light" size="md" @click="prevStep"
@@ -923,16 +997,13 @@ const getGroupName = (groupId) => {
                                 size="lg"
                                 :icon="Check"
                                 @click="finalSave"
+                                >Simpan Perubahan</Button
                             >
-                                Simpan Quiz
-                            </Button>
                         </div>
                     </template>
                 </Card>
             </div>
         </div>
-
-        <!-- Toast Notification -->
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>
