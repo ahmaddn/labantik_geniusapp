@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\ClassesController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Admin\PlaygroundController;
+use App\Http\Controllers\PlaygroundController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +16,9 @@ Route::get('/', function () {
 
 Route::get('/playground', [PlaygroundController::class, 'index'])
     ->name('playground.index');
+
+Route::get('/playground/login', [PlaygroundController::class, 'login'])
+    ->name('playground.login');
 
 // POST saat klik "Mulai Petualangan"
 Route::post('/playground/start', [PlaygroundController::class, 'start'])

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -9,9 +9,13 @@ use Inertia\Response;
 
 class PlaygroundController extends Controller
 {
-      public function index(): Response
+    public function login(): Response
     {
-        return Inertia::render('Admin/Playground/Index');
+        return Inertia::render('Auth/PlaygroundLogin');
+    }
+    public function index(): Response
+    {
+        return Inertia::render('Playground/Index');
     }
 
     /**
@@ -39,7 +43,7 @@ class PlaygroundController extends Controller
         ]);
 
         // Redirect ke halaman quiz
-        return redirect()->route('playground.quiz');
+        return redirect()->route('playground.index');
     }
 
     /**

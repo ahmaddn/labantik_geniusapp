@@ -103,17 +103,43 @@ const handleToastClose = () => {
                 </Link>
             </div>
 
-            <!-- Button -->
-            <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                full-width
-                :loading="form.processing"
-                :icon="form.processing ? Loader2 : null"
-            >
-                {{ form.processing ? "Signing in..." : "Sign In" }}
-            </Button>
+            <!-- Button & Forgot Password -->
+            <div class="flex flex-col gap-3">
+                <!-- Button Login Utama -->
+                <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    full-width
+                    :loading="form.processing"
+                    :icon="form.processing ? Loader2 : null"
+                >
+                    {{ form.processing ? "Signing in..." : "Sign In" }}
+                </Button>
+
+                <!-- Button Login Alternatif -->
+                <Link :href="route('playground.login')" class="w-full">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        full-width
+                    >
+                        Login Siswa
+                    </Button>
+                </Link>
+
+                <!-- Forgot Password -->
+                <div class="flex justify-center">
+                    <Link
+                        v-if="canResetPassword"
+                        :href="route('password.request')"
+                        class="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                        Forgot password?
+                    </Link>
+                </div>
+            </div>
         </form>
 
         <!-- Toast with Auto-Hide -->

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
-import PlaygroundLayout from "@/Layouts/PlaygroundLayout.vue";
+import PlaygroundLayout from "@/Layouts/PlaygroundAuthLayout.vue";
 
 // ── Inertia Layout ──
 defineOptions({ layout: PlaygroundLayout });
