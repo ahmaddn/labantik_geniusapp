@@ -1,711 +1,278 @@
-<script setup>
-import { ref } from "vue";
-
-const musicOn = ref(false);
-
-function toggleMusic() {
-    musicOn.value = !musicOn.value;
-    // Integrate audio here if needed
-    // e.g. audioRef.value.play() / .pause()
-}
-</script>
-
 <template>
-    <div class="playground-layout">
-        <!-- ░░ ANIMATED NATURE SCENE BACKGROUND ░░ -->
-        <div class="scene-bg">
-            <!-- Sky gradient -->
-            <div class="sky-layer"></div>
-
-            <!-- Sun -->
-            <div class="sun">
-                <div
-                    class="sun-ray"
-                    v-for="i in 8"
-                    :key="i"
-                    :style="{ transform: `rotate(${i * 45}deg)` }"
-                ></div>
-            </div>
-
-            <!-- Clouds -->
-            <div class="cloud cloud-1">
-                <div class="cloud-puff p1"></div>
-                <div class="cloud-puff p2"></div>
-                <div class="cloud-puff p3"></div>
-            </div>
-            <div class="cloud cloud-2">
-                <div class="cloud-puff p1"></div>
-                <div class="cloud-puff p2"></div>
-                <div class="cloud-puff p3"></div>
-            </div>
-            <div class="cloud cloud-3">
-                <div class="cloud-puff p1"></div>
-                <div class="cloud-puff p2"></div>
-                <div class="cloud-puff p3"></div>
-            </div>
-
-            <!-- Back hills -->
-            <div class="hills-back">
-                <div class="hill hb-1"></div>
-                <div class="hill hb-2"></div>
-                <div class="hill hb-3"></div>
-            </div>
-
-            <!-- Trees Left -->
-            <div class="tree-zone tree-left">
-                <div class="tree t-large">
-                    <div class="tree-canopy c-dark"></div>
-                    <div class="tree-canopy c-mid"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-                <div class="tree t-medium" style="margin-left: -10px">
-                    <div class="tree-canopy c-dark"></div>
-                    <div class="tree-canopy c-mid"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-                <div class="tree t-small" style="margin-left: -5px">
-                    <div class="tree-canopy c-light"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-            </div>
-
-            <!-- Trees Right -->
-            <div class="tree-zone tree-right">
-                <div class="tree t-small" style="margin-right: -5px">
-                    <div class="tree-canopy c-light"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-                <div class="tree t-medium" style="margin-right: -10px">
-                    <div class="tree-canopy c-dark"></div>
-                    <div class="tree-canopy c-mid"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-                <div class="tree t-large">
-                    <div class="tree-canopy c-dark"></div>
-                    <div class="tree-canopy c-mid"></div>
-                    <div class="tree-trunk"></div>
-                </div>
-            </div>
-
-            <!-- Ground mid -->
-            <div class="ground-mid"></div>
-
-            <!-- River -->
-            <div class="river-container">
-                <div class="river-body">
-                    <div class="ripple r1"></div>
-                    <div class="ripple r2"></div>
-                    <div class="ripple r3"></div>
-                    <div class="ripple r4"></div>
-                </div>
-                <div class="river-edge re-top"></div>
-                <div class="river-edge re-bottom"></div>
-            </div>
-
-            <!-- Ground front -->
-            <div class="ground-front">
-                <!-- Flowers left -->
-                <div class="flower-group fg-left">
-                    <div class="flower">
-                        <div class="bloom bloom-white"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                    <div class="flower" style="margin-left: 8px">
-                        <div class="bloom bloom-yellow"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                    <div class="flower" style="margin-left: 6px">
-                        <div class="bloom bloom-pink"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                </div>
-
-                <!-- Flowers right -->
-                <div class="flower-group fg-right">
-                    <div class="flower">
-                        <div class="bloom bloom-yellow"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                    <div class="flower" style="margin-left: 8px">
-                        <div class="bloom bloom-white"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                    <div class="flower" style="margin-left: 6px">
-                        <div class="bloom bloom-pink"></div>
-                        <div class="flower-stem"></div>
-                    </div>
-                </div>
-
-                <!-- Frog left -->
-                <div class="frog frog-l">
-                    <div class="frog-head">
-                        <div class="frog-eye fe-l"></div>
-                        <div class="frog-eye fe-r"></div>
-                        <div class="frog-smile"></div>
-                    </div>
-                    <div class="frog-body-shape"></div>
-                </div>
-
-                <!-- Frog right -->
-                <div class="frog frog-r">
-                    <div class="frog-head">
-                        <div class="frog-eye fe-l"></div>
-                        <div class="frog-eye fe-r"></div>
-                        <div class="frog-smile"></div>
-                    </div>
-                    <div class="frog-body-shape"></div>
-                </div>
-
-                <!-- Stone -->
-                <div class="stone"></div>
-
-                <!-- Grass tufts -->
-                <div class="grass-tuft gt1"></div>
-                <div class="grass-tuft gt2"></div>
-                <div class="grass-tuft gt3"></div>
-                <div class="grass-tuft gt4"></div>
-            </div>
-        </div>
-
-        <!-- ░░ SLOT - Main Content ░░ -->
-        <slot />
-
-        <!-- ░░ MUSIC BUTTON ░░ -->
-        <button
-            class="music-fab"
-            @click="toggleMusic"
-            :class="{ 'music-on': musicOn }"
-        >
-            <svg
-                v-if="musicOn"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-            </svg>
-            <svg
-                v-else
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-        </button>
+  <div class="playground-shell">
+    <!-- Animated sky background -->
+    <div class="sky-bg" aria-hidden="true">
+      <div class="cloud cloud-1">☁</div>
+      <div class="cloud cloud-2">☁</div>
+      <div class="cloud cloud-3">☁</div>
     </div>
+
+    <!-- Top Navigation -->
+    <header class="top-bar">
+      <div class="top-bar-inner">
+        <!-- Brand -->
+        <Link :href="route('student.index')" class="brand">
+          <span class="brand-icon">💧</span>
+          <span class="brand-name">EduAir</span>
+        </Link>
+
+        <!-- Nav -->
+        <nav class="nav-links">
+          <Link
+            :href="route('student.index')"
+            class="nav-item"
+            :class="{ active: $page.url === '/playground' || $page.url.startsWith('/playground/module') }"
+          >
+            🏠 Beranda
+          </Link>
+          <!-- <Link
+            :href="route('student.dashboard')"
+            class="nav-item"
+            :class="{ active: $page.url.startsWith('/dashboard') }"
+          >
+            📊 Progress
+          </Link> -->
+        </nav>
+
+        <!-- User info -->
+        <div class="user-info">
+          <div class="xp-badge" title="Total XP">
+            ⚡ {{ $page.props.auth.user.xp ?? 0 }} XP
+          </div>
+          <div class="avatar-wrap">
+            <div class="avatar">{{ userInitial }}</div>
+            <span class="user-name">{{ firstName }}</span>
+          </div>
+          <Link :href="route('profile.edit')" class="icon-btn" title="Profil">
+            ⚙️
+          </Link>
+        </div>
+      </div>
+    </header>
+
+    <!-- Slot for page content -->
+    <main class="playground-main">
+      <slot />
+    </main>
+
+    <!-- Grass footer -->
+    <footer class="grass-footer" aria-hidden="true">
+      <div class="grass-strip"></div>
+      <div class="footer-bar">
+        🌿 Belajar sambil bermain, menjaga alam bersama · EduAir
+      </div>
+    </footer>
+  </div>
 </template>
 
+<script setup>
+import { computed } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
+
+const page = usePage()
+
+const userInitial = computed(() =>
+  (page.props.auth.user.name ?? 'S').charAt(0).toUpperCase()
+)
+
+const firstName = computed(() =>
+  (page.props.auth.user.name ?? '').split(' ')[0]
+)
+</script>
+
 <style scoped>
-/* ─── RESET & BASE ─── */
-.playground-layout {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    font-family: "Nunito", "Baloo 2", sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap');
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Shell ── */
+.playground-shell {
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(180deg, #b8e4f9 0%, #d4eeff 45%, #e8f7d0 100%);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* ─── SCENE BG ─── */
-.scene-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
+/* ── Sky ── */
+.sky-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
-
-/* SKY */
-.sky-layer {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        180deg,
-        #7ec8e3 0%,
-        #b8e4f0 40%,
-        #d6f0fa 55%,
-        #b5da7e 55%,
-        #8fc94a 65%,
-        #6aaf2e 75%,
-        #5a9e24 100%
-    );
-}
-
-/* SUN */
-.sun {
-    position: absolute;
-    top: 6%;
-    right: 12%;
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(circle, #ffe066 60%, #ffb700 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 30px 10px rgba(255, 220, 50, 0.35);
-    animation: sun-pulse 4s ease-in-out infinite;
-}
-.sun-ray {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 70px;
-    height: 3px;
-    margin-top: -1.5px;
-    transform-origin: left center;
-    background: linear-gradient(to right, rgba(255, 220, 50, 0.5), transparent);
-}
-@keyframes sun-pulse {
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.06);
-    }
-}
-
-/* CLOUDS */
 .cloud {
-    position: absolute;
-    display: flex;
-    align-items: flex-end;
+  position: absolute;
+  color: #fff;
+  opacity: 0.55;
+  filter: drop-shadow(0 2px 10px rgba(255,255,255,0.7));
+  animation: floatCloud linear infinite;
 }
-.cloud-puff {
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-.cloud .p1 {
-    width: 50px;
-    height: 36px;
-}
-.cloud .p2 {
-    width: 70px;
-    height: 50px;
-    margin-left: -15px;
-}
-.cloud .p3 {
-    width: 45px;
-    height: 32px;
-    margin-left: -12px;
+.cloud-1 { top: 5%;  font-size: 2.8rem; animation-duration: 28s; }
+.cloud-2 { top: 14%; font-size: 2rem;   animation-duration: 40s; animation-delay: -12s; }
+.cloud-3 { top: 3%;  font-size: 2.4rem; animation-duration: 52s; animation-delay: -26s; }
+@keyframes floatCloud {
+  from { transform: translateX(-150px); }
+  to   { transform: translateX(110vw); }
 }
 
-.cloud-1 {
-    top: 7%;
-    left: 6%;
-    animation: cloud-drift 30s linear infinite;
-    opacity: 0.92;
+/* ── Top bar ── */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 3px solid #a8d8f0;
+  box-shadow: 0 4px 20px rgba(100, 180, 240, 0.18);
 }
-.cloud-2 {
-    top: 13%;
-    left: 35%;
-    animation: cloud-drift 40s linear infinite -15s;
-    opacity: 0.85;
-}
-.cloud-3 {
-    top: 5%;
-    left: 65%;
-    animation: cloud-drift 35s linear infinite -8s;
-    opacity: 0.9;
-}
-
-@keyframes cloud-drift {
-    from {
-        transform: translateX(-200px);
-    }
-    to {
-        transform: translateX(105vw);
-    }
+.top-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.65rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-/* HILLS BACK */
-.hills-back {
-    position: absolute;
-    bottom: 38%;
-    left: 0;
-    right: 0;
-    height: 160px;
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1a6fa3;
+  flex-shrink: 0;
 }
-.hill {
-    position: absolute;
-    border-radius: 50%;
+.brand-icon { font-size: 1.7rem; }
+
+/* Nav links */
+.nav-links {
+  display: flex;
+  gap: 0.4rem;
+  flex: 1;
 }
-.hb-1 {
-    width: 380px;
-    height: 180px;
-    background: #5aaa30;
-    bottom: 0;
-    left: -60px;
+.nav-item {
+  padding: 0.4rem 1rem;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #4a7c9e;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
 }
-.hb-2 {
-    width: 450px;
-    height: 200px;
-    background: #4e9e28;
-    bottom: 0;
-    left: 28%;
+.nav-item:hover { background: rgba(30, 120, 190, 0.1); color: #1a6fa3; }
+.nav-item.active { background: #1a6fa3; color: #fff; }
+
+/* User info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-left: auto;
 }
-.hb-3 {
-    width: 350px;
-    height: 160px;
-    background: #57a82e;
-    bottom: 0;
-    right: -40px;
+.xp-badge {
+  background: linear-gradient(135deg, #ffe066, #ffc300);
+  color: #7a4e00;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.85rem;
+  border-radius: 99px;
+  box-shadow: 0 2px 8px rgba(255,180,0,0.3);
+  white-space: nowrap;
+}
+.avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ec9ff, #1a6fa3);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(30,120,190,0.35);
+  flex-shrink: 0;
+}
+.user-name {
+  font-weight: 700;
+  color: #1a6fa3;
+  font-size: 0.9rem;
+}
+.icon-btn {
+  font-size: 1.1rem;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.icon-btn:hover { opacity: 1; }
+
+/* ── Main content ── */
+.playground-main {
+  flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
-/* TREES */
-.tree-zone {
-    position: absolute;
-    bottom: 30%;
-    display: flex;
-    align-items: flex-end;
-    z-index: 1;
+/* ── Footer ── */
+.grass-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 2rem;
 }
-.tree-left {
-    left: 0;
+.grass-strip {
+  height: 22px;
+  background: repeating-linear-gradient(
+    90deg,
+    #5cb85c 0px,   #5cb85c 14px,
+    #45a145 14px,  #45a145 28px,
+    #6dcc6d 28px,  #6dcc6d 42px
+  );
+  clip-path: polygon(
+    0% 100%, 1.5% 15%, 3% 100%, 4.5% 5%,  6% 100%, 7.5% 25%,
+    9% 100%, 10.5% 10%, 12% 100%, 13.5% 20%, 15% 100%,
+    16.5% 8%, 18% 100%, 19.5% 18%, 21% 100%, 22.5% 12%,
+    24% 100%, 25.5% 22%, 27% 100%, 28.5% 6%, 30% 100%,
+    31.5% 18%, 33% 100%, 34.5% 14%, 36% 100%, 37.5% 24%,
+    39% 100%, 40.5% 10%, 42% 100%, 43.5% 18%, 45% 100%,
+    46.5% 6%, 48% 100%, 49.5% 20%, 51% 100%, 52.5% 14%,
+    54% 100%, 55.5% 22%, 57% 100%, 58.5% 8%, 60% 100%,
+    61.5% 18%, 63% 100%, 64.5% 12%, 66% 100%, 67.5% 25%,
+    69% 100%, 70.5% 10%, 72% 100%, 73.5% 20%, 75% 100%,
+    76.5% 6%, 78% 100%, 79.5% 18%, 81% 100%, 82.5% 14%,
+    84% 100%, 85.5% 22%, 87% 100%, 88.5% 8%, 90% 100%,
+    91.5% 18%, 93% 100%, 94.5% 12%, 96% 100%, 97.5% 20%, 100% 100%
+  );
 }
-.tree-right {
-    right: 0;
-}
-
-.tree {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.tree-canopy {
-    border-radius: 50% 50% 45% 45%;
-    position: relative;
-    margin-bottom: -8px;
-}
-.c-dark {
-    background: #2d7a2f;
-}
-.c-mid {
-    background: #3d9e40;
-}
-.c-light {
-    background: #52bc55;
-}
-.tree-trunk {
-    background: linear-gradient(to right, #7c4d1e, #a0621a);
-    border-radius: 3px;
-}
-.t-large .c-dark {
-    width: 100px;
-    height: 90px;
-}
-.t-large .c-mid {
-    width: 85px;
-    height: 75px;
-}
-.t-large .tree-trunk {
-    width: 20px;
-    height: 50px;
-}
-.t-medium .c-dark {
-    width: 80px;
-    height: 72px;
-}
-.t-medium .c-mid {
-    width: 68px;
-    height: 60px;
-}
-.t-medium .tree-trunk {
-    width: 16px;
-    height: 40px;
-}
-.t-small .c-light {
-    width: 60px;
-    height: 55px;
-}
-.t-small .tree-trunk {
-    width: 12px;
-    height: 30px;
+.footer-bar {
+  background: #3a9a3a;
+  color: #d4ffd4;
+  text-align: center;
+  padding: 0.55rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
-/* GROUND MID */
-.ground-mid {
-    position: absolute;
-    bottom: 22%;
-    left: 0;
-    right: 0;
-    height: 12%;
-    background: linear-gradient(180deg, #7ec94a 0%, #5aaa2e 100%);
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .top-bar-inner { padding: 0.6rem 1rem; gap: 0.8rem; }
+  .user-name { display: none; }
+  .xp-badge { display: none; }
+  .brand-name { font-size: 1.2rem; }
 }
-
-/* RIVER */
-.river-container {
-    position: absolute;
-    bottom: 18%;
-    left: 0;
-    right: 0;
-    height: 70px;
-}
-.river-body {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, #5bc8e8 0%, #2ba8cc 100%);
-    overflow: hidden;
-}
-.ripple {
-    position: absolute;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.28);
-    animation: ripple-move 4s ease-in-out infinite;
-}
-.r1 {
-    width: 120px;
-    top: 15px;
-    left: 10%;
-    animation-delay: 0s;
-}
-.r2 {
-    width: 80px;
-    top: 30px;
-    left: 38%;
-    animation-delay: 1s;
-}
-.r3 {
-    width: 100px;
-    top: 20px;
-    left: 58%;
-    animation-delay: 2s;
-}
-.r4 {
-    width: 60px;
-    top: 40px;
-    left: 78%;
-    animation-delay: 0.5s;
-}
-@keyframes ripple-move {
-    0%,
-    100% {
-        opacity: 0.28;
-        transform: scaleX(1);
-    }
-    50% {
-        opacity: 0.5;
-        transform: scaleX(1.1);
-    }
-}
-
-.river-edge {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 14px;
-    background: #4ab832;
-    border-radius: 50%;
-}
-.re-top {
-    top: -7px;
-}
-.re-bottom {
-    bottom: -7px;
-}
-
-/* GROUND FRONT */
-.ground-front {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 20%;
-    background: linear-gradient(180deg, #6ec240 0%, #4fa822 100%);
-}
-
-/* FLOWERS */
-.flower-group {
-    position: absolute;
-    bottom: 55%;
-    display: flex;
-    align-items: flex-end;
-}
-.fg-left {
-    left: 3%;
-}
-.fg-right {
-    right: 3%;
-}
-.flower {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.bloom {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
-}
-.bloom-white {
-    background: #f0f0f0;
-    box-shadow: 0 0 0 4px rgba(240, 240, 240, 0.6);
-}
-.bloom-yellow {
-    background: #ffde00;
-    box-shadow: 0 0 0 4px rgba(255, 222, 0, 0.4);
-}
-.bloom-pink {
-    background: #ff7eb3;
-    box-shadow: 0 0 0 4px rgba(255, 126, 179, 0.4);
-}
-.flower-stem {
-    width: 3px;
-    height: 22px;
-    background: #3a8c1a;
-    border-radius: 2px;
-}
-
-/* FROGS */
-.frog {
-    position: absolute;
-    bottom: 55%;
-}
-.frog-l {
-    left: 15%;
-}
-.frog-r {
-    right: 8%;
-}
-.frog-head {
-    width: 28px;
-    height: 22px;
-    background: #3dba4e;
-    border-radius: 50% 50% 45% 45%;
-    position: relative;
-}
-.frog-eye {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
-    top: -4px;
-}
-.fe-l {
-    left: 4px;
-}
-.fe-r {
-    right: 4px;
-}
-.frog-eye::after {
-    content: "";
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: #1a1a1a;
-    border-radius: 50%;
-    top: 1.5px;
-    left: 1.5px;
-}
-.frog-smile {
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 12px;
-    height: 5px;
-    border-bottom: 2px solid #2a8838;
-    border-radius: 50%;
-}
-.frog-body-shape {
-    width: 32px;
-    height: 14px;
-    background: #3dba4e;
-    border-radius: 50%;
-    margin: 0 auto;
-    margin-top: -3px;
-}
-
-/* STONE */
-.stone {
-    position: absolute;
-    bottom: 30%;
-    left: 42%;
-    width: 34px;
-    height: 20px;
-    background: linear-gradient(180deg, #a09080, #7a6a5a);
-    border-radius: 50% 50% 45% 45%;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* GRASS TUFTS */
-.grass-tuft {
-    position: absolute;
-    bottom: 85%;
-}
-.grass-tuft::before,
-.grass-tuft::after {
-    content: "";
-    position: absolute;
-    width: 6px;
-    height: 14px;
-    background: #4fa822;
-    border-radius: 50% 50% 0 0;
-}
-.grass-tuft::before {
-    transform: rotate(-15deg);
-    left: 0;
-}
-.grass-tuft::after {
-    transform: rotate(15deg);
-    left: 6px;
-}
-.gt1 {
-    left: 8%;
-}
-.gt2 {
-    left: 22%;
-}
-.gt3 {
-    right: 22%;
-}
-.gt4 {
-    right: 8%;
-}
-
-/* ─── MUSIC FAB ─── */
-.music-fab {
-    position: fixed;
-    bottom: 24px;
-    left: 24px;
-    z-index: 100;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #5a9e24;
-    transition: all 0.25s;
-    pointer-events: all;
-}
-.music-fab:hover {
-    transform: scale(1.1);
-    background: white;
-}
-.music-fab.music-on {
-    background: #5aaa2e;
-    color: white;
-}
-.music-fab svg {
-    width: 22px;
-    height: 22px;
+@media (max-width: 480px) {
+  .nav-links .nav-item:not(.active) { display: none; }
 }
 </style>

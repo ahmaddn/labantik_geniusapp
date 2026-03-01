@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\PlaygroundLoginController;
 use Illuminate\Support\Facades\Route;
 
 // routes/auth.php
@@ -45,4 +46,19 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+Route::prefix('player')->group(function () {
+    Route::get('/playground/login', [PlaygroundLoginController::class, 'login'])
+        ->name('playground.login');
+    Route::get('/playground', [PlaygroundLoginController::class, 'index'])
+        ->name('playground.index');
+
+    // POST saat klik "Mulai Petualangan"
+    Route::post('/playground/start', [PlaygroundLoginController::class, 'start'])
+        ->name('playground.start');
+
+    // Halaman quiz (setelah start berhasil)
+    Route::get('/playground/quiz', [PlaygroundLoginController::class, 'quiz'])
+        ->name('playground.quiz');
 });

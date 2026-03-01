@@ -14,16 +14,6 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::get('/playground', [PlaygroundController::class, 'index'])
-    ->name('playground.index');
-
-// POST saat klik "Mulai Petualangan"
-Route::post('/playground/start', [PlaygroundController::class, 'start'])
-    ->name('playground.start');
-
-// Halaman quiz (setelah start berhasil)
-Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])
-    ->name('playground.quiz');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -71,6 +61,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/modules/{moduleId}/mission/{missionId}/quiz/create', [ModulesController::class, 'createQuiz'])->name('quiz');
     });
 });
+
+ Route::get('/', [PlaygroundController::class, 'index'])->name('student.index');
 
 
 require __DIR__ . '/auth.php';
