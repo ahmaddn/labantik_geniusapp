@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 
+
 // ── NO LAYOUT - Self-contained component ──
 
 // ── State ──

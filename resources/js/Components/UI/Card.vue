@@ -9,7 +9,7 @@ const props = defineProps({
     },
     title: {
         type: String,
-        required: true,
+        default: "",
     },
     subtitle: {
         type: String,
@@ -17,7 +17,7 @@ const props = defineProps({
     },
     icon: {
         type: [String, Object, Function],
-        default: "",
+        default: null,
     },
     iconColor: {
         type: String,
@@ -46,7 +46,6 @@ const props = defineProps({
     actions: {
         type: Array,
         default: () => [],
-        // Format: [{ label, icon, variant, onClick }]
     },
 });
 
@@ -86,7 +85,6 @@ const badgeClasses = computed(() => {
         red: "bg-red-100 text-red-700 border-red-300",
         purple: "bg-purple-100 text-purple-700 border-purple-300",
     };
-
     if (props.variant === "playful") {
         return `inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 ${colorMap[props.badgeColor] || colorMap.green}`;
     }
@@ -100,7 +98,7 @@ const handleClick = (e) => {
 };
 
 const handleAction = (action, index) => {
-    if (action.onClick) {
+    if (action && action.onClick) {
         action.onClick();
     }
     emit("action", { action, index });
@@ -113,7 +111,7 @@ const handleAction = (action, index) => {
         <div v-if="image" class="mb-4">
             <img
                 :src="image"
-                :alt="title"
+                :alt="title || 'Card image'"
                 :class="
                     variant === 'playful'
                         ? 'rounded-2xl border-2 border-gray-200'
@@ -143,8 +141,9 @@ const handleAction = (action, index) => {
 
                 <!-- Title -->
                 <h3
+                    v-if="title"
                     :class="[
-                        'font-bold text-gray-800 truncate',
+                        'font-bold text-gray-800',
                         variant === 'playful'
                             ? 'text-xl font-heading'
                             : 'text-lg',
@@ -173,7 +172,7 @@ const handleAction = (action, index) => {
 
         <!-- Actions -->
         <div
-            v-if="actions.length > 0"
+            v-if="actions && actions.length > 0"
             class="flex items-center gap-2 pt-4 border-t"
             :class="
                 variant === 'playful' ? 'border-gray-200' : 'border-gray-100'
@@ -185,14 +184,14 @@ const handleAction = (action, index) => {
                 :variant="action.variant || 'primary'"
                 :size="action.size || 'sm'"
                 :icon="action.icon"
-                @click="handleAction(action, index)"
+                @click.stop="handleAction(action, index)"
             >
                 {{ action.label }}
             </Button>
         </div>
 
         <!-- Footer Slot -->
-        <div v-if="$slots.footer">
+        <div v-if="$slots.footer" class="mt-4">
             <slot name="footer"></slot>
         </div>
     </div>

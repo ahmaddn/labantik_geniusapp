@@ -497,27 +497,3 @@ const toggleCardVariant = () => {
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>
-
-<style scoped>
-.shadow-playful {
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -1px rgba(0, 0, 0, 0.06),
-        0 8px 16px -4px rgba(34, 197, 94, 0.1);
-}
-
-.card-enter-active,
-.card-leave-active {
-    transition: all 0.3s ease;
-}
-
-.card-enter-from {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-.card-leave-to {
-    opacity: 0;
-    transform: scale(0.9);
-}
-</style>

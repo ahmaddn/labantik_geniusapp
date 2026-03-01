@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -17,12 +18,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    protected $keyType = 'string';
+    public $incrementing = false;
     protected $fillable = [
+        'id',
         'name',
         'email',
         'password',
         'role',
         'class_id',
+        'created_by',
     ];
 
     /**
@@ -51,5 +57,10 @@ class User extends Authenticatable
     public function class()
     {
         return $this->belongsTo(Classes::class, 'class_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

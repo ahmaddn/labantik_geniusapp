@@ -55,7 +55,7 @@ class ModulesController extends Controller
     {
         // Data dummy module
         $module = [
-            'id' => $id,
+            'id' => (int)$id,
             'title' => 'Pengenalan JavaScript',
             'description' => 'Modul dasar JavaScript untuk pemula',
             'content' => 'Konten lengkap modul JavaScript',
@@ -70,7 +70,7 @@ class ModulesController extends Controller
         $missions = [
             [
                 'id' => 1,
-                'module_id' => $id,
+                'module_id' => (int)$id,
                 'name' => 'Variabel dan Tipe Data',
                 'description' => 'Memahami konsep variabel dan berbagai tipe data di JavaScript',
                 'order_number' => 1,
@@ -80,7 +80,7 @@ class ModulesController extends Controller
             ],
             [
                 'id' => 2,
-                'module_id' => $id,
+                'module_id' => (int)$id,
                 'name' => 'Function dan Scope',
                 'description' => 'Belajar membuat dan menggunakan function dalam JavaScript',
                 'order_number' => 2,
@@ -90,7 +90,7 @@ class ModulesController extends Controller
             ],
             [
                 'id' => 3,
-                'module_id' => $id,
+                'module_id' => (int)$id,
                 'name' => 'Array dan Object',
                 'description' => 'Mengenal struktur data array dan object',
                 'order_number' => 3,
@@ -107,21 +107,41 @@ class ModulesController extends Controller
     }
 
     /**
+     * Show create mission wizard
+     * Route: /admin/modules/{moduleId}/mission/create
+     */
+    public function createMission($id)
+    {
+        // Get module data
+        $module = [
+            'id' => (int)$id,
+            'title' => 'Pengenalan JavaScript',
+        ];
+
+        // Render Mission creation wizard
+        return Inertia::render('Admin/Modules/Wizards/Mission', [
+            'moduleId' => (int)$id,
+            'moduleName' => $module['title']
+        ]);
+    }
+
+    /**
      * Show mission detail with materials and quizzes list
+     * Route: /admin/modules/{moduleId}/mission/{missionId}
      */
     public function showMission($moduleId, $missionId)
     {
         // Data dummy module
         $module = [
-            'id' => $moduleId,
+            'id' => (int)$moduleId,
             'title' => 'Pengenalan JavaScript',
             'description' => 'Modul dasar JavaScript untuk pemula',
         ];
 
         // Data dummy mission
         $mission = [
-            'id' => $missionId,
-            'module_id' => $moduleId,
+            'id' => (int)$missionId,
+            'module_id' => (int)$moduleId,
             'name' => 'Variabel dan Tipe Data',
             'description' => 'Memahami konsep variabel dan berbagai tipe data di JavaScript',
             'order_number' => 1,
@@ -132,7 +152,7 @@ class ModulesController extends Controller
         $materials = [
             [
                 'id' => 1,
-                'mission_id' => $missionId,
+                'mission_id' => (int)$missionId,
                 'title' => 'Pengenalan Variabel',
                 'description' => 'Memahami konsep dasar variabel dalam JavaScript',
                 'content' => 'Konten tentang variabel...',
@@ -142,7 +162,7 @@ class ModulesController extends Controller
             ],
             [
                 'id' => 2,
-                'mission_id' => $missionId,
+                'mission_id' => (int)$missionId,
                 'title' => 'Video Tutorial: Tipe Data',
                 'description' => 'Video pembelajaran tentang tipe data JavaScript',
                 'content' => 'https://youtube.com/example',
@@ -152,7 +172,7 @@ class ModulesController extends Controller
             ],
             [
                 'id' => 3,
-                'mission_id' => $missionId,
+                'mission_id' => (int)$missionId,
                 'title' => 'Panduan Lengkap Variabel',
                 'description' => 'Dokumen PDF panduan lengkap variabel',
                 'content' => '/files/variabel-guide.pdf',
@@ -166,7 +186,7 @@ class ModulesController extends Controller
         $quizzes = [
             [
                 'id' => 1,
-                'mission_id' => $missionId,
+                'mission_id' => (int)$missionId,
                 'title' => 'Quiz: Variabel dan Tipe Data',
                 'description' => 'Uji pemahaman tentang variabel dan tipe data',
                 'time_limit' => 30,
@@ -177,7 +197,7 @@ class ModulesController extends Controller
             ],
             [
                 'id' => 2,
-                'mission_id' => $missionId,
+                'mission_id' => (int)$missionId,
                 'title' => 'Drag & Drop: Tipe Data',
                 'description' => 'Cocokkan tipe data dengan contohnya',
                 'time_limit' => 15,
@@ -197,65 +217,51 @@ class ModulesController extends Controller
     }
 
     /**
-     * Show create mission wizard
-     */
-    public function createMission($id)
-    {
-        // Get module data
-        $module = [
-            'id' => $id,
-            'title' => 'Pengenalan JavaScript',
-        ];
-
-        return Inertia::render('Admin/Modules/Wizards/Mission', [
-            'moduleId' => $id,
-            'moduleName' => $module['title']
-        ]);
-    }
-
-    /**
      * Show create material wizard
+     * Route: /admin/modules/{moduleId}/mission/{missionId}/material/create
      */
     public function createMaterial($moduleId, $missionId)
     {
         // Get module and mission data
         $module = [
-            'id' => $moduleId,
+            'id' => (int)$moduleId,
             'title' => 'Pengenalan JavaScript',
         ];
 
         $mission = [
-            'id' => $missionId,
+            'id' => (int)$missionId,
             'name' => 'Variabel dan Tipe Data',
         ];
 
         return Inertia::render('Admin/Modules/Wizards/Material', [
-            'moduleId' => $moduleId,
-            'missionId' => $missionId,
+            'moduleId' => (int)$moduleId,
+            'missionId' => (int)$missionId,
             'moduleName' => $module['title'],
-            'missionName' => $mission['name']
+            'missionName' => $mission['name'],
+            'moduleTemplate' => null, // Add template data if needed
         ]);
     }
 
     /**
      * Show create quiz wizard
+     * Route: /admin/modules/{moduleId}/mission/{missionId}/quiz/create
      */
     public function createQuiz($moduleId, $missionId)
     {
         // Get module and mission data
         $module = [
-            'id' => $moduleId,
+            'id' => (int)$moduleId,
             'title' => 'Pengenalan JavaScript',
         ];
 
         $mission = [
-            'id' => $missionId,
+            'id' => (int)$missionId,
             'name' => 'Variabel dan Tipe Data',
         ];
 
         return Inertia::render('Admin/Modules/Wizards/Quiz', [
-            'moduleId' => $moduleId,
-            'missionId' => $missionId,
+            'moduleId' => (int)$moduleId,
+            'missionId' => (int)$missionId,
             'moduleName' => $module['title'],
             'missionName' => $mission['name']
         ]);

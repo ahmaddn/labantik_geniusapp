@@ -12,7 +12,6 @@ import {
     HelpCircle,
     Star,
     Info,
-    Question,
     List,
     LayoutGrid,
     Box,
@@ -21,8 +20,6 @@ import {
     Tag,
     Plus,
     Check,
-    ArrowLeft,
-    ArrowRight,
     Trash2,
     AlertTriangle,
 } from "lucide-vue-next";
@@ -939,12 +936,3 @@ const getGroupName = (groupId) => {
         <Toast :show="showSuccess" :message="successMessage" type="success" />
     </AppLayout>
 </template>
-
-<style scoped>
-.shadow-playful {
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -1px rgba(0, 0, 0, 0.06),
-        0 8px 16px -4px rgba(251, 146, 60, 0.1);
-}
-</style>

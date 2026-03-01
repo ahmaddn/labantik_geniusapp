@@ -11,19 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('classes', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->timestamps();
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->uuid('user_id')->nullable()->change();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->nullable()->change();
+        });
     }
 };

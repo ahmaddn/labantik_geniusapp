@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
+import { usePage, useForm } from "@inertiajs/vue3";
 import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
@@ -8,14 +9,23 @@ import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
-import { BookOpen, Star, Plus, Pencil, Trash2, Save } from "lucide-vue-next";
+import {
+    BookOpen,
+    Star,
+    Plus,
+    Pencil,
+    Trash2,
+    Save,
+    UserKey,
+} from "lucide-vue-next";
+import SelectField from "@/Components/UI/Forms/SelectField.vue";
 
-const classes = ref([
-    { id: 1, name: "Mathematics", description: "Basic algebra and geometry" },
-    { id: 2, name: "Physics", description: "Introduction to mechanics" },
-    { id: 3, name: "Chemistry", description: "Organic chemistry fundamentals" },
-    { id: 4, name: "Biology", description: "Introduction to living organisms" },
-]);
+const props = defineProps({
+    classes: Array,
+    teachers: Array,
+});
+
+const page = usePage();
 
 const showDialog = ref(false);
 const showDeleteDialog = ref(false);
@@ -23,23 +33,111 @@ const isEdit = ref(false);
 const selectedId = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
-const cardVariant = ref("playful"); // Toggle between 'playful' and 'normal'
+const cardVariant = ref("playful");
+const toastType = ref("success");
+const editingClass = ref(null);
+const editId = ref(null);
+const form = useForm({
+    name: "",
+    description: "",
+    teacher_id: "",
+});
 
-const showToast = (message) => {
+const showToast = (message, type = "success") => {
     successMessage.value = message;
+    toastType.value = type;
     showSuccess.value = true;
-
-    setTimeout(() => {
-        showSuccess.value = false;
-    }, 2500);
+    setTimeout(() => (showSuccess.value = false), 2500);
 };
 
-const lockScroll = (state) => {
-    document.body.style.overflow = state ? "hidden" : "";
+const openCreate = () => {
+    isEdit.value = false;
+    editingClass.value = null;
+    form.reset();
+    showDialog.value = true;
+};
+
+const openEdit = (classItem) => {
+    isEdit.value = true;
+    editId.value = classItem.id;
+    editingClass.value = classItem;
+    form.name = classItem.name;
+    form.description = classItem.description || "";
+    form.teacher_id = classItem.teacher_id || "";
+    showDialog.value = true;
+};
+
+const confirmDelete = (id) => {
+    selectedId.value = id;
+    showDeleteDialog.value = true;
+};
+
+// Helper untuk ambil pesan error pertama dari object errors
+const getFirstError = (errors) => {
+    return Object.values(errors)[0] ?? "Terjadi kesalahan.";
+};
+
+const saveClass = () => {
+    if (!form.name.trim()) return;
+
+    const options = {
+        onError: (errors) => showToast(getFirstError(errors), "error"),
+        onSuccess: () => {
+            showDialog.value = false;
+            form.reset();
+        },
+    };
+
+    if (isEdit.value) {
+        form.put(route("admin.classes.update", editId.value), options);
+    } else {
+        form.post(route("admin.classes.store"), options);
+    }
+};
+
+const deleteClass = () => {
+    form.delete(route("admin.classes.destroy", selectedId.value), {
+        onError: (errors) => showToast(getFirstError(errors), "error"),
+        onSuccess: () => {
+            showDeleteDialog.value = false;
+        },
+    });
+};
+
+const availableTeachers = computed(() => {
+    if (!isEdit.value || !editingClass.value?.teacher) {
+        return props.teachers;
+    }
+
+    const currentTeacher = editingClass.value.teacher;
+    const alreadyInList = props.teachers.some(
+        (t) => t.id === currentTeacher.id,
+    );
+    if (!alreadyInList) {
+        return [currentTeacher, ...props.teachers];
+    }
+
+    return props.teachers;
+});
+
+const toggleCardVariant = () => {
+    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
 };
 
 watch(showDialog, (val) => lockScroll(val));
 watch(showDeleteDialog, (val) => lockScroll(val));
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.success) showToast(flash.success, "success");
+        if (flash?.error) showToast(flash.error, "error");
+        if (flash?.message) showToast(flash.message, "info");
+    },
+);
+
+const lockScroll = (state) => {
+    document.body.style.overflow = state ? "hidden" : "";
+};
 
 const handleEsc = (e) => {
     if (e.key === "Escape") {
@@ -55,57 +153,6 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener("keydown", handleEsc);
 });
-
-const form = ref({
-    id: null,
-    name: "",
-    description: "",
-});
-
-const openCreate = () => {
-    isEdit.value = false;
-    form.value = { id: null, name: "", description: "" };
-    showDialog.value = true;
-};
-
-const openEdit = (classItem) => {
-    isEdit.value = true;
-    form.value = { ...classItem };
-    showDialog.value = true;
-};
-
-const confirmDelete = (id) => {
-    selectedId.value = id;
-    showDeleteDialog.value = true;
-};
-
-const deleteClass = () => {
-    classes.value = classes.value.filter((c) => c.id !== selectedId.value);
-    showDeleteDialog.value = false;
-    showToast("Data kelas berhasil dihapus.");
-};
-
-const saveClass = () => {
-    if (!form.value.name.trim()) return;
-
-    if (isEdit.value) {
-        const index = classes.value.findIndex((c) => c.id === form.value.id);
-        classes.value[index] = { ...form.value };
-        showToast("Data kelas berhasil diperbarui.");
-    } else {
-        classes.value.push({
-            ...form.value,
-            id: Date.now(),
-        });
-        showToast("Kelas baru berhasil ditambahkan.");
-    }
-
-    showDialog.value = false;
-};
-
-const toggleCardVariant = () => {
-    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
-};
 </script>
 
 <template>
@@ -173,7 +220,7 @@ const toggleCardVariant = () => {
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
                 <Card
-                    v-for="classItem in classes"
+                    v-for="classItem in props.classes"
                     :key="classItem.id"
                     :variant="cardVariant"
                     :title="classItem.name"
@@ -182,6 +229,19 @@ const toggleCardVariant = () => {
                     icon-color="blue"
                     border-color="blue"
                 >
+                    <template #default>
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <UserKey
+                                class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
+                            />
+                            <span class="text-xs text-gray-400 truncate">
+                                {{
+                                    classItem.teacher?.name ??
+                                    "Belum ada Wali Kelas"
+                                }}
+                            </span>
+                        </div>
+                    </template>
                     <template #footer>
                         <div class="flex justify-end gap-2 mt-4">
                             <Button
@@ -210,6 +270,17 @@ const toggleCardVariant = () => {
             @close="showDialog = false"
         >
             <div class="space-y-4">
+                <SelectField
+                    v-model="form.teacher_id"
+                    label="Wali Kelas"
+                    placeholder="Pilih Wali Kelas"
+                    :icon="UserRound"
+                    :options="availableTeachers"
+                    option-value="id"
+                    option-label="name"
+                    border-color="blue"
+                    required
+                />
                 <InputField
                     v-model="form.name"
                     type="text"
@@ -219,6 +290,9 @@ const toggleCardVariant = () => {
                     required
                     border-color="blue"
                 />
+                <p v-if="form.errors.name" class="text-red-500 text-sm">
+                    {{ form.errors.name }}
+                </p>
 
                 <TextareaField
                     v-model="form.description"
@@ -243,9 +317,10 @@ const toggleCardVariant = () => {
                         variant="primary"
                         size="md"
                         :icon="Save"
+                        :disabled="form.processing"
                         @click="saveClass"
                     >
-                        Simpan
+                        {{ form.processing ? "Menyimpan" : "Simpan" }}
                     </Button>
                 </div>
             </template>
@@ -261,6 +336,11 @@ const toggleCardVariant = () => {
         />
 
         <!-- Toast Notification -->
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast
+            :show="showSuccess"
+            :message="successMessage"
+            :type="toastType"
+            @close="showSuccess = false"
+        />
     </AppLayout>
 </template>

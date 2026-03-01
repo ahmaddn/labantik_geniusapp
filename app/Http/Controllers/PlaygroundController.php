@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class PlaygroundLoginController extends Controller
+class PlaygroundController extends Controller
 {
     public function login(): Response
     {
@@ -56,7 +56,7 @@ class PlaygroundLoginController extends Controller
             return redirect()->route('playground.index');
         }
 
-        return Inertia::render('Student/Playground/Quiz', [
+        return Inertia::render('Admin/Playground/Quiz', [
             'player' => session('player'),
         ]);
     }

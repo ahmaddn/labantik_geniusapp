@@ -5,6 +5,7 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    Search,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -38,6 +39,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    searchPlaceholder: {
+        type: String,
+        default: "Cari data...",
+    },
 });
 
 const emit = defineEmits(["action"]);
@@ -46,10 +51,10 @@ const currentPage = ref(1);
 const perPage = ref(props.initialPerPage);
 const sortField = ref(null);
 const sortDirection = ref("asc");
+const searchQuery = ref("");
 
 const sort = (field) => {
     if (!field) return;
-
     if (sortField.value === field) {
         sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
     } else {
@@ -58,13 +63,25 @@ const sort = (field) => {
     }
 };
 
-const sortedData = computed(() => {
-    if (!sortField.value) return props.data;
+// Filter data berdasarkan search query — cari di semua kolom
+const filteredData = computed(() => {
+    if (!searchQuery.value.trim()) return props.data;
 
-    return [...props.data].sort((a, b) => {
+    const query = searchQuery.value.toLowerCase();
+    return props.data.filter((row) =>
+        props.columns.some((col) => {
+            const val = row[col.key];
+            return val != null && String(val).toLowerCase().includes(query);
+        }),
+    );
+});
+
+const sortedData = computed(() => {
+    if (!sortField.value) return filteredData.value;
+
+    return [...filteredData.value].sort((a, b) => {
         const aVal = a[sortField.value];
         const bVal = b[sortField.value];
-
         if (aVal < bVal) return sortDirection.value === "asc" ? -1 : 1;
         if (aVal > bVal) return sortDirection.value === "asc" ? 1 : -1;
         return 0;
@@ -91,6 +108,11 @@ const changePerPage = (value) => {
     currentPage.value = 1;
 };
 
+// Reset ke halaman 1 setiap kali search berubah
+const handleSearch = () => {
+    currentPage.value = 1;
+};
+
 const handleAction = (actionName, row) => {
     emit("action", { action: actionName, data: row });
 };
@@ -101,13 +123,29 @@ const handleAction = (actionName, row) => {
     <div
         class="bg-white rounded-3xl border-4 border-blue-200 shadow-playful overflow-hidden"
     >
-        <!-- Toolbar Per Page Control -->
+        <!-- Toolbar -->
         <div
             v-if="showPerPageControl"
-            class="flex justify-end p-4 border-b-4 border-blue-200"
+            class="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-b-4 border-blue-200"
         >
+            <!-- Search -->
+            <div class="relative w-full sm:w-auto sm:min-w-[260px]">
+                <Search
+                    :size="16"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+                <input
+                    v-model="searchQuery"
+                    @input="handleSearch"
+                    type="text"
+                    :placeholder="searchPlaceholder"
+                    class="w-full pl-10 pr-4 py-2 rounded-2xl border-4 border-blue-200 focus:border-blue-400 outline-none font-medium text-gray-700 bg-blue-50 placeholder-gray-400 transition-colors"
+                />
+            </div>
+
+            <!-- Per Page -->
             <div
-                class="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-2xl border-2 border-blue-200"
+                class="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-2xl border-2 border-blue-200 shrink-0"
             >
                 <label
                     for="perPage"
@@ -191,7 +229,12 @@ const handleAction = (actionName, row) => {
                             ]"
                         >
                             <slot :name="`cell-${column.key}`" :row="row">
-                                {{ row[column.key] }}
+                                <!-- Kalau ada formatter, gunakan formatter, kalau tidak tampilkan biasa -->
+                                {{
+                                    column.formatter
+                                        ? column.formatter(row[column.key], row)
+                                        : row[column.key]
+                                }}
                             </slot>
                         </td>
 
@@ -220,7 +263,8 @@ const handleAction = (actionName, row) => {
                         </td>
                     </tr>
 
-                    <tr v-if="paginatedData.length === 0">
+                    <!-- Empty state: tidak ada data sama sekali -->
+                    <tr v-if="paginatedData.length === 0 && !searchQuery">
                         <td
                             :colspan="
                                 columns.length + (actions.length > 0 ? 1 : 0)
@@ -228,6 +272,29 @@ const handleAction = (actionName, row) => {
                             class="p-6 text-center text-gray-500 font-medium"
                         >
                             {{ emptyMessage }}
+                        </td>
+                    </tr>
+
+                    <!-- Empty state: hasil pencarian kosong -->
+                    <tr v-if="paginatedData.length === 0 && searchQuery">
+                        <td
+                            :colspan="
+                                columns.length + (actions.length > 0 ? 1 : 0)
+                            "
+                            class="p-8 text-center"
+                        >
+                            <div class="flex flex-col items-center gap-2">
+                                <Search :size="32" class="text-gray-300" />
+                                <p class="font-bold text-gray-500">
+                                    Tidak ada hasil
+                                </p>
+                                <p class="text-sm text-gray-400">
+                                    Tidak ditemukan data untuk
+                                    <span class="font-semibold text-blue-500"
+                                        >"{{ searchQuery }}"</span
+                                    >
+                                </p>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -254,6 +321,9 @@ const handleAction = (actionName, row) => {
                     sortedData.length
                 }}</span>
                 data
+                <span v-if="searchQuery" class="text-blue-500">
+                    (difilter dari {{ data.length }} total)
+                </span>
             </div>
 
             <!-- Pagination Buttons -->
@@ -293,32 +363,30 @@ const handleAction = (actionName, row) => {
 </template>
 
 <style scoped>
-/* Custom Scrollbar Styling */
 .custom-scrollbar::-webkit-scrollbar {
     width: 12px;
     height: 12px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #dbeafe; /* bg-blue-100 */
+    background: #dbeafe;
     border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #3b82f6; /* bg-blue-500 */
+    background: #3b82f6;
     border-radius: 10px;
-    border: 2px solid #dbeafe; /* border with track color */
+    border: 2px solid #dbeafe;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #2563eb; /* bg-blue-600 */
+    background: #2563eb;
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
     background: #dbeafe;
 }
 
-/* Firefox */
 .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: #3b82f6 #dbeafe;

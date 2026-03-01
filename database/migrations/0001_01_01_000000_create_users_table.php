@@ -20,12 +20,12 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['admin', 'guru', 'siswa']);
+            $table->uuid('created_by')->index()->nullable();
             $table->rememberToken();
             $table->timestamps();
 
             $table->foreign('class_id')->references('id')->on('classes');
-
-            $table->softDeletes();
+            $table->foreign('created_by')->references('id')->on('users');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
