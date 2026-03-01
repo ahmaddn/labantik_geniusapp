@@ -35,7 +35,7 @@ onMounted(() => {
 // ── Music Toggle ──
 function toggleMusic() {
     musicOn.value = !musicOn.value;
-    // Integrate audio here if needed
+    // Integrate audio here if needed`
     // e.g. audioRef.value.play() / .pause()
 }
 

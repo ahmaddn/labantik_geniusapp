@@ -3,25 +3,30 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PlaygroundLoginController extends Controller
 {
-    public function login(): Response
+    /**
+     * [GET] Tampilkan halaman form login playground.
+     * Jika session player sudah ada, langsung redirect ke menu modul.
+     */
+    public function login(): Response|RedirectResponse
     {
+        if (session('player')) {
+            return redirect()->route('playground.index');
+        }
+
         return Inertia::render('Auth/PlaygroundLogin');
-    }
-    public function index(): Response
-    {
-        return Inertia::render('Playground/Index');
     }
 
     /**
-     * Proses form start — validasi & simpan ke session
+     * [POST] Proses form login — validasi nama & kelas, simpan ke session.
      */
-    public function start(Request $request)
+    public function start(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'nama'  => ['required', 'string', 'min:2', 'max:60'],
@@ -34,30 +39,44 @@ class PlaygroundLoginController extends Controller
             'kelas.in'       => 'Kelas yang dipilih tidak valid.',
         ]);
 
-        // Simpan data siswa ke session
         session([
             'player' => [
                 'nama'  => $validated['nama'],
                 'kelas' => $validated['kelas'],
-            ]
+            ],
         ]);
 
-        // Redirect ke halaman quiz
         return redirect()->route('playground.index');
     }
 
     /**
-     * Halaman quiz — pastikan session player ada
+     * [GET] Menu pemilihan modul — halaman Index yang sudah kita buat.
+     * Guard: jika belum login (session kosong), kembalikan ke form login.
      */
-    public function quiz()
+    public function index(): Response|RedirectResponse
     {
-        // Guard: kalau belum isi form, balik ke start
         if (!session('player')) {
-            return redirect()->route('playground.index');
+            return redirect()->route('playground.login');
         }
 
-        return Inertia::render('Student/Playground/Quiz', [
-            'player' => session('player'),
+        return Inertia::render('Playground/Index', [
+            'user' => [
+                'name'  => session('player.nama'),
+                'email' => null,             // guest, tidak punya email
+                'class' => [
+                    'name' => session('player.kelas'),
+                ],
+            ],
         ]);
+    }
+
+    /**
+     * [POST] Logout — hapus session player dan kembali ke form login.
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        $request->session()->forget('player');
+
+        return redirect()->route('playground.login');
     }
 }
