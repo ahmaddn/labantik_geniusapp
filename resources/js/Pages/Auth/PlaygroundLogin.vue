@@ -91,6 +91,7 @@ function handleMulai() {
     form.post(route("playground.start"), {
         onSuccess: () => {
             mascotBounce.value = false;
+            // router.visit(route("playground.index"));
             // Inertia akan redirect otomatis sesuai response dari controller
         },
         onError: () => {
@@ -186,7 +187,6 @@ function handleMulai() {
                 </div>
                 <p v-if="errors.nama" class="err-text">{{ errors.nama }}</p>
 
-
                 <!-- Select Kelas -->
                 <div
                     class="field field-select"
@@ -239,7 +239,7 @@ function handleMulai() {
                         stroke="currentColor"
                         stroke-width="2.5"
                     >
-                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1" fill="currentColor" />
                     </svg>
                 </div>
                 <p v-if="errors.kelas" class="err-text">{{ errors.kelas }}</p>
@@ -266,7 +266,11 @@ function handleMulai() {
         </div>
 
         <!-- ░░ MUSIC BUTTON ░░ -->
-        <button class="music-fab" @click="toggleMusic" :class="{ 'music-on': musicOn }">
+        <button
+            class="music-fab"
+            @click="toggleMusic"
+            :class="{ 'music-on': musicOn }"
+        >
             <svg
                 v-if="musicOn"
                 viewBox="0 0 24 24"
@@ -317,7 +321,7 @@ function handleMulai() {
     inset: 0;
     width: 100%;
     height: 100%;
-    background-image: url('/images/templates/background.png');
+    background-image: url("/images/templates/background.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -418,16 +422,16 @@ function handleMulai() {
     letter-spacing: -0.5px;
 }
 .logo-geni {
-    color: #2C5F7C;
+    color: #2c5f7c;
 }
 .logo-uss {
-    color: #FF7B3D;
+    color: #ff7b3d;
 }
 .logo-sub {
     font-family: "Nunito", sans-serif;
     font-size: 18px;
     font-weight: 600;
-    color: #5A7C8F;
+    color: #5a7c8f;
     letter-spacing: 0.3px;
     margin-top: 4px;
 }
@@ -452,7 +456,7 @@ function handleMulai() {
     align-items: center;
     gap: 12px;
     background: white;
-    border: 2px solid #E5E7EB;
+    border: 2px solid #e5e7eb;
     border-radius: 18px;
     padding: 0 20px;
     height: 62px;
@@ -460,8 +464,8 @@ function handleMulai() {
     margin-bottom: 6px;
 }
 .field.focused {
-    border-color: #FF7B3D;
-    background: #FFF9F5;
+    border-color: #ff7b3d;
+    background: #fff9f5;
     box-shadow: 0 0 0 4px rgba(255, 123, 61, 0.12);
 }
 .field.filled {
@@ -481,12 +485,12 @@ function handleMulai() {
     font-family: "Nunito", sans-serif;
     font-size: 16px;
     font-weight: 600;
-    color: #1F2937;
+    color: #1f2937;
     outline: none;
     min-width: 0;
 }
 .field input::placeholder {
-    color: #9CA3AF;
+    color: #9ca3af;
     font-weight: 500;
 }
 .field input:disabled {
@@ -495,15 +499,15 @@ function handleMulai() {
 .field select {
     cursor: pointer;
     appearance: none;
-    color: #1F2937;
+    color: #1f2937;
 }
 .field select option {
-    color: #1F2937;
+    color: #1f2937;
     font-weight: 500;
 }
 .field select:invalid,
 .field select option[value=""] {
-    color: #9CA3AF;
+    color: #9ca3af;
 }
 
 .field-select {
@@ -512,13 +516,15 @@ function handleMulai() {
 .arrow-icon {
     width: 12px;
     height: 12px;
-    color: #9CA3AF;
+    color: #9ca3af;
     flex-shrink: 0;
     pointer-events: none;
-    transition: transform 0.2s, color 0.2s;
+    transition:
+        transform 0.2s,
+        color 0.2s;
 }
 .field.focused .arrow-icon {
-    color: #FF7B3D;
+    color: #ff7b3d;
 }
 
 .clear-btn {
@@ -528,7 +534,7 @@ function handleMulai() {
     padding: 6px;
     display: flex;
     align-items: center;
-    color: #9CA3AF;
+    color: #9ca3af;
     transition: color 0.2s;
 }
 .clear-btn:hover {
@@ -575,7 +581,7 @@ function handleMulai() {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background: linear-gradient(135deg, #FF8A4D 0%, #FF9F5A 100%);
+    background: linear-gradient(135deg, #ff8a4d 0%, #ff9f5a 100%);
     color: white;
     box-shadow:
         0 6px 24px rgba(255, 123, 61, 0.4),
@@ -605,7 +611,7 @@ function handleMulai() {
     transform: translateY(0) scale(0.98);
 }
 .btn-mulai.btn-active {
-    background: linear-gradient(135deg, #FF7B3D 0%, #FF8A4D 100%);
+    background: linear-gradient(135deg, #ff7b3d 0%, #ff8a4d 100%);
     animation: pulse-btn 2.5s ease-in-out infinite;
 }
 .btn-mulai.btn-loading {
@@ -683,7 +689,7 @@ function handleMulai() {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #4FC3F7;
+    color: #4fc3f7;
     transition: all 0.25s;
 }
 .music-fab:hover {
@@ -691,7 +697,7 @@ function handleMulai() {
     background: white;
 }
 .music-fab.music-on {
-    background: #4FC3F7;
+    background: #4fc3f7;
     color: white;
 }
 .music-fab svg {

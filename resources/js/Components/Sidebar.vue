@@ -10,7 +10,6 @@ import {
     X,
 } from "lucide-vue-next";
 
-
 defineProps({
     open: Boolean,
     isMobile: Boolean,
@@ -83,7 +82,7 @@ const menuItems = [
     },
     {
         name: "Playground",
-        route: "playground.index",
+        route: "playground.login",
         icon: Users,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
