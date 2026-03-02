@@ -1,278 +1,192 @@
-<template>
-  <div class="playground-shell">
-    <!-- Animated sky background -->
-    <div class="sky-bg" aria-hidden="true">
-      <div class="cloud cloud-1">☁</div>
-      <div class="cloud cloud-2">☁</div>
-      <div class="cloud cloud-3">☁</div>
-    </div>
-
-    <!-- Top Navigation -->
-    <header class="top-bar">
-      <div class="top-bar-inner">
-        <!-- Brand -->
-        <Link :href="route('student.index')" class="brand">
-          <span class="brand-icon">💧</span>
-          <span class="brand-name">EduAir</span>
-        </Link>
-
-        <!-- Nav -->
-        <nav class="nav-links">
-          <Link
-            :href="route('student.index')"
-            class="nav-item"
-            :class="{ active: $page.url === '/playground' || $page.url.startsWith('/playground/module') }"
-          >
-            🏠 Beranda
-          </Link>
-          <!-- <Link
-            :href="route('student.dashboard')"
-            class="nav-item"
-            :class="{ active: $page.url.startsWith('/dashboard') }"
-          >
-            📊 Progress
-          </Link> -->
-        </nav>
-
-        <!-- User info -->
-        <div class="user-info">
-          <div class="xp-badge" title="Total XP">
-            ⚡ {{ $page.props.auth.user.xp ?? 0 }} XP
-          </div>
-          <div class="avatar-wrap">
-            <div class="avatar">{{ userInitial }}</div>
-            <span class="user-name">{{ firstName }}</span>
-          </div>
-          <Link :href="route('profile.edit')" class="icon-btn" title="Profil">
-            ⚙️
-          </Link>
-        </div>
-      </div>
-    </header>
-
-    <!-- Slot for page content -->
-    <main class="playground-main">
-      <slot />
-    </main>
-
-    <!-- Grass footer -->
-    <footer class="grass-footer" aria-hidden="true">
-      <div class="grass-strip"></div>
-      <div class="footer-bar">
-        🌿 Belajar sambil bermain, menjaga alam bersama · EduAir
-      </div>
-    </footer>
-  </div>
-</template>
-
 <script setup>
-import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { ref, onMounted } from "vue";
 
-const page = usePage()
+// ── State ──
+const mascotBounce = ref(false);
+const musicOn = ref(false);
 
-const userInitial = computed(() =>
-  (page.props.auth.user.name ?? 'S').charAt(0).toUpperCase()
-)
+// ── Lifecycle ──
+onMounted(() => {
+    setTimeout(() => {
+        mascotBounce.value = true;
+        setTimeout(() => {
+            mascotBounce.value = false;
+        }, 1200);
+    }, 800);
+});
 
-const firstName = computed(() =>
-  (page.props.auth.user.name ?? '').split(' ')[0]
-)
+// ── Music Toggle ──
+function toggleMusic() {
+    musicOn.value = !musicOn.value;
+}
+
+// ── Expose untuk parent component ──
+defineExpose({
+    mascotBounce,
+});
 </script>
 
+<template>
+    <!-- ░░ FULL PAGE WITH BACKGROUND IMAGE ░░ -->
+    <div class="landing-page">
+        <!-- Background Image -->
+        <div class="bg-image"></div>
+
+        <!-- ░░ MASCOT CHARACTER IMAGE ░░ -->
+        <div class="mascot" :class="{ bounce: mascotBounce }">
+            <img
+                src="/images/templates/pose_keren.png"
+                alt="Character Mascot"
+                class="mascot-img"
+            />
+        </div>
+
+        <!-- ░░ SLOT FOR PAGE CONTENT ░░ -->
+        <slot></slot>
+
+        <!-- ░░ MUSIC BUTTON ░░ -->
+        <button
+            class="music-fab"
+            @click="toggleMusic"
+            :class="{ 'music-on': musicOn }"
+        >
+            <svg
+                v-if="musicOn"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+            >
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+            </svg>
+            <svg
+                v-else
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+            >
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+        </button>
+    </div>
+</template>
+
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap');
-
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* ── Shell ── */
-.playground-shell {
-  min-height: 100vh;
-  font-family: 'Nunito', sans-serif;
-  background: linear-gradient(180deg, #b8e4f9 0%, #d4eeff 45%, #e8f7d0 100%);
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  position: relative;
+/* ─── RESET & BASE ─── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* ── Sky ── */
-.sky-bg {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-.cloud {
-  position: absolute;
-  color: #fff;
-  opacity: 0.55;
-  filter: drop-shadow(0 2px 10px rgba(255,255,255,0.7));
-  animation: floatCloud linear infinite;
-}
-.cloud-1 { top: 5%;  font-size: 2.8rem; animation-duration: 28s; }
-.cloud-2 { top: 14%; font-size: 2rem;   animation-duration: 40s; animation-delay: -12s; }
-.cloud-3 { top: 3%;  font-size: 2.4rem; animation-duration: 52s; animation-delay: -26s; }
-@keyframes floatCloud {
-  from { transform: translateX(-150px); }
-  to   { transform: translateX(110vw); }
+/* ─── LANDING PAGE ─── */
+.landing-page {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: "Nunito", "Baloo 2", sans-serif;
 }
 
-/* ── Top bar ── */
-.top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 3px solid #a8d8f0;
-  box-shadow: 0 4px 20px rgba(100, 180, 240, 0.18);
-}
-.top-bar-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0.65rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+/* ─── BACKGROUND IMAGE ─── */
+.bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("/images/templates/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-/* Brand */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  text-decoration: none;
-  font-family: 'Baloo 2', cursive;
-  font-size: 1.45rem;
-  font-weight: 800;
-  color: #1a6fa3;
-  flex-shrink: 0;
+/* ─── MASCOT ─── */
+.mascot {
+    position: fixed;
+    right: 70%;
+    bottom: 5%;
+    width: 480px;
+    height: auto;
+    z-index: 300;
+    filter: drop-shadow(0 12px 24px rgba(0, 80, 140, 0.18));
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.brand-icon { font-size: 1.7rem; }
-
-/* Nav links */
-.nav-links {
-  display: flex;
-  gap: 0.4rem;
-  flex: 1;
+.mascot-img {
+    width: 100%;
+    height: auto;
+    display: block;
 }
-.nav-item {
-  padding: 0.4rem 1rem;
-  border-radius: 99px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #4a7c9e;
-  text-decoration: none;
-  transition: background 0.18s, color 0.18s;
+@media (max-width: 1200px) {
+    .mascot {
+        right: 5%;
+        width: 220px;
+    }
 }
-.nav-item:hover { background: rgba(30, 120, 190, 0.1); color: #1a6fa3; }
-.nav-item.active { background: #1a6fa3; color: #fff; }
-
-/* User info */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-left: auto;
+@media (max-width: 900px) {
+    .mascot {
+        right: 10px;
+        width: 160px;
+        bottom: 8%;
+        opacity: 0.9;
+    }
 }
-.xp-badge {
-  background: linear-gradient(135deg, #ffe066, #ffc300);
-  color: #7a4e00;
-  font-weight: 800;
-  font-size: 0.78rem;
-  padding: 0.28rem 0.85rem;
-  border-radius: 99px;
-  box-shadow: 0 2px 8px rgba(255,180,0,0.3);
-  white-space: nowrap;
+.mascot.bounce {
+    animation: mascot-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.avatar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-.avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4ec9ff, #1a6fa3);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.95rem;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 2px 8px rgba(30,120,190,0.35);
-  flex-shrink: 0;
-}
-.user-name {
-  font-weight: 700;
-  color: #1a6fa3;
-  font-size: 0.9rem;
-}
-.icon-btn {
-  font-size: 1.1rem;
-  text-decoration: none;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-.icon-btn:hover { opacity: 1; }
-
-/* ── Main content ── */
-.playground-main {
-  flex: 1;
-  position: relative;
-  z-index: 1;
+@keyframes mascot-bounce {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-28px) rotate(-3deg);
+    }
+    55% {
+        transform: translateY(-14px) rotate(2deg);
+    }
+    75% {
+        transform: translateY(-6px) rotate(-1deg);
+    }
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
 }
 
-/* ── Footer ── */
-.grass-footer {
-  position: relative;
-  z-index: 1;
-  margin-top: 2rem;
+/* ─── MUSIC FAB ─── */
+.music-fab {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    z-index: 301;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4fc3f7;
+    transition: all 0.25s;
 }
-.grass-strip {
-  height: 22px;
-  background: repeating-linear-gradient(
-    90deg,
-    #5cb85c 0px,   #5cb85c 14px,
-    #45a145 14px,  #45a145 28px,
-    #6dcc6d 28px,  #6dcc6d 42px
-  );
-  clip-path: polygon(
-    0% 100%, 1.5% 15%, 3% 100%, 4.5% 5%,  6% 100%, 7.5% 25%,
-    9% 100%, 10.5% 10%, 12% 100%, 13.5% 20%, 15% 100%,
-    16.5% 8%, 18% 100%, 19.5% 18%, 21% 100%, 22.5% 12%,
-    24% 100%, 25.5% 22%, 27% 100%, 28.5% 6%, 30% 100%,
-    31.5% 18%, 33% 100%, 34.5% 14%, 36% 100%, 37.5% 24%,
-    39% 100%, 40.5% 10%, 42% 100%, 43.5% 18%, 45% 100%,
-    46.5% 6%, 48% 100%, 49.5% 20%, 51% 100%, 52.5% 14%,
-    54% 100%, 55.5% 22%, 57% 100%, 58.5% 8%, 60% 100%,
-    61.5% 18%, 63% 100%, 64.5% 12%, 66% 100%, 67.5% 25%,
-    69% 100%, 70.5% 10%, 72% 100%, 73.5% 20%, 75% 100%,
-    76.5% 6%, 78% 100%, 79.5% 18%, 81% 100%, 82.5% 14%,
-    84% 100%, 85.5% 22%, 87% 100%, 88.5% 8%, 90% 100%,
-    91.5% 18%, 93% 100%, 94.5% 12%, 96% 100%, 97.5% 20%, 100% 100%
-  );
+.music-fab:hover {
+    transform: scale(1.1);
+    background: white;
 }
-.footer-bar {
-  background: #3a9a3a;
-  color: #d4ffd4;
-  text-align: center;
-  padding: 0.55rem 1rem;
-  font-size: 0.78rem;
-  font-weight: 600;
+.music-fab.music-on {
+    background: #4fc3f7;
+    color: white;
 }
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .top-bar-inner { padding: 0.6rem 1rem; gap: 0.8rem; }
-  .user-name { display: none; }
-  .xp-badge { display: none; }
-  .brand-name { font-size: 1.2rem; }
-}
-@media (max-width: 480px) {
-  .nav-links .nav-item:not(.active) { display: none; }
+.music-fab svg {
+    width: 24px;
+    height: 24px;
 }
 </style>

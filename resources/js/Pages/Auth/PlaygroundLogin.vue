@@ -1,22 +1,20 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
-
-
-// ── NO LAYOUT - Self-contained component ──
+import PlaygroundAuthLayout from "@/Layouts/PlaygroundAuthLayout.vue";
 
 // ── State ──
 const cardReady = ref(false);
-const mascotBounce = ref(false);
 const shakeBtn = ref(false);
 const focusNama = ref(false);
-const focusKelas = ref(false);
-const musicOn = ref(false);
+const focusPassword = ref(false);
+const showPassword = ref(false);
+const layoutRef = ref(null);
 
 // ── Inertia Form (handles loading, errors, CSRF otomatis) ──
 const form = useForm({
     nama: "",
-    kelas: "",
+    password: "",
 });
 
 // ── Lifecycle ──
@@ -24,23 +22,10 @@ onMounted(() => {
     setTimeout(() => {
         cardReady.value = true;
     }, 100);
-    setTimeout(() => {
-        mascotBounce.value = true;
-        setTimeout(() => {
-            mascotBounce.value = false;
-        }, 1200);
-    }, 800);
 });
 
-// ── Music Toggle ──
-function toggleMusic() {
-    musicOn.value = !musicOn.value;
-    // Integrate audio here if needed
-    // e.g. audioRef.value.play() / .pause()
-}
-
 // ── Validation lokal ──
-const localErrors = ref({ nama: "", kelas: "" });
+const localErrors = ref({ nama: "", password: "" });
 
 function validateNama() {
     if (!form.nama.trim()) {
@@ -55,12 +40,16 @@ function validateNama() {
     return true;
 }
 
-function validateKelas() {
-    if (!form.kelas) {
-        localErrors.value.kelas = "Pilih kelas terlebih dahulu!";
+function validatePassword() {
+    if (!form.password) {
+        localErrors.value.password = "Password wajib diisi!";
         return false;
     }
-    localErrors.value.kelas = "";
+    if (form.password.length < 6) {
+        localErrors.value.password = "Password minimal 6 karakter";
+        return false;
+    }
+    localErrors.value.password = "";
     return true;
 }
 
@@ -69,17 +58,17 @@ const errors = {
     get nama() {
         return localErrors.value.nama || form.errors.nama || "";
     },
-    get kelas() {
-        return localErrors.value.kelas || form.errors.kelas || "";
+    get password() {
+        return localErrors.value.password || form.errors.password || "";
     },
 };
 
 // ── Submit via Inertia ──
-function handleMulai() {
+function handleLogin() {
     const namaOk = validateNama();
-    const kelasOk = validateKelas();
+    const passwordOk = validatePassword();
 
-    if (!namaOk || !kelasOk) {
+    if (!namaOk || !passwordOk) {
         shakeBtn.value = true;
         setTimeout(() => {
             shakeBtn.value = false;
@@ -87,43 +76,38 @@ function handleMulai() {
         return;
     }
 
-    mascotBounce.value = true;
+    if (layoutRef.value) {
+        layoutRef.value.mascotBounce = true;
+    }
 
-    form.post(route("playground.start"), {
+    form.post(route("playground.authenticate"), {
         onSuccess: () => {
-            mascotBounce.value = false;
-            // router.visit(route("playground.index"));
-            // Inertia akan redirect otomatis sesuai response dari controller
+            if (layoutRef.value) {
+                layoutRef.value.mascotBounce = false;
+            }
+            // Redirect ke playground.index
+            router.visit(route("playground.index"));
         },
         onError: () => {
-            mascotBounce.value = false;
+            if (layoutRef.value) {
+                layoutRef.value.mascotBounce = false;
+            }
             shakeBtn.value = true;
             setTimeout(() => {
                 shakeBtn.value = false;
             }, 600);
         },
         onFinish: () => {
-            mascotBounce.value = false;
+            if (layoutRef.value) {
+                layoutRef.value.mascotBounce = false;
+            }
         },
     });
 }
 </script>
 
 <template>
-    <!-- ░░ FULL PAGE WITH BACKGROUND IMAGE ░░ -->
-    <div class="landing-page">
-        <!-- Background Image -->
-        <div class="bg-image"></div>
-
-        <!-- ░░ MASCOT CHARACTER IMAGE ░░ -->
-        <div class="mascot" :class="{ bounce: mascotBounce }">
-            <img
-                src="/images/templates/pose_keren.png"
-                alt="Character Mascot"
-                class="mascot-img"
-            />
-        </div>
-
+    <PlaygroundAuthLayout ref="layoutRef">
         <!-- ░░ CARD ░░ -->
         <div class="start-card" :class="{ 'card-in': cardReady }">
             <!-- Logo -->
@@ -188,198 +172,92 @@ function handleMulai() {
                 </div>
                 <p v-if="errors.nama" class="err-text">{{ errors.nama }}</p>
 
-                <!-- Select Kelas -->
+                <!-- Input Password -->
                 <div
-                    class="field field-select"
+                    class="field"
                     :class="{
-                        focused: focusKelas,
-                        filled: form.kelas,
-                        errored: errors.kelas,
+                        focused: focusPassword,
+                        filled: form.password,
+                        errored: errors.password,
                     }"
                 >
-                    <select
-                        v-model="form.kelas"
+                    <input
+                        v-model="form.password"
+                        :type="showPassword ? 'text' : 'password'"
+                        placeholder="Password"
+                        maxlength="60"
+                        autocomplete="off"
                         @focus="
-                            focusKelas = true;
-                            localErrors.kelas = '';
-                            form.clearErrors('kelas');
+                            focusPassword = true;
+                            localErrors.password = '';
+                            form.clearErrors('password');
                         "
                         @blur="
-                            focusKelas = false;
-                            validateKelas();
+                            focusPassword = false;
+                            validatePassword();
                         "
-                        @change="
-                            localErrors.kelas = '';
-                            form.clearErrors('kelas');
+                        @input="
+                            localErrors.password = '';
+                            form.clearErrors('password');
                         "
+                    />
+                    <button
+                        v-if="form.password"
+                        type="button"
+                        class="toggle-password-btn"
+                        @click="showPassword = !showPassword"
                     >
-                        <option value="" disabled>Pilih Klass</option>
-                        <optgroup label="Sekolah Dasar (SD)">
-                            <option value="SD-1">Kelas 1 SD</option>
-                            <option value="SD-2">Kelas 2 SD</option>
-                            <option value="SD-3">Kelas 3 SD</option>
-                            <option value="SD-4">Kelas 4 SD</option>
-                            <option value="SD-5">Kelas 5 SD</option>
-                            <option value="SD-6">Kelas 6 SD</option>
-                        </optgroup>
-                        <optgroup label="Sekolah Menengah Pertama (SMP)">
-                            <option value="SMP-7">Kelas 7 SMP</option>
-                            <option value="SMP-8">Kelas 8 SMP</option>
-                            <option value="SMP-9">Kelas 9 SMP</option>
-                        </optgroup>
-                        <optgroup label="Sekolah Menengah Atas (SMA)">
-                            <option value="SMA-10">Kelas 10 SMA</option>
-                            <option value="SMA-11">Kelas 11 SMA</option>
-                            <option value="SMA-12">Kelas 12 SMA</option>
-                        </optgroup>
-                    </select>
-                    <svg
-                        class="arrow-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                    >
-                        <circle cx="12" cy="12" r="1" fill="currentColor" />
-                    </svg>
+                        <svg
+                            v-if="showPassword"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                        >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <svg
+                            v-else
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                        >
+                            <path
+                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                            />
+                            <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                    </button>
                 </div>
-                <p v-if="errors.kelas" class="err-text">{{ errors.kelas }}</p>
+                <p v-if="errors.password" class="err-text">{{ errors.password }}</p>
 
                 <button
                     class="btn-mulai"
                     :class="{
-                        'btn-active': form.nama && form.kelas,
+                        'btn-active': form.nama && form.password,
                         'btn-loading': form.processing,
                         'btn-shake': shakeBtn,
                     }"
-                    @click="handleMulai"
+                    @click="handleLogin"
                     :disabled="form.processing"
                 >
                     <template v-if="!form.processing">
-                        Mulai Petulangan
+                        Masuk
                     </template>
                     <template v-else>
                         <span class="spinner"></span>
-                        Memulai...
+                        Masuk...
                     </template>
                 </button>
             </div>
         </div>
-
-        <!-- ░░ MUSIC BUTTON ░░ -->
-        <button
-            class="music-fab"
-            @click="toggleMusic"
-            :class="{ 'music-on': musicOn }"
-        >
-            <svg
-                v-if="musicOn"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-            </svg>
-            <svg
-                v-else
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-        </button>
-    </div>
+    </PlaygroundAuthLayout>
 </template>
 
 <style scoped>
 /* ─── RESET & BASE ─── */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* ─── LANDING PAGE ─── */
-.landing-page {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    font-family: "Nunito", "Baloo 2", sans-serif;
-}
-
-/* ─── BACKGROUND IMAGE ─── */
-.bg-image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("/images/templates/background.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-/* ─── MASCOT ─── */
-.mascot {
-    position: fixed;
-    right: 70%;
-    bottom: 5%;
-    width: 480px;
-    height: auto;
-    z-index: 300;
-    filter: drop-shadow(0 12px 24px rgba(0, 80, 140, 0.18));
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.mascot-img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-@media (max-width: 1200px) {
-    .mascot {
-        right: 5%;
-        width: 220px;
-    }
-}
-@media (max-width: 900px) {
-    .mascot {
-        right: 10px;
-        width: 160px;
-        bottom: 8%;
-        opacity: 0.9;
-    }
-}
-.mascot.bounce {
-    animation: mascot-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes mascot-bounce {
-    0% {
-        transform: translateY(0) rotate(0deg);
-    }
-    25% {
-        transform: translateY(-28px) rotate(-3deg);
-    }
-    55% {
-        transform: translateY(-14px) rotate(2deg);
-    }
-    75% {
-        transform: translateY(-6px) rotate(-1deg);
-    }
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-}
-
-/* ─── CARD ─── */
 .start-card {
     position: fixed;
     top: 50%;
@@ -546,6 +424,24 @@ function handleMulai() {
     height: 16px;
 }
 
+.toggle-password-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+.toggle-password-btn:hover {
+    color: #ff7b3d;
+}
+.toggle-password-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
 .err-text {
     font-size: 13px;
     font-weight: 600;
@@ -673,36 +569,4 @@ function handleMulai() {
     }
 }
 
-/* ─── MUSIC FAB ─── */
-.music-fab {
-    position: fixed;
-    bottom: 28px;
-    left: 28px;
-    z-index: 301;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #4fc3f7;
-    transition: all 0.25s;
-}
-.music-fab:hover {
-    transform: scale(1.1);
-    background: white;
-}
-.music-fab.music-on {
-    background: #4fc3f7;
-    color: white;
-}
-.music-fab svg {
-    width: 24px;
-    height: 24px;
-}
 </style>

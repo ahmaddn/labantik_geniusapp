@@ -39,6 +39,16 @@ class PlaygroundController extends Controller
             'streak'         => $siswa['streak'],
         ]);
     }
+    public function pretest(): Response
+    {
+        return Inertia::render('Playground/PretestPage');
+    }
+
+     /**
+     * Halaman quiz – hanya bisa diakses kalau session player ada.
+     *
+     * Route: GET /player/playground/quiz  →  student.quiz
+     */
 
     // ── Dummy data ────────────────────────────────────────────────────────
     private function dummyModules(): array
