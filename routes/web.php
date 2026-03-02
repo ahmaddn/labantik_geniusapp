@@ -4,10 +4,9 @@ use App\Http\Controllers\Admin\ClassesController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Student\PlaygroundController;
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Student\PlaygroundController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -24,6 +23,21 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Playground Routes (Public - No Auth Required)
+Route::prefix('player')->name('playground.')->group(function () {
+    Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
+    Route::get('/playground/pretest', [PlaygroundController::class, 'pretest'])->name('pretest');
+    Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
+});
+
+// Playground Login Routes
+Route::name('playground.')->group(function () {
+    Route::get('/playground-login', [PlaygroundLoginController::class, 'login'])->name('login');
+    Route::post('/playground-auth', [PlaygroundLoginController::class, 'authenticate'])->name('authenticate');
+    Route::post('/playground-start', [PlaygroundLoginController::class, 'start'])->name('start');
+});
+
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 
     // Kelas

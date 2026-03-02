@@ -90,7 +90,9 @@ defineExpose({ mascotBounce });
             <span class="timer-text">{{ formattedTime }}</span>
         </div>
 
+        <!-- ░░ MASCOT CHARACTER ░░ -->
         
+
         <!-- ░░ SLOT FOR PAGE CONTENT ░░ -->
         <main class="layout-content">
             <slot />
