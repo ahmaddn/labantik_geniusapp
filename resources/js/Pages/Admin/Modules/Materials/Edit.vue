@@ -49,7 +49,7 @@ const hasExistingImage = ref(!!props.material.image);
 // Mascot options
 const mascotOptions = computed(() => {
     if (!props.mascots || props.mascots.length === 0) return [];
-    return props.mascots.map((m) => ({ value: m.id, label: m.name }));
+    return props.mascots.map((m) => ({ value: m.id, label: m.name_pose }));
 });
 const getSelectedMascot = (mascotId) =>
     props.mascots.find((m) => m.id == mascotId) || null;
@@ -313,6 +313,15 @@ const toggleCardVariant = () => {
                                         Maskot ini akan muncul di material
                                     </p>
                                 </div>
+                                <!-- Tombol batalkan -->
+                                <button
+                                    type="button"
+                                    @click="materialForm.mascot_id = null"
+                                    class="ml-auto p-1.5 rounded-full text-yellow-600 hover:bg-yellow-200 hover:text-yellow-800 transition"
+                                    title="Batalkan pilihan maskot"
+                                >
+                                    <X class="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -19,6 +19,7 @@ import {
     Inbox,
     Trash2,
     Pencil,
+    Eye,
 } from "lucide-vue-next";
 
 const page = usePage();
@@ -120,6 +121,26 @@ const goToEditMaterial = (materialId) => {
 const goToEditQuiz = (quizId) => {
     router.visit(
         route("admin.modules.missions.quizzes.edit", [
+            props.module.id,
+            props.mission.id,
+            quizId,
+        ]),
+    );
+};
+
+const goToShowMaterial = (materialId) => {
+    router.visit(
+        route("admin.modules.missions.materials.show", [
+            props.module.id,
+            props.mission.id,
+            materialId,
+        ]),
+    );
+};
+
+const goToShowQuiz = (quizId) => {
+    router.visit(
+        route("admin.modules.missions.quizzes.show", [
             props.module.id,
             props.mission.id,
             quizId,
@@ -369,6 +390,12 @@ const formatDate = (dateString) => {
 
                             <div class="flex gap-2">
                                 <Button
+                                    variant="info"
+                                    size="md"
+                                    :icon="Eye"
+                                    @click="goToShowMaterial(item.id)"
+                                />
+                                <Button
                                     variant="warning"
                                     size="md"
                                     :icon="Pencil"
@@ -414,15 +441,31 @@ const formatDate = (dateString) => {
                                         <span
                                             :class="[
                                                 'text-xs px-3 py-1 rounded-full border font-medium',
-                                                item.type === 'multiple_choice'
+                                                item.type === 'multiple_choices'
                                                     ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                                    : 'bg-purple-100 text-purple-700 border-purple-300',
+                                                    : item.type === 'drag_drop'
+                                                      ? 'bg-purple-100 text-purple-700 border-purple-300'
+                                                      : item.type ===
+                                                          'true_false'
+                                                        ? 'bg-green-100 text-green-700 border-green-300'
+                                                        : item.type ===
+                                                            'case_study'
+                                                          ? 'bg-pink-100 text-pink-700 border-pink-300'
+                                                          : 'bg-gray-100 text-gray-700 border-gray-300',
                                             ]"
                                         >
                                             {{
-                                                item.type === "multiple_choice"
+                                                item.type === "multiple_choices"
                                                     ? "MULTIPLE CHOICE"
-                                                    : "DRAG & DROP"
+                                                    : item.type === "drag_drop"
+                                                      ? "DRAG & DROP"
+                                                      : item.type ===
+                                                          "true_false"
+                                                        ? "TRUE / FALSE"
+                                                        : item.type ===
+                                                            "case_study"
+                                                          ? "CASE STUDY"
+                                                          : item.type?.toUpperCase()
                                             }}
                                         </span>
                                         <span
@@ -474,6 +517,12 @@ const formatDate = (dateString) => {
                             </div>
 
                             <div class="flex gap-2">
+                                <Button
+                                    variant="info"
+                                    size="md"
+                                    :icon="Eye"
+                                    @click="goToShowQuiz(item.id)"
+                                />
                                 <Button
                                     variant="warning"
                                     size="md"

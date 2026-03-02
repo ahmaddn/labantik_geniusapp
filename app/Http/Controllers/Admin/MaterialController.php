@@ -45,50 +45,44 @@ class MaterialController extends Controller
      */
     public function store(Learning_modules $modules, Missions $missions, Request $request)
     {
-        // Pastikan mission milik module yang benar
         if ($missions->module_id !== $modules->id) {
             abort(404);
         }
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content' => 'required|string',
-            'mascot_id' => 'nullable|exists:mascots,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'materials' => 'required|array|min:1',
+            'materials.*.title' => 'required|string|max:255',
+            'materials.*.description' => 'nullable|string',
+            'materials.*.content' => 'required|string',
+            'materials.*.mascot_id' => 'nullable|exists:mascots,id',
+            'materials.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
-            'title.required' => 'Judul material wajib diisi.',
-            'content.required' => 'Konten material wajib diisi.',
+            'materials.*.title.required' => 'Judul material wajib diisi.',
+            'materials.*.content.required' => 'Konten material wajib diisi.',
         ]);
 
-        $data = [
-            'mission_id' => $missions->id,
-            'module_id' => $modules->id,
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'content' => $validated['content'],
-            'mascot_id' => $validated['mascot_id'],
-            'created_by' => Auth::id(),
-        ];
+        foreach ($validated['materials'] as $index => $material) {
+            $data = [
+                'mission_id' => $missions->id,
+                'module_id' => $modules->id,
+                'title' => $material['title'],
+                'description' => $material['description'] ?? null,
+                'content' => $material['content'],
+                'mascot_id' => $material['mascot_id'] ?? null,
+                'created_by' => Auth::id(),
+            ];
 
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('materials/images', 'public');
-            $data['image'] = $path;
+            if ($request->hasFile("materials.{$index}.image")) {
+                $path = $request->file("materials.{$index}.image")->store('materials/images', 'public');
+                $data['image'] = $path;
+            }
+
+            Materials::create($data);
         }
-
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('materials/thumbnails', 'public');
-            $data['thumbnail'] = $path;
-        }
-
-        Materials::create($data);
 
         return redirect()
             ->route('admin.modules.missions.show', [$modules->id, $missions->id])
-            ->with('success', 'Material berhasil ditambahkan.');
+            ->with('success', 'Semua material berhasil ditambahkan.');
     }
 
     /**
@@ -103,7 +97,7 @@ class MaterialController extends Controller
 
         $materials->load(['mascot', 'createdBy']);
 
-        return Inertia::render('Admin/Modules/Missions/Materials/Show', [
+        return Inertia::render('Admin/Modules/Materials/Show', [
             'module' => [
                 'id' => $modules->id,
                 'name' => $modules->name,
@@ -129,7 +123,7 @@ class MaterialController extends Controller
         $materials->load(['mascot']);
         $mascots = $modules->template?->mascots ?? [];
 
-        return Inertia::render('Admin/Modules/Missions/Materials/Edit', [
+        return Inertia::render('Admin/Modules/Materials/Edit', [
             'module' => [
                 'id' => $modules->id,
                 'name' => $modules->name,

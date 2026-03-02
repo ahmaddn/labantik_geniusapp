@@ -20,6 +20,7 @@ import {
     Trash2,
     AlertTriangle,
     Inbox,
+    X,
     Image as ImageIcon,
 } from "lucide-vue-next";
 
@@ -55,7 +56,7 @@ const materials = ref([]);
 // Mascot options
 const mascotOptions = computed(() => {
     if (!props.mascots || props.mascots.length === 0) return [];
-    return props.mascots.map((m) => ({ value: m.id, label: m.name }));
+    return props.mascots.map((m) => ({ value: m.id, label: m.name_pose }));
 });
 const getSelectedMascot = (mascotId) =>
     props.mascots.find((m) => m.id == mascotId) || null;
@@ -93,10 +94,6 @@ const validateForm = () => {
     return true;
 };
 
-const nextStep = () => {
-    if (!validateForm()) return;
-    wizardStep.value = 2;
-};
 const prevStep = () => {
     wizardStep.value = 1;
 };
@@ -174,6 +171,12 @@ const finalSave = () => {
                         ]),
                     );
                 }, 1500);
+            },
+            onError: (errors) => {
+                console.error("Validation errors:", errors);
+                showToast(
+                    "Gagal menyimpan: " + Object.values(errors).join(", "),
+                );
             },
         },
     );
@@ -290,13 +293,13 @@ const toggleCardVariant = () => {
                             label="Deskripsi Singkat"
                             v-model="materialForm.description"
                             placeholder="Deskripsi singkat tentang material ini..."
-                            rows="3"
+                            :rows="3"
                         />
                         <TextareaField
                             label="Konten Material"
                             v-model="materialForm.content"
                             placeholder="Tulis konten pembelajaran di sini..."
-                            rows="8"
+                            :rows="8"
                             required
                         />
 
@@ -357,7 +360,7 @@ const toggleCardVariant = () => {
                                 label="Pilih Maskot"
                                 v-model="materialForm.mascot_id"
                                 :options="mascotOptions"
-                                placeholder="Pilih maskot untuk material ini"
+                                placeholder="Pilih maskot untuk materi ini"
                             />
                             <div
                                 v-if="materialForm.mascot_id"
@@ -373,7 +376,7 @@ const toggleCardVariant = () => {
                                         "
                                         class="w-16 h-16 object-contain rounded-lg"
                                     />
-                                    <div>
+                                    <div class="flex-1">
                                         <h4 class="font-bold text-yellow-800">
                                             {{
                                                 getSelectedMascot(
@@ -382,9 +385,18 @@ const toggleCardVariant = () => {
                                             }}
                                         </h4>
                                         <p class="text-sm text-yellow-600">
-                                            Maskot ini akan muncul di material
+                                            Maskot ini akan muncul di Materi
                                         </p>
                                     </div>
+                                    <!-- Tombol batalkan -->
+                                    <button
+                                        type="button"
+                                        @click="materialForm.mascot_id = null"
+                                        class="ml-auto p-1.5 rounded-full text-yellow-600 hover:bg-yellow-200 hover:text-yellow-800 transition"
+                                        title="Batalkan pilihan maskot"
+                                    >
+                                        <X class="w-5 h-5" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -420,19 +432,25 @@ const toggleCardVariant = () => {
                                 Batal
                             </Button>
                             <div class="flex gap-3">
+                                <!-- Tombol langsung ke review jika sudah ada list -->
+
                                 <Button
                                     variant="success"
                                     size="md"
                                     :icon="Plus"
                                     @click="addMaterial"
-                                    >Tambah ke List</Button
                                 >
+                                    Tambah ke List
+                                </Button>
                                 <Button
-                                    variant="primary"
+                                    v-if="materials.length > 0"
+                                    variant="warning"
                                     size="md"
-                                    @click="nextStep"
-                                    >Lanjut Review</Button
+                                    :icon="List"
+                                    @click="wizardStep = 2"
                                 >
+                                    Review ({{ materials.length }})
+                                </Button>
                             </div>
                         </div>
                     </template>
@@ -487,7 +505,7 @@ const toggleCardVariant = () => {
                                         >{{
                                             getSelectedMascot(
                                                 material.mascot_id,
-                                            )?.name || "No Mascot"
+                                            )?.name_pose || "No Mascot"
                                         }}</span
                                     >
                                 </div>
