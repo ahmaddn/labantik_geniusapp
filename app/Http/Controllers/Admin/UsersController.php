@@ -34,7 +34,6 @@ class UsersController extends Controller
         ]);
 
         User::create([
-            'id' => Str::uuid(),
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),

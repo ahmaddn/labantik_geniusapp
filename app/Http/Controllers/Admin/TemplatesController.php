@@ -36,7 +36,12 @@ class TemplatesController extends Controller
     {
         $request->validate([
             'name'               => 'required|string|max:255',
-            'backsound'          => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
+            'backsound' => [
+                'nullable',
+                'file',
+                'mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/ogg,video/mp4',
+                'max:10240'
+            ],
             'backgrounds'        => 'nullable|array',
             'backgrounds.*'      => 'file|mimes:jpg,jpeg,png|max:10240',
             'background_names'   => 'nullable|array',
@@ -60,7 +65,6 @@ class TemplatesController extends Controller
                 }
 
                 $template = Templates::create([
-                    'id' => Str::uuid(),
                     'name'       => $request->name,
                     'backsound'  => $backsoundPath,
                     'created_by' => Auth::id(),
@@ -104,9 +108,19 @@ class TemplatesController extends Controller
 
     public function update(Templates $templates, Request $request)
     {
+        // dd(
+        //     $request->file('backsound')->getClientOriginalName(),
+        //     $request->file('backsound')->getMimeType(),
+        //     $request->file('backsound')->getClientMimeType()
+        // );
         $request->validate([
             'name'               => 'required|string|max:255',
-            'backsound'          => 'nullable|file|mimes:mp3,wav,m4a,ogg|max:10240',
+            'backsound' => [
+                'nullable',
+                'file',
+                'mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/ogg,video/mp4',
+                'max:10240'
+            ],
             'backgrounds'        => 'nullable|array',
             'backgrounds.*'      => 'file|mimes:jpg,jpeg,png|max:10240',
             'background_names'   => 'nullable|array',

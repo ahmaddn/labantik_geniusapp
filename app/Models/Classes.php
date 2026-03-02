@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Classes extends Model
 {
@@ -15,6 +16,15 @@ class Classes extends Model
         'description',
         'teacher_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = Str::uuid();
+            }
+        });
+    }
 
     public function teacher()
     {

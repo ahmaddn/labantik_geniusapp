@@ -49,9 +49,15 @@ const props = defineProps({
         type: String,
         default: "blue",
         validator: (value) =>
-            ["blue", "green", "yellow", "red", "purple", "gray"].includes(
-                value,
-            ),
+            [
+                "blue",
+                "green",
+                "yellow",
+                "red",
+                "purple",
+                "gray",
+                "orange",
+            ].includes(value),
     },
 });
 
@@ -84,6 +90,7 @@ const getBorderColorClass = computed(() => {
         red: "border-red-200 focus:border-red-400",
         purple: "border-purple-200 focus:border-purple-400",
         gray: "border-gray-200 focus:border-gray-400",
+        orange: "border-orange-200 focus:border-orange-400",
     };
     return colors[props.borderColor];
 });

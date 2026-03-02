@@ -40,9 +40,15 @@ const props = defineProps({
         type: String,
         default: "blue",
         validator: (value) =>
-            ["blue", "green", "yellow", "red", "purple", "gray"].includes(
-                value,
-            ),
+            [
+                "blue",
+                "green",
+                "yellow",
+                "red",
+                "purple",
+                "gray",
+                "orange",
+            ].includes(value),
     },
     optionValue: {
         type: String,
@@ -148,6 +154,7 @@ const borderClasses = computed(() => {
         red: "border-red-200 focus-within:border-red-400",
         purple: "border-purple-200 focus-within:border-purple-400",
         gray: "border-gray-200 focus-within:border-gray-400",
+        orange: "border-orange-200 focus-within:border-orange-400",
     };
     return colors[props.borderColor];
 });
@@ -160,6 +167,7 @@ const activeColorClasses = computed(() => {
         red: "bg-red-50 text-red-600",
         purple: "bg-purple-50 text-purple-600",
         gray: "bg-gray-50 text-gray-600",
+        orange: "bg-orange-50 text-orange-600",
     };
     return colors[props.borderColor];
 });
@@ -172,6 +180,7 @@ const checkColorClass = computed(() => {
         red: "text-red-500",
         purple: "text-purple-500",
         gray: "text-gray-500",
+        orange: "text-orange-500",
     };
     return colors[props.borderColor];
 });

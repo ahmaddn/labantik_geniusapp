@@ -80,15 +80,7 @@ const menuItems = [
         borderColor: "border-blue-300",
         activeColor: "bg-blue-500",
     },
-    {
-        name: "Playground",
-        route: "playground.login",
-        icon: Users,
-        bgColor: "bg-blue-100",
-        iconColor: "text-blue-600",
-        borderColor: "border-blue-300",
-        activeColor: "bg-blue-500",
-    },
+
 ];
 </script>
 
