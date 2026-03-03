@@ -39,6 +39,7 @@ Route::name('playground.')->group(function () {
     Route::get('/playground-login', [PlaygroundLoginController::class, 'login'])->name('login');
     Route::post('/playground-auth', [PlaygroundLoginController::class, 'authenticate'])->name('authenticate');
     Route::post('/playground-start', [PlaygroundLoginController::class, 'start'])->name('start');
+    Route::post('/playground-logout', [PlaygroundLoginController::class, 'logout'])->name('logout');
 });
 
 Route::middleware(['auth', 'role:admin,guru'])->prefix('admin')->name('admin.')->group(function () {
