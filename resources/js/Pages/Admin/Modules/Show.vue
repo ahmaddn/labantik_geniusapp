@@ -1,21 +1,25 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref } from "vue";
-import { router } from "@inertiajs/vue3";
+import { ref, watch } from "vue";
+import { router, usePage, useForm } from "@inertiajs/vue3";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
+import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import InputField from "@/Components/UI/Forms/InputField.vue";
 import {
     ArrowLeft,
     Flag,
-    FileText,
-    HelpCircle,
     Plus,
     Inbox,
-    Star,
     Trash2,
+    Pencil,
+    Loader2,
+    Hash,
 } from "lucide-vue-next";
+
+const page = usePage();
 
 // Props dari backend
 const props = defineProps({
@@ -30,49 +34,137 @@ const props = defineProps({
 });
 
 // State management
+const showAddMissionModal = ref(false);
+const showEditMissionModal = ref(false);
 const showDeleteDialog = ref(false);
-const selectedMissionId = ref(null);
-const successMessage = ref("");
-const showSuccess = ref(false);
-const cardVariant = ref("playful");
+const selectedMission = ref(null);
 
-// Toast notification
-const showToast = (message) => {
-    successMessage.value = message;
-    showSuccess.value = true;
-    setTimeout(() => {
-        showSuccess.value = false;
-    }, 2500);
+// Form untuk tambah mission
+const form = useForm({
+    mission_count: 1,
+});
+
+// Form untuk edit mission
+const editForm = useForm({
+    name: "",
+    order_number: null,
+});
+
+// Toast
+const toastMessage = ref("");
+const toastType = ref("success");
+const toastVisible = ref(false);
+
+const triggerToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    toastVisible.value = true;
+    setTimeout(() => (toastVisible.value = false), 2800);
 };
+
+// Flash messages
+watch(
+    () => page.props.flash?.success,
+    (val) => {
+        if (val) triggerToast(val, "success");
+    },
+);
+watch(
+    () => page.props.flash?.error,
+    (val) => {
+        if (val) triggerToast(val, "error");
+    },
+);
 
 // Navigate functions
 const goBack = () => {
     router.visit(route("admin.modules.index"));
 };
 
-const goToAddMission = () => {
-    router.visit(route("admin.modules.mission", props.module.id));
+const openAddMissionModal = () => {
+    form.reset();
+    form.clearErrors();
+    showAddMissionModal.value = true;
+};
+
+const closeAddMissionModal = () => {
+    showAddMissionModal.value = false;
+    form.reset();
+    form.clearErrors();
+};
+
+const saveMissions = () => {
+    form.post(route("admin.modules.missions.store", props.module.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeAddMissionModal();
+        },
+    });
 };
 
 const goToShowMission = (missionId) => {
     router.visit(
-        route("admin.modules.mission.show", [props.module.id, missionId]),
+        route("admin.modules.missions.show", [props.module.id, missionId]),
     );
 };
 
-const confirmDeleteMission = (missionId) => {
-    selectedMissionId.value = missionId;
+const openEditMissionModal = (mission) => {
+    selectedMission.value = mission;
+    editForm.reset();
+    editForm.clearErrors();
+    editForm.name = mission.name;
+    editForm.order_number = mission.order_number;
+    showEditMissionModal.value = true;
+};
+
+const closeEditMissionModal = () => {
+    showEditMissionModal.value = false;
+    editForm.reset();
+    editForm.clearErrors();
+    selectedMission.value = null;
+};
+
+const updateMission = () => {
+    if (!selectedMission.value) return;
+
+    editForm.put(
+        route("admin.modules.missions.update", [
+            props.module.id,
+            selectedMission.value.id,
+        ]),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeEditMissionModal();
+            },
+        },
+    );
+};
+
+const confirmDeleteMission = (mission) => {
+    selectedMission.value = mission;
     showDeleteDialog.value = true;
 };
 
 const deleteMission = () => {
-    console.log("Delete mission:", selectedMissionId.value);
-    showDeleteDialog.value = false;
-    showToast("Mission berhasil dihapus.");
-};
+    if (!selectedMission.value) return;
 
-const toggleCardVariant = () => {
-    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
+    router.delete(
+        route("admin.modules.missions.destroy", [
+            props.module.id,
+            selectedMission.value.id,
+        ]),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showDeleteDialog.value = false;
+                selectedMission.value = null;
+            },
+            onError: () => {
+                triggerToast("Gagal menghapus mission.", "error");
+            },
+        },
+    );
 };
 </script>
 
@@ -95,9 +187,12 @@ const toggleCardVariant = () => {
                         <h1
                             class="text-2xl md:text-3xl font-heading font-bold text-gray-800 mb-2"
                         >
-                            {{ module.title }}
+                            {{ module.name }}
                         </h1>
-                        <p class="text-sm text-gray-600 mb-4">
+                        <p
+                            v-if="module.description"
+                            class="text-sm text-gray-600 mb-4"
+                        >
                             {{ module.description }}
                         </p>
 
@@ -108,23 +203,9 @@ const toggleCardVariant = () => {
                             >
                                 <Flag class="text-purple-500 w-4 h-4" />
                                 <span class="text-sm font-medium text-gray-700">
-                                    {{ missions.length }} Missions
-                                </span>
-                            </div>
-                            <div
-                                class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl border-2 border-green-200"
-                            >
-                                <FileText class="text-green-500 w-4 h-4" />
-                                <span class="text-sm font-medium text-gray-700">
-                                    {{ module.materials_count || 0 }} Materials
-                                </span>
-                            </div>
-                            <div
-                                class="flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-xl border-2 border-orange-200"
-                            >
-                                <HelpCircle class="text-orange-500 w-4 h-4" />
-                                <span class="text-sm font-medium text-gray-700">
-                                    {{ module.quizzes_count || 0 }} Quizzes
+                                    {{ missions.length }} Mission{{
+                                        missions.length !== 1 ? "s" : ""
+                                    }}
                                 </span>
                             </div>
                         </div>
@@ -133,23 +214,10 @@ const toggleCardVariant = () => {
                     <!-- Actions -->
                     <div class="flex gap-2">
                         <Button
-                            :variant="
-                                cardVariant === 'playful' ? 'warning' : 'light'
-                            "
-                            size="md"
-                            :icon="Star"
-                            @click="toggleCardVariant"
-                        >
-                            {{
-                                cardVariant === "playful" ? "Playful" : "Normal"
-                            }}
-                        </Button>
-
-                        <Button
-                            variant="success"
+                            variant="primary"
                             size="lg"
                             :icon="Plus"
-                            @click="goToAddMission"
+                            @click="openAddMissionModal"
                         >
                             Tambah Mission
                         </Button>
@@ -182,20 +250,19 @@ const toggleCardVariant = () => {
                         Belum ada Mission
                     </h3>
                     <p class="text-gray-500 mb-6">
-                        Mulai dengan menambahkan mission pertama untuk module
-                        ini
+                        Mulai dengan menambahkan mission pertama untuk modul ini
                     </p>
                     <Button
-                        variant="success"
+                        variant="primary"
                         size="lg"
                         :icon="Plus"
-                        @click="goToAddMission"
+                        @click="openAddMissionModal"
                     >
                         Tambah Mission Pertama
                     </Button>
                 </div>
 
-                <!-- Missions Grid menggunakan Card -->
+                <!-- Missions Grid -->
                 <TransitionGroup
                     v-else
                     name="card"
@@ -205,49 +272,55 @@ const toggleCardVariant = () => {
                     <Card
                         v-for="mission in missions"
                         :key="mission.id"
-                        :variant="cardVariant"
-                        :title="mission.name"
-                        :subtitle="mission.description"
-                        :icon="Flag"
-                        icon-color="purple"
                         border-color="purple"
-                        :badge="`#${mission.order_number}`"
-                        badge-color="purple"
+                        class="cursor-pointer hover:scale-[1.02] transition-all duration-200"
                         @click="goToShowMission(mission.id)"
                     >
-                        <!-- Mission Stats -->
+                        <!-- Badge Order -->
                         <div
-                            class="space-y-2 pt-2 border-t-2 border-purple-100"
+                            class="absolute top-4 right-4 bg-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5"
                         >
-                            <div
-                                class="flex items-center gap-2 text-sm text-gray-600"
-                            >
-                                <FileText class="text-green-500 w-4 h-4" />
-                                <span class="font-medium">
-                                    {{ mission.materials_count || 0 }} Materials
-                                </span>
-                            </div>
-                            <div
-                                class="flex items-center gap-2 text-sm text-gray-600"
-                            >
-                                <HelpCircle class="text-orange-500 w-4 h-4" />
-                                <span class="font-medium">
-                                    {{ mission.quizzes_count || 0 }} Quizzes
-                                </span>
-                            </div>
+                            <Hash class="w-3.5 h-3.5" />
+                            {{ mission.order_number }}
                         </div>
+
+                        <!-- Icon -->
+                        <div
+                            class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center"
+                        >
+                            <Flag class="w-12 h-12 text-purple-400" />
+                        </div>
+
+                        <!-- Nama Mission -->
+                        <h3
+                            class="font-heading font-bold text-gray-800 text-lg leading-snug pr-12"
+                        >
+                            {{ mission.name }}
+                        </h3>
 
                         <!-- Footer Actions -->
                         <template #footer>
-                            <div class="flex justify-end gap-2 mt-4">
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    :icon="Trash2"
-                                    @click.stop="
-                                        confirmDeleteMission(mission.id)
-                                    "
-                                />
+                            <div
+                                class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
+                                @click.stop
+                            >
+                                <!-- Edit Button -->
+                                <button
+                                    @click="openEditMissionModal(mission)"
+                                    title="Edit Mission"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
+                                >
+                                    <Pencil class="w-4 h-4" />
+                                </button>
+
+                                <!-- Delete Button -->
+                                <button
+                                    @click="confirmDeleteMission(mission)"
+                                    title="Hapus Mission"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-red-200"
+                                >
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
                             </div>
                         </template>
                     </Card>
@@ -255,16 +328,161 @@ const toggleCardVariant = () => {
             </div>
         </div>
 
+        <!-- Modal Tambah Mission -->
+        <Modal
+            :show="showAddMissionModal"
+            title="Tambah Mission Baru"
+            @close="closeAddMissionModal"
+            max-width="md"
+        >
+            <div class="space-y-5">
+                <div
+                    class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4"
+                >
+                    <p class="text-sm text-gray-700">
+                        Mission yang ditambahkan akan otomatis diberi nama
+                        <span class="font-bold text-purple-600"
+                            >"Misi 1", "Misi 2"</span
+                        >, dll. Anda dapat mengubah namanya nanti.
+                    </p>
+                </div>
+
+                <InputField
+                    v-model.number="form.mission_count"
+                    label="Jumlah Mission"
+                    type="number"
+                    placeholder="Contoh: 5"
+                    :icon="Hash"
+                    min="1"
+                    max="20"
+                    required
+                    border-color="purple"
+                    :error="form.errors.mission_count"
+                >
+                    <template #help>
+                        Masukkan jumlah mission yang ingin ditambahkan (1-20)
+                    </template>
+                </InputField>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="light"
+                        size="md"
+                        :disabled="form.processing"
+                        @click="closeAddMissionModal"
+                    >
+                        Batal
+                    </Button>
+
+                    <Button
+                        variant="primary"
+                        size="md"
+                        :disabled="form.processing"
+                        @click="saveMissions"
+                    >
+                        <span
+                            v-if="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                <Plus class="w-4 h-4" />
+                                Tambah {{ form.mission_count }} Mission
+                            </span>
+                        </span>
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Edit Mission -->
+        <Modal
+            :show="showEditMissionModal"
+            title="Edit Mission"
+            @close="closeEditMissionModal"
+            max-width="md"
+        >
+            <div class="space-y-5">
+                <InputField
+                    v-model="editForm.name"
+                    label="Nama Mission"
+                    type="text"
+                    placeholder="Contoh: Misi Pengenalan"
+                    :icon="Flag"
+                    required
+                    border-color="purple"
+                    :error="editForm.errors.name"
+                >
+                    <template #help>
+                        Ubah nama mission sesuai kebutuhan
+                    </template>
+                </InputField>
+
+                <InputField
+                    v-model.number="editForm.order_number"
+                    label="Nomor Urut"
+                    type="number"
+                    placeholder="Contoh: 1"
+                    :icon="Hash"
+                    min="1"
+                    required
+                    border-color="purple"
+                    :error="editForm.errors.order_number"
+                >
+                    <template #help> Atur urutan tampilan mission </template>
+                </InputField>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="light"
+                        size="md"
+                        :disabled="editForm.processing"
+                        @click="closeEditMissionModal"
+                    >
+                        Batal
+                    </Button>
+
+                    <Button
+                        variant="primary"
+                        size="md"
+                        :disabled="editForm.processing"
+                        @click="updateMission"
+                    >
+                        <span
+                            v-if="editForm.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                <Pencil class="w-4 h-4" />
+                                Simpan Perubahan
+                            </span>
+                        </span>
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
         <!-- Delete Confirmation Dialog -->
         <ConfirmDialog
             :show="showDeleteDialog"
-            title="Apakah kamu yakin ingin menghapus mission ini?"
-            message="Semua materials dan quizzes di dalam mission ini juga akan terhapus."
+            title="Hapus mission ini?"
+            :message="`Mission '${selectedMission?.name}' akan dihapus secara permanen.`"
             @confirm="deleteMission"
             @cancel="showDeleteDialog = false"
         />
 
         <!-- Toast Notification -->
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast :show="toastVisible" :message="toastMessage" :type="toastType" />
     </AppLayout>
 </template>

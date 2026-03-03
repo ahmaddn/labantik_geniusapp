@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref, computed } from "vue";
-import { router } from "@inertiajs/vue3";
+import { ref, computed, watch } from "vue";
+import { router, usePage } from "@inertiajs/vue3";
 import Button from "@/Components/UI/Button.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
@@ -10,9 +10,6 @@ import {
     ChevronRight,
     Plus,
     FileText,
-    FileEdit,
-    Video,
-    FileType,
     HelpCircle,
     Clock,
     User,
@@ -21,7 +18,11 @@ import {
     List,
     Inbox,
     Trash2,
+    Pencil,
+    Eye,
 } from "lucide-vue-next";
+
+const page = usePage();
 
 // Props dari backend
 const props = defineProps({
@@ -35,8 +36,32 @@ const props = defineProps({
 const showDeleteDialog = ref(false);
 const deleteType = ref("");
 const selectedItemId = ref(null);
-const successMessage = ref("");
-const showSuccess = ref(false);
+
+// Toast
+const toastMessage = ref("");
+const toastType = ref("success");
+const toastVisible = ref(false);
+
+const triggerToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    toastVisible.value = true;
+    setTimeout(() => (toastVisible.value = false), 2800);
+};
+
+// Flash messages
+watch(
+    () => page.props.flash?.success,
+    (val) => {
+        if (val) triggerToast(val, "success");
+    },
+);
+watch(
+    () => page.props.flash?.error,
+    (val) => {
+        if (val) triggerToast(val, "error");
+    },
+);
 
 // Combine materials and quizzes, sorted by creation date
 const sortedItems = computed(() => {
@@ -61,25 +86,65 @@ const totalItems = computed(
     () => props.materials.length + props.quizzes.length,
 );
 
-const showToast = (message) => {
-    successMessage.value = message;
-    showSuccess.value = true;
-    setTimeout(() => {
-        showSuccess.value = false;
-    }, 2500);
-};
-
 const goBack = () => {
     router.visit(route("admin.modules.show", props.module.id));
 };
+
 const goToAddMaterial = () => {
     router.visit(
-        route("admin.modules.material", [props.module.id, props.mission.id]),
+        route("admin.modules.missions.materials.create", [
+            props.module.id,
+            props.mission.id,
+        ]),
     );
 };
+
 const goToAddQuiz = () => {
     router.visit(
-        route("admin.modules.quiz", [props.module.id, props.mission.id]),
+        route("admin.modules.missions.quizzes.create", [
+            props.module.id,
+            props.mission.id,
+        ]),
+    );
+};
+
+const goToEditMaterial = (materialId) => {
+    router.visit(
+        route("admin.modules.missions.materials.edit", [
+            props.module.id,
+            props.mission.id,
+            materialId,
+        ]),
+    );
+};
+
+const goToEditQuiz = (quizId) => {
+    router.visit(
+        route("admin.modules.missions.quizzes.edit", [
+            props.module.id,
+            props.mission.id,
+            quizId,
+        ]),
+    );
+};
+
+const goToShowMaterial = (materialId) => {
+    router.visit(
+        route("admin.modules.missions.materials.show", [
+            props.module.id,
+            props.mission.id,
+            materialId,
+        ]),
+    );
+};
+
+const goToShowQuiz = (quizId) => {
+    router.visit(
+        route("admin.modules.missions.quizzes.show", [
+            props.module.id,
+            props.mission.id,
+            quizId,
+        ]),
     );
 };
 
@@ -96,36 +161,41 @@ const confirmDeleteQuiz = (quizId) => {
 };
 
 const deleteItem = () => {
-    console.log(`Delete ${deleteType.value}:`, selectedItemId.value);
-    showDeleteDialog.value = false;
-    showToast(
-        deleteType.value === "material"
-            ? "Material berhasil dihapus."
-            : "Quiz berhasil dihapus.",
-    );
-};
-
-const getMaterialIcon = (type) => {
-    const icons = { text: FileEdit, video: Video, pdf: FileType };
-    return icons[type] || FileText;
-};
-
-const getMaterialColor = (type) => {
-    const colors = {
-        text: "text-blue-500",
-        video: "text-red-500",
-        pdf: "text-orange-500",
-    };
-    return colors[type] || "text-gray-500";
-};
-
-const getMaterialBadge = (type) => {
-    const badges = {
-        text: "bg-blue-100 text-blue-700 border-blue-300",
-        video: "bg-red-100 text-red-700 border-red-300",
-        pdf: "bg-orange-100 text-orange-700 border-orange-300",
-    };
-    return badges[type] || "bg-gray-100 text-gray-700 border-gray-300";
+    if (deleteType.value === "material") {
+        router.delete(
+            route("admin.modules.missions.materials.destroy", [
+                props.module.id,
+                props.mission.id,
+                selectedItemId.value,
+            ]),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showDeleteDialog.value = false;
+                },
+                onError: () => {
+                    triggerToast("Gagal menghapus material.", "error");
+                },
+            },
+        );
+    } else {
+        router.delete(
+            route("admin.modules.missions.quizzes.destroy", [
+                props.module.id,
+                props.mission.id,
+                selectedItemId.value,
+            ]),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showDeleteDialog.value = false;
+                },
+                onError: () => {
+                    triggerToast("Gagal menghapus quiz.", "error");
+                },
+            },
+        );
+    }
 };
 
 const formatDate = (dateString) => {
@@ -160,7 +230,7 @@ const formatDate = (dateString) => {
                         <div
                             class="flex items-center gap-2 text-sm text-gray-500 mb-2"
                         >
-                            <span>{{ module.title }}</span>
+                            <span>{{ module.title || module.name }}</span>
                             <ChevronRight class="w-3 h-3" />
                             <span class="text-purple-600 font-medium">
                                 Mission {{ mission.order_number }}
@@ -205,38 +275,35 @@ const formatDate = (dateString) => {
             <!-- Combined Materials & Quizzes Section -->
             <div>
                 <div
-                    class="bg-gradient-to-r from-green-100 to-orange-100 rounded-2xl p-4 flex items-center justify-between mb-4"
+                    class="bg-gradient-to-r from-green-100 to-orange-100 rounded-2xl p-4 flex items-center justify-between mb-6"
                 >
-                    <h2
-                        class="text-xl font-bold text-gray-800 flex items-center gap-2"
-                    >
-                        <FileText class="text-green-600 w-5 h-5" />
+                    <h2 class="text-xl font-bold text-gray-800">
                         Materials & Quizzes
                     </h2>
                     <span
-                        class="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold"
+                        class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-bold shadow-sm"
                     >
-                        {{ totalItems }}
+                        {{ totalItems }} Item{{ totalItems !== 1 ? "s" : "" }}
                     </span>
                 </div>
 
                 <!-- Empty State -->
                 <div
                     v-if="sortedItems.length === 0"
-                    class="bg-white rounded-3xl border-4 border-purple-200 shadow-playful p-12 text-center"
+                    class="bg-white rounded-3xl border-4 border-gray-200 shadow-playful p-12 text-center"
                 >
                     <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
                         Belum ada Material atau Quiz
                     </h3>
                     <p class="text-gray-500 mb-6">
-                        Tambahkan material pembelajaran atau quiz untuk mission
-                        ini
+                        Mulai dengan menambahkan material pembelajaran atau quiz
+                        untuk mission ini
                     </p>
-                    <div class="flex flex-wrap gap-3 justify-center">
+                    <div class="flex justify-center gap-3">
                         <Button
                             variant="success"
-                            size="lg"
+                            size="md"
                             :icon="Plus"
                             @click="goToAddMaterial"
                         >
@@ -244,7 +311,7 @@ const formatDate = (dateString) => {
                         </Button>
                         <Button
                             variant="warning"
-                            size="lg"
+                            size="md"
                             :icon="Plus"
                             @click="goToAddQuiz"
                         >
@@ -255,16 +322,14 @@ const formatDate = (dateString) => {
 
                 <!-- Items List -->
                 <TransitionGroup v-else name="card" tag="div" class="space-y-4">
-                    <!-- Material Card -->
                     <div
                         v-for="item in sortedItems"
                         :key="`${item.itemType}-${item.id}`"
-                        :class="[
-                            'bg-white rounded-3xl border-4 shadow-playful p-6 transition-all',
-                            item.itemType === 'material'
-                                ? 'border-green-200 hover:border-green-400'
-                                : 'border-orange-200 hover:border-orange-400',
-                        ]"
+                        class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
+                        :class="{
+                            'border-green-200': item.itemType === 'material',
+                            'border-orange-200': item.itemType === 'quiz',
+                        }"
                     >
                         <!-- Material Item -->
                         <div
@@ -272,13 +337,11 @@ const formatDate = (dateString) => {
                             class="flex items-start justify-between gap-4"
                         >
                             <div class="flex items-start gap-4 flex-1">
-                                <component
-                                    :is="getMaterialIcon(item.type)"
-                                    :class="[
-                                        'w-8 h-8 mt-1',
-                                        getMaterialColor(item.type),
-                                    ]"
-                                />
+                                <div
+                                    class="bg-green-100 p-3 rounded-2xl border-2 border-green-300"
+                                >
+                                    <FileText class="text-green-600 w-8 h-8" />
+                                </div>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-2">
                                         <span
@@ -295,14 +358,6 @@ const formatDate = (dateString) => {
 
                                     <div class="flex items-center gap-3 mb-3">
                                         <span
-                                            :class="[
-                                                'text-xs px-3 py-1 rounded-full border font-medium',
-                                                getMaterialBadge(item.type),
-                                            ]"
-                                        >
-                                            {{ item.type.toUpperCase() }}
-                                        </span>
-                                        <span
                                             class="text-xs text-gray-500 flex items-center gap-1"
                                         >
                                             <Clock class="w-3 h-3" />
@@ -314,6 +369,13 @@ const formatDate = (dateString) => {
                                         >
                                             <User class="w-3 h-3" />
                                             {{ item.created_by }}
+                                        </span>
+                                        <span
+                                            v-if="item.mascot"
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <Tag class="w-3 h-3" />
+                                            {{ item.mascot.name }}
                                         </span>
                                     </div>
 
@@ -327,6 +389,18 @@ const formatDate = (dateString) => {
                             </div>
 
                             <div class="flex gap-2">
+                                <Button
+                                    variant="info"
+                                    size="md"
+                                    :icon="Eye"
+                                    @click="goToShowMaterial(item.id)"
+                                />
+                                <Button
+                                    variant="warning"
+                                    size="md"
+                                    :icon="Pencil"
+                                    @click="goToEditMaterial(item.id)"
+                                />
                                 <Button
                                     variant="danger"
                                     size="md"
@@ -342,9 +416,13 @@ const formatDate = (dateString) => {
                             class="flex items-start justify-between gap-4"
                         >
                             <div class="flex items-start gap-4 flex-1">
-                                <HelpCircle
-                                    class="text-orange-500 w-8 h-8 mt-1"
-                                />
+                                <div
+                                    class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300"
+                                >
+                                    <HelpCircle
+                                        class="text-orange-600 w-8 h-8"
+                                    />
+                                </div>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-2">
                                         <span
@@ -363,15 +441,31 @@ const formatDate = (dateString) => {
                                         <span
                                             :class="[
                                                 'text-xs px-3 py-1 rounded-full border font-medium',
-                                                item.type === 'multiple_choice'
+                                                item.type === 'multiple_choices'
                                                     ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                                    : 'bg-purple-100 text-purple-700 border-purple-300',
+                                                    : item.type === 'drag_drop'
+                                                      ? 'bg-purple-100 text-purple-700 border-purple-300'
+                                                      : item.type ===
+                                                          'true_false'
+                                                        ? 'bg-green-100 text-green-700 border-green-300'
+                                                        : item.type ===
+                                                            'case_study'
+                                                          ? 'bg-pink-100 text-pink-700 border-pink-300'
+                                                          : 'bg-gray-100 text-gray-700 border-gray-300',
                                             ]"
                                         >
                                             {{
-                                                item.type === "multiple_choice"
+                                                item.type === "multiple_choices"
                                                     ? "MULTIPLE CHOICE"
-                                                    : "DRAG & DROP"
+                                                    : item.type === "drag_drop"
+                                                      ? "DRAG & DROP"
+                                                      : item.type ===
+                                                          "true_false"
+                                                        ? "TRUE / FALSE"
+                                                        : item.type ===
+                                                            "case_study"
+                                                          ? "CASE STUDY"
+                                                          : item.type?.toUpperCase()
                                             }}
                                         </span>
                                         <span
@@ -411,11 +505,30 @@ const formatDate = (dateString) => {
                                             <Tag class="w-3 h-3" />
                                             {{ item.category }}
                                         </span>
+                                        <span
+                                            v-if="item.created_by"
+                                            class="text-xs text-gray-500 flex items-center gap-1"
+                                        >
+                                            <User class="w-3 h-3" />
+                                            {{ item.created_by }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="flex gap-2">
+                                <Button
+                                    variant="info"
+                                    size="md"
+                                    :icon="Eye"
+                                    @click="goToShowQuiz(item.id)"
+                                />
+                                <Button
+                                    variant="warning"
+                                    size="md"
+                                    :icon="Pencil"
+                                    @click="goToEditQuiz(item.id)"
+                                />
                                 <Button
                                     variant="danger"
                                     size="md"
@@ -434,12 +547,12 @@ const formatDate = (dateString) => {
             :show="showDeleteDialog"
             :title="
                 deleteType === 'material'
-                    ? 'Apakah kamu yakin ingin menghapus material ini?'
-                    : 'Apakah kamu yakin ingin menghapus quiz ini?'
+                    ? 'Hapus material ini?'
+                    : 'Hapus quiz ini?'
             "
             :message="
                 deleteType === 'material'
-                    ? 'Data material akan terhapus permanen.'
+                    ? 'Material akan dihapus permanen.'
                     : 'Semua pertanyaan dan jawaban di dalam quiz ini akan terhapus.'
             "
             @confirm="deleteItem"
@@ -447,30 +560,6 @@ const formatDate = (dateString) => {
         />
 
         <!-- Toast Notification -->
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast :show="toastVisible" :message="toastMessage" :type="toastType" />
     </AppLayout>
 </template>
-
-<style scoped>
-.card-enter-active,
-.card-leave-active {
-    transition: all 0.3s ease;
-}
-
-.card-enter-from {
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-}
-
-.card-leave-to {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-}
-
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-</style>

@@ -51,11 +51,11 @@ const handleToastClose = () => {
                 class="text-4xl font-heading font-bold text-gray-800 mb-2 flex items-center gap-3"
             >
                 <LogIn class="text-blue-500 w-8 h-8" />
-                Welcome Back
+                Selamat Datang!
             </h1>
             <p class="text-gray-600 font-medium flex items-center gap-2">
                 <Lock class="text-gray-400 w-4 h-4" />
-                Please sign in to continue
+                Login Untuk Melanjutkan ke Dashboard Admin
             </p>
         </div>
 
@@ -91,18 +91,6 @@ const handleToastClose = () => {
                 :error="form.errors.password"
                 border-color="blue"
             />
-
-            <!-- Remember -->
-            <div class="flex items-center justify-start">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="text-sm font-bold text-blue-600 hover:text-blue-700"
-                >
-                    Forgot password?
-                </Link>
-            </div>
-
             <!-- Button & Forgot Password -->
             <div class="flex flex-col gap-3">
                 <!-- Button Login Utama -->
@@ -128,17 +116,6 @@ const handleToastClose = () => {
                         Login Siswa
                     </Button>
                 </Link>
-
-                <!-- Forgot Password -->
-                <div class="flex justify-center">
-                    <Link
-                        v-if="canResetPassword"
-                        :href="route('password.request')"
-                        class="text-sm font-medium text-blue-600 hover:text-blue-700"
-                    >
-                        Forgot password?
-                    </Link>
-                </div>
             </div>
         </form>
 

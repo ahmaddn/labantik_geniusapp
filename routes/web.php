@@ -1,13 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\ClassesController;
+use App\Http\Controllers\Admin\MaterialController;
+use App\Http\Controllers\Admin\MissionController;
 use App\Http\Controllers\Admin\ModulesController;
+use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\Student\PlaygroundController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,29 +17,6 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-
-// Auth: login form & Playground menu
-Route::get('/playground/login', [PlaygroundLoginController::class, 'login'])
-    ->name('playground.login');
-
-Route::post('/playground/start', [PlaygroundLoginController::class, 'start'])
-    ->name('playground.start');
-
-Route::post('/playground/logout', [PlaygroundLoginController::class, 'logout'])
-    ->name('playground.logout');
-
-// ── Menu modul (Index) — guard ada di controller ───────────────────────────
-Route::get('/playground', [PlaygroundLoginController::class, 'index'])
-    ->name('playground.index');
-
-// ── Modul & Quiz — guard ada di controller ────────────────────────────────
-Route::get('/playground/module/{moduleId}', [PlaygroundController::class, 'show'])
-    ->name('playground.module');
-
-Route::get('/playground/module/{moduleId}/quiz', [PlaygroundController::class, 'quiz'])
-    ->name('playground.quiz');
-
-    
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -47,6 +26,21 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Playground Routes (Public - No Auth Required)
+Route::prefix('player')->name('playground.')->group(function () {
+    Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
+    Route::get('/playground/pretest', [PlaygroundController::class, 'pretest'])->name('pretest');
+    Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
+});
+
+// Playground Login Routes
+Route::name('playground.')->group(function () {
+    Route::get('/playground-login', [PlaygroundLoginController::class, 'login'])->name('login');
+    Route::post('/playground-auth', [PlaygroundLoginController::class, 'authenticate'])->name('authenticate');
+    Route::post('/playground-start', [PlaygroundLoginController::class, 'start'])->name('start');
+});
+
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 
     // Kelas
@@ -80,18 +74,42 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     });
     // Modul
     Route::name('modules.')->group(function () {
+        // Module Routes
         Route::get('/modules', [ModulesController::class, 'index'])->name('index');
+        Route::post('/modules', [ModulesController::class, 'store'])->name('store');
+        Route::get('/modules/{modules}', [ModulesController::class, 'show'])->name('show');
+        Route::put('/modules/{modules}', [ModulesController::class, 'update'])->name('update');
+        Route::delete('/modules/{modules}', [ModulesController::class, 'destroy'])->name('destroy');
+        Route::patch('/modules/{modules}/toggle-active', [ModulesController::class, 'toggleActive'])->name('toggle-active');
 
-        // ⚠️ CRITICAL: CREATE routes MUST be BEFORE show routes!
-        Route::get('/modules/{id}/mission/create', [ModulesController::class, 'createMission'])->name('mission');
-        Route::get('/modules/{moduleId}/mission/{missionId}/material/create', [ModulesController::class, 'createMaterial'])->name('material');
-        Route::get('/modules/{moduleId}/mission/{missionId}/quiz/create', [ModulesController::class, 'createQuiz'])->name('quiz');
+        // Mission Routes (nested under modules)
+        Route::prefix('{modules}/missions')->name('missions.')->group(function () {
+            Route::post('/', [MissionController::class, 'store'])->name('store');
+            Route::get('/{missions}', [MissionController::class, 'show'])->name('show');
+            Route::put('/{missions}', [MissionController::class, 'update'])->name('update');
+            Route::delete('/{missions}', [MissionController::class, 'destroy'])->name('destroy');
 
-        // Show routes go AFTER create routes
-        Route::get('/modules/{id}', [ModulesController::class, 'show'])->name('show');
-        Route::get('/modules/{moduleId}/mission/{missionId}', [ModulesController::class, 'showMission'])->name('mission.show');
+            // Material Routes (nested under missions)
+            Route::prefix('{missions}/materials')->name('materials.')->group(function () {
+                Route::get('/create', [MaterialController::class, 'create'])->name('create');
+                Route::post('/', [MaterialController::class, 'store'])->name('store');
+                Route::get('/{materials}', [MaterialController::class, 'show'])->name('show');
+                Route::get('/{materials}/edit', [MaterialController::class, 'edit'])->name('edit');
+                Route::put('/{materials}', [MaterialController::class, 'update'])->name('update');
+                Route::delete('/{materials}', [MaterialController::class, 'destroy'])->name('destroy');
+            });
+
+            // Quiz Routes (nested under missions)
+            Route::prefix('{missions}/quizzes')->name('quizzes.')->group(function () {
+                Route::get('/create', [QuizController::class, 'create'])->name('create');
+                Route::post('/', [QuizController::class, 'store'])->name('store');
+                Route::get('/{quizzes}', [QuizController::class, 'show'])->name('show');
+                Route::get('/{quizzes}/edit', [QuizController::class, 'edit'])->name('edit');
+                Route::put('/{quizzes}', [QuizController::class, 'update'])->name('update');
+                Route::delete('/{quizzes}', [QuizController::class, 'destroy'])->name('destroy');
+            });
+        });
     });
 });
-
 
 require __DIR__ . '/auth.php';

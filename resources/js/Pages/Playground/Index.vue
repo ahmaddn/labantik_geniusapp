@@ -30,6 +30,7 @@ const props = defineProps({
     user: {
         type: Object,
         default: () => ({ name: "Budi Santoso", class: { name: "SD-4" } }),
+        required: true,
     },
     learningModules: { type: Array, default: () => [] },
 });
@@ -312,64 +313,79 @@ const scoreBg = (s) =>
 </script>
 
 <template>
-    <div style="display: none">
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap"
-            rel="stylesheet"
-        />
-    </div>
-
-    <div class="pg">
-        <!-- ══ TOPBAR ══ -->
-        <header class="topbar">
-            <div class="wrap row-between">
-                <div class="brand">
-                    <div class="brand-logo">
-                        <Rocket :size="16" color="#fff" :stroke-width="2.5" />
-                    </div>
-                    <span class="brand-name">Geniuss</span>
+    <div class="index-page">
+        <!-- ░░ HERO GREETING ░░ -->
+        <section class="hero-section" :class="{ 'hero-in': ready }">
+            <div class="hero-inner">
+                <div class="hero-text">
+                    <p class="hero-salam">🌟 Halo, selamat datang kembali!</p>
+                    <h1 class="hero-nama">{{ props.siswa.name }}</h1>
+                    <p class="hero-desc">
+                        Yuk lanjutkan petualangan belajarmu hari ini! Ada
+                        <strong>{{ modules.length }}</strong> modul seru
+                        menunggumu.
+                    </p>
                 </div>
-                <!-- User menu with dropdown -->
-                <div class="user-menu" ref="menuRef">
-                    <button
-                        class="user-pill"
-                        @click="toggleDropdown"
-                        :class="{ open: dropdownOpen }"
-                    >
-                        <div class="avatar">{{ user.name.charAt(0) }}</div>
-                        <div class="user-info">
-                            <span class="u-name">{{ user.name }}</span>
-                            <span class="u-kelas"
-                                >Kelas {{ user.class?.name }}</span
-                            >
-                        </div>
-                        <ChevronDown
-                            :size="14"
-                            :stroke-width="2.5"
-                            class="pill-chevron"
-                        />
-                    </button>
 
-                    <Transition name="dropdown">
-                        <div v-if="dropdownOpen" class="dropdown">
-                            <!-- Header -->
-                            <div class="dd-header">
-                                <div class="dd-avatar">
-                                    {{ user.name.charAt(0) }}
+                <div class="pg">
+                    <!-- ══ TOPBAR ══ -->
+                    <header class="topbar">
+                        <div class="wrap row-between">
+                            <div class="brand">
+                                <div class="brand-logo">
+                                    <Rocket
+                                        :size="16"
+                                        color="#fff"
+                                        :stroke-width="2.5"
+                                    />
                                 </div>
-                                <div class="dd-meta">
-                                    <span class="dd-name">{{ user.name }}</span>
-                                    <span class="dd-email">{{
-                                        user.email
-                                    }}</span>
-                                </div>
+                                <span class="brand-name">Geniuss</span>
                             </div>
-                            <div class="dd-sep"></div>
+                            <!-- User menu with dropdown -->
+                            <div class="user-menu" ref="menuRef">
+                                <button
+                                    class="user-pill"
+                                    @click="toggleDropdown"
+                                    :class="{ open: dropdownOpen }"
+                                >
+                                    <div class="avatar">
+                                        {{ user.name.charAt(0) }}
+                                    </div>
+                                    <div class="user-info">
+                                        <span class="u-name">{{
+                                            user.name
+                                        }}</span>
+                                        <span class="u-kelas"
+                                            >Kelas {{ user.class?.name }}</span
+                                        >
+                                    </div>
+                                    <ChevronDown
+                                        :size="14"
+                                        :stroke-width="2.5"
+                                        class="pill-chevron"
+                                    />
+                                </button>
 
-                            <!-- Items -->
-                            <!-- <Link
+                                <Transition name="dropdown">
+                                    <div v-if="dropdownOpen" class="dropdown">
+                                        <!-- Header -->
+                                        <div class="dd-header">
+                                            <div class="dd-avatar">
+                                                {{ user.name.charAt(0) }}
+                                            </div>
+                                            <div class="dd-meta">
+                                                <span class="dd-name">{{
+                                                    user.name
+                                                }}</span>
+                                                <span class="dd-email">{{
+                                                    user.email
+                                                }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="dd-sep"></div>
+
+                                        <!-- Items -->
+                                        <!-- <Link
                                 href="/profile"
                                 class="dd-item"
                                 @click="dropdownOpen = false"
@@ -386,269 +402,295 @@ const scoreBg = (s) =>
                                 Pengaturan
                             </Link> -->
 
-                            <div class="dd-sep"></div>
+                                        <div class="dd-sep"></div>
 
-                            <button class="dd-item dd-logout" @click="logout">
-                                <LogOut :size="15" :stroke-width="2.2" />
-                                Keluar
-                            </button>
+                                        <button
+                                            class="dd-item dd-logout"
+                                            @click="logout"
+                                        >
+                                            <LogOut
+                                                :size="15"
+                                                :stroke-width="2.2"
+                                            />
+                                            Keluar
+                                        </button>
+                                    </div>
+                                </Transition>
+                            </div>
                         </div>
-                    </Transition>
-                </div>
-            </div>
-        </header>
+                    </header>
 
-        <!-- ══ HERO ══ -->
-        <section class="hero-wrap" :class="{ 'fade-in': ready }">
-            <div class="wrap">
-                <div class="hero-card">
-                    <div class="hero-left">
-                        <span class="greet-tag">
-                            <Sparkles :size="12" :stroke-width="2.5" />
-                            Selamat datang kembali!
-                        </span>
-                        <h1 class="hero-name">{{ user.name }}</h1>
-                        <p class="hero-desc">
-                            Semangat belajar! Ada
-                            <strong>{{ modules.length }}</strong> modul yang
-                            siap dijelajahi hari ini.
-                        </p>
+                    <!-- ══ HERO ══ -->
+                    <section class="hero-wrap" :class="{ 'fade-in': ready }">
+                        <div class="wrap">
+                            <div class="hero-card">
+                                <div class="hero-left">
+                                    <span class="greet-tag">
+                                        <Sparkles
+                                            :size="12"
+                                            :stroke-width="2.5"
+                                        />
+                                        Selamat datang kembali!
+                                    </span>
+                                    <h1 class="hero-name">{{ user.name }}</h1>
+                                    <p class="hero-desc">
+                                        Semangat belajar! Ada
+                                        <strong>{{ modules.length }}</strong>
+                                        modul yang siap dijelajahi hari ini.
+                                    </p>
+                                </div>
+                                <div class="stat-chip">
+                                    <span class="stat-icon">🎒</span>
+                                    <div>
+                                        <span class="stat-val">{{
+                                            props.siswa.kelas
+                                        }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ══ FILTER ══ -->
+                    <div class="filter-outer" :class="{ 'fade-in': ready }">
+                        <div class="wrap">
+                            <div class="filter-scroll">
+                                <button
+                                    v-for="cat in categories"
+                                    :key="cat.key"
+                                    class="ftab"
+                                    :class="{
+                                        active: activeCategory === cat.key,
+                                    }"
+                                    @click="activeCategory = cat.key"
+                                >
+                                    <component
+                                        :is="cat.icon"
+                                        :size="14"
+                                        :stroke-width="2.2"
+                                    />
+                                    {{ cat.label }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="stat-row">
-                        <div class="stat-box stat-red">
-                            <CheckCircle2
-                                :size="22"
-                                color="rgba(255,255,255,.9)"
-                                :stroke-width="2"
-                            />
-                            <span class="s-val"
-                                >{{ totalFinished
-                                }}<small>/{{ modules.length }}</small></span
-                            >
-                            <span class="s-lbl">Selesai</span>
-                        </div>
-                        <div class="stat-box stat-green">
-                            <Target
-                                :size="22"
-                                color="rgba(255,255,255,.9)"
-                                :stroke-width="2"
-                            />
-                            <span class="s-val"
-                                >{{ avgScore }}<small>%</small></span
-                            >
-                            <span class="s-lbl">Rata Skor</span>
-                        </div>
-                        <div class="stat-box stat-blue">
-                            <Backpack
-                                :size="22"
-                                color="rgba(255,255,255,.9)"
-                                :stroke-width="2"
-                            />
-                            <span class="s-val">{{ user.class?.name }}</span>
-                            <span class="s-lbl">Kelas</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+                    <!-- ══ GRID ══ -->
+                    <main class="content-wrap">
+                        <div class="wrap">
+                            <div class="section-label">
+                                <Leaf
+                                    :size="14"
+                                    color="#16A34A"
+                                    :stroke-width="2.5"
+                                />
+                                <span
+                                    >{{ filtered.length }} modul tersedia</span
+                                >
+                            </div>
 
-        <!-- ══ FILTER ══ -->
-        <div class="filter-outer" :class="{ 'fade-in': ready }">
-            <div class="wrap">
-                <div class="filter-scroll">
+                            <div class="mod-grid">
+                                <article
+                                    v-for="(mod, i) in filtered"
+                                    :key="mod.id"
+                                    class="mod-card"
+                                    :class="{
+                                        'card-in': ready,
+                                        'is-done': mod.finished,
+                                    }"
+                                    :style="{
+                                        '--ac': mod.accent,
+                                        '--d': i * 40 + 'ms',
+                                    }"
+                                >
+                                    <!-- Thumbnail zone -->
+                                    <div class="card-thumb">
+                                        <div
+                                            class="thumb-bg"
+                                            :style="{
+                                                background: `${mod.accent}18`,
+                                            }"
+                                        >
+                                            <template v-if="mod.thumbnail">
+                                                <img
+                                                    :src="mod.thumbnail"
+                                                    :alt="mod.name"
+                                                    class="thumb-img"
+                                                />
+                                            </template>
+                                            <template v-else>
+                                                <div
+                                                    class="thumb-icon-ring"
+                                                    :style="{
+                                                        background: `${mod.accent}22`,
+                                                        borderColor: `${mod.accent}44`,
+                                                    }"
+                                                >
+                                                    <BookOpen
+                                                        :size="24"
+                                                        :color="mod.accent"
+                                                        :stroke-width="1.8"
+                                                    />
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Accent bottom line -->
+                                        <div
+                                            class="thumb-line"
+                                            :style="{ background: mod.accent }"
+                                        ></div>
+                                    </div>
+
+                                    <!-- Card content -->
+                                    <div class="card-content">
+                                        <h3 class="mod-title">
+                                            {{ mod.name }}
+                                        </h3>
+                                        <p class="mod-desc">
+                                            {{ mod.description }}
+                                        </p>
+
+                                        <!-- Score pill (if attempted) -->
+                                        <div
+                                            v-if="mod.has_attempt"
+                                            class="score-pill"
+                                            :style="{
+                                                color: scoreColor(
+                                                    mod.best_score,
+                                                ),
+                                                background: scoreBg(
+                                                    mod.best_score,
+                                                ),
+                                            }"
+                                        >
+                                            <Star
+                                                :size="10"
+                                                :stroke-width="0"
+                                                :fill="
+                                                    scoreColor(mod.best_score)
+                                                "
+                                            />
+                                            Skor terbaik:
+                                            <strong>{{
+                                                mod.best_score
+                                            }}</strong>
+                                        </div>
+
+                                        <div class="card-divider"></div>
+
+                                        <!-- Meta -->
+                                        <div class="mod-meta">
+                                            <span class="meta-chip">
+                                                <Target
+                                                    :size="11"
+                                                    :stroke-width="2.5"
+                                                    :color="mod.accent"
+                                                />
+                                                {{ mod.missions_done }}/{{
+                                                    mod.missions_count
+                                                }}
+                                                Misi
+                                            </span>
+                                            <span class="meta-chip">
+                                                <FileQuestion
+                                                    :size="11"
+                                                    :stroke-width="2.5"
+                                                    :color="mod.accent"
+                                                />
+                                                Quiz & Materi
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            class="mod-btn"
+                                            :class="{
+                                                'btn-start': !mod.has_attempt,
+                                                'btn-continue':
+                                                    mod.has_attempt &&
+                                                    !mod.finished,
+                                                'btn-done': mod.finished,
+                                            }"
+                                            :style="
+                                                !mod.finished &&
+                                                !mod.has_attempt
+                                                    ? `--btnc:${mod.accent}`
+                                                    : ''
+                                            "
+                                        >
+                                            <component
+                                                :is="
+                                                    mod.finished
+                                                        ? RefreshCw
+                                                        : Play
+                                                "
+                                                :size="13"
+                                                :stroke-width="2.5"
+                                                :fill="
+                                                    !mod.finished
+                                                        ? 'currentColor'
+                                                        : 'none'
+                                                "
+                                            />
+                                            {{ statusLabel(mod) }}
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <!-- Empty -->
+                            <div
+                                v-if="filtered.length === 0"
+                                class="empty-state"
+                            >
+                                <div class="empty-box">
+                                    <BookOpen
+                                        :size="32"
+                                        color="#a3c4a0"
+                                        :stroke-width="1.5"
+                                    />
+                                </div>
+                                <p class="empty-t">Belum ada modul</p>
+                                <p class="empty-s">
+                                    Tidak ada modul di kategori ini.
+                                </p>
+                            </div>
+                        </div>
+                    </main>
+
+                    <!-- ══ MUSIC FAB ══ -->
                     <button
-                        v-for="cat in categories"
-                        :key="cat.key"
-                        class="ftab"
-                        :class="{ active: activeCategory === cat.key }"
-                        @click="activeCategory = cat.key"
+                        class="music-fab"
+                        @click="toggleMusic"
+                        :class="{ 'music-on': musicOn }"
                     >
-                        <component
-                            :is="cat.icon"
-                            :size="14"
-                            :stroke-width="2.2"
-                        />
-                        {{ cat.label }}
+                        <svg
+                            v-if="musicOn"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                        >
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                        </svg>
+                        <svg
+                            v-else
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                        >
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                            <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- ══ GRID ══ -->
-        <main class="content-wrap">
-            <div class="wrap">
-                <div class="section-label">
-                    <Leaf :size="14" color="#16A34A" :stroke-width="2.5" />
-                    <span>{{ filtered.length }} modul tersedia</span>
-                </div>
-
-                <div class="mod-grid">
-                    <article
-                        v-for="(mod, i) in filtered"
-                        :key="mod.id"
-                        class="mod-card"
-                        :class="{ 'card-in': ready, 'is-done': mod.finished }"
-                        :style="{ '--ac': mod.accent, '--d': i * 40 + 'ms' }"
-                    >
-                        <!-- Thumbnail zone -->
-                        <div class="card-thumb">
-                            <div
-                                class="thumb-bg"
-                                :style="{ background: `${mod.accent}18` }"
-                            >
-                                <template v-if="mod.thumbnail">
-                                    <img
-                                        :src="mod.thumbnail"
-                                        :alt="mod.name"
-                                        class="thumb-img"
-                                    />
-                                </template>
-                                <template v-else>
-                                    <div
-                                        class="thumb-icon-ring"
-                                        :style="{
-                                            background: `${mod.accent}22`,
-                                            borderColor: `${mod.accent}44`,
-                                        }"
-                                    >
-                                        <BookOpen
-                                            :size="24"
-                                            :color="mod.accent"
-                                            :stroke-width="1.8"
-                                        />
-                                    </div>
-                                </template>
-                            </div>
-
-                            <!-- Accent bottom line -->
-                            <div
-                                class="thumb-line"
-                                :style="{ background: mod.accent }"
-                            ></div>
-                        </div>
-
-                        <!-- Card content -->
-                        <div class="card-content">
-                            <h3 class="mod-title">{{ mod.name }}</h3>
-                            <p class="mod-desc">{{ mod.description }}</p>
-
-                            <!-- Score pill (if attempted) -->
-                            <div
-                                v-if="mod.has_attempt"
-                                class="score-pill"
-                                :style="{
-                                    color: scoreColor(mod.best_score),
-                                    background: scoreBg(mod.best_score),
-                                }"
-                            >
-                                <Star
-                                    :size="10"
-                                    :stroke-width="0"
-                                    :fill="scoreColor(mod.best_score)"
-                                />
-                                Skor terbaik:
-                                <strong>{{ mod.best_score }}</strong>
-                            </div>
-
-                            <div class="card-divider"></div>
-
-                            <!-- Meta -->
-                            <div class="mod-meta">
-                                <span class="meta-chip">
-                                    <Target
-                                        :size="11"
-                                        :stroke-width="2.5"
-                                        :color="mod.accent"
-                                    />
-                                    {{ mod.missions_done }}/{{
-                                        mod.missions_count
-                                    }}
-                                    Misi
-                                </span>
-                                <span class="meta-chip">
-                                    <FileQuestion
-                                        :size="11"
-                                        :stroke-width="2.5"
-                                        :color="mod.accent"
-                                    />
-                                    Quiz & Materi
-                                </span>
-                            </div>
-
-                            <button
-                                class="mod-btn"
-                                :class="{
-                                    'btn-start': !mod.has_attempt,
-                                    'btn-continue':
-                                        mod.has_attempt && !mod.finished,
-                                    'btn-done': mod.finished,
-                                }"
-                                :style="
-                                    !mod.finished && !mod.has_attempt
-                                        ? `--btnc:${mod.accent}`
-                                        : ''
-                                "
-                            >
-                                <component
-                                    :is="mod.finished ? RefreshCw : Play"
-                                    :size="13"
-                                    :stroke-width="2.5"
-                                    :fill="
-                                        !mod.finished ? 'currentColor' : 'none'
-                                    "
-                                />
-                                {{ statusLabel(mod) }}
-                            </button>
-                        </div>
-                    </article>
-                </div>
-
-                <!-- Empty -->
-                <div v-if="filtered.length === 0" class="empty-state">
-                    <div class="empty-box">
-                        <BookOpen
-                            :size="32"
-                            color="#a3c4a0"
-                            :stroke-width="1.5"
-                        />
-                    </div>
-                    <p class="empty-t">Belum ada modul</p>
-                    <p class="empty-s">Tidak ada modul di kategori ini.</p>
-                </div>
-            </div>
-        </main>
-
-        <!-- ══ MUSIC FAB ══ -->
-        <button
-            class="music-fab"
-            @click="toggleMusic"
-            :class="{ 'music-on': musicOn }"
-        >
-            <svg
-                v-if="musicOn"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-            </svg>
-            <svg
-                v-else
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-        </button>
+        </section>
     </div>
 </template>
 

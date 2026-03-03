@@ -2,14 +2,10 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
-use App\Http\Controllers\Auth\EmailVerificationNotificationController;
-use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 
 // routes/auth.php
@@ -35,7 +31,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
-
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');
 
@@ -48,12 +43,8 @@ Route::middleware('auth')->group(function () {
 Route::prefix('player')->group(function () {
     Route::get('/playground/login', [PlaygroundLoginController::class, 'login'])
         ->name('playground.login');
-    Route::get('/playground', [PlaygroundLoginController::class, 'index'])
-        ->name('playground.index');
-
-    // POST saat klik "Mulai Petualangan"
-    Route::post('/playground/start', [PlaygroundLoginController::class, 'start'])
-        ->name('playground.start');
+    Route::post('/playground/authenticate', [PlaygroundLoginController::class, 'authenticate'])
+        ->name('playground.authenticate');
 
     // Halaman quiz (setelah start berhasil)
     Route::get('/playground/quiz', [PlaygroundLoginController::class, 'quiz'])
