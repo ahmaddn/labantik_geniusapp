@@ -80,6 +80,7 @@ const menuItems = [
         borderColor: "border-blue-300",
         activeColor: "bg-blue-500",
     },
+
 ];
 </script>
 
