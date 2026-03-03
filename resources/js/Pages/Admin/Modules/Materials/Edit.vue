@@ -27,6 +27,7 @@ const props = defineProps({
 
 const successMessage = ref("");
 const showSuccess = ref(false);
+const toastType = ref("success");
 const cardVariant = ref("playful");
 
 // Form — pre-populate dari material existing
@@ -54,8 +55,9 @@ const mascotOptions = computed(() => {
 const getSelectedMascot = (mascotId) =>
     props.mascots.find((m) => m.id == mascotId) || null;
 
-const showToast = (message) => {
+const showToast = (message, type = "success") => {
     successMessage.value = message;
+    toastType.value = type;
     showSuccess.value = true;
     setTimeout(() => {
         showSuccess.value = false;
@@ -87,11 +89,11 @@ const removeImage = () => {
 // Submit update — sesuai controller update() validation
 const handleSubmit = () => {
     if (!materialForm.value.title.trim()) {
-        showToast("Judul material harus diisi!");
+        showToast("Judul material harus diisi!", "warning");
         return;
     }
     if (!materialForm.value.content.trim()) {
-        showToast("Konten material harus diisi!");
+        showToast("Konten material harus diisi!", "warning");
         return;
     }
 
@@ -119,7 +121,7 @@ const handleSubmit = () => {
         formData,
         {
             onSuccess: () => {
-                showToast("Material berhasil diperbarui.");
+                showToast("Material berhasil diperbarui.", "success");
                 setTimeout(() => {
                     router.visit(
                         route("admin.modules.missions.show", [
@@ -364,6 +366,10 @@ const toggleCardVariant = () => {
                 </template>
             </Card>
         </div>
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast
+            :show="showSuccess"
+            :message="successMessage"
+            :type="toastType"
+        />
     </AppLayout>
 </template>

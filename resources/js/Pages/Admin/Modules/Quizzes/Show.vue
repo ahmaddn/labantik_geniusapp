@@ -19,7 +19,7 @@ import {
 
 const props = defineProps({
     module: { type: Object, required: true },
-    mission: { type: Object, required: true },
+    mission: { type: Object, required: false, default: null },
     quiz: { type: Object, required: true },
 });
 
@@ -52,6 +52,15 @@ const formatDate = (dateString) => {
         minute: "2-digit",
     });
 };
+
+const getCategoryLabel = (value) => {
+    const map = {
+        pretest: "Tes Awal",
+        mission: "Misi",
+        posttest: "Tes Akhir",
+    };
+    return map[value] || value;
+};
 </script>
 
 <template>
@@ -61,14 +70,18 @@ const formatDate = (dateString) => {
             <div
                 class="bg-white rounded-3xl border-4 border-orange-200 shadow-playful p-6 mb-8"
             >
-                <div class="flex items-start gap-4">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                >
                     <button
                         @click="
                             router.visit(
-                                route('admin.modules.missions.show', [
-                                    module.id,
-                                    mission.id,
-                                ]),
+                                mission
+                                    ? route('admin.modules.missions.show', [
+                                          module.id,
+                                          mission.id,
+                                      ])
+                                    : route('admin.modules.show', module.id),
                             )
                         "
                         class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 hover:bg-orange-200 transition-all"
@@ -77,7 +90,8 @@ const formatDate = (dateString) => {
                     </button>
                     <div class="flex-1">
                         <p class="text-sm text-gray-500 mb-1">
-                            {{ module.name }} / {{ mission.name }}
+                            {{ module.name
+                            }}<span v-if="mission"> / {{ mission.name }}</span>
                         </p>
                         <h1
                             class="text-2xl md:text-3xl font-heading font-bold text-gray-800 mb-2"
@@ -97,11 +111,13 @@ const formatDate = (dateString) => {
                                 v-if="quiz.category"
                                 class="text-xs px-3 py-1 rounded-full border font-medium bg-orange-100 text-orange-700 border-orange-300 capitalize"
                             >
-                                {{ quiz.category }}
+                                {{ getCategoryLabel(quiz.category) }}
                             </span>
                         </div>
                     </div>
                     <Button
+                        v-if="mission"
+                        class="w-full sm:w-auto"
                         variant="warning"
                         size="md"
                         :icon="Pencil"
@@ -123,7 +139,7 @@ const formatDate = (dateString) => {
             <!-- Meta Info -->
             <Card
                 variant="playful"
-                title="Informasi Quiz"
+                title="Informasi Kuis"
                 :icon="HelpCircle"
                 icon-color="orange"
                 border-color="orange"
@@ -133,7 +149,7 @@ const formatDate = (dateString) => {
                 <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                     <span class="flex items-center gap-1">
                         <Clock class="w-4 h-4" />
-                        {{ quiz.time_limit }} detik
+                        {{ quiz.time_limit }} menit
                     </span>
                     <span class="flex items-center gap-1">
                         <Calendar class="w-4 h-4" />
@@ -152,11 +168,11 @@ const formatDate = (dateString) => {
                 </p>
             </Card>
 
-            <!-- Gambar Quiz -->
+            <!-- Gambar Kuis -->
             <Card
                 v-if="quiz.image"
                 variant="playful"
-                title="Gambar Quiz"
+                title="Gambar Kuis"
                 :icon="ImageIcon"
                 icon-color="blue"
                 border-color="blue"

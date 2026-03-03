@@ -35,6 +35,7 @@ const props = defineProps({
 const wizardStep = ref(1);
 const successMessage = ref("");
 const showSuccess = ref(false);
+const toastType = ref("success");
 const cardVariant = ref("playful");
 
 // Form Material
@@ -61,8 +62,9 @@ const mascotOptions = computed(() => {
 const getSelectedMascot = (mascotId) =>
     props.mascots.find((m) => m.id == mascotId) || null;
 
-const showToast = (message) => {
+const showToast = (message, type = "success") => {
     successMessage.value = message;
+    toastType.value = type;
     showSuccess.value = true;
     setTimeout(() => {
         showSuccess.value = false;
@@ -84,11 +86,11 @@ const removeImage = () => {
 
 const validateForm = () => {
     if (!materialForm.value.title.trim()) {
-        showToast("Judul material harus diisi!");
+        showToast("Judul material harus diisi!", "warning");
         return false;
     }
     if (!materialForm.value.content.trim()) {
-        showToast("Konten material harus diisi!");
+        showToast("Konten material harus diisi!", "warning");
         return false;
     }
     return true;
@@ -114,12 +116,12 @@ const addMaterial = () => {
         image: null,
     };
     imagePreview.value = null;
-    showToast("Material ditambahkan ke list.");
+    showToast("Material ditambahkan ke list.", "success");
 };
 
 const removeMaterial = (id) => {
     materials.value = materials.value.filter((m) => m.id !== id);
-    showToast("Material dihapus dari list.");
+    showToast("Material dihapus dari list.", "success");
 };
 
 const editMaterial = (material) => {
@@ -132,7 +134,7 @@ const editMaterial = (material) => {
 // Final save — kirim ke controller store() via FormData (karena ada file upload)
 const finalSave = () => {
     if (materials.value.length === 0) {
-        showToast("Tambahkan minimal 1 material!");
+        showToast("Tambahkan minimal 1 material!", "warning");
         return;
     }
 
@@ -162,7 +164,7 @@ const finalSave = () => {
         formData,
         {
             onSuccess: () => {
-                showToast("Semua material berhasil disimpan.");
+                showToast("Semua material berhasil disimpan.", "success");
                 setTimeout(() => {
                     router.visit(
                         route("admin.modules.missions.show", [
@@ -176,6 +178,7 @@ const finalSave = () => {
                 console.error("Validation errors:", errors);
                 showToast(
                     "Gagal menyimpan: " + Object.values(errors).join(", "),
+                    "error",
                 );
             },
         },
@@ -590,6 +593,10 @@ const toggleCardVariant = () => {
                 </div>
             </div>
         </div>
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast
+            :show="showSuccess"
+            :message="successMessage"
+            :type="toastType"
+        />
     </AppLayout>
 </template>

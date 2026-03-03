@@ -217,7 +217,9 @@ const formatDate = (dateString) => {
             <div
                 class="bg-white rounded-3xl border-4 border-purple-200 shadow-playful p-6 mb-8"
             >
-                <div class="flex items-start gap-4 mb-4">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4"
+                >
                     <button
                         @click="goBack"
                         class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 hover:bg-purple-200 transition-all"
@@ -233,7 +235,7 @@ const formatDate = (dateString) => {
                             <span>{{ module.title || module.name }}</span>
                             <ChevronRight class="w-3 h-3" />
                             <span class="text-purple-600 font-medium">
-                                Mission {{ mission.order_number }}
+                                Misi {{ mission.order_number }}
                             </span>
                         </div>
 
@@ -254,20 +256,22 @@ const formatDate = (dateString) => {
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-3">
                     <Button
+                        class="w-full sm:w-auto"
                         variant="success"
                         size="md"
                         :icon="Plus"
                         @click="goToAddMaterial"
                     >
-                        Tambah Material
+                        Tambah Materi
                     </Button>
                     <Button
+                        class="w-full sm:w-auto"
                         variant="warning"
                         size="md"
                         :icon="Plus"
                         @click="goToAddQuiz"
                     >
-                        Tambah Quiz
+                        Tambah Kuis
                     </Button>
                 </div>
             </div>
@@ -278,12 +282,12 @@ const formatDate = (dateString) => {
                     class="bg-gradient-to-r from-green-100 to-orange-100 rounded-2xl p-4 flex items-center justify-between mb-6"
                 >
                     <h2 class="text-xl font-bold text-gray-800">
-                        Materials & Quizzes
+                        Materi & Kuis
                     </h2>
                     <span
                         class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-bold shadow-sm"
                     >
-                        {{ totalItems }} Item{{ totalItems !== 1 ? "s" : "" }}
+                        {{ totalItems }} Konten
                     </span>
                 </div>
 
@@ -294,11 +298,10 @@ const formatDate = (dateString) => {
                 >
                     <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
-                        Belum ada Material atau Quiz
+                        Belum ada materi atau kuis
                     </h3>
                     <p class="text-gray-500 mb-6">
-                        Mulai dengan menambahkan material pembelajaran atau quiz
-                        untuk mission ini
+                        Tambahkan materi atau kuis untuk misi ini
                     </p>
                     <div class="flex justify-center gap-3">
                         <Button
@@ -307,7 +310,7 @@ const formatDate = (dateString) => {
                             :icon="Plus"
                             @click="goToAddMaterial"
                         >
-                            Tambah Material
+                            Tambah Materi
                         </Button>
                         <Button
                             variant="warning"
@@ -315,7 +318,7 @@ const formatDate = (dateString) => {
                             :icon="Plus"
                             @click="goToAddQuiz"
                         >
-                            Tambah Quiz
+                            Tambah Kuis
                         </Button>
                     </div>
                 </div>
@@ -334,9 +337,11 @@ const formatDate = (dateString) => {
                         <!-- Material Item -->
                         <div
                             v-if="item.itemType === 'material'"
-                            class="flex items-start justify-between gap-4"
+                            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                         >
-                            <div class="flex items-start gap-4 flex-1">
+                            <div
+                                class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1"
+                            >
                                 <div
                                     class="bg-green-100 p-3 rounded-2xl border-2 border-green-300"
                                 >
@@ -347,7 +352,7 @@ const formatDate = (dateString) => {
                                         <span
                                             class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-300 font-medium"
                                         >
-                                            MATERIAL
+                                            MATERI
                                         </span>
                                         <h3
                                             class="text-xl font-bold text-gray-800"
@@ -388,20 +393,23 @@ const formatDate = (dateString) => {
                                 </div>
                             </div>
 
-                            <div class="flex gap-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="info"
                                     size="md"
                                     :icon="Eye"
                                     @click="goToShowMaterial(item.id)"
                                 />
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="warning"
                                     size="md"
                                     :icon="Pencil"
                                     @click="goToEditMaterial(item.id)"
                                 />
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="danger"
                                     size="md"
                                     :icon="Trash2"
@@ -413,9 +421,11 @@ const formatDate = (dateString) => {
                         <!-- Quiz Item -->
                         <div
                             v-else
-                            class="flex items-start justify-between gap-4"
+                            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                         >
-                            <div class="flex items-start gap-4 flex-1">
+                            <div
+                                class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1"
+                            >
                                 <div
                                     class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300"
                                 >
@@ -516,20 +526,23 @@ const formatDate = (dateString) => {
                                 </div>
                             </div>
 
-                            <div class="flex gap-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="info"
                                     size="md"
                                     :icon="Eye"
                                     @click="goToShowQuiz(item.id)"
                                 />
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="warning"
                                     size="md"
                                     :icon="Pencil"
                                     @click="goToEditQuiz(item.id)"
                                 />
                                 <Button
+                                    class="w-full sm:w-auto"
                                     variant="danger"
                                     size="md"
                                     :icon="Trash2"
@@ -547,12 +560,12 @@ const formatDate = (dateString) => {
             :show="showDeleteDialog"
             :title="
                 deleteType === 'material'
-                    ? 'Hapus material ini?'
+                    ? 'Hapus materi ini?'
                     : 'Hapus quiz ini?'
             "
             :message="
                 deleteType === 'material'
-                    ? 'Material akan dihapus permanen.'
+                    ? 'Materi akan dihapus selamanya.'
                     : 'Semua pertanyaan dan jawaban di dalam quiz ini akan terhapus.'
             "
             @confirm="deleteItem"

@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,guru'])->prefix('admin')->name('admin.')->group(function () {
 
     // Kelas
     Route::name('classes.')->group(function () {
@@ -80,6 +80,13 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::put('/modules/{modules}', [ModulesController::class, 'update'])->name('update');
         Route::delete('/modules/{modules}', [ModulesController::class, 'destroy'])->name('destroy');
         Route::patch('/modules/{modules}/toggle-active', [ModulesController::class, 'toggleActive'])->name('toggle-active');
+        // Module-level Quiz Routes (for quizzes without a mission_id)
+        Route::prefix('{modules}/quizzes')->name('quizzes.')->group(function () {
+            Route::get('/create/{category}', [QuizController::class, 'createModule'])->name('create');
+            Route::post('/', [QuizController::class, 'storeModule'])->name('store');
+            Route::get('/{quizzes}', [QuizController::class, 'showModule'])->name('show');
+            // Note: creation of quizzes for pretest/posttest is available here
+        });
 
         // Mission Routes (nested under modules)
         Route::prefix('{modules}/missions')->name('missions.')->group(function () {

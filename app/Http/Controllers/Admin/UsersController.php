@@ -28,15 +28,21 @@ class UsersController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'nullable|string|min:8',
             'role' => 'required|in:admin,guru,siswa',
             'class_id' => 'nullable|exists:classes,id',
         ]);
 
+        // If current user is a teacher, they may only create student accounts
+        $current = Auth::user();
+        if ($current && $current->role === 'guru' && $request->role !== 'siswa') {
+            return redirect()->back()->with('error', 'Role guru hanya dapat membuat akun siswa.');
+        }
+
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password ?? '11223344'),
             'role' => $request->role,
             'class_id' => $request->class_id,
             'created_by' => Auth::id()
@@ -55,6 +61,18 @@ class UsersController extends Controller
             'class_id' => 'nullable|exists:classes,id',
         ]);
 
+        $current = Auth::user();
+
+        // If current user is a teacher, disallow updating admin accounts or assigning non-student roles
+        if ($current && $current->role === 'guru') {
+            if ($user->role === 'admin') {
+                return redirect()->back()->with('error', 'Anda tidak diizinkan mengubah akun admin.');
+            }
+            if ($request->role !== 'siswa') {
+                return redirect()->back()->with('error', 'Role guru hanya dapat mengatur akun siswa.');
+            }
+        }
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
@@ -68,6 +86,18 @@ class UsersController extends Controller
 
     public function destroy(User $user)
     {
+        $current = Auth::user();
+
+        // Prevent deleting self
+        if ($current && $current->id === $user->id) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        // If current user is a teacher, they may only delete student accounts
+        if ($current && $current->role === 'guru' && $user->role !== 'siswa') {
+            return redirect()->back()->with('error', 'Anda tidak diizinkan menghapus akun non-siswa.');
+        }
+
         $user->delete();
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus');
     }

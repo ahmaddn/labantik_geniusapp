@@ -31,6 +31,14 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    pretest: {
+        type: Array,
+        default: () => [],
+    },
+    posttest: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // State management
@@ -81,6 +89,13 @@ const goBack = () => {
     router.visit(route("admin.modules.index"));
 };
 
+// Open module-level quiz create (pretest/posttest) with preset category
+const openCreateQuizPretest = (category) => {
+    const base = route("admin.modules.quizzes.create", [props.module.id]);
+    const url = base + "?presetCategory=" + encodeURIComponent(category);
+    router.visit(url);
+};
+
 const openAddMissionModal = () => {
     form.reset();
     form.clearErrors();
@@ -105,6 +120,25 @@ const saveMissions = () => {
 const goToShowMission = (missionId) => {
     router.visit(
         route("admin.modules.missions.show", [props.module.id, missionId]),
+    );
+};
+const goToShowQuiz = (quiz) => {
+    // accepts either quiz object or id
+    const quizObj = typeof quiz === "object" ? quiz : { id: quiz };
+    // If quiz belongs to a mission, navigate to mission-scoped route
+    if (quizObj.mission_id) {
+        router.visit(
+            route("admin.modules.missions.quizzes.show", [
+                props.module.id,
+                quizObj.mission_id,
+                quizObj.id,
+            ]),
+        );
+        return;
+    }
+    // Module-level quiz (pretest/posttest)
+    router.visit(
+        route("admin.modules.quizzes.show", [props.module.id, quizObj.id]),
     );
 };
 
@@ -161,7 +195,7 @@ const deleteMission = () => {
                 selectedMission.value = null;
             },
             onError: () => {
-                triggerToast("Gagal menghapus mission.", "error");
+                triggerToast("Gagal menghapus misi.", "error");
             },
         },
     );
@@ -175,7 +209,9 @@ const deleteMission = () => {
             <div
                 class="bg-white rounded-3xl border-4 border-blue-200 shadow-playful p-6 mb-8"
             >
-                <div class="flex items-start gap-4">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                >
                     <button
                         @click="goBack"
                         class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 hover:bg-blue-200 transition-all"
@@ -199,29 +235,84 @@ const deleteMission = () => {
                         <!-- Module Stats -->
                         <div class="flex flex-wrap gap-4">
                             <div
-                                class="flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-xl border-2 border-purple-200"
+                                class="flex items-center gap-2 bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-medium"
                             >
                                 <Flag class="text-purple-500 w-4 h-4" />
                                 <span class="text-sm font-medium text-gray-700">
-                                    {{ missions.length }} Mission{{
-                                        missions.length !== 1 ? "s" : ""
-                                    }}
+                                    {{ missions.length }} Misi
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="flex gap-2">
+                    <!-- Actions (responsive: wrap on small screens) -->
+                    <div class="flex flex-wrap gap-2 mt-4 sm:mt-0">
                         <Button
+                            class="w-full sm:w-auto"
+                            variant="warning"
+                            size="md"
+                            :icon="Plus"
+                            @click="openCreateQuizPretest('pretest')"
+                        >
+                            Tambah Tes Awal
+                        </Button>
+                        <Button
+                            class="w-full sm:w-auto"
                             variant="primary"
                             size="lg"
                             :icon="Plus"
                             @click="openAddMissionModal"
                         >
-                            Tambah Mission
+                            Tambah Misi
+                        </Button>
+                        <Button
+                            class="w-full sm:w-auto"
+                            variant="light"
+                            size="md"
+                            :icon="Plus"
+                            @click="openCreateQuizPretest('posttest')"
+                        >
+                            Tambah Tes Akhir
                         </Button>
                     </div>
+                </div>
+            </div>
+
+            <!-- PRETEST SECTION -->
+            <div v-if="pretest.length" class="mb-6">
+                <div
+                    class="bg-blue-100 rounded-2xl p-4 flex items-center justify-between mb-4"
+                >
+                    <h2 class="text-xl font-bold text-gray-800">Tes Awal</h2>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                    <Card
+                        v-for="quiz in pretest"
+                        :key="quiz.id"
+                        border-color="blue"
+                        @click="goToShowQuiz(quiz.id)"
+                        class="cursor-pointer hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between h-full"
+                    >
+                        <div
+                            class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center"
+                        >
+                            <Flag class="w-12 h-12 text-blue-400" />
+                        </div>
+
+                        <h3
+                            class="font-heading font-bold text-gray-800 text-lg"
+                        >
+                            {{ quiz.title }}
+                        </h3>
+
+                        <p class="text-sm text-gray-500 mt-2">
+                            {{ quiz.questions_count }} Soal •
+                            {{ quiz.time_limit }} menit
+                        </p>
+                    </Card>
                 </div>
             </div>
 
@@ -230,9 +321,7 @@ const deleteMission = () => {
                 <div
                     class="bg-purple-100 rounded-2xl p-4 flex items-center justify-between"
                 >
-                    <h2 class="text-xl font-bold text-gray-800">
-                        Daftar Missions
-                    </h2>
+                    <h2 class="text-xl font-bold text-gray-800">Daftar Misi</h2>
                     <span
                         class="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold"
                     >
@@ -247,10 +336,10 @@ const deleteMission = () => {
                 >
                     <Inbox class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
                     <h3 class="text-xl font-bold text-gray-700 mb-2">
-                        Belum ada Mission
+                        Belum ada misi
                     </h3>
                     <p class="text-gray-500 mb-6">
-                        Mulai dengan menambahkan mission pertama untuk modul ini
+                        Mulai dengan menambahkan misi pertama untuk modul ini
                     </p>
                     <Button
                         variant="primary"
@@ -258,7 +347,7 @@ const deleteMission = () => {
                         :icon="Plus"
                         @click="openAddMissionModal"
                     >
-                        Tambah Mission Pertama
+                        Tambah Misi Pertama
                     </Button>
                 </div>
 
@@ -273,7 +362,7 @@ const deleteMission = () => {
                         v-for="mission in missions"
                         :key="mission.id"
                         border-color="purple"
-                        class="cursor-pointer hover:scale-[1.02] transition-all duration-200"
+                        class="cursor-pointer hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between h-full"
                         @click="goToShowMission(mission.id)"
                     >
                         <!-- Badge Order -->
@@ -293,7 +382,7 @@ const deleteMission = () => {
 
                         <!-- Nama Mission -->
                         <h3
-                            class="font-heading font-bold text-gray-800 text-lg leading-snug pr-12"
+                            class="font-heading font-bold text-gray-800 text-lg leading-snug pr-12 truncate"
                         >
                             {{ mission.name }}
                         </h3>
@@ -307,7 +396,7 @@ const deleteMission = () => {
                                 <!-- Edit Button -->
                                 <button
                                     @click="openEditMissionModal(mission)"
-                                    title="Edit Mission"
+                                    title="Ubah Misi"
                                     class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
                                 >
                                     <Pencil class="w-4 h-4" />
@@ -316,7 +405,7 @@ const deleteMission = () => {
                                 <!-- Delete Button -->
                                 <button
                                     @click="confirmDeleteMission(mission)"
-                                    title="Hapus Mission"
+                                    title="Hapus Misi"
                                     class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-red-200"
                                 >
                                     <Trash2 class="w-4 h-4" />
@@ -325,13 +414,53 @@ const deleteMission = () => {
                         </template>
                     </Card>
                 </TransitionGroup>
+
+                <!-- POSTTEST SECTION -->
+                <div v-if="posttest.length" class="mt-10">
+                    <div
+                        class="bg-green-100 rounded-2xl p-4 flex items-center justify-between mb-4"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Tes Akhir
+                        </h2>
+                    </div>
+
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        <Card
+                            v-for="quiz in posttest"
+                            :key="quiz.id"
+                            border-color="green"
+                            @click="goToShowQuiz(quiz.id)"
+                            class="cursor-pointer hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between h-full"
+                        >
+                            <div
+                                class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center"
+                            >
+                                <Flag class="w-12 h-12 text-green-400" />
+                            </div>
+
+                            <h3
+                                class="font-heading font-bold text-gray-800 text-lg"
+                            >
+                                {{ quiz.title }}
+                            </h3>
+
+                            <p class="text-sm text-gray-500 mt-2">
+                                {{ quiz.questions_count }} Soal •
+                                {{ quiz.time_limit }} menit
+                            </p>
+                        </Card>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Modal Tambah Mission -->
         <Modal
             :show="showAddMissionModal"
-            title="Tambah Mission Baru"
+            title="Tambah Misi Baru"
             @close="closeAddMissionModal"
             max-width="md"
         >
@@ -340,7 +469,7 @@ const deleteMission = () => {
                     class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4"
                 >
                     <p class="text-sm text-gray-700">
-                        Mission yang ditambahkan akan otomatis diberi nama
+                        Misi yang ditambahkan akan otomatis diberi nama
                         <span class="font-bold text-purple-600"
                             >"Misi 1", "Misi 2"</span
                         >, dll. Anda dapat mengubah namanya nanti.
@@ -349,7 +478,7 @@ const deleteMission = () => {
 
                 <InputField
                     v-model.number="form.mission_count"
-                    label="Jumlah Mission"
+                    label="Jumlah Misi"
                     type="number"
                     placeholder="Contoh: 5"
                     :icon="Hash"
@@ -360,7 +489,7 @@ const deleteMission = () => {
                     :error="form.errors.mission_count"
                 >
                     <template #help>
-                        Masukkan jumlah mission yang ingin ditambahkan (1-20)
+                        Masukkan jumlah misi yang ingin ditambahkan (1-20)
                     </template>
                 </InputField>
             </div>
@@ -392,7 +521,7 @@ const deleteMission = () => {
                         <span v-else>
                             <span class="flex items-center gap-2">
                                 <Plus class="w-4 h-4" />
-                                Tambah {{ form.mission_count }} Mission
+                                Tambah {{ form.mission_count }} Misi
                             </span>
                         </span>
                     </Button>
@@ -403,14 +532,14 @@ const deleteMission = () => {
         <!-- Modal Edit Mission -->
         <Modal
             :show="showEditMissionModal"
-            title="Edit Mission"
+            title="Ubah Misi"
             @close="closeEditMissionModal"
             max-width="md"
         >
             <div class="space-y-5">
                 <InputField
                     v-model="editForm.name"
-                    label="Nama Mission"
+                    label="Nama Misi"
                     type="text"
                     placeholder="Contoh: Misi Pengenalan"
                     :icon="Flag"
@@ -476,8 +605,8 @@ const deleteMission = () => {
         <!-- Delete Confirmation Dialog -->
         <ConfirmDialog
             :show="showDeleteDialog"
-            title="Hapus mission ini?"
-            :message="`Mission '${selectedMission?.name}' akan dihapus secara permanen.`"
+            title="Hapus misi ini?"
+            :message="`Misi '${selectedMission?.name}' akan dihapus selamanya.`"
             @confirm="deleteMission"
             @cancel="showDeleteDialog = false"
         />
