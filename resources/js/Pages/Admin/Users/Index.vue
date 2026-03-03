@@ -38,13 +38,18 @@ const props = defineProps({
 });
 
 const page = usePage();
+const currentRole = page.props.auth?.user?.role || null;
+const isGuru = currentRole === "guru";
 
 // Role options untuk select
-const roleOptions = [
+const allRoleOptions = [
     { value: "admin", label: "Admin" },
     { value: "guru", label: "Guru" },
     { value: "siswa", label: "Siswa" },
 ];
+const roleOptions = isGuru
+    ? allRoleOptions.filter((r) => r.value === "siswa")
+    : allRoleOptions;
 
 // Konfigurasi kolom untuk DataTable
 const columns = [
@@ -71,11 +76,14 @@ const actions = [
         name: "edit",
         icon: Pencil,
         class: "bg-yellow-400 border-yellow-500",
+        // show only if not guru OR the row is a student
+        showIf: (row) => !isGuru || row.role === "student",
     },
     {
         name: "delete",
         icon: Trash2,
         class: "bg-red-400 border-red-500",
+        showIf: () => !isGuru,
     },
 ];
 
@@ -103,10 +111,18 @@ const showToast = (message, type = "success") => {
 const openCreate = () => {
     isEdit.value = false;
     form.reset();
+    // If current user is guru, force role to siswa
+    if (isGuru) form.role = "siswa";
     showDialog.value = true;
 };
 
 const openEdit = (userItem) => {
+    // Prevent teachers from editing admin/guru accounts
+    if (isGuru && userItem.role !== "siswa") {
+        showToast("Anda tidak diizinkan mengubah akun non-siswa.", "error");
+        return;
+    }
+
     isEdit.value = true;
     editId.value = userItem.id;
     form.name = userItem.name;
@@ -161,7 +177,15 @@ const handleTableAction = ({ action, data }) => {
     if (action === "edit") {
         openEdit(data);
     } else if (action === "delete") {
-        confirmDelete(data);
+        // Prevent teachers from deleting non-student accounts
+        if (isGuru && data.role !== "siswa") {
+            showToast(
+                "Anda tidak diizinkan menghapus akun non-siswa.",
+                "error",
+            );
+            return;
+        }
+        confirmDelete(data.id || data);
     }
 };
 
@@ -291,6 +315,7 @@ onUnmounted(() => {
                     placeholder="Pilih Role"
                     :icon="Shield"
                     required
+                    :disabled="isGuru"
                     border-color="blue"
                 />
 

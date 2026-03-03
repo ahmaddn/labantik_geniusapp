@@ -1,11 +1,18 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import {
-    BookOpen, Star, CheckCircle2, FileQuestion,
-    ChevronDown, RefreshCw, Play, LayoutGrid,
-    ClipboardList, Swords, GraduationCap,
-    Target, Sparkles, LogOut,
-    Trophy, Zap,
+    BookOpen,
+    Star,
+    CheckCircle2,
+    FileQuestion,
+    ChevronDown,
+    RefreshCw,
+    Play,
+    Sparkles,
+    LogOut,
+    GraduationCap,
+    Trophy,
+    Zap,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 
@@ -19,42 +26,52 @@ const props = defineProps({
 });
 
 // ── State ─────────────────────────────────────────────────────────
-const ready        = ref(false);
-const activeTab    = ref("semua");
+const ready = ref(false);
 const dropdownOpen = ref(false);
-const menuRef      = ref(null);
-const musicOn      = ref(false);
-const audioRef     = ref(null);
+const menuRef = ref(null);
+const musicOn = ref(false);
+const audioRef = ref(null);
 
 // ── Music ─────────────────────────────────────────────────────────
 const handleVisibility = () => {
     if (!audioRef.value) return;
-    document.hidden ? audioRef.value.pause()
-                    : (musicOn.value && audioRef.value.play().catch(() => {}));
+    document.hidden
+        ? audioRef.value.pause()
+        : musicOn.value && audioRef.value.play().catch(() => {});
 };
 const toggleMusic = async () => {
     if (!audioRef.value) {
         audioRef.value = new Audio("/backsound/backsound.mp3");
-        audioRef.value.loop    = true;
-        audioRef.value.volume  = 0.4;
+        audioRef.value.loop = true;
+        audioRef.value.volume = 0.4;
         audioRef.value.preload = "auto";
         audioRef.value.addEventListener("error", () => {
-            audioRef.value = null; musicOn.value = false;
+            audioRef.value = null;
+            musicOn.value = false;
         });
     }
     if (musicOn.value) {
-        audioRef.value.pause(); musicOn.value = false;
+        audioRef.value.pause();
+        musicOn.value = false;
     } else {
-        try { await audioRef.value.play(); musicOn.value = true; }
-        catch (e) { musicOn.value = false; }
+        try {
+            await audioRef.value.play();
+            musicOn.value = true;
+        } catch (e) {
+            musicOn.value = false;
+        }
     }
 };
 
 // ── Dropdown ──────────────────────────────────────────────────────
 const handleClickOutside = (e) => {
-    if (menuRef.value && !menuRef.value.contains(e.target)) dropdownOpen.value = false;
+    if (menuRef.value && !menuRef.value.contains(e.target))
+        dropdownOpen.value = false;
 };
-const logout = () => { dropdownOpen.value = false; router.post(route("playground.logout")); };
+const logout = () => {
+    dropdownOpen.value = false;
+    router.post(route("playground.logout"));
+};
 
 // ── Lifecycle ─────────────────────────────────────────────────────
 onMounted(() => {
@@ -65,85 +82,97 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener("mousedown", handleClickOutside);
     document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) { audioRef.value.pause(); audioRef.value = null; }
+    if (audioRef.value) {
+        audioRef.value.pause();
+        audioRef.value = null;
+    }
 });
-
-// ── Filter Tabs ───────────────────────────────────────────────────
-const ALL_TABS = [
-    { key: "semua",    label: "Semua",    icon: LayoutGrid    },
-    { key: "pretest",  label: "Pretest",  icon: ClipboardList },
-    { key: "mission",  label: "Mission",  icon: Swords        },
-    { key: "posttest", label: "Posttest", icon: GraduationCap },
-];
-
-// Hanya tampilkan tab yang ada modulnya
-const tabs = computed(() => {
-    const used = new Set(props.learningModules.flatMap(m => m.quiz_categories ?? []));
-    return ALL_TABS.filter(t => t.key === "semua" || used.has(t.key));
-});
-
-// ── Filtered modules ──────────────────────────────────────────────
-// Modul muncul di tab jika quiz_categories-nya mengandung tab tersebut
-const filtered = computed(() => {
-    if (activeTab.value === "semua") return props.learningModules;
-    return props.learningModules.filter(m =>
-        (m.quiz_categories ?? []).includes(activeTab.value)
-    );
-});
-
-const totalFinished = computed(() => props.learningModules.filter(m => m.finished).length);
 
 // ── Helpers ───────────────────────────────────────────────────────
-const statusLabel = m => m.finished ? "Ulangi" : m.has_attempt ? "Lanjutkan" : "Mulai";
-const scoreColor  = s => s >= 80 ? "#16a34a" : s >= 60 ? "#ca8a04" : "#dc2626";
-const scoreBg     = s => s >= 80 ? "rgba(22,163,74,.1)" : s >= 60 ? "rgba(202,138,4,.1)" : "rgba(220,38,38,.1)";
+const totalFinished = computed(
+    () => props.learningModules.filter((m) => m.finished).length,
+);
+const statusLabel = (m) =>
+    m.finished ? "Ulangi" : m.has_attempt ? "Lanjutkan" : "Mulai";
+const scoreColor = (s) =>
+    s >= 80 ? "#16a34a" : s >= 60 ? "#ca8a04" : "#dc2626";
+const scoreBg = (s) =>
+    s >= 80
+        ? "rgba(22,163,74,.1)"
+        : s >= 60
+          ? "rgba(202,138,4,.1)"
+          : "rgba(220,38,38,.1)";
 
-const CATEGORY_META = {
-    pretest:  { label: "Pretest",  color: "#8B5CF6", bg: "rgba(139,92,246,.12)", border: "rgba(139,92,246,.3)" },
-    mission:  { label: "Mission",  color: "#FF5500", bg: "rgba(255,85,0,.1)",    border: "rgba(255,85,0,.28)"  },
-    posttest: { label: "Posttest", color: "#0891B2", bg: "rgba(8,145,178,.1)",   border: "rgba(8,145,178,.28)" },
-};
-
-const badgeStyle = (cat) => {
-    const m = CATEGORY_META[cat];
-    return m ? { color: m.color, background: m.bg, borderColor: m.border } : {};
-};
-const badgeLabel = (cat) => CATEGORY_META[cat]?.label ?? cat;
+// Warna aksen per index — tetap berwarna-warni per kartu
+const ACCENTS = [
+    "#2563EB",
+    "#8B5CF6",
+    "#0891B2",
+    "#16A34A",
+    "#E09B2D",
+    "#DC2626",
+    "#0D9488",
+    "#BE185D",
+    "#CA8A04",
+    "#7C3AED",
+];
+const accent = (i) => ACCENTS[i % ACCENTS.length];
 </script>
 
 <template>
-    <div style="display:none">
+    <div style="display: none">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
+            rel="stylesheet"
+        />
     </div>
 
     <div class="pg">
-
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
             <div class="wrap row-between">
                 <div class="brand">
                     <div class="brand-icon">
-                        <Zap :size="16" color="#fff" :stroke-width="2.5" fill="white" />
+                        <Zap
+                            :size="16"
+                            color="#fff"
+                            :stroke-width="2.5"
+                            fill="white"
+                        />
                     </div>
-                    <span class="brand-name">BelajarYuk<span class="brand-dot">!</span></span>
+                    <span class="brand-name">Geniuss</span>
                 </div>
 
                 <div class="user-menu" ref="menuRef">
-                    <button class="user-pill" @click="dropdownOpen = !dropdownOpen" :class="{ open: dropdownOpen }">
+                    <button
+                        class="user-pill"
+                        @click="dropdownOpen = !dropdownOpen"
+                        :class="{ open: dropdownOpen }"
+                    >
                         <div class="avatar-sm">{{ user.name.charAt(0) }}</div>
-                        <span class="pill-name">{{ user.name.split(" ")[0] }}</span>
-                        <ChevronDown :size="13" :stroke-width="2.8" class="pill-chev" />
+                        <span class="pill-name">{{
+                            user.name.split(" ")[0]
+                        }}</span>
+                        <ChevronDown
+                            :size="13"
+                            :stroke-width="2.8"
+                            class="pill-chev"
+                        />
                     </button>
 
                     <Transition name="dd">
                         <div v-if="dropdownOpen" class="dropdown">
                             <div class="dd-top">
-                                <div class="dd-ava">{{ user.name.charAt(0) }}</div>
+                                <div class="dd-ava">
+                                    {{ user.name.charAt(0) }}
+                                </div>
                                 <div>
                                     <div class="dd-nm">{{ user.name }}</div>
-                                    <div class="dd-kls">Kelas {{ user.class?.name }}</div>
+                                    <div class="dd-kls">
+                                        Kelas {{ user.class?.name }}
+                                    </div>
                                 </div>
                             </div>
                             <div class="dd-line"></div>
@@ -169,18 +198,27 @@ const badgeLabel = (cat) => CATEGORY_META[cat]?.label ?? cat;
                             <Sparkles :size="12" :stroke-width="2.3" />
                             Selamat datang kembali!
                         </div>
-                        <h1 class="hero-name">Halo, {{ user.name.split(" ")[0] }}! 👋</h1>
+                        <h1 class="hero-name">
+                            Halo, {{ user.name.split(" ")[0] }}! 👋
+                        </h1>
                         <p class="hero-sub">
-                            Ada <strong>{{ learningModules.length }}</strong> modul seru yang siap dijelajahi hari ini.
+                            Ada
+                            <strong>{{ learningModules.length }}</strong> modul
+                            seru yang siap dijelajahi hari ini.
                         </p>
 
                         <div class="hero-stats">
                             <div class="hstat">
                                 <div class="hstat-icon">
-                                    <GraduationCap :size="16" :stroke-width="2.3" />
+                                    <GraduationCap
+                                        :size="16"
+                                        :stroke-width="2.3"
+                                    />
                                 </div>
                                 <div class="hstat-text">
-                                    <span class="hstat-val">{{ user.class?.name }}</span>
+                                    <span class="hstat-val">{{
+                                        user.class?.name
+                                    }}</span>
                                     <span class="hstat-lbl">Kelas Saya</span>
                                 </div>
                             </div>
@@ -191,7 +229,12 @@ const badgeLabel = (cat) => CATEGORY_META[cat]?.label ?? cat;
                                 </div>
                                 <div class="hstat-text">
                                     <span class="hstat-val">
-                                        {{ totalFinished }}<small>/{{ learningModules.length }}</small>
+                                        {{ totalFinished
+                                        }}<small
+                                            >/{{
+                                                learningModules.length
+                                            }}</small
+                                        >
                                     </span>
                                     <span class="hstat-lbl">Modul Selesai</span>
                                 </div>
@@ -204,69 +247,75 @@ const badgeLabel = (cat) => CATEGORY_META[cat]?.label ?? cat;
                         <div class="dring dr-md"></div>
                         <div class="dring dr-sm"></div>
                         <div class="dring-center">
-                            <BookOpen :size="32" color="rgba(255,255,255,.92)" :stroke-width="1.6" />
+                            <BookOpen
+                                :size="32"
+                                color="rgba(255,255,255,.92)"
+                                :stroke-width="1.6"
+                            />
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ══ FILTER ══ -->
-        <div class="filter-bar" :class="{ show: ready }">
-            <div class="wrap">
-                <div class="filter-row">
-                    <button
-                        v-for="tab in tabs" :key="tab.key"
-                        class="ftab"
-                        :class="{ active: activeTab === tab.key }"
-                        @click="activeTab = tab.key"
-                    >
-                        <component :is="tab.icon" :size="13" :stroke-width="2.2" />
-                        <span>{{ tab.label }}</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- ══ GRID ══ -->
-        <main class="grid-section">
+        <main class="grid-section" :class="{ show: ready }">
             <div class="wrap">
-                <p class="grid-label">{{ filtered.length }} modul tersedia</p>
+                <p class="grid-label">
+                    {{ learningModules.length }} modul tersedia
+                </p>
 
                 <div class="mod-grid">
                     <article
-                        v-for="(mod, i) in filtered" :key="mod.id"
+                        v-for="(mod, i) in learningModules"
+                        :key="mod.id"
                         class="mod-card"
                         :class="{ 'card-show': ready, done: mod.finished }"
-                        :style="{ '--ac': mod.accent, '--delay': i * 40 + 'ms' }"
+                        :style="{ '--ac': accent(i), '--delay': i * 40 + 'ms' }"
                     >
-                        <div class="card-bar" :style="{ background: mod.accent }"></div>
+                        <div
+                            class="card-bar"
+                            :style="{ background: accent(i) }"
+                        ></div>
 
-                        <div class="card-thumb" :style="{ background: mod.accent + '12' }">
+                        <div
+                            class="card-thumb"
+                            :style="{ background: accent(i) + '12' }"
+                        >
                             <template v-if="mod.thumbnail">
-                                <img :src="mod.thumbnail" :alt="mod.name" class="thumb-img" />
+                                <img
+                                    :src="mod.thumbnail"
+                                    :alt="mod.name"
+                                    class="thumb-img"
+                                />
                             </template>
                             <template v-else>
-                                <div class="thumb-icon"
-                                    :style="{ background: mod.accent+'1e', borderColor: mod.accent+'55' }">
-                                    <BookOpen :size="24" :color="mod.accent" :stroke-width="1.8" />
+                                <div
+                                    class="thumb-icon"
+                                    :style="{
+                                        background: accent(i) + '1e',
+                                        borderColor: accent(i) + '55',
+                                    }"
+                                >
+                                    <BookOpen
+                                        :size="24"
+                                        :color="accent(i)"
+                                        :stroke-width="1.8"
+                                    />
                                 </div>
                             </template>
 
-                            <!-- Badge kategori utama -->
-                            <div v-if="mod.primary_category" class="type-badge"
-                                :style="badgeStyle(mod.primary_category)">
-                                {{ badgeLabel(mod.primary_category) }}
-                            </div>
-
-                            <!-- Badge tambahan jika modul punya lebih dari 1 kategori -->
-                            <div v-if="(mod.quiz_categories ?? []).length > 1" class="multi-badge">
-                                +{{ mod.quiz_categories.length - 1 }}
-                            </div>
-
-                            <div v-if="mod.finished" class="fin-stamp"
-                                :style="{ color: mod.accent, borderColor: mod.accent+'55', background: mod.accent+'15' }">
-                                <CheckCircle2 :size="11" :stroke-width="2.5" /> Selesai
+                            <div
+                                v-if="mod.finished"
+                                class="fin-stamp"
+                                :style="{
+                                    color: accent(i),
+                                    borderColor: accent(i) + '55',
+                                    background: accent(i) + '15',
+                                }"
+                            >
+                                <CheckCircle2 :size="11" :stroke-width="2.5" />
+                                Selesai
                             </div>
                         </div>
 
@@ -274,388 +323,865 @@ const badgeLabel = (cat) => CATEGORY_META[cat]?.label ?? cat;
                             <h3 class="mod-title">{{ mod.name }}</h3>
                             <p class="mod-desc">{{ mod.description }}</p>
 
-                            <div v-if="mod.has_attempt" class="score-row"
-                                :style="{ color: scoreColor(mod.best_score), background: scoreBg(mod.best_score) }">
-                                <Star :size="10" fill="currentColor" :stroke-width="0" />
-                                Skor terbaik: <strong>{{ mod.best_score }}</strong>
+                            <div
+                                v-if="mod.has_attempt"
+                                class="score-row"
+                                :style="{
+                                    color: scoreColor(mod.best_score),
+                                    background: scoreBg(mod.best_score),
+                                }"
+                            >
+                                <Star
+                                    :size="10"
+                                    fill="currentColor"
+                                    :stroke-width="0"
+                                />
+                                Skor terbaik:
+                                <strong>{{ mod.best_score }}</strong>
                             </div>
 
                             <div class="divider"></div>
 
                             <div class="chips">
-                                <span class="chip" :style="{ color: mod.accent, background: mod.accent+'14' }">
-                                    <FileQuestion :size="10" :stroke-width="2.5" />
-                                    {{ mod.quizzes_count }} Quiz
-                                </span>
-                                <!-- Badge semua kategori yang ada -->
                                 <span
-                                    v-for="cat in (mod.quiz_categories ?? [])" :key="cat"
                                     class="chip"
-                                    :style="badgeStyle(cat)"
+                                    :style="{
+                                        color: accent(i),
+                                        background: accent(i) + '14',
+                                    }"
                                 >
-                                    {{ badgeLabel(cat) }}
+                                    <FileQuestion
+                                        :size="10"
+                                        :stroke-width="2.5"
+                                    />
+                                    Quiz &amp; Materi
                                 </span>
                             </div>
 
-                            <button class="cta"
+                            <button
+                                class="cta"
                                 :class="{
-                                    'cta-new':  !mod.has_attempt,
-                                    'cta-cont':  mod.has_attempt && !mod.finished,
-                                    'cta-redo':  mod.finished,
+                                    'cta-new': !mod.has_attempt,
+                                    'cta-cont':
+                                        mod.has_attempt && !mod.finished,
+                                    'cta-redo': mod.finished,
                                 }"
-                                :style="!mod.has_attempt ? `--btnbg:${mod.accent}` : ''"
+                                :style="
+                                    !mod.has_attempt
+                                        ? `--btnbg:${accent(i)}`
+                                        : ''
+                                "
                             >
-                                <component :is="mod.finished ? RefreshCw : Play"
-                                    :size="12" :stroke-width="2.5"
-                                    :fill="!mod.finished ? 'currentColor' : 'none'" />
+                                <component
+                                    :is="mod.finished ? RefreshCw : Play"
+                                    :size="12"
+                                    :stroke-width="2.5"
+                                    :fill="
+                                        !mod.finished ? 'currentColor' : 'none'
+                                    "
+                                />
                                 {{ statusLabel(mod) }}
                             </button>
                         </div>
                     </article>
                 </div>
 
-                <div v-if="filtered.length === 0" class="empty">
-                    <BookOpen :size="40" color="#e8956d" :stroke-width="1.4" />
+                <div v-if="learningModules.length === 0" class="empty">
+                    <BookOpen :size="40" color="#3b82f6" :stroke-width="1.4" />
                     <p class="empty-t">Belum ada modul</p>
-                    <p class="empty-s">Tidak ada modul di kategori ini.</p>
+                    <p class="empty-s">Modul akan segera tersedia.</p>
                 </div>
             </div>
         </main>
 
         <!-- ══ MUSIC FAB ══ -->
-        <button class="music-fab" :class="{ on: musicOn }"
-            @click="toggleMusic" :title="musicOn ? 'Matikan musik' : 'Nyalakan musik'">
-            <svg v-if="musicOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+        <button
+            class="music-fab"
+            :class="{ on: musicOn }"
+            @click="toggleMusic"
+            :title="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
+        >
+            <svg
+                v-if="musicOn"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+            >
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
             </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+            <svg
+                v-else
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+            >
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
                 <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
             <span v-if="musicOn" class="fab-pulse"></span>
         </button>
-
     </div>
 </template>
 
 <style scoped>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 .pg {
     min-height: 100vh;
-    font-family: 'Nunito', sans-serif;
+    font-family: "Nunito", sans-serif;
     padding-bottom: 96px;
-    background: url("/images/templates/background.png") top center / cover no-repeat fixed;
+    background: url("/images/templates/background.png") top center / cover
+        no-repeat fixed;
 }
 
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-.row-between { display: flex; align-items: center; justify-content: space-between; }
+.wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
 /* ── TOPBAR ── */
 .topbar {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(255,255,255,.82);
-    backdrop-filter: blur(18px) saturate(1.8);
-    -webkit-backdrop-filter: blur(18px) saturate(1.8);
-    border-bottom: 1px solid rgba(255,107,43,.16);
-    box-shadow: 0 1px 18px rgba(0,0,0,.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 0 32px;
+    z-index: 20;
+    box-shadow: 0 1px 18px rgba(0, 0, 0, 0.08);
 }
-.topbar .wrap { padding-top: 10px; padding-bottom: 10px; }
+.topbar .wrap {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
 
-.brand { display: flex; align-items: center; gap: 9px; }
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
 .brand-icon {
-    width: 32px; height: 32px; border-radius: 10px;
-    background: linear-gradient(140deg,#ff9a6c,#ff5500);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 10px rgba(255,107,43,.38);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(140deg, #60a5fa, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(29, 78, 216, 0.38);
 }
-.brand-name { font-family: 'Righteous', cursive; font-size: 20px; color: #c43d00; letter-spacing: -.2px; }
-.brand-dot  { color: #ff5500; }
+.brand-name {
+    font-family: "Righteous", cursive;
+    font-size: 20px;
+    color: #1e3a8a;
+    letter-spacing: -0.2px;
+}
 
-.user-menu { position: relative; }
-.user-pill {
-    display: flex; align-items: center; gap: 7px; padding: 5px 11px 5px 5px;
-    background: rgba(255,255,255,.9); border: 1.5px solid rgba(255,107,43,.22);
-    border-radius: 50px; cursor: pointer; outline: none; transition: all .18s;
+/* ── USER PILL ── */
+.user-menu {
+    position: relative;
 }
-.user-pill:hover, .user-pill.open {
-    background: #fff; border-color: rgba(255,107,43,.5);
-    box-shadow: 0 3px 14px rgba(255,107,43,.14);
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px 5px 5px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid rgba(29, 78, 216, 0.22);
+    border-radius: 50px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.18s;
+}
+.user-pill:hover,
+.user-pill.open {
+    background: #fff;
+    border-color: rgba(29, 78, 216, 0.5);
+    box-shadow: 0 3px 14px rgba(29, 78, 216, 0.14);
 }
 .avatar-sm {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: linear-gradient(135deg,#ff9a6c,#ff5500);
-    color: #fff; font-weight: 900; font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+    color: #fff;
+    font-weight: 900;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.pill-name { font-size: 12.5px; font-weight: 800; color: #c43d00; }
-.pill-chev { color: #ff5500; flex-shrink: 0; transition: transform .2s cubic-bezier(.34,1.56,.64,1); }
-.user-pill.open .pill-chev { transform: rotate(180deg); }
+.pill-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1e3a8a;
+}
+.pill-chev {
+    color: #1d4ed8;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.user-pill.open .pill-chev {
+    transform: rotate(180deg);
+}
 
+/* ── DROPDOWN ── */
 .dropdown {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 210px;
-    background: rgba(255,255,255,.98); border: 1.5px solid rgba(255,107,43,.16);
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 210px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1.5px solid rgba(29, 78, 216, 0.16);
     border-radius: 16px;
-    box-shadow: 0 16px 48px rgba(200,60,0,.14), 0 2px 8px rgba(0,0,0,.05);
-    overflow: hidden; z-index: 200;
+    box-shadow:
+        0 16px 48px rgba(29, 78, 216, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    z-index: 200;
 }
-.dd-top { display: flex; align-items: center; gap: 10px; padding: 13px 13px 11px; }
+.dd-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 13px 11px;
+}
 .dd-ava {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg,#ff9a6c,#ff5500);
-    color: #fff; font-weight: 900; font-size: 16px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+    color: #fff;
+    font-weight: 900;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
-.dd-nm  { font-size: 13px; font-weight: 900; color: #3a1200; line-height: 1.3; }
-.dd-kls { font-size: 11px; font-weight: 700; color: #c4826a; }
-.dd-line { height: 1px; background: rgba(255,107,43,.1); margin: 0 10px; }
+.dd-nm {
+    font-size: 13px;
+    font-weight: 900;
+    color: #1e3a8a;
+    line-height: 1.3;
+}
+.dd-kls {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b9fd4;
+}
+.dd-line {
+    height: 1px;
+    background: rgba(29, 78, 216, 0.1);
+    margin: 0 10px;
+}
 .dd-row {
-    display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 13px;
-    font-family: 'Nunito',sans-serif; font-size: 13px; font-weight: 800;
-    background: none; border: none; cursor: pointer; text-align: left; transition: background .13s;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 10px 13px;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.13s;
 }
-.dd-out { color: #dc2626; }
-.dd-out:hover { background: rgba(220,38,38,.06); }
-.dd-enter-active { transition: all .2s cubic-bezier(.34,1.56,.64,1); }
-.dd-leave-active { transition: all .14s ease; }
-.dd-enter-from, .dd-leave-to { opacity: 0; transform: translateY(-6px) scale(.97); }
+.dd-out {
+    color: #dc2626;
+}
+.dd-out:hover {
+    background: rgba(220, 38, 38, 0.06);
+}
+.dd-enter-active {
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.dd-leave-active {
+    transition: all 0.14s ease;
+}
+.dd-enter-from,
+.dd-leave-to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+}
 
 /* ── HERO ── */
 .hero-section {
-    padding: 20px 0 0; opacity: 0; transform: translateY(22px);
-    transition: opacity .55s ease, transform .55s cubic-bezier(.34,1.56,.64,1);
+    padding: 20px 0 0;
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+        opacity 0.55s ease,
+        transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.hero-section.show { opacity: 1; transform: none; }
+.hero-section.show {
+    opacity: 1;
+    transform: none;
+}
+
 .hero-card {
-    position: relative; overflow: hidden;
-    background: linear-gradient(130deg,#ff8c42 0%,#ff5500 50%,#ff3d00 100%);
-    border-radius: 24px; padding: 28px 32px;
-    display: flex; align-items: center; justify-content: space-between; gap: 20px;
-    box-shadow: 0 12px 44px rgba(255,85,0,.38), 0 4px 0 rgba(160,30,0,.22),
-                inset 0 1px 0 rgba(255,255,255,.18);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(130deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+    border-radius: 24px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    box-shadow:
+        0 12px 44px rgba(29, 78, 216, 0.38),
+        0 4px 0 rgba(14, 57, 165, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
-.hblob { position: absolute; border-radius: 50%; pointer-events: none; }
-.hblob-a { width: 300px; height: 300px; top: -100px; right: 80px; background: rgba(255,255,255,.07); }
-.hblob-b { width: 120px; height: 120px; bottom: -50px; left: 160px; background: rgba(255,200,80,.1); }
-.hero-body { position: relative; z-index: 2; flex: 1; min-width: 0; }
+.hblob {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.hblob-a {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: 80px;
+    background: rgba(255, 255, 255, 0.07);
+}
+.hblob-b {
+    width: 120px;
+    height: 120px;
+    bottom: -50px;
+    left: 160px;
+    background: rgba(147, 197, 253, 0.12);
+}
+
+.hero-body {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    min-width: 0;
+}
 .hero-greet {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 900; letter-spacing: .4px; color: rgba(255,255,255,.9);
-    background: rgba(255,255,255,.18); border: 1.5px solid rgba(255,255,255,.3);
-    border-radius: 50px; padding: 3px 11px; margin-bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    padding: 3px 11px;
+    margin-bottom: 10px;
 }
 .hero-name {
-    font-family: 'Righteous', cursive; font-size: clamp(22px,3.2vw,32px);
-    color: #fff; line-height: 1.2; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(160,30,0,.3);
+    font-family: "Righteous", cursive;
+    font-size: clamp(22px, 3.2vw, 32px);
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 10px rgba(14, 57, 165, 0.3);
 }
 .hero-sub {
-    font-size: clamp(12.5px,1.6vw,14px); font-weight: 700;
-    color: rgba(255,255,255,.82); margin-bottom: 20px; line-height: 1.5;
+    font-size: clamp(12.5px, 1.6vw, 14px);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.82);
+    margin-bottom: 20px;
+    line-height: 1.5;
 }
-.hero-sub strong { color: #fff; font-weight: 900; }
-.hero-stats {
-    display: inline-flex; align-items: stretch;
-    background: rgba(255,255,255,.14); border: 1.5px solid rgba(255,255,255,.28);
-    border-radius: 14px; overflow: hidden;
+.hero-sub strong {
+    color: #fff;
+    font-weight: 900;
 }
-.hstat { display: flex; align-items: center; gap: 10px; padding: 10px 18px; color: #fff; }
-.hstat-icon {
-    width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-    background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center;
-}
-.hstat-text { display: flex; flex-direction: column; }
-.hstat-val  { font-family: 'Righteous', cursive; font-size: 16px; line-height: 1.2; color: #fff; }
-.hstat-val small { font-family: 'Nunito',sans-serif; font-size: 11px; font-weight: 700; opacity: .8; }
-.hstat-lbl  { font-size: 10px; font-weight: 800; opacity: .72; text-transform: uppercase; letter-spacing: .6px; }
-.hstat-sep  { width: 1px; background: rgba(255,255,255,.22); align-self: stretch; }
-.hero-deco {
-    position: relative; z-index: 2; flex-shrink: 0;
-    width: 124px; height: 124px; display: flex; align-items: center; justify-content: center;
-}
-.dring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.2); }
-.dr-lg { width: 124px; height: 124px; animation: spin-r 18s linear infinite; }
-.dr-md { width:  88px; height:  88px; animation: spin-r 11s linear infinite reverse; }
-.dr-sm { width:  56px; height:  56px; animation: spin-r  6s linear infinite; }
-.dring-center {
-    width: 68px; height: 68px; border-radius: 20px;
-    background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.3);
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,.1);
-}
-@keyframes spin-r { to { transform: rotate(360deg); } }
 
-/* ── FILTER ── */
-.filter-bar {
-    padding: 16px 0 0; opacity: 0; transform: translateY(8px);
-    transition: opacity .4s .16s ease, transform .4s .16s cubic-bezier(.34,1.56,.64,1);
+.hero-stats {
+    display: inline-flex;
+    align-items: stretch;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    border-radius: 14px;
+    overflow: hidden;
 }
-.filter-bar.show { opacity: 1; transform: none; }
-.filter-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-.filter-row::-webkit-scrollbar { display: none; }
-.ftab {
-    flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 8px 16px;
-    border-radius: 50px; border: 1.5px solid rgba(255,255,255,.62);
-    background: rgba(255,255,255,.8); backdrop-filter: blur(10px);
-    font-family: 'Nunito',sans-serif; font-size: 13px; font-weight: 800;
-    color: #c43d00; cursor: pointer; transition: all .18s; white-space: nowrap;
+.hstat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    color: #fff;
 }
-.ftab:hover { background: #fff; border-color: rgba(255,107,43,.42); }
-.ftab.active {
-    background: linear-gradient(135deg,#ff9a6c,#ff5500); border-color: #ff5500; color: #fff;
-    box-shadow: 0 4px 16px rgba(255,107,43,.38);
+.hstat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hstat-text {
+    display: flex;
+    flex-direction: column;
+}
+.hstat-val {
+    font-family: "Righteous", cursive;
+    font-size: 16px;
+    line-height: 1.2;
+    color: #fff;
+}
+.hstat-val small {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+.hstat-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    opacity: 0.72;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+.hstat-sep {
+    width: 1px;
+    background: rgba(255, 255, 255, 0.22);
+    align-self: stretch;
+}
+
+.hero-deco {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    width: 124px;
+    height: 124px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+.dr-lg {
+    width: 124px;
+    height: 124px;
+    animation: spin-r 18s linear infinite;
+}
+.dr-md {
+    width: 88px;
+    height: 88px;
+    animation: spin-r 11s linear infinite reverse;
+}
+.dr-sm {
+    width: 56px;
+    height: 56px;
+    animation: spin-r 6s linear infinite;
+}
+.dring-center {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+@keyframes spin-r {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ── GRID ── */
-.grid-section { padding: 14px 0 0; }
-.grid-label {
-    font-size: 12px; font-weight: 800; color: rgba(255,255,255,.9);
-    text-shadow: 0 1px 4px rgba(0,0,0,.2); margin-bottom: 12px; letter-spacing: .2px;
+.grid-section {
+    padding: 20px 0 0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+        opacity 0.4s 0.16s ease,
+        transform 0.4s 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.mod-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.grid-section.show {
+    opacity: 1;
+    transform: none;
+}
+.grid-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 12px;
+    letter-spacing: 0.2px;
+}
+.mod-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
 
 /* ── CARD ── */
 .mod-card {
-    background: #fff; border: 1.5px solid rgba(255,107,43,.14);
-    border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;
-    opacity: 0; transform: translateY(24px) scale(.97);
+    background: #fff;
+    border: 1.5px solid rgba(29, 78, 216, 0.12);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
     transition:
-        opacity .42s var(--delay,0ms) ease,
-        transform .42s var(--delay,0ms) cubic-bezier(.34,1.56,.64,1),
-        box-shadow .2s ease, border-color .2s ease;
-    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+        opacity 0.42s var(--delay, 0ms) ease,
+        transform 0.42s var(--delay, 0ms) cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
 }
-.mod-card.card-show { opacity: 1; transform: none; }
+.mod-card.card-show {
+    opacity: 1;
+    transform: none;
+}
 .mod-card:hover {
     transform: translateY(-6px) scale(1.013);
-    box-shadow: 0 16px 40px rgba(0,0,0,.13), 0 0 0 1.5px var(--ac);
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.13),
+        0 0 0 1.5px var(--ac);
     border-color: var(--ac);
 }
-.mod-card.done { border-color: rgba(255,107,43,.3); }
+.mod-card.done {
+    border-color: rgba(29, 78, 216, 0.28);
+}
 
-.card-bar { height: 4px; }
+.card-bar {
+    height: 4px;
+}
 .card-thumb {
-    position: relative; height: 86px;
-    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    height: 86px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.thumb-img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 .thumb-icon {
-    width: 54px; height: 54px; border-radius: 14px; border: 2px solid;
-    display: flex; align-items: center; justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-
-/* Badge kategori utama (kiri atas) */
-.type-badge {
-    position: absolute; top: 7px; left: 7px;
-    font-size: 9px; font-weight: 900; border-radius: 50px;
-    padding: 2px 8px; border: 1.5px solid;
-    text-transform: uppercase; letter-spacing: .4px;
-}
-
-/* Badge jumlah kategori tambahan (kanan atas, di samping fin-stamp jika ada) */
-.multi-badge {
-    position: absolute; top: 7px; right: 7px;
-    font-size: 9px; font-weight: 900; border-radius: 50px;
-    padding: 2px 7px; background: rgba(0,0,0,.1); color: #444;
-    border: 1.5px solid rgba(0,0,0,.08);
-}
-
 .fin-stamp {
-    position: absolute; bottom: 7px; right: 7px;
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 9.5px; font-weight: 900; border-radius: 50px;
-    padding: 2px 8px; border: 1.5px solid;
+    position: absolute;
+    bottom: 7px;
+    right: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9.5px;
+    font-weight: 900;
+    border-radius: 50px;
+    padding: 2px 8px;
+    border: 1.5px solid;
 }
-.card-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
-.mod-title { font-family: 'Righteous', cursive; font-size: 14.5px; color: #1a0800; line-height: 1.35; }
+.card-body {
+    padding: 12px 13px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+}
+.mod-title {
+    font-family: "Righteous", cursive;
+    font-size: 14.5px;
+    color: #1e3a8a;
+    line-height: 1.35;
+}
 .mod-desc {
-    font-size: 11.5px; font-weight: 700; color: #8a5a48; line-height: 1.55;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #4b6a9b;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .score-row {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10.5px; font-weight: 800; border-radius: 50px; padding: 3px 10px; width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 800;
+    border-radius: 50px;
+    padding: 3px 10px;
+    width: fit-content;
 }
-.score-row strong { font-weight: 900; }
-.divider { height: 1px; background: rgba(255,107,43,.08); }
-.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.score-row strong {
+    font-weight: 900;
+}
+.divider {
+    height: 1px;
+    background: rgba(29, 78, 216, 0.08);
+}
+.chips {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
 .chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; font-weight: 800; border-radius: 8px; padding: 3px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 3px 8px;
 }
-.cta {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: 100%; height: 37px; border: none; border-radius: 10px;
-    font-family: 'Righteous', cursive; font-size: 13.5px;
-    cursor: pointer; margin-top: auto; transition: all .17s cubic-bezier(.34,1.56,.64,1);
-}
-.cta:hover  { transform: translateY(-2px); filter: brightness(1.07); }
-.cta:active { transform: translateY(1px); }
-.cta-new  { background: var(--btnbg,#ff5500); color: #fff; box-shadow: 0 3px 10px rgba(255,107,43,.3); }
-.cta-cont { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; box-shadow: 0 3px 8px rgba(180,100,0,.22); }
-.cta-redo { background: rgba(255,107,43,.1); color: #c43d00; border: 1.5px solid rgba(255,107,43,.28); }
 
-.empty {
-    text-align: center; padding: 72px 20px;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
+/* ── CTA Button ── */
+.cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 37px;
+    border: none;
+    border-radius: 10px;
+    font-family: "Righteous", cursive;
+    font-size: 13.5px;
+    cursor: pointer;
+    margin-top: auto;
+    transition: all 0.17s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.empty-t { font-family: 'Righteous',cursive; font-size: 18px; color: #c43d00; }
-.empty-s { font-size: 13px; font-weight: 700; color: #c4826a; }
+.cta:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.07);
+}
+.cta:active {
+    transform: translateY(1px);
+}
+.cta-new {
+    background: var(--btnbg, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(29, 78, 216, 0.3);
+}
+.cta-cont {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(29, 78, 216, 0.28);
+}
+.cta-redo {
+    background: rgba(29, 78, 216, 0.08);
+    color: #1d4ed8;
+    border: 1.5px solid rgba(29, 78, 216, 0.25);
+}
+
+/* ── EMPTY ── */
+.empty {
+    text-align: center;
+    padding: 72px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.empty-t {
+    font-family: "Righteous", cursive;
+    font-size: 18px;
+    color: #1e3a8a;
+}
+.empty-s {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b9fd4;
+}
 
 /* ── MUSIC FAB ── */
 .music-fab {
-    position: fixed; bottom: 26px; left: 26px; z-index: 301;
-    width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; outline: none;
-    background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
-    color: #ff5500; box-shadow: 0 4px 20px rgba(255,107,43,.22);
-    display: flex; align-items: center; justify-content: center;
-    transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    position: fixed;
+    bottom: 26px;
+    left: 26px;
+    z-index: 301;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    color: #1d4ed8;
+    box-shadow: 0 4px 20px rgba(29, 78, 216, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.music-fab:hover { transform: scale(1.1); background: #fff; }
+.music-fab:hover {
+    transform: scale(1.1);
+    background: #fff;
+}
 .music-fab.on {
-    background: linear-gradient(135deg,#ff9a6c,#ff5500); color: #fff;
-    box-shadow: 0 6px 24px rgba(255,107,43,.44);
+    background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(29, 78, 216, 0.44);
 }
-.music-fab svg { width: 21px; height: 21px; }
+.music-fab svg {
+    width: 21px;
+    height: 21px;
+}
 .fab-pulse {
-    position: absolute; inset: -5px; border-radius: 50%;
-    border: 2px solid rgba(255,107,43,.44);
-    animation: fab-ring 2s ease-out infinite; pointer-events: none;
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid rgba(29, 78, 216, 0.4);
+    animation: fab-ring 2s ease-out infinite;
+    pointer-events: none;
 }
 @keyframes fab-ring {
-    0%   { transform: scale(1); opacity: .8; }
-    100% { transform: scale(1.55); opacity: 0; }
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1.55);
+        opacity: 0;
+    }
 }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 1100px) { .mod-grid { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 1100px) {
+    .mod-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 @media (max-width: 768px) {
-    .mod-grid { grid-template-columns: repeat(2,1fr); }
-    .hero-card { flex-direction: column; align-items: flex-start; padding: 22px 20px 24px; gap: 18px; }
-    .hero-deco { align-self: flex-end; margin-top: -80px; width: 100px; height: 100px; }
-    .dr-lg { width: 100px; height: 100px; }
-    .dr-md { width:  70px; height:  70px; }
-    .dr-sm { width:  44px; height:  44px; }
-    .dring-center { width: 54px; height: 54px; border-radius: 15px; }
+    .mod-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .hero-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px 20px 24px;
+        gap: 18px;
+    }
+    .hero-deco {
+        align-self: flex-end;
+        margin-top: -80px;
+        width: 100px;
+        height: 100px;
+    }
+    .dr-lg {
+        width: 100px;
+        height: 100px;
+    }
+    .dr-md {
+        width: 70px;
+        height: 70px;
+    }
+    .dr-sm {
+        width: 44px;
+        height: 44px;
+    }
+    .dring-center {
+        width: 54px;
+        height: 54px;
+        border-radius: 15px;
+    }
 }
 @media (max-width: 600px) {
-    .wrap { padding: 0 14px; }
-    .hero-card { padding: 18px 16px 20px; border-radius: 20px; }
-    .hero-deco { display: none; }
-    .hero-name { font-size: 22px; }
-    .hero-sub  { font-size: 12.5px; margin-bottom: 14px; }
-    .hero-stats { width: 100%; }
-    .hstat { flex: 1; }
-    .brand-name { font-size: 18px; }
-    .ftab { font-size: 12.5px; padding: 7px 13px; }
+    .wrap {
+        padding: 0 14px;
+    }
+    .hero-card {
+        padding: 18px 16px 20px;
+        border-radius: 20px;
+    }
+    .hero-deco {
+        display: none;
+    }
+    .hero-name {
+        font-size: 22px;
+    }
+    .hero-sub {
+        font-size: 12.5px;
+        margin-bottom: 14px;
+    }
+    .hero-stats {
+        width: 100%;
+    }
+    .hstat {
+        flex: 1;
+    }
+    .brand-name {
+        font-size: 18px;
+    }
 }
 @media (max-width: 420px) {
-    .mod-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
-    .hero-name { font-size: 20px; }
-    .hstat { padding: 8px 12px; gap: 7px; }
-    .hstat-val { font-size: 14px; }
-    .hstat-icon { width: 28px; height: 28px; }
-    .card-thumb { height: 72px; }
-    .music-fab { bottom: 18px; left: 18px; width: 44px; height: 44px; }
+    .mod-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .hero-name {
+        font-size: 20px;
+    }
+    .hstat {
+        padding: 8px 12px;
+        gap: 7px;
+    }
+    .hstat-val {
+        font-size: 14px;
+    }
+    .hstat-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .card-thumb {
+        height: 72px;
+    }
+    .music-fab {
+        bottom: 18px;
+        left: 26px;
+        width: 44px;
+        height: 44px;
+    }
 }
-@media (max-width: 340px) { .mod-grid { grid-template-columns: 1fr; } }
+@media (max-width: 340px) {
+    .mod-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>

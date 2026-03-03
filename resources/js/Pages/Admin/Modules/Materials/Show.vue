@@ -37,7 +37,9 @@ const formatDate = (dateString) => {
             <div
                 class="bg-white rounded-3xl border-4 border-green-200 shadow-playful p-6 mb-8"
             >
-                <div class="flex items-start gap-4">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                >
                     <button
                         @click="
                             router.visit(
@@ -62,6 +64,7 @@ const formatDate = (dateString) => {
                         </h1>
                     </div>
                     <Button
+                        class="w-full sm:w-auto"
                         variant="warning"
                         size="md"
                         :icon="Pencil"

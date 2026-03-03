@@ -38,6 +38,7 @@ const props = defineProps({
 const wizardStep = ref(1);
 const successMessage = ref("");
 const showSuccess = ref(false);
+const toastType = ref("success");
 const cardVariant = ref("playful");
 
 const quizForm = ref({
@@ -151,7 +152,7 @@ const addTFOption = () => {
         !currentTFOption.value.option_text.trim() &&
         !currentTFImageFile.value
     ) {
-        showToast("Teks atau gambar opsi harus diisi!");
+        showToast("Teks atau gambar opsi harus diisi!", "warning");
         return;
     }
     trueFalseOptions.value.push({
@@ -165,7 +166,7 @@ const addTFOption = () => {
     currentTFOption.value = { option_text: "", is_correct: false };
     currentTFImageFile.value = null;
     currentTFImagePreview.value = null;
-    showToast("Opsi gambar ditambahkan!");
+    showToast("Opsi gambar ditambahkan!", "success");
 };
 const removeTFOption = (id) => {
     trueFalseOptions.value = trueFalseOptions.value.filter((o) => o.id !== id);
@@ -194,13 +195,23 @@ const quizTypeOptions = [
     { value: "case_study", label: "Case Study" },
 ];
 const categoryOptions = [
-    { value: "pretest", label: "Pretest" },
-    { value: "mission", label: "Mission" },
-    { value: "posttest", label: "Posttest" },
+    { value: "pretest", label: "Tes Awal" },
+    { value: "mission", label: "Misi" },
+    { value: "posttest", label: "Tes Akhir" },
 ];
 
-const showToast = (message) => {
+const getCategoryLabel = (value) => {
+    const map = {
+        pretest: "Tes Awal",
+        mission: "Misi",
+        posttest: "Tes Akhir",
+    };
+    return map[value] || value;
+};
+
+const showToast = (message, type = "success") => {
     successMessage.value = message;
+    toastType.value = type;
     showSuccess.value = true;
     setTimeout(() => {
         showSuccess.value = false;
@@ -216,7 +227,7 @@ const reviewStep = computed(() => {
 const nextStep = () => {
     if (wizardStep.value === 1) {
         if (!quizForm.value.title.trim()) {
-            showToast("Judul quiz harus diisi!");
+            showToast("Judul kuis harus diisi!", "warning");
             return;
         }
         if (isDragDrop.value) {
@@ -261,7 +272,7 @@ const prevStep = () => {
 // --- Multiple Choice Methods ---
 const addOption = () => {
     if (!currentOption.value.option_text.trim()) {
-        showToast("Teks opsi harus diisi!");
+        showToast("Teks opsi harus diisi!", "warning");
         return;
     }
     questionOptions.value.push({
@@ -275,15 +286,18 @@ const removeOption = (id) => {
 };
 const addQuestion = () => {
     if (!currentQuestion.value.question_text.trim()) {
-        showToast("Teks pertanyaan harus diisi!");
+        showToast("Teks pertanyaan harus diisi!", "warning");
         return;
     }
     if (questionOptions.value.length < 2) {
-        showToast("Minimal 2 opsi jawaban diperlukan!");
+        showToast("Minimal 2 opsi jawaban diperlukan!", "warning");
         return;
     }
     if (!questionOptions.value.some((o) => o.is_correct)) {
-        showToast("Minimal 1 opsi harus ditandai sebagai jawaban benar!");
+        showToast(
+            "Minimal 1 opsi harus ditandai sebagai jawaban benar!",
+            "warning",
+        );
         return;
     }
     quizQuestions.value.push({
@@ -293,7 +307,7 @@ const addQuestion = () => {
     });
     currentQuestion.value = { question_text: "", mascot_id: null, image: null };
     questionOptions.value = [];
-    showToast("Pertanyaan ditambahkan!");
+    showToast("Pertanyaan ditambahkan!", "success");
 };
 const removeQuestion = (id) => {
     quizQuestions.value = quizQuestions.value.filter((q) => q.id !== id);
@@ -302,7 +316,7 @@ const removeQuestion = (id) => {
 // --- Drag & Drop Methods ---
 const addDragDropGroup = () => {
     if (!currentDragDropGroup.value.group_name.trim()) {
-        showToast("Nama grup harus diisi!");
+        showToast("Nama grup harus diisi!", "warning");
         return;
     }
     dragDropGroups.value.push({
@@ -310,7 +324,7 @@ const addDragDropGroup = () => {
         local_id: Date.now() + Math.random(),
     });
     currentDragDropGroup.value = { group_name: "" };
-    showToast("Grup ditambahkan!");
+    showToast("Grup ditambahkan!", "success");
 };
 const removeDragDropGroup = (local_id) => {
     dragDropGroups.value = dragDropGroups.value.filter(
@@ -322,11 +336,11 @@ const removeDragDropGroup = (local_id) => {
 };
 const addDragDropItem = () => {
     if (!currentDragDropItem.value.item_text.trim()) {
-        showToast("Teks item harus diisi!");
+        showToast("Teks item harus diisi!", "warning");
         return;
     }
     if (!currentDragDropItem.value.group_local_id) {
-        showToast("Pilih grup yang benar untuk item ini!");
+        showToast("Pilih grup yang benar untuk item ini!", "warning");
         return;
     }
     dragDropItems.value.push({
@@ -334,7 +348,7 @@ const addDragDropItem = () => {
         id: Date.now() + Math.random(),
     });
     currentDragDropItem.value = { item_text: "", group_local_id: null };
-    showToast("Item ditambahkan!");
+    showToast("Item ditambahkan!", "success");
 };
 const removeDragDropItem = (id) => {
     dragDropItems.value = dragDropItems.value.filter((i) => i.id !== id);
@@ -346,28 +360,31 @@ const getGroupName = (local_id) =>
 const finalSave = () => {
     if (isTrueFalse.value) {
         if (!trueFalseQuestionText.value.trim()) {
-            showToast("Teks pertanyaan harus diisi!");
+            showToast("Teks pertanyaan harus diisi!", "warning");
             return;
         }
         if (trueFalseOptions.value.length < 2) {
-            showToast("Tambahkan minimal 2 opsi gambar!");
+            showToast("Tambahkan minimal 2 opsi gambar!", "warning");
             return;
         }
         if (!trueFalseOptions.value.some((o) => o.is_correct)) {
-            showToast("Minimal 1 opsi harus ditandai sebagai jawaban benar!");
+            showToast(
+                "Minimal 1 opsi harus ditandai sebagai jawaban benar!",
+                "warning",
+            );
             return;
         }
     } else if (!isDragDrop.value && quizQuestions.value.length === 0) {
-        showToast("Tambahkan minimal 1 pertanyaan!");
+        showToast("Tambahkan minimal 1 pertanyaan!", "warning");
         return;
     }
     if (isDragDrop.value) {
         if (dragDropGroups.value.length < 2) {
-            showToast("Tambahkan minimal 2 grup!");
+            showToast("Tambahkan minimal 2 grup!", "warning");
             return;
         }
         if (dragDropItems.value.length < 2) {
-            showToast("Tambahkan minimal 2 item!");
+            showToast("Tambahkan minimal 2 item!", "warning");
             return;
         }
     }
@@ -452,10 +469,10 @@ const finalSave = () => {
         {
             onSuccess: (page) => {
                 if (page.props.flash?.error) {
-                    showToast("Gagal: " + page.props.flash.error);
+                    showToast("Gagal: " + page.props.flash.error, "error");
                     return;
                 }
-                showToast("Quiz berhasil diperbarui.");
+                showToast("Kuis berhasil diperbarui.", "success");
                 setTimeout(() => {
                     router.visit(
                         route("admin.modules.missions.show", [
@@ -468,6 +485,7 @@ const finalSave = () => {
             onError: (errors) => {
                 showToast(
                     "Gagal menyimpan: " + Object.values(errors).join(", "),
+                    "error",
                 );
             },
         },
@@ -506,7 +524,7 @@ const toggleCardVariant = () => {
                             <h1
                                 class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
                             >
-                                Edit Quiz: {{ quiz.title }}
+                                Edit Kuis: {{ quiz.title }}
                             </h1>
                             <p class="text-sm text-gray-500">
                                 Modul: {{ module.name }} | Misi:
@@ -542,7 +560,7 @@ const toggleCardVariant = () => {
                             1
                         </div>
                         <span class="ml-2 text-sm font-medium text-gray-700"
-                            >Info Quiz</span
+                            >Info Kuis</span
                         >
                     </div>
                     <div class="h-1 w-16 bg-gray-300"></div>
@@ -608,8 +626,8 @@ const toggleCardVariant = () => {
             <div v-if="wizardStep === 1" class="max-w-3xl mx-auto">
                 <Card
                     :variant="cardVariant"
-                    title="Informasi Quiz"
-                    subtitle="Edit detail quiz"
+                    title="Informasi Kuis"
+                    subtitle="Edit detail kuis"
                     :icon="Info"
                     icon-color="orange"
                     border-color="orange"
@@ -618,22 +636,22 @@ const toggleCardVariant = () => {
                     <div class="space-y-5">
                         <InputField
                             v-model="quizForm.title"
-                            label="Judul Quiz"
-                            placeholder="Contoh: Quiz Angka 1-10"
+                            label="Judul Kuis"
+                            placeholder="Contoh: Kuis Angka 1-10"
                             required
                             border-color="orange"
                         />
                         <TextareaField
                             v-model="quizForm.description"
-                            label="Deskripsi Quiz"
-                            placeholder="Jelaskan quiz ini..."
+                            label="Deskripsi Kuis"
+                            placeholder="Jelaskan kuis ini..."
                             :rows="3"
                             border-color="orange"
                         />
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 mb-2"
-                                >Gambar Quiz (Opsional)</label
+                                >Gambar Kuis (Opsional)</label
                             >
                             <div class="space-y-3">
                                 <div
@@ -673,14 +691,14 @@ const toggleCardVariant = () => {
                         <InputField
                             v-model.number="quizForm.time_limit"
                             type="number"
-                            label="Batas Waktu (detik)"
+                            label="Batas Waktu (menit)"
                             placeholder="30"
                             border-color="orange"
                         />
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <SelectField
                                 v-model="quizForm.type"
-                                label="Tipe Quiz"
+                                label="Tipe Kuis"
                                 :options="quizTypeOptions"
                                 border-color="orange"
                             />
@@ -1346,7 +1364,7 @@ const toggleCardVariant = () => {
             <div v-if="wizardStep === reviewStep" class="max-w-4xl mx-auto">
                 <Card
                     :variant="cardVariant"
-                    title="Review Quiz"
+                    title="Review Kuis"
                     subtitle="Periksa kembali perubahan yang akan disimpan"
                     :icon="CheckCircle"
                     icon-color="blue"
@@ -1380,7 +1398,9 @@ const toggleCardVariant = () => {
                                 >
                                 <span
                                     class="px-2 py-0.5 bg-orange-200 rounded-full text-xs font-semibold capitalize"
-                                    >{{ quizForm.category }}</span
+                                    >{{
+                                        getCategoryLabel(quizForm.category)
+                                    }}</span
                                 >
                             </div>
                         </div>
@@ -1464,6 +1484,10 @@ const toggleCardVariant = () => {
                 </Card>
             </div>
         </div>
-        <Toast :show="showSuccess" :message="successMessage" type="success" />
+        <Toast
+            :show="showSuccess"
+            :message="successMessage"
+            :type="toastType"
+        />
     </AppLayout>
 </template>

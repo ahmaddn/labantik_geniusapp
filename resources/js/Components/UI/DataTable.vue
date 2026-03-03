@@ -241,7 +241,9 @@ const handleAction = (actionName, row) => {
                         <td v-if="actions.length > 0" class="p-4 text-center">
                             <div class="flex justify-center gap-2">
                                 <button
-                                    v-for="action in actions"
+                                    v-for="action in actions.filter((a) =>
+                                        a.showIf(row),
+                                    )"
                                     :key="action.name"
                                     @click="handleAction(action.name, row)"
                                     :class="[

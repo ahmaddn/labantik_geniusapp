@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Learning_modules;
 use App\Models\Missions;
+use App\Models\Quizzes;
 use App\Models\Templates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -90,13 +91,55 @@ class ModulesController extends Controller
      */
     public function show(Learning_modules $modules)
     {
+        /*
+    |--------------------------------------------------------------------------
+    | MISSIONS
+    |--------------------------------------------------------------------------
+    */
         $missions = Missions::where('module_id', $modules->id)
+            ->withCount(['materials', 'quizzes'])
             ->orderBy('order_number')
             ->get()
             ->map(fn($m) => [
                 'id' => $m->id,
                 'name' => $m->name,
                 'order_number' => $m->order_number,
+                'description' => $m->description ?? null,
+                'duration' => $m->duration ?? null,
+                'materials_count' => $m->materials_count ?? 0,
+                'quizzes_count' => $m->quizzes_count ?? 0,
+            ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | QUIZZES (MODULE LEVEL)
+    |--------------------------------------------------------------------------
+    */
+        $moduleQuizzes = Quizzes::where('module_id', $modules->id)
+            ->withCount('questions')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $pretest = $moduleQuizzes
+            ->where('category', 'pretest')
+            ->whereNull('mission_id')
+            ->values()
+            ->map(fn($q) => [
+                'id' => $q->id,
+                'title' => $q->title,
+                'questions_count' => $q->questions_count,
+                'time_limit' => $q->time_limit,
+            ]);
+
+        $posttest = $moduleQuizzes
+            ->where('category', 'posttest')
+            ->whereNull('mission_id')
+            ->values()
+            ->map(fn($q) => [
+                'id' => $q->id,
+                'title' => $q->title,
+                'questions_count' => $q->questions_count,
+                'time_limit' => $q->time_limit,
             ]);
 
         return Inertia::render('Admin/Modules/Show', [
@@ -105,7 +148,9 @@ class ModulesController extends Controller
                 'name' => $modules->name,
                 'description' => $modules->description,
             ],
+            'pretest' => $pretest,
             'missions' => $missions,
+            'posttest' => $posttest,
         ]);
     }
 
