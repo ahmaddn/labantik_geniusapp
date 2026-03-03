@@ -313,12 +313,20 @@ const getCategoryLabel = (value) => {
                                     :key="item.id"
                                     class="flex items-center gap-2 bg-purple-50 p-2 rounded-lg border border-purple-200"
                                 >
-                                    <Box
-                                        class="w-4 h-4 text-purple-500 shrink-0"
-                                    />
-                                    <span class="text-sm font-medium">{{
-                                        item.item_text
-                                    }}</span>
+                                    <template v-if="item.item_image">
+                                        <img
+                                            :src="`/storage/${item.item_image}`"
+                                            :alt="item.item_text"
+                                            class="w-12 h-12 object-cover rounded-md border mr-2"
+                                        />
+                                        <div>
+                                            <div class="text-sm font-medium">{{ item.item_text }}</div>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <Box class="w-4 h-4 text-purple-500 shrink-0" />
+                                        <span class="text-sm font-medium">{{ item.item_text }}</span>
+                                    </template>
                                 </div>
                                 <p
                                     v-if="
