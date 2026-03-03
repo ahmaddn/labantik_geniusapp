@@ -19,78 +19,7 @@ defineProps({
     <div class="app-layout">
         <!-- ░░ BACKGROUND ░░ -->
         <div class="bg-scene">
-            <div class="sky"></div>
 
-            <!-- Sun -->
-            <div class="sun">
-                <div
-                    class="sun-ray"
-                    v-for="i in 8"
-                    :key="i"
-                    :style="{ transform: `rotate(${i * 45}deg)` }"
-                ></div>
-            </div>
-
-            <!-- Clouds -->
-            <div class="cloud cloud-1">
-                <div class="cp p1"></div>
-                <div class="cp p2"></div>
-                <div class="cp p3"></div>
-            </div>
-            <div class="cloud cloud-2">
-                <div class="cp p1"></div>
-                <div class="cp p2"></div>
-                <div class="cp p3"></div>
-            </div>
-            <div class="cloud cloud-3">
-                <div class="cp p1"></div>
-                <div class="cp p2"></div>
-                <div class="cp p3"></div>
-            </div>
-
-            <!-- Hills -->
-            <div class="hills">
-                <div class="hill h1"></div>
-                <div class="hill h2"></div>
-                <div class="hill h3"></div>
-            </div>
-
-            <!-- Trees left -->
-            <div class="tree-strip tree-left">
-                <div class="tree tl">
-                    <div class="canopy c-dk"></div>
-                    <div class="canopy c-md"></div>
-                    <div class="trunk"></div>
-                </div>
-                <div class="tree tm">
-                    <div class="canopy c-dk"></div>
-                    <div class="canopy c-md"></div>
-                    <div class="trunk"></div>
-                </div>
-            </div>
-
-            <!-- Trees right -->
-            <div class="tree-strip tree-right">
-                <div class="tree tm">
-                    <div class="canopy c-dk"></div>
-                    <div class="canopy c-md"></div>
-                    <div class="trunk"></div>
-                </div>
-                <div class="tree tl">
-                    <div class="canopy c-dk"></div>
-                    <div class="canopy c-md"></div>
-                    <div class="trunk"></div>
-                </div>
-            </div>
-
-            <!-- Ground strip -->
-            <div class="ground-strip"></div>
-
-            <!-- Grass tufts -->
-            <div class="grass-tuft gt1"></div>
-            <div class="grass-tuft gt2"></div>
-            <div class="grass-tuft gt3"></div>
-            <div class="grass-tuft gt4"></div>
         </div>
 
         <!-- ░░ TOP NAV ░░ -->
@@ -107,10 +36,10 @@ defineProps({
                 <!-- Siswa info -->
                 <div class="nav-siswa">
                     <div class="siswa-avatar">
-                        {{ siswa.nama.charAt(0).toUpperCase() }}
+                        {{ siswa.name.charAt(0).toUpperCase() }}
                     </div>
                     <div class="siswa-info">
-                        <span class="siswa-nama">{{ siswa.nama }}</span>
+                        <span class="siswa-nama">{{ siswa.name }}</span>
                         <span class="siswa-kelas">{{ siswa.kelas }}</span>
                     </div>
                 </div>
@@ -167,10 +96,12 @@ defineProps({
 
 /* ─── BG SCENE ─── */
 .bg-scene {
+    background-image: url("/images/templates/background.png");
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    
 }
 
 .sky {

@@ -9,7 +9,7 @@ defineOptions({ layout: PlaygroundAppLayout });
 const props = defineProps({
     siswa: {
         type: Object,
-        default: () => ({ nama: "Budi Santoso", kelas: "SD-4" }),
+        required: true,
     },
 });
 
@@ -251,7 +251,7 @@ const totalSelesai = () => modules.value.filter((m) => m.selesai).length;
             <div class="hero-inner">
                 <div class="hero-text">
                     <p class="hero-salam">🌟 Halo, selamat datang kembali!</p>
-                    <h1 class="hero-nama">{{ siswa.nama }}</h1>
+                    <h1 class="hero-nama">{{ props.siswa.name }}</h1>
                     <p class="hero-desc">
                         Yuk lanjutkan petualangan belajarmu hari ini! Ada
                         <strong>{{ modules.length }}</strong> modul seru
@@ -280,8 +280,7 @@ const totalSelesai = () => modules.value.filter((m) => m.selesai).length;
                     <div class="stat-chip">
                         <span class="stat-icon">🎒</span>
                         <div>
-                            <span class="stat-val">{{ siswa.kelas }}</span>
-                            <span class="stat-lbl">Kelasmu</span>
+                            <span class="stat-val">{{ props.siswa.kelas }}</span>
                         </div>
                     </div>
                 </div>
