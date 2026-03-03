@@ -24,6 +24,13 @@ onMounted(() => {
     }, 100);
 });
 
+// ── Music Toggle ──
+function toggleMusic() {
+    musicOn.value = !musicOn.value;
+    // Integrate audio here if needed`
+    // e.g. audioRef.value.play() / .pause()
+}
+
 // ── Validation lokal ──
 const localErrors = ref({ nama: "", password: "" });
 
