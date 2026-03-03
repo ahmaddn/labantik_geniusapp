@@ -320,12 +320,18 @@ const getCategoryLabel = (value) => {
                                             class="w-12 h-12 object-cover rounded-md border mr-2"
                                         />
                                         <div>
-                                            <div class="text-sm font-medium">{{ item.item_text }}</div>
+                                            <div class="text-sm font-medium">
+                                                {{ item.item_text }}
+                                            </div>
                                         </div>
                                     </template>
                                     <template v-else>
-                                        <Box class="w-4 h-4 text-purple-500 shrink-0" />
-                                        <span class="text-sm font-medium">{{ item.item_text }}</span>
+                                        <Box
+                                            class="w-4 h-4 text-purple-500 shrink-0"
+                                        />
+                                        <span class="text-sm font-medium">{{
+                                            item.item_text
+                                        }}</span>
                                     </template>
                                 </div>
                                 <p

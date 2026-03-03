@@ -81,7 +81,12 @@ const dragDropMascotId = ref(null);
 const dragDropGroups = ref([]);
 const dragDropItems = ref([]);
 const currentDragDropGroup = ref({ group_name: "" });
-const currentDragDropItem = ref({ item_text: "", group_local_id: null, item_image_file: null, item_image_preview: null });
+const currentDragDropItem = ref({
+    item_text: "",
+    group_local_id: null,
+    item_image_file: null,
+    item_image_preview: null,
+});
 
 // --- True/False (Image Select) State ---
 // Satu soal dengan beberapa opsi berupa gambar, user memilih yang benar
@@ -320,7 +325,12 @@ const addDragDropItem = () => {
         }
     }
     dragDropItems.value.push(item);
-    currentDragDropItem.value = { item_text: "", group_local_id: null, item_image_file: null, item_image_preview: null };
+    currentDragDropItem.value = {
+        item_text: "",
+        group_local_id: null,
+        item_image_file: null,
+        item_image_preview: null,
+    };
     showToast("Item ditambahkan!", "success");
 };
 const removeDragDropItem = (id) => {
@@ -435,7 +445,10 @@ const finalSave = () => {
         if (isDragDrop.value) {
             dragDropItems.value.forEach((i, idx) => {
                 if (i.item_image_file instanceof File) {
-                    formData.append(`drag_item_images[${idx}]`, i.item_image_file);
+                    formData.append(
+                        `drag_item_images[${idx}]`,
+                        i.item_image_file,
+                    );
                 }
             });
         }
