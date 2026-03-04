@@ -93,6 +93,13 @@ class QuizController extends Controller
                 'tf_question'            => 'required|string',
                 'tf_option_images.*'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
+        } elseif ($request->input('type') === 'drag_drop') {
+            $request->validate([
+                'questions' => 'required|string',
+                'drag_item_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ], [
+                'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
+            ]);
         } else {
             $request->validate([
                 'questions' => 'required|string',
@@ -207,12 +214,22 @@ class QuizController extends Controller
                         }
 
                         if (isset($questionData['drag_drop_items'])) {
+                            // collect uploaded drag item images (indexed by frontend)
+                            $dragImages = $request->file('drag_item_images', []);
+                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
+                                $storedPath = $itemData['item_image'] ?? null;
+                                // If an uploaded file exists for this item index, store it
+                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
+                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
+                                    $imgIndex++;
+                                }
+
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $itemData['item_image'] ?? null,
+                                    'item_image'         => $storedPath ?? null,
                                 ]);
                             }
                         }
@@ -252,6 +269,13 @@ class QuizController extends Controller
             $request->validate([
                 'tf_question'            => 'required|string',
                 'tf_option_images.*'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+        } elseif ($request->input('type') === 'drag_drop') {
+            $request->validate([
+                'questions' => 'required|string',
+                'drag_item_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ], [
+                'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
             ]);
         } else {
             $request->validate([
@@ -360,12 +384,20 @@ class QuizController extends Controller
                         }
 
                         if (isset($questionData['drag_drop_items'])) {
+                            $dragImages = $request->file('drag_item_images', []);
+                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
+                                $storedPath = $itemData['item_image'] ?? null;
+                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
+                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
+                                    $imgIndex++;
+                                }
+
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $itemData['item_image'] ?? null,
+                                    'item_image'         => $storedPath ?? null,
                                 ]);
                             }
                         }
@@ -533,8 +565,15 @@ class QuizController extends Controller
                         Storage::disk('public')->delete($oldOption->option_image);
                     }
                 }
+                // Delete drag & drop item images as well
+                foreach ($oldQuestion->dragDropItems as $oldItem) {
+                    if ($oldItem->item_image) {
+                        Storage::disk('public')->delete($oldItem->item_image);
+                    }
+                }
+                // Delete the question model to trigger Questions::deleting and cascade removals
+                $oldQuestion->delete();
             }
-            $quizzes->questions()->delete();
 
             // ===== TRUE/FALSE (Image Select) =====
             if ($validated['type'] === 'true_false') {
@@ -625,12 +664,20 @@ class QuizController extends Controller
                             }
                         }
                         if (isset($questionData['drag_drop_items'])) {
+                            $dragImages = $request->file('drag_item_images', []);
+                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
+                                $storedPath = $itemData['item_image'] ?? null;
+                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
+                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
+                                    $imgIndex++;
+                                }
+
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $itemData['item_image'] ?? null,
+                                    'item_image'         => $storedPath ?? null,
                                 ]);
                             }
                         }

@@ -224,7 +224,7 @@ const toggleCardVariant = () => {
                     <div>
                         <label
                             class="block text-sm font-medium text-gray-700 mb-2"
-                            >Gambar (Opsional)</label
+                            >Gambar</label
                         >
                         <div class="space-y-3">
                             <!-- Preview gambar existing atau baru -->

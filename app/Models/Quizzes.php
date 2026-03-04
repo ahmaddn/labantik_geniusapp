@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Quizzes extends Model
@@ -30,8 +31,16 @@ class Quizzes extends Model
         });
 
         // Auto delete related records when quiz is deleted
+        // Use model deletes to ensure child model deleting events run
         static::deleting(function ($model) {
-            $model->questions()->delete();
+            // Delete quiz cover image if present
+            if (!empty($model->image)) {
+                Storage::disk('public')->delete($model->image);
+            }
+
+            foreach ($model->questions as $question) {
+                $question->delete();
+            }
         });
     }
 

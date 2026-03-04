@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class Mascots extends Model
 {
@@ -23,6 +24,12 @@ class Mascots extends Model
         static::creating(function ($model) {
             if (empty($model->id)) {
                 $model->id = Str::uuid();
+            }
+        });
+
+        static::deleting(function ($model) {
+            if (!empty($model->image)) {
+                Storage::disk('public')->delete($model->image);
             }
         });
     }

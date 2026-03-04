@@ -5,6 +5,7 @@ import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
+import ImageDropzone from "@/Components/UI/Forms/ImageDropzone.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import Card from "@/Components/UI/Card.vue";
@@ -80,7 +81,12 @@ const dragDropMascotId = ref(null);
 const dragDropGroups = ref([]);
 const dragDropItems = ref([]);
 const currentDragDropGroup = ref({ group_name: "" });
-const currentDragDropItem = ref({ item_text: "", group_local_id: null });
+const currentDragDropItem = ref({
+    item_text: "",
+    group_local_id: null,
+    item_image_file: null,
+    item_image_preview: null,
+});
 
 // --- True/False (Image Select) State ---
 // Satu soal dengan beberapa opsi berupa gambar, user memilih yang benar
@@ -305,11 +311,26 @@ const addDragDropItem = () => {
         showToast("Pilih grup yang benar untuk item ini!", "warning");
         return;
     }
-    dragDropItems.value.push({
+    // preserve image file + preview if present
+    const item = {
         ...currentDragDropItem.value,
         id: Date.now() + Math.random(),
-    });
-    currentDragDropItem.value = { item_text: "", group_local_id: null };
+    };
+    // if a File is present, create a preview URL for display
+    if (item.item_image_file instanceof File) {
+        try {
+            item.item_image_preview = URL.createObjectURL(item.item_image_file);
+        } catch (e) {
+            item.item_image_preview = null;
+        }
+    }
+    dragDropItems.value.push(item);
+    currentDragDropItem.value = {
+        item_text: "",
+        group_local_id: null,
+        item_image_file: null,
+        item_image_preview: null,
+    };
     showToast("Item ditambahkan!", "success");
 };
 const removeDragDropItem = (id) => {
@@ -400,7 +421,8 @@ const finalSave = () => {
                     })),
                     drag_drop_items: dragDropItems.value.map((i) => ({
                         item_text: i.item_text,
-                        item_image: null,
+                        // indicate whether the item has an image; actual files are appended separately
+                        item_image: i.item_image_file ? true : null,
                         group_index: groupIndexMap[i.group_local_id],
                     })),
                 },
@@ -419,6 +441,17 @@ const finalSave = () => {
             }));
         }
         formData.append("questions", JSON.stringify(questions));
+        // attach drag & drop item images if present
+        if (isDragDrop.value) {
+            dragDropItems.value.forEach((i, idx) => {
+                if (i.item_image_file instanceof File) {
+                    formData.append(
+                        `drag_item_images[${idx}]`,
+                        i.item_image_file,
+                    );
+                }
+            });
+        }
     }
 
     // Choose correct route based on whether mission is present
@@ -744,9 +777,15 @@ const toggleCardVariant = () => {
                             <SelectField
                                 v-model="quizForm.category"
                                 label="Kategori"
-                                :options="categoryOptions"
+                                :options="
+                                    props.mission
+                                        ? [{ value: 'mission', label: 'Misi' }]
+                                        : categoryOptions
+                                "
                                 border-color="orange"
-                                :disabled="!!props.presetCategory"
+                                :disabled="
+                                    !!props.presetCategory || !!props.mission
+                                "
                             />
                         </div>
                         <div
@@ -884,11 +923,6 @@ const toggleCardVariant = () => {
                                         v-model="currentOption.option_text"
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
-                                    />
-                                    <InputField
-                                        v-model="currentOption.feedback"
-                                        placeholder="Feedback (opsional)"
-                                        border-color="gray"
                                     />
                                     <label class="flex items-center gap-2">
                                         <input
@@ -1080,7 +1114,7 @@ const toggleCardVariant = () => {
                             </h4>
                             <InputField
                                 v-model="currentTFOption.option_text"
-                                label="Label Opsi (Opsional)"
+                                label="Label Opsi"
                                 placeholder="Contoh: Kucing"
                                 border-color="teal"
                             />
@@ -1367,6 +1401,14 @@ const toggleCardVariant = () => {
                             placeholder="Contoh: 2"
                             border-color="green"
                         />
+                        <div>
+                            <ImageDropzone
+                                v-model="currentDragDropItem.item_image_file"
+                                label="Gambar Item"
+                                accept="image/*"
+                                border-color="green"
+                            />
+                        </div>
                         <SelectField
                             v-model="currentDragDropItem.group_local_id"
                             label="Grup yang Benar"
