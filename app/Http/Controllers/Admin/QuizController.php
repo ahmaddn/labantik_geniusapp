@@ -571,8 +571,9 @@ class QuizController extends Controller
                         Storage::disk('public')->delete($oldItem->item_image);
                     }
                 }
+                // Delete the question model to trigger Questions::deleting and cascade removals
+                $oldQuestion->delete();
             }
-            $quizzes->questions()->delete();
 
             // ===== TRUE/FALSE (Image Select) =====
             if ($validated['type'] === 'true_false') {

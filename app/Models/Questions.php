@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Questions extends Model
@@ -26,11 +27,33 @@ class Questions extends Model
             }
         });
 
-        // Auto delete related records when question is deleted
+        // Auto delete related records and files when question is deleted
         static::deleting(function ($model) {
-            $model->options()->delete();
-            $model->dragDropGroups()->delete();
-            $model->dragDropItems()->delete();
+            // Delete question image if present
+            if (!empty($model->image)) {
+                Storage::disk('public')->delete($model->image);
+            }
+
+            // Delete options and their images
+            foreach ($model->options as $opt) {
+                if (!empty($opt->option_image)) {
+                    Storage::disk('public')->delete($opt->option_image);
+                }
+                $opt->delete();
+            }
+
+            // Delete drag & drop items and their images before groups
+            foreach ($model->dragDropItems as $item) {
+                if (!empty($item->item_image)) {
+                    Storage::disk('public')->delete($item->item_image);
+                }
+                $item->delete();
+            }
+
+            // Finally delete groups
+            foreach ($model->dragDropGroups as $group) {
+                $group->delete();
+            }
         });
     }
 

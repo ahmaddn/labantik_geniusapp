@@ -777,9 +777,15 @@ const toggleCardVariant = () => {
                             <SelectField
                                 v-model="quizForm.category"
                                 label="Kategori"
-                                :options="categoryOptions"
+                                :options="
+                                    props.mission
+                                        ? [{ value: 'mission', label: 'Misi' }]
+                                        : categoryOptions
+                                "
                                 border-color="orange"
-                                :disabled="!!props.presetCategory"
+                                :disabled="
+                                    !!props.presetCategory || !!props.mission
+                                "
                             />
                         </div>
                         <div
@@ -917,11 +923,6 @@ const toggleCardVariant = () => {
                                         v-model="currentOption.option_text"
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
-                                    />
-                                    <InputField
-                                        v-model="currentOption.feedback"
-                                        placeholder="Feedback (opsional)"
-                                        border-color="gray"
                                     />
                                     <label class="flex items-center gap-2">
                                         <input
@@ -1113,7 +1114,7 @@ const toggleCardVariant = () => {
                             </h4>
                             <InputField
                                 v-model="currentTFOption.option_text"
-                                label="Label Opsi (Opsional)"
+                                label="Label Opsi"
                                 placeholder="Contoh: Kucing"
                                 border-color="teal"
                             />
@@ -1403,7 +1404,7 @@ const toggleCardVariant = () => {
                         <div>
                             <ImageDropzone
                                 v-model="currentDragDropItem.item_image_file"
-                                label="Gambar Item (Opsional)"
+                                label="Gambar Item"
                                 accept="image/*"
                                 border-color="green"
                             />

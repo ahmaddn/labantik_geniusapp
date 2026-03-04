@@ -23,6 +23,17 @@ class Missions extends Model
                 $model->id = Str::uuid();
             }
         });
+        static::deleting(function ($model) {
+            // Delete materials (and their files)
+            foreach ($model->materials as $mat) {
+                $mat->delete();
+            }
+
+            // Delete quizzes (Quizzes::deleting will handle questions/files)
+            foreach ($model->quizzes as $quiz) {
+                $quiz->delete();
+            }
+        });
     }
 
     public function module()

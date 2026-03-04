@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Backgrounds extends Model
@@ -22,6 +23,11 @@ class Backgrounds extends Model
         static::creating(function ($model) {
             if (empty($model->id)) {
                 $model->id = Str::uuid();
+            }
+        });
+        static::deleting(function ($model) {
+            if (!empty($model->image)) {
+                Storage::disk('public')->delete($model->image);
             }
         });
     }

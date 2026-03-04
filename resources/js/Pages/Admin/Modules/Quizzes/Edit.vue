@@ -834,11 +834,6 @@ const toggleCardVariant = () => {
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
                                     />
-                                    <InputField
-                                        v-model="currentOption.feedback"
-                                        placeholder="Feedback (opsional)"
-                                        border-color="gray"
-                                    />
                                     <label class="flex items-center gap-2">
                                         <input
                                             type="checkbox"
@@ -1026,7 +1021,7 @@ const toggleCardVariant = () => {
                             </h4>
                             <InputField
                                 v-model="currentTFOption.option_text"
-                                label="Label Opsi (Opsional)"
+                                label="Label Opsi"
                                 placeholder="Contoh: Kucing"
                                 border-color="teal"
                             />
