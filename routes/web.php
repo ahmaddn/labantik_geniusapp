@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\PlaygroundController;
+use App\Http\Controllers\Student\DragDropController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -25,6 +26,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+
+Route::get('/preview/dragdrop', [DragDropController::class, 'preview']);
+
+// ── Route asli dengan middleware ─────────────────────────────
+Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/missions/{mission}/dragdrop', [DragDropController::class, 'show'])
+        ->name('missions.dragdrop');
 });
 
 // Playground Routes (Public - No Auth Required)
