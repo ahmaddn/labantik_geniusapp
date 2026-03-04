@@ -103,6 +103,10 @@ const scoreBg = (s) =>
           ? "rgba(202,138,4,.1)"
           : "rgba(220,38,38,.1)";
 
+const goToMissions = (mod) => {
+    router.visit(route('playground.missions.index', mod.id));
+};
+
 // Warna aksen per index — tetap berwarna-warni per kartu
 const ACCENTS = [
     "#2563EB",
@@ -371,6 +375,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                                         ? `--btnbg:${accent(i)}`
                                         : ''
                                 "
+                                @click="goToMissions(mod)"
                             >
                                 <component
                                     :is="mod.finished ? RefreshCw : Play"

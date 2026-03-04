@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class Quiz_attempts extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -31,8 +32,14 @@ class Quiz_attempts extends Model
     {
         return $this->belongsTo(Quizzes::class, 'quiz_id');
     }
+
     public function student()
     {
         return $this->belongsTo(User::class, 'student_id');
+    }
+
+    public function answers()
+    {
+        return $this->hasMany(User_answers::class, 'attempt_id');
     }
 }
