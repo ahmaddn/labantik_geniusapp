@@ -91,9 +91,10 @@ const goBack = () => {
 
 // Open module-level quiz create (pretest/posttest) with preset category
 const openCreateQuizPretest = (category) => {
-    const base = route("admin.modules.quizzes.create", [props.module.id]);
-    const url = base + "?presetCategory=" + encodeURIComponent(category);
-    router.visit(url);
+    // The route requires both module id and category as path params
+    router.visit(
+        route("admin.modules.quizzes.create", [props.module.id, category]),
+    );
 };
 
 const openAddMissionModal = () => {
