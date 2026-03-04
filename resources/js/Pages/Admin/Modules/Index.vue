@@ -77,6 +77,7 @@ const form = useForm({
     description: "",
     content: "",
     quotes: "",
+    closing_text: "",
     template_id: "",
     thumbnail: null,
     thumbnail_remove: false,
@@ -137,6 +138,7 @@ const openEdit = (module) => {
     form.description = module.description ?? "";
     form.content = module.content ?? "";
     form.quotes = module.quotes ?? "";
+    form.closing_text = module.closing_text ?? "";
     form.template_id = module.template_id ?? "";
     form.thumbnail = null;
     form.thumbnail_remove = false;
@@ -518,7 +520,7 @@ const toggleActive = (module) => {
                 />
 
                 <!-- Quotes -->
-                <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <TextAreaField
                         v-model="form.quotes"
                         label="Kutipan / Quotes"
@@ -526,7 +528,15 @@ const toggleActive = (module) => {
                         :rows="2"
                         border-color="red"
                         :error="form.errors.quotes"
-                        required
+                    />
+
+                    <TextAreaField
+                        v-model="form.closing_text"
+                        label="Kata Penutup"
+                        placeholder="Isi Kata Penutup"
+                        :rows="2"
+                        border-color="red"
+                        :error="form.errors.closing_text"
                     />
                 </div>
 
@@ -572,10 +582,8 @@ const toggleActive = (module) => {
                         class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"
                     >
                         <Image class="w-4 h-4 text-blue-400" />
-                        Thumbnail
-                        <span class="text-gray-400 font-normal ml-1"
-                            >(opsional)</span
-                        >
+                        Thumbnail (Cover Modul)
+                        <span class="text-gray-400 font-normal ml-1"></span>
                     </label>
 
                     <!-- Preview -->
