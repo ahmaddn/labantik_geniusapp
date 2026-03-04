@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class PlaygroundController extends Controller
+class PretestController extends Controller
 {
     /**
      * Guard helper — cek session player.
