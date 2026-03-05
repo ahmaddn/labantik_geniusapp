@@ -28,7 +28,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/preview/dragdrop', [DragDropController::class, 'preview']);
 
 // ── Route asli dengan middleware ─────────────────────────────
 Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {

@@ -45,17 +45,5 @@ class DragDropController extends Controller
         ]);
     }
 
-    // ── PREVIEW tanpa auth (hapus setelah selesai testing!) ──
-    public function preview()
-    {
-        return Inertia::render('Playground/Mission/Drag_drop', [
-            'mission'    => ['id' => 0, 'title' => 'Misi 1 – Ekosistem Sungai'],
-            'module'     => ['id' => 0, 'title' => 'Modul 1 – Ekosistem'],
-            'groups'     => [],
-            'items'      => [],
-            'mascot'     => Mascots::first()     ? ['id' => Mascots::first()->id,     'name' => Mascots::first()->name ?? 'Teman',  'image' => Mascots::first()->image]     : null,
-            'background' => Backgrounds::first() ? ['id' => Backgrounds::first()->id, 'name' => Backgrounds::first()->name,         'image' => Backgrounds::first()->image] : null,
-            'auth'       => null,
-        ]);
-    }
+   
 }
