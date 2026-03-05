@@ -84,8 +84,10 @@ const getFirstError = (errors) => {
 };
 
 const saveClass = () => {
-    if (!form.name.trim()) return;
-
+    if (!form.name.trim() || !form.teacher_id || !form.description) {
+        showToast("Semua kolom wajib diisi.", "error");
+        return;
+    }
     const options = {
         onError: (errors) => showToast(getFirstError(errors), "error"),
         onSuccess: () => {
