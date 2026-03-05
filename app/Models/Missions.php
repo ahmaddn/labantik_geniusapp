@@ -8,11 +8,14 @@ use Illuminate\Support\Str;
 class Missions extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
         'module_id',
         'name',
+        'description',
+        'hint',
         'order_number',
     ];
 

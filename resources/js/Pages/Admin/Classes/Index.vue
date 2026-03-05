@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { ref, watch, onMounted, onUnmounted, computed } from "vue";
-import { usePage, useForm } from "@inertiajs/vue3";
+import { usePage, useForm, router } from "@inertiajs/vue3";
 import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
@@ -9,6 +9,7 @@ import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
+import Pagination from "@/Components/UI/Pagination.vue";
 import {
     BookOpen,
     Star,
@@ -17,11 +18,17 @@ import {
     Trash2,
     Save,
     UserKey,
+    PackageOpen,
+    Loader2,
 } from "lucide-vue-next";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 
 const props = defineProps({
-    classes: Array,
+    /**
+     * Laravel paginator: { data, current_page, last_page, per_page, total, from, to }
+     * Controller: Class::paginate(12)
+     */
+    classes: Object,
     teachers: Array,
 });
 
@@ -72,7 +79,6 @@ const confirmDelete = (id) => {
     showDeleteDialog.value = true;
 };
 
-// Helper untuk ambil pesan error pertama dari object errors
 const getFirstError = (errors) => {
     return Object.values(errors)[0] ?? "Terjadi kesalahan.";
 };
@@ -122,6 +128,15 @@ const availableTeachers = computed(() => {
 
 const toggleCardVariant = () => {
     cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
+};
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+const handlePageChange = (pageNumber) => {
+    router.get(
+        route("admin.classes.index"),
+        { page: pageNumber },
+        { preserveScroll: true, preserveState: true },
+    );
 };
 
 watch(showDialog, (val) => lockScroll(val));
@@ -187,7 +202,6 @@ onUnmounted(() => {
 
                     <!-- Kanan -->
                     <div class="flex items-center gap-3">
-                        <!-- Toggle Card Style -->
                         <Button
                             :variant="
                                 cardVariant === 'playful' ? 'warning' : 'light'
@@ -215,12 +229,13 @@ onUnmounted(() => {
 
             <!-- Grid menggunakan Card -->
             <TransitionGroup
+                v-if="props.classes?.data?.length > 0"
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
                 <Card
-                    v-for="classItem in props.classes"
+                    v-for="classItem in props.classes.data"
                     :key="classItem.id"
                     :variant="cardVariant"
                     :title="classItem.name"
@@ -261,6 +276,46 @@ onUnmounted(() => {
                     </template>
                 </Card>
             </TransitionGroup>
+
+            <!-- Empty State -->
+            <div
+                v-else
+                class="flex flex-col items-center justify-center py-20 text-center"
+            >
+                <div
+                    class="bg-blue-50 p-6 rounded-3xl border-4 border-blue-100 mb-5"
+                >
+                    <PackageOpen class="w-14 h-14 text-blue-300 mx-auto" />
+                </div>
+                <h3 class="font-heading font-bold text-gray-600 text-lg mb-1">
+                    Belum ada kelas
+                </h3>
+                <p class="text-sm text-gray-400 mb-5">
+                    Mulai dengan menambahkan kelas pertama untuk siswa.
+                </p>
+                <Button
+                    variant="primary"
+                    size="md"
+                    :icon="Plus"
+                    @click="openCreate"
+                >
+                    Tambah Kelas Pertama
+                </Button>
+            </div>
+
+            <!-- Pagination -->
+            <Pagination
+                :meta="{
+                    current_page: props.classes.current_page,
+                    last_page: props.classes.last_page,
+                    per_page: props.classes.per_page,
+                    total: props.classes.total,
+                    from: props.classes.from,
+                    to: props.classes.to,
+                }"
+                color="blue"
+                @change="handlePageChange"
+            />
         </div>
 
         <!-- Create / Edit Modal -->
@@ -320,7 +375,18 @@ onUnmounted(() => {
                         :disabled="form.processing"
                         @click="saveClass"
                     >
-                        {{ form.processing ? "Menyimpan" : "Simpan" }}
+                        <span
+                            v-if="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                Simpan
+                            </span>
+                        </span>
                     </Button>
                 </div>
             </template>

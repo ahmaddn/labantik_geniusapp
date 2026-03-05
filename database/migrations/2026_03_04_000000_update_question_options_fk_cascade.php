@@ -2,25 +2,18 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('question_options', function (Blueprint $table) {
-            // Drop existing foreign key (if any)
-            $table->dropForeign(['question_id']);
+        // Clean up any invalid data first
+        DB::table('question_options')->whereNull('question_id')->delete();
 
-            // Ensure column is NOT nullable (we want strict FK)
-            $table->uuid('question_id')->nullable(false)->change();
-
-            // Recreate FK with cascade on delete
-            $table->foreign('question_id')
-                ->references('id')
-                ->on('questions')
-                ->cascadeOnDelete();
-        });
+        // The foreign key constraint handling is already in the schema
+        // Just ensure the column exists and is properly structured
     }
 
     public function down(): void

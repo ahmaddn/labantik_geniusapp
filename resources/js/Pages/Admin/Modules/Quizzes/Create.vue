@@ -27,6 +27,8 @@ import {
     Image as ImageIcon,
     ToggleLeft,
     CheckSquare,
+    Loader2,
+    Save,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -1584,8 +1586,21 @@ const toggleCardVariant = () => {
                                 size="lg"
                                 :icon="Check"
                                 @click="finalSave"
-                                >Simpan Kuis</Button
-                            >
+                                :disabled="quizForm.processing"
+                                ><span
+                                    v-if="quizForm.processing"
+                                    class="flex items-center gap-2"
+                                >
+                                    <Loader2 class="w-4 h-4 animate-spin" />
+                                    Menyimpan...
+                                </span>
+                                <span v-else>
+                                    <span class="flex items-center gap-2">
+                                        <Save class="w-4 h-4" />
+                                        Simpan
+                                    </span>
+                                </span>
+                            </Button>
                         </div>
                     </template>
                 </Card>

@@ -9,8 +9,8 @@ use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\DragDropController;
+use App\Http\Controllers\Student\PlaygroundController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,7 +28,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
 Route::get('/preview/dragdrop', [DragDropController::class, 'preview']);
 
 // ── Route asli dengan middleware ─────────────────────────────
@@ -42,6 +41,14 @@ Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
     Route::get('/playground/pretest', [PlaygroundController::class, 'pretest'])->name('pretest');
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
+
+    // Student mission routes (session-based authentication)
+    Route::prefix('missions')->name('missions.')->group(function () {
+        Route::get('/module/{module}', [\App\Http\Controllers\Student\MissionController::class, 'missionsList'])->name('index');
+        Route::get('/{mission}', [\App\Http\Controllers\Student\MissionController::class, 'showMission'])->name('show');
+        Route::post('/{mission}/submit', [\App\Http\Controllers\Student\MissionController::class, 'submitMissionAnswers'])->name('submit');
+        Route::get('/{mission}/result', [\App\Http\Controllers\Student\MissionController::class, 'showResult'])->name('result');
+    });
 });
 
 // Playground Login Routes
@@ -52,7 +59,7 @@ Route::name('playground.')->group(function () {
     Route::post('/playground-logout', [PlaygroundLoginController::class, 'logout'])->name('logout');
 });
 
-Route::middleware(['auth', 'role:admin,guru'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
 
     // Kelas
     Route::name('classes.')->group(function () {

@@ -17,7 +17,7 @@ class TemplatesController extends Controller
 {
     public function index()
     {
-        $templates = Templates::withCount(['backgrounds', 'mascots'])->latest()->get();
+        $templates = Templates::withCount(['backgrounds', 'mascots'])->latest()->paginate(12);
         return Inertia::render('Admin/Templates/Index', [
             'templates'  => $templates,
         ]);

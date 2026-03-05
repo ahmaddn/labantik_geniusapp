@@ -54,7 +54,7 @@ const menuItems = [
         activeColor: "bg-blue-500",
     },
     {
-        name: "Modul",
+        name: "Modul Pembelajaran",
         route: "admin.modules.index",
         icon: GraduationCap,
         bgColor: "bg-blue-100",
@@ -80,7 +80,6 @@ const menuItems = [
         borderColor: "border-blue-300",
         activeColor: "bg-blue-500",
     },
-
 ];
 </script>
 

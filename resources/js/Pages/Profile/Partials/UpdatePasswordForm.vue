@@ -65,7 +65,7 @@ const handleToastClose = () => {
                 :icon="Lock"
                 autocomplete="current-password"
                 :error="form.errors.current_password"
-                border-color="blue"
+                border-color="green"
             />
 
             <InputField
@@ -76,7 +76,7 @@ const handleToastClose = () => {
                 :icon="Lock"
                 autocomplete="new-password"
                 :error="form.errors.password"
-                border-color="blue"
+                border-color="green"
             />
 
             <InputField
@@ -87,13 +87,13 @@ const handleToastClose = () => {
                 :icon="Lock"
                 autocomplete="new-password"
                 :error="form.errors.password_confirmation"
-                border-color="blue"
+                border-color="green"
             />
 
             <div class="flex items-center gap-4 pt-4">
                 <Button
                     type="submit"
-                    variant="primary"
+                    variant="success"
                     size="lg"
                     :icon="Save"
                     :disabled="form.processing"
