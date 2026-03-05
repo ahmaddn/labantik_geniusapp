@@ -14,7 +14,7 @@ class ClassesController extends Controller
 {
     public function index()
     {
-        $classes = Classes::with('teacher')->latest()->get();
+        $classes = Classes::with('teacher')->latest()->paginate(12);
 
         $usedTeacherIds = Classes::whereNotNull('teacher_id')
             ->pluck('teacher_id')

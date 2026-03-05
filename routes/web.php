@@ -59,7 +59,7 @@ Route::name('playground.')->group(function () {
     Route::post('/playground-logout', [PlaygroundLoginController::class, 'logout'])->name('logout');
 });
 
-Route::middleware(['auth', 'role:admin,guru'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
 
     // Kelas
     Route::name('classes.')->group(function () {
@@ -137,4 +137,4 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('admin')->name('admin.')-
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

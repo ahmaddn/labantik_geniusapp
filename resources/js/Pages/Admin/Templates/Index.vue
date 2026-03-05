@@ -8,6 +8,7 @@ import Toast from "@/Components/UI/Toast.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import FileUpload from "@/Components/UI/Forms/FileUpload.vue";
 import Button from "@/Components/UI/Button.vue";
+import Pagination from "@/Components/UI/Pagination.vue";
 import {
     Palette,
     Plus,
@@ -19,10 +20,18 @@ import {
     Pencil,
     Trash2,
     ChevronRight,
+    PackageOpen,
+    Loader2,
+    Save,
 } from "lucide-vue-next";
 
 const props = defineProps({
-    templates: Array,
+    /**
+     * Laravel paginator object.
+     * Dari controller: Template::paginate(12)
+     * Props ini berisi: { data: [...], current_page, last_page, per_page, total, from, to }
+     */
+    templates: Object,
 });
 
 const page = usePage();
@@ -106,7 +115,16 @@ const goToDetail = (id) => {
     router.visit(route("admin.templates.show", id));
 };
 
-// Upload backsound
+// ── Pagination ────────────────────────────────────────────────────────────────
+const handlePageChange = (pageNumber) => {
+    router.get(
+        route("admin.templates.index"),
+        { page: pageNumber },
+        { preserveScroll: true, preserveState: true },
+    );
+};
+
+// ── Upload handlers ───────────────────────────────────────────────────────────
 const handleBacksoundUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -120,16 +138,14 @@ const removeBacksound = () => {
     form.backsound = null;
 };
 
-// Upload background — satu per satu, langsung minta nama
 const handleBackgroundUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
     previewBackgrounds.value.push({
         id: Date.now() + Math.random(),
-        name: file.name.replace(/\.[^.]+$/, ""), // default nama = nama file tanpa ekstensi
+        name: file.name.replace(/\.[^.]+$/, ""),
         file: file,
     });
-    // reset input agar bisa upload lagi
     event.target.value = "";
 };
 
@@ -139,7 +155,6 @@ const removeBackground = (id) => {
     );
 };
 
-// Upload mascot — satu per satu, langsung minta nama pose
 const handleMascotUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -158,7 +173,6 @@ const removeMascot = (id) => {
 const saveTemplate = () => {
     if (!form.name.trim()) return;
 
-    // Bangun FormData manual karena kita punya array file + array nama
     const fd = new FormData();
     fd.append("name", form.name);
     if (form.backsound) fd.append("backsound", form.backsound);
@@ -243,12 +257,13 @@ const deleteTemplate = () => {
 
             <!-- Grid -->
             <TransitionGroup
+                v-if="props.templates.data?.length > 0"
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
                 <div
-                    v-for="template in props.templates"
+                    v-for="template in props.templates.data"
                     :key="template.id"
                     class="bg-white rounded-3xl shadow-playful border-4 border-blue-200 p-6 hover:scale-105 transition-all cursor-pointer group"
                     @click="goToDetail(template.id)"
@@ -309,6 +324,47 @@ const deleteTemplate = () => {
                     </div>
                 </div>
             </TransitionGroup>
+
+            <!-- Empty State -->
+            <div
+                v-else
+                class="flex flex-col items-center justify-center py-20 text-center"
+            >
+                <div
+                    class="bg-blue-50 p-6 rounded-3xl border-4 border-blue-100 mb-5"
+                >
+                    <Palette class="w-14 h-14 text-blue-300 mx-auto" />
+                </div>
+                <h3 class="font-heading font-bold text-gray-600 text-lg mb-1">
+                    Belum ada template
+                </h3>
+                <p class="text-sm text-gray-400 mb-5">
+                    Mulai dengan menambahkan template pertama untuk
+                    pembelajaran.
+                </p>
+                <Button
+                    variant="primary"
+                    size="md"
+                    :icon="Plus"
+                    @click="openCreate"
+                >
+                    Tambah Template Pertama
+                </Button>
+            </div>
+
+            <!-- Pagination -->
+            <Pagination
+                :meta="{
+                    current_page: props.templates.current_page,
+                    last_page: props.templates.last_page,
+                    per_page: props.templates.per_page,
+                    total: props.templates.total,
+                    from: props.templates.from,
+                    to: props.templates.to,
+                }"
+                color="blue"
+                @change="handlePageChange"
+            />
         </div>
 
         <!-- Modal -->
@@ -358,7 +414,7 @@ const deleteTemplate = () => {
                     />
                 </div>
 
-                <!-- Backgrounds — satu per satu dengan nama -->
+                <!-- Backgrounds -->
                 <div>
                     <p class="text-sm font-bold text-gray-700 mb-2">
                         Background
@@ -366,8 +422,6 @@ const deleteTemplate = () => {
                             >(isi nama untuk setiap gambar)</span
                         >
                     </p>
-
-                    <!-- List background yang sudah dipilih -->
                     <div
                         v-if="previewBackgrounds.length > 0"
                         class="space-y-2 mb-3"
@@ -392,8 +446,6 @@ const deleteTemplate = () => {
                             />
                         </div>
                     </div>
-
-                    <!-- Tombol tambah background -->
                     <FileUpload
                         label="Tambah Background"
                         accept="image/*"
@@ -403,7 +455,7 @@ const deleteTemplate = () => {
                     />
                 </div>
 
-                <!-- Mascots — satu per satu dengan nama pose -->
+                <!-- Mascots -->
                 <div>
                     <p class="text-sm font-bold text-gray-700 mb-2">
                         Maskot
@@ -411,8 +463,6 @@ const deleteTemplate = () => {
                             >(isi nama pose untuk setiap maskot)</span
                         >
                     </p>
-
-                    <!-- List mascot yang sudah dipilih -->
                     <div
                         v-if="previewMascots.length > 0"
                         class="space-y-2 mb-3"
@@ -437,8 +487,6 @@ const deleteTemplate = () => {
                             />
                         </div>
                     </div>
-
-                    <!-- Tombol tambah maskot -->
                     <FileUpload
                         label="Tambah Maskot"
                         accept="image/*"
@@ -457,8 +505,25 @@ const deleteTemplate = () => {
                         @click="showDialog = false"
                         >Batal</Button
                     >
-                    <Button variant="primary" size="md" @click="saveTemplate">
-                        Simpan
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="saveTemplate"
+                        :disabled="form.processing"
+                    >
+                        <span
+                            v-if="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                <Save class="w-4 h-4" />
+                                Simpan
+                            </span>
+                        </span>
                     </Button>
                 </div>
             </template>

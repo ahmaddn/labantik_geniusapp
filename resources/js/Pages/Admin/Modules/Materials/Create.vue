@@ -22,6 +22,7 @@ import {
     Inbox,
     X,
     Image as ImageIcon,
+    Loader2,
 } from "lucide-vue-next";
 
 // Props — sesuai controller create()
@@ -586,8 +587,23 @@ const toggleCardVariant = () => {
                             size="lg"
                             :icon="Check"
                             @click="finalSave"
+                            :disabled="materialForm.processing"
                         >
-                            Simpan Semua Material ({{ materials.length }})
+                            <span
+                                v-if="materialForm.processing"
+                                class="flex items-center gap-2"
+                            >
+                                <Loader2 class="w-4 h-4 animate-spin" />
+                                Menyimpan...
+                            </span>
+                            <span v-else>
+                                <span class="flex items-center gap-2">
+                                    <Pencil class="w-4 h-4" />
+                                    Simpan Semua Material ({{
+                                        materials.length
+                                    }})
+                                </span>
+                            </span>
                         </Button>
                     </div>
                 </div>
