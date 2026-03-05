@@ -22,7 +22,7 @@ class ModulesController extends Controller
         $modules = Learning_modules::with(['template:id,name', 'createdBy:id,name'])
             ->latest()
             ->paginate(12)
-            ->map(fn($m) => [
+            ->through(fn($m) => [
                 'id'          => $m->id,
                 'name'        => $m->name,
                 'description' => $m->description,

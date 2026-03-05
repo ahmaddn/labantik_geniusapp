@@ -20,17 +20,11 @@ import {
     Pencil,
     Trash2,
     ChevronRight,
-    PackageOpen,
     Loader2,
     Save,
 } from "lucide-vue-next";
 
 const props = defineProps({
-    /**
-     * Laravel paginator object.
-     * Dari controller: Template::paginate(12)
-     * Props ini berisi: { data: [...], current_page, last_page, per_page, total, from, to }
-     */
     templates: Object,
 });
 
@@ -45,13 +39,10 @@ const toastType = ref("success");
 const editId = ref(null);
 
 const previewBacksound = ref(null);
-const previewBackgrounds = ref([]);
+const previewBackground = ref(null); // single: { name, file, preview }
 const previewMascots = ref([]);
 
-const form = useForm({
-    name: "",
-    backsound: null,
-});
+const form = useForm({ name: "", backsound: null });
 
 const showToast = (message, type = "success") => {
     successMessage.value = message;
@@ -71,9 +62,8 @@ watch(
 const lockScroll = (state) => {
     document.body.style.overflow = state ? "hidden" : "";
 };
-
-watch(showDialog, (val) => lockScroll(val));
-watch(showDeleteDialog, (val) => lockScroll(val));
+watch(showDialog, lockScroll);
+watch(showDeleteDialog, lockScroll);
 
 const handleEsc = (e) => {
     if (e.key === "Escape") {
@@ -81,28 +71,28 @@ const handleEsc = (e) => {
         showDeleteDialog.value = false;
     }
 };
-
 onMounted(() => window.addEventListener("keydown", handleEsc));
 onUnmounted(() => window.removeEventListener("keydown", handleEsc));
+
+const resetForm = () => {
+    form.reset();
+    previewBacksound.value = null;
+    previewBackground.value = null;
+    previewMascots.value = [];
+};
 
 const openCreate = () => {
     isEdit.value = false;
     editId.value = null;
-    previewBacksound.value = null;
-    previewBackgrounds.value = [];
-    previewMascots.value = [];
-    form.reset();
+    resetForm();
     showDialog.value = true;
 };
 
 const openEdit = (template) => {
     isEdit.value = true;
     editId.value = template.id;
-    previewBacksound.value = null;
-    previewBackgrounds.value = [];
-    previewMascots.value = [];
+    resetForm();
     form.name = template.name;
-    form.backsound = null;
     showDialog.value = true;
 };
 
@@ -111,11 +101,8 @@ const confirmDelete = (id) => {
     showDeleteDialog.value = true;
 };
 
-const goToDetail = (id) => {
-    router.visit(route("admin.templates.show", id));
-};
+const goToDetail = (id) => router.visit(route("admin.templates.show", id));
 
-// ── Pagination ────────────────────────────────────────────────────────────────
 const handlePageChange = (pageNumber) => {
     router.get(
         route("admin.templates.index"),
@@ -124,63 +111,68 @@ const handlePageChange = (pageNumber) => {
     );
 };
 
-// ── Upload handlers ───────────────────────────────────────────────────────────
+// ── Backsound ─────────────────────────────────────────────────────────────────
 const handleBacksoundUpload = (event) => {
     const file = event.target.files[0];
-    if (file) {
-        previewBacksound.value = { name: file.name };
-        form.backsound = file;
-    }
+    if (!file) return;
+    previewBacksound.value = { name: file.name };
+    form.backsound = file;
 };
-
 const removeBacksound = () => {
     previewBacksound.value = null;
     form.backsound = null;
 };
 
+// ── Background — single ───────────────────────────────────────────────────────
 const handleBackgroundUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    previewBackgrounds.value.push({
-        id: Date.now() + Math.random(),
+    previewBackground.value = {
         name: file.name.replace(/\.[^.]+$/, ""),
-        file: file,
-    });
+        file,
+        preview: URL.createObjectURL(file),
+    };
     event.target.value = "";
 };
-
-const removeBackground = (id) => {
-    previewBackgrounds.value = previewBackgrounds.value.filter(
-        (b) => b.id !== id,
-    );
+const removeBackground = () => {
+    previewBackground.value = null;
 };
 
+// ── Mascots — multiple satu per satu ─────────────────────────────────────────
 const handleMascotUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
     previewMascots.value.push({
         id: Date.now() + Math.random(),
         name_pose: file.name.replace(/\.[^.]+$/, ""),
-        file: file,
+        file,
     });
     event.target.value = "";
 };
-
 const removeMascot = (id) => {
     previewMascots.value = previewMascots.value.filter((m) => m.id !== id);
 };
 
+// ── Save ──────────────────────────────────────────────────────────────────────
 const saveTemplate = () => {
-    if (!form.name.trim()) return;
-
+    if (
+        !form.name.trim() ||
+        !form.backsound ||
+        !form.background ||
+        form.mascot
+    ) {
+        showToast("Semua kolom wajib diisi.", "error");
+        return;
+    }
     const fd = new FormData();
     fd.append("name", form.name);
     if (form.backsound) fd.append("backsound", form.backsound);
 
-    previewBackgrounds.value.forEach((bg, i) => {
-        fd.append(`backgrounds[${i}]`, bg.file);
-        fd.append(`background_names[${i}]`, bg.name);
-    });
+    // Background single
+    if (previewBackground.value) {
+        fd.append("background", previewBackground.value.file);
+        fd.append("background_name", previewBackground.value.name);
+    }
 
     previewMascots.value.forEach((m, i) => {
         fd.append(`mascots[${i}]`, m.file);
@@ -189,21 +181,20 @@ const saveTemplate = () => {
 
     if (isEdit.value) fd.append("_method", "PUT");
 
-    const url = isEdit.value
-        ? route("admin.templates.update", editId.value)
-        : route("admin.templates.store");
-
-    router.post(url, fd, {
-        forceFormData: true,
-        onSuccess: () => {
-            showDialog.value = false;
-            form.reset();
-            previewBacksound.value = null;
-            previewBackgrounds.value = [];
-            previewMascots.value = [];
+    router.post(
+        isEdit.value
+            ? route("admin.templates.update", editId.value)
+            : route("admin.templates.store"),
+        fd,
+        {
+            forceFormData: true,
+            onSuccess: () => {
+                showDialog.value = false;
+                resetForm();
+            },
+            onError: (errors) => showToast(Object.values(errors)[0], "error"),
         },
-        onError: (errors) => showToast(Object.values(errors)[0], "error"),
-    });
+    );
 };
 
 const deleteTemplate = () => {
@@ -257,7 +248,7 @@ const deleteTemplate = () => {
 
             <!-- Grid -->
             <TransitionGroup
-                v-if="props.templates.data?.length > 0"
+                v-if="props.templates?.data?.length > 0"
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
@@ -276,7 +267,6 @@ const deleteTemplate = () => {
                             class="w-5 h-5 text-gray-300 group-hover:text-blue-400 transition-colors shrink-0 mt-1"
                         />
                     </div>
-
                     <div
                         class="mb-3 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -289,7 +279,6 @@ const deleteTemplate = () => {
                             }}
                         </span>
                     </div>
-
                     <div
                         class="mb-3 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -298,7 +287,6 @@ const deleteTemplate = () => {
                             >{{ template.backgrounds_count }} Background</span
                         >
                     </div>
-
                     <div
                         class="mb-6 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -307,7 +295,6 @@ const deleteTemplate = () => {
                             >{{ template.mascots_count }} Maskot</span
                         >
                     </div>
-
                     <div class="flex justify-end gap-2" @click.stop>
                         <Button
                             variant="warning"
@@ -375,7 +362,7 @@ const deleteTemplate = () => {
             max-width="3xl"
         >
             <div class="space-y-6">
-                <!-- Nama Template -->
+                <!-- Nama -->
                 <InputField
                     v-model="form.name"
                     label="Nama Template"
@@ -414,26 +401,31 @@ const deleteTemplate = () => {
                     />
                 </div>
 
-                <!-- Backgrounds -->
+                <!-- Background — single -->
                 <div>
                     <p class="text-sm font-bold text-gray-700 mb-2">
                         Background
                         <span class="font-normal text-gray-400"
-                            >(isi nama untuk setiap gambar)</span
+                            >(1 gambar)</span
                         >
                     </p>
+
+                    <!-- Preview -->
                     <div
-                        v-if="previewBackgrounds.length > 0"
-                        class="space-y-2 mb-3"
+                        v-if="previewBackground"
+                        class="rounded-2xl overflow-hidden border-2 border-green-200 bg-green-50 mb-2"
                     >
+                        <img
+                            :src="previewBackground.preview"
+                            :alt="previewBackground.name"
+                            class="w-full h-40 object-cover"
+                        />
                         <div
-                            v-for="bg in previewBackgrounds"
-                            :key="bg.id"
-                            class="flex items-center gap-3 bg-green-50 p-3 rounded-xl border-2 border-green-200"
+                            class="flex items-center gap-3 px-3 py-2 border-t-2 border-green-200"
                         >
                             <Image class="text-green-500 w-4 h-4 shrink-0" />
                             <input
-                                v-model="bg.name"
+                                v-model="previewBackground.name"
                                 type="text"
                                 placeholder="Nama background..."
                                 class="flex-1 text-sm font-medium bg-transparent outline-none border-b-2 border-green-300 focus:border-green-500 pb-0.5 transition-colors"
@@ -442,12 +434,14 @@ const deleteTemplate = () => {
                                 variant="danger"
                                 size="sm"
                                 :icon="X"
-                                @click="removeBackground(bg.id)"
+                                @click="removeBackground"
                             />
                         </div>
                     </div>
+
                     <FileUpload
-                        label="Tambah Background"
+                        v-else
+                        label="Pilih Background"
                         accept="image/*"
                         :multiple="false"
                         button-color="green"
@@ -518,11 +512,8 @@ const deleteTemplate = () => {
                             <Loader2 class="w-4 h-4 animate-spin" />
                             Menyimpan...
                         </span>
-                        <span v-else>
-                            <span class="flex items-center gap-2">
-                                <Save class="w-4 h-4" />
-                                Simpan
-                            </span>
+                        <span v-else class="flex items-center gap-2">
+                            <Save class="w-4 h-4" /> Simpan
                         </span>
                     </Button>
                 </div>
