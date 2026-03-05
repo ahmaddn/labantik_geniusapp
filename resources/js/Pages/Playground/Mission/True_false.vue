@@ -60,9 +60,7 @@ const handleSelect = (optionId) => {
         </div>
 
         <div class="tf-inner">
-          <div class="tf-icon-wrap">
-            <span class="tf-emoji">{{ isTrue(option) ? '✓' : '✗' }}</span>
-          </div>
+          
           <span class="tf-label">{{ option.option_text || option.text }}</span>
           <div class="tf-radio">
             <CheckCircle2 v-if="selectedAnswer === option.id" :size="20" :stroke-width="2" />
@@ -116,8 +114,8 @@ const handleSelect = (optionId) => {
 }
 
 .tf-false.selected {
-  background: #fee2e2;
-  border-color: #ef4444;
+  background: #e2feef;
+  border-color: #44ef77;
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
 }
 
@@ -170,7 +168,7 @@ const handleSelect = (optionId) => {
 
 .tf-false .tf-icon-wrap {
   background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+  color: #26dc44;
 }
 
 .tf-label {
@@ -186,7 +184,7 @@ const handleSelect = (optionId) => {
 }
 
 .tf-false.selected .tf-label {
-  color: #7f1d1d;
+  color: #1d7f32;
 }
 
 .tf-radio {
@@ -199,7 +197,7 @@ const handleSelect = (optionId) => {
 }
 
 .tf-false.selected .tf-radio {
-  color: #dc2626;
+  color: #26dc3e;
 }
 
 @media (max-width: 480px) {

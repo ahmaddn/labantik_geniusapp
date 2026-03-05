@@ -136,7 +136,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     <div class="pg">
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
-            <div class="wrap row-between">
+            <div class="wrap">
                 <div class="brand">
                     <div class="brand-icon">
                         <Zap
@@ -148,8 +148,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                     </div>
                     <span class="brand-name">Geniuss</span>
                 </div>
+            </div>
 
-                <div class="user-menu" ref="menuRef">
+            <div class="user-menu" ref="menuRef">
                     <button
                         class="user-pill"
                         @click="dropdownOpen = !dropdownOpen"
@@ -187,7 +188,6 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                         </div>
                     </Transition>
                 </div>
-            </div>
         </header>
 
         <!-- ══ HERO ══ -->
@@ -474,10 +474,15 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     padding: 0 32px;
     z-index: 20;
     box-shadow: 0 1px 18px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
 }
 .topbar .wrap {
     padding-top: 10px;
     padding-bottom: 10px;
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .brand {
@@ -505,6 +510,8 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 /* ── USER PILL ── */
 .user-menu {
     position: relative;
+    flex-shrink: 0;
+    padding: 10px 0;
 }
 .user-pill {
     display: flex;
