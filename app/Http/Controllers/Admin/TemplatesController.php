@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Templates;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -32,39 +33,40 @@ class TemplatesController extends Controller
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'backsound'       => 'nullable|mimes:mp3,wav,ogg,aac|max:20480',
+            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:20480',
             'background'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'background_name' => 'nullable|string|max:255',
             'mascots.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'mascot_pose.*'   => 'nullable|string|max:255',
         ], [
-            'name.required'       => 'Nama template wajib diisi.',
-            'backsound.mimes'     => 'Format audio harus mp3, wav, ogg, atau aac.',
-            'background.image'    => 'Background harus berupa gambar.',
-            'mascots.*.image'     => 'Maskot harus berupa gambar.',
+            'name.required'        => 'Nama template wajib diisi.',
+            'backsound.extensions' => 'Format audio harus mp3, wav, ogg, atau aac.',
+            'background.image'     => 'Background harus berupa gambar.',
+            'mascots.*.image'      => 'Maskot harus berupa gambar.',
         ]);
-
-        $template = Templates::create([
+        $templates = Templates::create([
             'name'      => $request->name,
             'backsound' => $request->hasFile('backsound')
                 ? $request->file('backsound')->store('templates/backsounds', 'public')
                 : null,
+            'created_by' => Auth::id()
         ]);
+
 
         // Background — single
         if ($request->hasFile('background')) {
-            $template->backgrounds()->create([
+            $templates->backgrounds()->create([
                 'name' => $request->input('background_name') ?? 'Background',
-                'path' => $request->file('background')->store('templates/backgrounds', 'public'),
+                'image' => $request->file('background')->store('templates/backgrounds', 'public'),
             ]);
         }
 
         // Mascots
         if ($request->hasFile('mascots')) {
             foreach ($request->file('mascots') as $i => $file) {
-                $template->mascots()->create([
+                $templates->mascots()->create([
                     'name_pose' => $request->input("mascot_pose.{$i}") ?? 'Pose',
-                    'path'      => $file->store('templates/mascots', 'public'),
+                    'image'      => $file->store('templates/mascots', 'public'),
                 ]);
             }
         }
@@ -73,70 +75,71 @@ class TemplatesController extends Controller
             ->with('success', 'Template berhasil ditambahkan.');
     }
 
-    public function show(Templates $template)
+    public function show(Templates $templates)
     {
-        $template->load(['backgrounds', 'mascots']);
+        $templates->load(['backgrounds', 'mascots']);
 
         return Inertia::render('Admin/Templates/Show', [
             'template' => [
-                'id'          => $template->id,
-                'name'        => $template->name,
-                'backsound'   => $template->backsound ? Storage::url($template->backsound) : null,
-                'backgrounds' => $template->backgrounds->map(fn($b) => [
-                    'id'   => $b->id,
-                    'name' => $b->name,
-                    'url'  => Storage::url($b->path),
+                'id'          => $templates->id,
+                'name'        => $templates->name,
+                'backsound'   => $templates->backsound, // ← hapus Storage::url()
+                'backgrounds' => $templates->backgrounds->map(fn($b) => [
+                    'id'    => $b->id,
+                    'name'  => $b->name,
+                    'image' => $b->image, // ← hapus Storage::url(), kirim path mentah
                 ]),
-                'mascots' => $template->mascots->map(fn($m) => [
+                'mascots' => $templates->mascots->map(fn($m) => [
                     'id'        => $m->id,
                     'name_pose' => $m->name_pose,
-                    'url'       => Storage::url($m->path),
+                    'image'     => $m->image, // ← hapus Storage::url()
                 ]),
             ],
         ]);
     }
 
-    public function update(Request $request, Templates $template)
+    public function update(Request $request, Templates $templates)
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'backsound'       => 'nullable|mimes:mp3,wav,ogg,aac|max:20480',
+            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:20480',
             'background'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'background_name' => 'nullable|string|max:255',
             'mascots.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'mascot_pose.*'   => 'nullable|string|max:255',
         ]);
 
-        $template->update(['name' => $request->name]);
+        $templates->update(['name' => $request->name]);
+
 
         // Update backsound jika ada file baru
         if ($request->hasFile('backsound')) {
-            if ($template->backsound) {
-                Storage::disk('public')->delete($template->backsound);
+            if ($templates->backsound) {
+                Storage::disk('public')->delete($templates->backsound);
             }
-            $template->update([
+            $templates->update([
                 'backsound' => $request->file('backsound')->store('templates/backsounds', 'public'),
             ]);
         }
 
         // Ganti background (hapus lama, simpan baru)
         if ($request->hasFile('background')) {
-            foreach ($template->backgrounds as $old) {
-                Storage::disk('public')->delete($old->path);
+            foreach ($templates->backgrounds as $old) {
+                Storage::disk('public')->delete($old->image);
                 $old->delete();
             }
-            $template->backgrounds()->create([
+            $templates->backgrounds()->create([
                 'name' => $request->input('background_name') ?? 'Background',
-                'path' => $request->file('background')->store('templates/backgrounds', 'public'),
+                'image' => $request->file('background')->store('templates/backgrounds', 'public'),
             ]);
         }
 
         // Tambah maskot baru
         if ($request->hasFile('mascots')) {
             foreach ($request->file('mascots') as $i => $file) {
-                $template->mascots()->create([
+                $templates->mascots()->create([
                     'name_pose' => $request->input("mascot_pose.{$i}") ?? 'Pose',
-                    'path'      => $file->store('templates/mascots', 'public'),
+                    'image'      => $file->store('templates/mascots', 'public'),
                 ]);
             }
         }
@@ -145,24 +148,25 @@ class TemplatesController extends Controller
             ->with('success', 'Template berhasil diperbarui.');
     }
 
-    public function destroy(Templates $template)
+    public function destroy(Templates $templates)
     {
+
         // Hapus file backsound
-        if ($template->backsound) {
-            Storage::disk('public')->delete($template->backsound);
+        if ($templates->backsound) {
+            Storage::disk('public')->delete($templates->backsound);
         }
 
         // Hapus file background
-        foreach ($template->backgrounds as $bg) {
-            Storage::disk('public')->delete($bg->path);
+        foreach ($templates->backgrounds as $bg) {
+            Storage::disk('public')->delete($bg->image);
         }
 
         // Hapus file mascot
-        foreach ($template->mascots as $mascot) {
-            Storage::disk('public')->delete($mascot->path);
+        foreach ($templates->mascots as $mascot) {
+            Storage::disk('public')->delete($mascot->image);
         }
 
-        $template->delete();
+        $templates->delete();
 
         return redirect()->route('admin.templates.index')
             ->with('success', 'Template berhasil dihapus.');

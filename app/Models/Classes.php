@@ -11,7 +11,6 @@ class Classes extends Model
     protected $keyType = 'string';
     public $incrementing = false;
     protected $fillable = [
-        'id',
         'name',
         'description',
         'teacher_id',
@@ -21,7 +20,7 @@ class Classes extends Model
     {
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = Str::uuid();
+                $model->id = (string) Str::uuid(); // ← cast ke string
             }
         });
     }

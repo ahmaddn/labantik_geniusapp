@@ -371,7 +371,6 @@ const toggleCardVariant = () => {
                             </span>
                             <span v-else>
                                 <span class="flex items-center gap-2">
-                                    <Pencil class="w-4 h-4" />
                                     Simpan Semua Perubahan
                                 </span>
                             </span>

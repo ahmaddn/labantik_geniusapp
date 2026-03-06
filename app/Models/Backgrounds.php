@@ -12,7 +12,6 @@ class Backgrounds extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
         'name',
         'image',
         'template_id'
@@ -22,7 +21,7 @@ class Backgrounds extends Model
     {
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = Str::uuid();
+                $model->id = (string) Str::uuid(); // ← cast ke string
             }
         });
         static::deleting(function ($model) {
