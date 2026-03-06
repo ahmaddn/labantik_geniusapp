@@ -136,7 +136,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     <div class="pg">
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
-            <div class="wrap row-between gap-5">
+            <div class="wrap">
                 <div class="brand">
                     <div class="brand-icon">
                         <Zap
