@@ -275,20 +275,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="step-dots">
-            <button
-              v-for="(s, idx) in steps"
-              :key="idx"
-              class="step-dot"
-              :class="stepStatus(idx)"
-              @click.stop="goToStep(idx)"
-              :title="s.isMaterial ? 'Materi' : s.quiz.title"
-            >
-              <span v-if="stepStatus(idx) === 'done'">✓</span>
-              <span v-else-if="s.isMaterial">📖</span>
-              <span v-else>{{ idx + 1 }}</span>
-            </button>
-          </div>
+
         </div>
 
         <div class="mascot-wrap">
@@ -403,24 +390,25 @@ onUnmounted(() => {
     </footer>
 
     <!-- ══ CONFIRM MODAL ══ -->
-    <Transition name="modal">
-      <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
-        <div class="modal">
-          <h2 class="modal-title">Apakah kamu yakin?</h2>
-          <p class="modal-desc">
-            Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
-          </p>
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
-            <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
-              <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
-              <span v-else>Menyimpan…</span>
-            </button>
-          </div>
+<Transition name="overlay-fade">
+  <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
+    <Transition name="modal-pop" appear>
+      <div v-if="showConfirm" class="modal">
+        <h2 class="modal-title">Apakah kamu yakin?</h2>
+        <p class="modal-desc">
+          Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
+        </p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
+          <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
+            <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
+            <span v-else>Menyimpan…</span>
+          </button>
         </div>
       </div>
     </Transition>
-
+  </div>
+</Transition>
     <!-- ══ MUSIC FAB ══ -->
 
 
@@ -597,24 +585,56 @@ onUnmounted(() => {
 .footer-hint { text-align: center; font-size: 11px; font-weight: 800; color: #fde68a; padding: 5px 0 2px; text-shadow: 0 1px 4px rgba(0,0,0,.15); }
 
 /* ══ CONFIRM MODAL ══ */
-.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.55); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; }
-.modal { background: #fff; border-radius: 22px; padding: 28px 24px 22px; width: 100%; max-width: 360px; box-shadow: 0 24px 60px rgba(0,0,0,.22), 0 4px 0 rgba(29,78,216,.08); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-.modal-icon { font-size: 44px; line-height: 1; }
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: #fff; border-radius: 22px; padding: 28px 24px 22px;
+  width: 100%; max-width: 360px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.22), 0 4px 0 rgba(29,78,216,.08);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; text-align: center;
+}
 .modal-title { font-family: 'Righteous', cursive; font-size: 20px; color: #1e3a8a; margin: 0; }
 .modal-desc { font-size: 13px; font-weight: 600; color: #475569; line-height: 1.65; margin: 0; }
 .modal-desc strong { color: #dc2626; }
 .modal-actions { display: flex; gap: 9px; width: 100%; margin-top: 4px; }
-.modal-btn { flex: 1; height: 42px; border: none; border-radius: 12px; font-family: 'Righteous', cursive; font-size: 13.5px; cursor: pointer; transition: all .18s cubic-bezier(.34,1.56,.64,1); }
+.modal-btn {
+  flex: 1; height: 42px; border: none; border-radius: 12px;
+  font-family: 'Righteous', cursive; font-size: 13.5px;
+  cursor: pointer; transition: all .18s cubic-bezier(.34,1.56,.64,1);
+}
 .modal-btn--cancel { background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
 .modal-btn--cancel:hover:not(:disabled) { background: #e2e8f0; transform: translateY(-1px); }
 .modal-btn--confirm { background: linear-gradient(135deg,#10b981,#059669); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,.35); }
 .modal-btn--confirm:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,185,129,.45); }
 .modal-btn:disabled { opacity: .55; cursor: not-allowed; }
-.modal-enter-active { transition: all .28s cubic-bezier(.34,1.56,.64,1); }
-.modal-leave-active { transition: all .18s ease; }
-.modal-enter-from { opacity: 0; transform: scale(.88); }
-.modal-leave-to   { opacity: 0; transform: scale(.94); }
 
+/* Overlay: fade in/out */
+.overlay-fade-enter-active { transition: opacity .25s ease; }
+.overlay-fade-leave-active { transition: opacity .2s ease; }
+.overlay-fade-enter-from,
+.overlay-fade-leave-to { opacity: 0; }
+
+/* Modal card: pop in, shrink out */
+.modal-pop-enter-active {
+  transition: opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.modal-pop-leave-active {
+  transition: opacity .18s ease, transform .18s ease;
+}
+.modal-pop-enter-from {
+  opacity: 0;
+  transform: scale(.82) translateY(24px);
+}
+.modal-pop-leave-to {
+  opacity: 0;
+  transform: scale(.94);
+}
 /* ══ MUSIC FAB ══ */
 .music-fab {
    bottom: 26px; left: 26px; z-index: 301;

@@ -201,7 +201,7 @@ function getPilihanClass(key) {
 <template>
     <div class="pretest-page">
 
-        <!-- ░░░░░░░░░░░░░░░░░░░░░░░░ -->
+        <!-- ░░░░░░░░░░░░░░░░░░ -->
         <!-- VIEW 1 : INTRO           -->
         <!-- ░░░░░░░░░░░░░░░░░░░░░░░░ -->
         <Transition name="view-fade" mode="out-in">
