@@ -193,7 +193,7 @@ const quizTypeOptions = [
     { value: "multiple_choices", label: "Multiple Choice" },
     { value: "drag_drop", label: "Drag & Drop" },
     { value: "true_false", label: "True / False (Pilih Gambar)" },
-    { value: "case_study", label: "Case Study" },
+    { value: "case_study", label: "Studi Kasus" },
 ];
 const categoryOptions = [
     { value: "pretest", label: "Tes Awal" },
@@ -1483,7 +1483,6 @@ const toggleCardVariant = () => {
                                 </span>
                                 <span v-else>
                                     <span class="flex items-center gap-2">
-                                        <Pencil class="w-4 h-4" />
                                         Simpan Perubahan
                                     </span>
                                 </span>

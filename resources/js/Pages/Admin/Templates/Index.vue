@@ -158,8 +158,8 @@ const saveTemplate = () => {
     if (
         !form.name.trim() ||
         !form.backsound ||
-        !form.background ||
-        form.mascot
+        !previewBackground.value ||
+        previewMascots.value.length === 0
     ) {
         showToast("Semua kolom wajib diisi.", "error");
         return;
@@ -198,7 +198,8 @@ const saveTemplate = () => {
 };
 
 const deleteTemplate = () => {
-    useForm({}).delete(route("admin.templates.destroy", selectedId.value), {
+    router.delete(route("admin.templates.destroy", selectedId.value), {
+        preserveScroll: true,
         onSuccess: () => {
             showDeleteDialog.value = false;
         },

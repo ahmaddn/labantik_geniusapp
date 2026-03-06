@@ -540,7 +540,7 @@ const toggleActive = (module) => {
                 <!-- Konten -->
                 <TextAreaField
                     v-model="form.content"
-                    label="Konten"
+                    label="Tujuan Pembelajaran"
                     placeholder="Isi materi / konten lengkap modul..."
                     :rows="5"
                     border-color="blue"
@@ -571,7 +571,7 @@ const toggleActive = (module) => {
 
                 <!-- Status Aktif -->
                 <div
-                    class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border-2 border-blue-200"
+                    class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border-2 border-blue-200 mt-3"
                 >
                     <div class="flex items-center gap-3">
                         <Power class="w-5 h-5 text-blue-600" />
@@ -606,7 +606,7 @@ const toggleActive = (module) => {
                 </div>
 
                 <!-- Thumbnail -->
-                <div>
+                <div class="mt-3">
                     <label
                         class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"
                     >

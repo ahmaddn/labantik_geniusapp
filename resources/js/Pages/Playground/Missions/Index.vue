@@ -77,34 +77,42 @@ onUnmounted(() => {
 // ── Helpers ───────────────────────────────────────────────────────
 const goBack = () => router.visit(route('playground.index'))
 
-const startMission = (mission) =>
+
+const startMission = (mission) => {
+  if (mission.status === 'completed') return
   router.visit(route('playground.missions.show', mission.id))
 
+// ── Status helpers (pakai field 'status' dari controller) ─────────
 const getMissionStatus = (mission) => {
-  if (mission.finished)    return 'Selesai'
-  if (mission.has_attempt) return 'Lanjutkan'
+
+  if (mission.status === 'completed')  return 'Selesai'
+  if (mission.status === 'in_progress') return 'Lanjutkan'
   return 'Mulai'
 }
 const getMissionStatusColor = (mission) => {
-  if (mission.finished)    return '#10b981'
-  if (mission.has_attempt) return '#f59e0b'
+
+  if (mission.status === 'completed')  return '#10b981'
+  if (mission.status === 'in_progress') return '#f59e0b'
   return '#3b82f6'
 }
 const getMissionStatusBg = (mission) => {
-  if (mission.finished)    return 'rgba(16,185,129,.1)'
-  if (mission.has_attempt) return 'rgba(245,158,11,.1)'
+
+  if (mission.status === 'completed')  return 'rgba(16,185,129,.1)'
+  if (mission.status === 'in_progress') return 'rgba(245,158,11,.1)'
   return 'rgba(59,130,246,.1)'
 }
 const getStatusIcon = (mission) => {
-  if (mission.finished)    return CheckCircle2
-  if (mission.has_attempt) return Clock
+
+  if (mission.status === 'completed')  return CheckCircle2
+  if (mission.status === 'in_progress') return Clock
   return Play
 }
 
-const totalMissions     = computed(() => props.missions?.length || 0)
-const completedMissions = computed(() => props.missions?.filter(m => m.finished).length || 0)
-const inProgressMissions = computed(() => props.missions?.filter(m => m.has_attempt && !m.finished).length || 0)
-const notStartedMissions = computed(() => props.missions?.filter(m => !m.has_attempt).length || 0)
+// ── Stats ─────────────────────────────────────────────────────────
+const totalMissions      = computed(() => props.missions?.length || 0)
+const completedMissions  = computed(() => props.missions?.filter(m => m.status === 'completed').length || 0)
+const inProgressMissions = computed(() => props.missions?.filter(m => m.status === 'in_progress').length || 0)
+const notStartedMissions = computed(() => props.missions?.filter(m => m.status === 'not_started').length || 0)
 </script>
 
 <template>
@@ -175,12 +183,14 @@ const notStartedMissions = computed(() => props.missions?.filter(m => !m.has_att
             :key="mission.id"
             class="mission-card"
             :class="{
-              'card-show': ready,
-              'card-completed': mission.finished,
-              'card-in-progress': mission.has_attempt && !mission.finished,
+              'card-show':        ready,
+              'card-completed':   mission.status === 'completed',
+              'card-in-progress': mission.status === 'in_progress',
             }"
             :style="{ '--delay': i * 50 + 'ms' }"
           >
+
+            <!-- Status badge -->
             <div
               class="mission-badge"
               :style="{ color: getMissionStatusColor(mission), background: getMissionStatusBg(mission) }"
@@ -189,24 +199,27 @@ const notStartedMissions = computed(() => props.missions?.filter(m => !m.has_att
               {{ getMissionStatus(mission) }}
             </div>
 
+            <!-- Body -->
             <div class="mission-body">
               <h3 class="mission-title">{{ mission.name }}</h3>
               <p class="mission-desc">{{ mission.description }}</p>
               <div class="mission-meta">
-                <div v-if="mission.question_count" class="meta-item">
+                <div v-if="mission.total_questions" class="meta-item">
                   <span class="meta-icon">❓</span>
-                  <span>{{ mission.question_count }} soal</span>
+                  <span>{{ mission.total_questions }} soal</span>
                 </div>
-                <div v-if="mission.best_score !== undefined && mission.has_attempt" class="meta-item">
+                <div v-if="mission.best_score != null && mission.status !== 'not_started'" class="meta-item">
                   <span class="meta-icon">⭐</span>
                   <span>Skor: {{ mission.best_score }}</span>
                 </div>
               </div>
             </div>
 
+            <!-- CTA Button -->
             <button
               class="mission-btn"
-              :style="{ background: getMissionStatusColor(mission) }"
+              :class="`btn--${mission.status}`"
+              :disabled="mission.status === 'completed'"
               @click="startMission(mission)"
             >
               <component :is="getStatusIcon(mission)" :size="14" :stroke-width="2.5" />
@@ -327,11 +340,28 @@ const notStartedMissions = computed(() => props.missions?.filter(m => !m.has_att
     transform 0.4s var(--delay,0ms) cubic-bezier(0.34,1.56,0.64,1),
     box-shadow 0.2s ease, border-color 0.2s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-}
+
 .mission-card.card-show { opacity: 1; transform: none; }
 .mission-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: rgba(29,78,216,0.28); }
-.mission-card.card-completed { opacity: 0.85; border-color: rgba(16,185,129,0.28); }
-.mission-card.card-in-progress { border-color: rgba(245,158,11,0.28); }
+
+/* Completed card: subtle green tint */
+.mission-card.card-completed {
+  border-color: rgba(16,185,129,0.35);
+  background: linear-gradient(145deg, #fff 0%, #f0fdf4 100%);
+}
+.mission-card.card-completed:hover {
+  border-color: rgba(16,185,129,0.6);
+  box-shadow: 0 12px 32px rgba(16,185,129,0.12);
+}
+
+/* In-progress card: subtle amber tint */
+.mission-card.card-in-progress {
+  border-color: rgba(245,158,11,0.28);
+}
+.mission-card.card-in-progress:hover {
+  border-color: rgba(245,158,11,0.5);
+  box-shadow: 0 12px 32px rgba(245,158,11,0.12);
+}
 
 .mission-badge {
   display: inline-flex; align-items: center; gap: 6px;
@@ -344,11 +374,55 @@ const notStartedMissions = computed(() => props.missions?.filter(m => !m.has_att
 .mission-meta { display: flex; gap: 12px; flex-wrap: wrap; }
 .meta-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #6b7181; }
 .meta-icon { font-size: 13px; }
+
+
+/* ── CTA BUTTON ── */
 .mission-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 10px; color: #fff; border: none;
+  width: 100%; padding: 10px; border: none;
   border-radius: 10px; font-family: 'Righteous', cursive; font-size: 12px;
   cursor: pointer; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  color: #fff;
+}
+.mission-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+.mission-btn:active { transform: translateY(0); }
+
+/* Mulai → biru */
+.btn--not_started {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 3px 12px rgba(29,78,216,0.28);
+}
+
+/* Lanjutkan → amber */
+.btn--in_progress {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  box-shadow: 0 3px 12px rgba(217,119,6,0.28);
+}
+
+/* Selesai → hijau, tidak bisa diklik */
+.btn--completed {
+  background: linear-gradient(135deg, #34d399, #059669);
+  box-shadow: 0 3px 12px rgba(5,150,105,0.28);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.btn--completed:hover {
+  transform: none;
+  filter: none;
+  box-shadow: 0 3px 12px rgba(5,150,105,0.28);
+}
+.btn--completed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 .mission-btn:hover { transform: translateY(-2px); filter: brightness(1.12); box-shadow: 0 6px 16px rgba(59,130,246,0.3); }
 .mission-btn:active { transform: translateY(0); }
