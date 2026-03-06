@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 // routes/auth.php
 Route::middleware('guest')->group(function () {
     Route::get('login-geniAdmin', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
+        ->name('login.admin');
     Route::post('login-geniAdmin', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('register', [RegisteredUserController::class, 'create'])
@@ -42,7 +42,7 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('player')->group(function () {
     Route::get('/playground/login', [PlaygroundLoginController::class, 'login'])
-        ->name('playground.login');
+        ->name('login');
     Route::post('/playground/authenticate', [PlaygroundLoginController::class, 'authenticate'])
         ->name('playground.authenticate');
 
