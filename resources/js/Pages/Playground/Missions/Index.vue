@@ -77,31 +77,32 @@ onUnmounted(() => {
 // ── Helpers ───────────────────────────────────────────────────────
 const goBack = () => router.visit(route('playground.index'))
 
+
 const startMission = (mission) => {
   if (mission.status === 'completed') return
   router.visit(route('playground.missions.show', mission.id))
-}
 
 // ── Status helpers (pakai field 'status' dari controller) ─────────
 const getMissionStatus = (mission) => {
+
   if (mission.status === 'completed')  return 'Selesai'
   if (mission.status === 'in_progress') return 'Lanjutkan'
   return 'Mulai'
 }
-
 const getMissionStatusColor = (mission) => {
+
   if (mission.status === 'completed')  return '#10b981'
   if (mission.status === 'in_progress') return '#f59e0b'
   return '#3b82f6'
 }
-
 const getMissionStatusBg = (mission) => {
+
   if (mission.status === 'completed')  return 'rgba(16,185,129,.1)'
   if (mission.status === 'in_progress') return 'rgba(245,158,11,.1)'
   return 'rgba(59,130,246,.1)'
 }
-
 const getStatusIcon = (mission) => {
+
   if (mission.status === 'completed')  return CheckCircle2
   if (mission.status === 'in_progress') return Clock
   return Play
@@ -188,6 +189,7 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
             }"
             :style="{ '--delay': i * 50 + 'ms' }"
           >
+
             <!-- Status badge -->
             <div
               class="mission-badge"
@@ -338,7 +340,7 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
     transform 0.4s var(--delay,0ms) cubic-bezier(0.34,1.56,0.64,1),
     box-shadow 0.2s ease, border-color 0.2s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-}
+
 .mission-card.card-show { opacity: 1; transform: none; }
 .mission-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: rgba(29,78,216,0.28); }
 
@@ -372,6 +374,7 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
 .mission-meta { display: flex; gap: 12px; flex-wrap: wrap; }
 .meta-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #6b7181; }
 .meta-icon { font-size: 13px; }
+
 
 /* ── CTA BUTTON ── */
 .mission-btn {
@@ -421,6 +424,8 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+.mission-btn:hover { transform: translateY(-2px); filter: brightness(1.12); box-shadow: 0 6px 16px rgba(59,130,246,0.3); }
+.mission-btn:active { transform: translateY(0); }
 
 /* ── EMPTY STATE ── */
 .empty-state { text-align: center; padding: 80px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }

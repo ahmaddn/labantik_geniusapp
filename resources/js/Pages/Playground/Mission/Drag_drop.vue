@@ -1,4 +1,5 @@
 <script setup>
+
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { Layers, XCircle, CheckCircle2, RotateCcw, GripHorizontal } from 'lucide-vue-next'
 
@@ -218,8 +219,7 @@ onUnmounted(() => { tClone?.remove() })
           <CheckCircle2 :size="20" color="#22c55e" :stroke-width="2" />
           <span>Semua sudah ditempatkan!</span>
         </div>
-      </div>
-    </div>
+
 
     <!-- ── Drop Zones ── -->
     <div class="dd-zones">
@@ -248,6 +248,8 @@ onUnmounted(() => { tClone?.remove() })
           <span class="dd-zone-name">{{ zone.label }}</span>
           <span class="dd-zone-count">{{ zone.items.length }}</span>
         </div>
+    </div>
+
 
         <!-- Drop body -->
         <div class="dd-zone-body" :data-zoneid="zone.id">
@@ -287,8 +289,7 @@ onUnmounted(() => { tClone?.remove() })
             <span>Letakkan di sini</span>
           </div>
         </div>
-      </div>
-    </div>
+
 
     <!-- ── Reset ── -->
     <div class="dd-actions">
@@ -297,10 +298,10 @@ onUnmounted(() => { tClone?.remove() })
         Ulangi Soal Ini
       </button>
     </div>
-  </div>
 </template>
 
 <style scoped>
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .dd { display: flex; flex-direction: column; gap: 12px; }
@@ -321,6 +322,7 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Bank ── */
 .dd-bank {
+
   background: rgba(248,250,252,.9);
   border: 1.5px solid #e2e8f0;
   border-radius: 12px; padding: 10px 12px;
@@ -349,6 +351,7 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Item card ── */
 .dd-item {
+
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   background: #fff;
   border: 2px solid rgba(29,78,216,0.1);
@@ -441,6 +444,7 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Placed item ── */
 .dd-placed {
+
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 6px 8px; border-radius: 10px; border: 2px solid;
   min-width: 64px; position: relative;
