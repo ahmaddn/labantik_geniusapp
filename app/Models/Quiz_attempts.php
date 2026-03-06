@@ -15,6 +15,10 @@ class Quiz_attempts extends Model
         'quiz_id',
         'student_id',
         'score',
+        'score_multiple_choice',
+        'score_true_false',
+        'score_case_study',
+        'score_drag_drop',
         'started_at',
         'finished_at',
     ];

@@ -33,6 +33,10 @@ const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials
 const props = defineProps({
   mission: { type: Object, required: true },
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
+   module: {
+    type: Object,
+    default: () => ({ id: null, name: 'Module', description: '' }),
+  }
 })
 
 // ── Steps ──────────────────────────────────────────────────────
@@ -44,6 +48,7 @@ const steps = computed(() =>
     isDragDrop: quiz.type === 'drag_drop',
   }))
 )
+
 
 // ── State ──────────────────────────────────────────────────────
 const currentStep  = ref(0)
@@ -311,7 +316,7 @@ onUnmounted(() => {
                   <Zap :size="14" color="#fff" fill="white" :stroke-width="2.4" />
                 </div>
                 <div>
-                  <div class="card-brand-nm">Geni<span class="ac">uss</span></div>
+                  <div class="card-brand-nm"><span>{{ module.name }}</span></div>
                   <div class="card-brand-sub">{{ typeMeta(step.quiz.type).label }}</div>
                 </div>
               </div>
