@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
 use App\Http\Controllers\Student\PlaygroundController;
+use App\Http\Controllers\Student\PretestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,6 +29,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Preview route untuk Pretest (tanpa auth) - hanya untuk pengembangan UI
+Route::get('/playground/pretest/preview', [PretestController::class, 'preview'])
+    ->name('playground.pretest.preview');
+
 
 // ── Route asli dengan middleware ─────────────────────────────
 Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {
@@ -38,7 +43,6 @@ Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->grou
 // Playground Routes (Public - No Auth Required)
 Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
-    Route::get('/playground/pretest', [PlaygroundController::class, 'pretest'])->name('pretest');
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
 
     // Student mission routes (session-based authentication)

@@ -3,199 +3,169 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PretestController extends Controller
 {
-    /**
-     * Guard helper — cek session player.
-     * Dipanggil di setiap method agar tidak duplikasi kode.
-     */
-    private function guardPlayer()
+    // ──────────────────────────────────────────────────────────────
+    //  GUARD
+    // ──────────────────────────────────────────────────────────────
+
+    private function guardPlayer(): ?RedirectResponse
     {
-        // ── Guard: kalau belum login playground, alihkan ke login ─────────
-        if (! session('player')) {
+        if (!session()->has('player')) {
             return redirect()->route('playground.login');
         }
-
-        // ── Ambil data siswa dari database berdasarkan session login ──────
-        $playerName = session('player.nama', 'Siswa');
-        $siswaUser = User::query()
-            ->where('role', 'siswa')
-            ->where('name', $playerName)
-            ->with('class')
-            ->firstOrFail();
-
-        // ── Format data siswa dari database ────────────────────────────────
-        $siswa = [
-            'name' => $siswaUser->name,
-            'kelas' => $siswaUser->class?->name ?? session('player.kelas', ''),
-            'xp' => session('player_xp', 0),
-            'streak' => session('player_streak', 0),
-        ];
-
         return null;
     }
 
-    /**
-     * [GET] Detail / halaman utama sebuah modul.
-     * Dipanggil saat user memilih modul di menu Index.
-     */
-    public function show(string $moduleId): Response|RedirectResponse
+    private function playerData(): array
     {
-        if ($guard = $this->guardPlayer()) return $guard;
-
-        // TODO: ambil data modul dari DB berdasarkan $moduleId
-        // $module = LearningModule::findOrFail($moduleId);
-
-        return Inertia::render('Playground/Module', [
-            'player'   => session('player'),
-            'moduleId' => $moduleId,
-        ]);
-    }
-
-    /**
-     * [GET] Halaman quiz dalam sebuah modul.
-     */
-    public function quiz(string $moduleId): Response|RedirectResponse
-    {
-        if ($guard = $this->guardPlayer()) return $guard;
-
-        // TODO: ambil quiz dari DB
-        // $quiz = Quiz::where('module_id', $moduleId)->firstOrFail();
-
-        return Inertia::render('Playground/Quiz', [
-            'player'   => session('player'),
-            'moduleId' => $moduleId,
-        ]);
-        $completedCount = collect($modules)->where('status', 'selesai')->count();
-        $totalStars = collect($modules)->sum('stars');
-
-        return Inertia::render('Playground/Index', [
-            'siswa' => $siswa,          // ← dikirim ke Vue
-            'modules' => $modules,
-            'completedCount' => $completedCount,
-            'totalStars' => $totalStars,
-            'streak' => $siswa['streak'],
-        ]);
-    }
-
-    public function pretest()
-    {
-        // ── Guard: kalau belum login playground, alihkan ke login ─────────
-        if (! session('player')) {
-            return redirect()->route('playground.login');
-        }
-
-        // ── Ambil data siswa dari database berdasarkan session login ──────
-        $playerName = session('player.nama', 'Siswa');
-        $siswaUser = User::query()
-            ->where('role', 'siswa')
-            ->where('name', $playerName)
-            ->with('class')
-            ->firstOrFail();
-
-        // ── Format data siswa dari database ────────────────────────────────
-        $siswa = [
-            'name' => $siswaUser->name,
-            'kelas' => $siswaUser->class?->name ?? session('player.kelas', ''),
-            'xp' => session('player_xp', 0),
-            'streak' => session('player_streak', 0),
+        $player = session('player', []);
+        return [
+            'id'    => $player['id']        ?? null,
+            'name'  => $player['nama']       ?? 'Siswa',
+            'class' => ['name' => $player['nama_kelas'] ?? '-'],
         ];
-
-        return Inertia::render('Playground/PretestPage', [
-            'siswa' => $siswa,
-        ]);
     }
-    private function dummyModules(): array
+
+    // ──────────────────────────────────────────────────────────────
+    //  SHOW  —  GET /player/playground/pretest
+    //  name: playground.pretest.show
+    // ──────────────────────────────────────────────────────────────
+
+    public function show(): Response|RedirectResponse
+    {
+        if ($guard = $this->guardPlayer()) return $guard;
+
+        $data         = $this->dummyData();
+        $data['user'] = $this->playerData();
+
+        return Inertia::render('Playground/Pretest/index', $data);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  PREVIEW  —  GET /playground/pretest/preview
+    //  name: playground.pretest.preview
+    //  Tanpa auth — khusus development / preview UI
+    // ──────────────────────────────────────────────────────────────
+
+    public function preview(): Response
+    {
+        return Inertia::render('Playground/Pretest/index', $this->dummyData());
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  SUBMIT  —  POST /player/playground/pretest/submit
+    //  name: playground.pretest.submit
+    //  Data dummy — tidak menyimpan ke DB, langsung redirect ke index
+    // ──────────────────────────────────────────────────────────────
+
+    public function submit(Request $request): RedirectResponse
+    {
+        if ($guard = $this->guardPlayer()) return $guard;
+
+        // Dummy: abaikan payload, langsung balik ke playground
+        return redirect()->route('playground.pretest.index');
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  DUMMY DATA
+    // ──────────────────────────────────────────────────────────────
+
+    private function dummyData(): array
     {
         return [
-            [
-                'id' => 1,
-                'slug' => 'petualangan-si-air',
-                'title' => 'Petualangan Si Air: Mengapa Sungai Bisa Marah & Banjir',
-                'description' => 'Pelajari ekosistem sungai, penyebab banjir, dan cara menjaga keseimbangan lingkungan.',
-                'subject' => 'IPA',
-                'icon' => '🌊',
-                'color' => 'linear-gradient(135deg, #4ec9ff 0%, #1a7fd4 100%)',
-                'duration' => '45 menit',
-                'grade' => '4–6',
-                'status' => 'aktif',
-                'progress' => 60,
-                'stars' => 0,
+            'quiz' => [
+                'id'          => 'dummy-quiz-001',
+                'title'       => 'Pretest: Pengenalan Materi',
+                'description' => 'Jawab semua soal berikut dengan sebaik-baiknya untuk mengukur pemahamanmu!',
+                'time_limit'  => 10,
+                'type'        => 'pretest',
+                'category'    => null,
             ],
-            [
-                'id' => 2,
-                'slug' => 'hutan-penjaga-udara',
-                'title' => 'Hutan Kita: Penjaga Udara Bersih',
-                'description' => 'Mengenal peran hutan dalam menjaga kualitas udara dan kehidupan makhluk hidup.',
-                'subject' => 'IPA',
-                'icon' => '🌿',
-                'color' => 'linear-gradient(135deg, #78d878 0%, #2eaa2e 100%)',
-                'duration' => '40 menit',
-                'grade' => '4–6',
-                'status' => 'aktif',
-                'progress' => 0,
-                'stars' => 0,
+
+            'questions' => [
+                [
+                    'id'            => 'q-001',
+                    'question_text' => 'Apa kepanjangan dari CPU dalam ilmu komputer?',
+                    'image'         => null,
+                    'order_number'  => 1,
+                    'options'       => [
+                        ['id' => 'q1-a', 'option_text' => 'Central Processing Unit', 'feedback' => 'Benar! CPU adalah otak dari komputer.'],
+                        ['id' => 'q1-b', 'option_text' => 'Computer Personal Unit',  'feedback' => 'Kurang tepat, coba lagi!'],
+                        ['id' => 'q1-c', 'option_text' => 'Central Program Utility', 'feedback' => 'Kurang tepat, coba lagi!'],
+                        ['id' => 'q1-d', 'option_text' => 'Core Processing Utility', 'feedback' => 'Kurang tepat, coba lagi!'],
+                    ],
+                ],
+                [
+                    'id'            => 'q-002',
+                    'question_text' => 'Manakah yang merupakan contoh perangkat output komputer?',
+                    'image'         => null,
+                    'order_number'  => 2,
+                    'options'       => [
+                        ['id' => 'q2-a', 'option_text' => 'Keyboard',  'feedback' => 'Keyboard adalah perangkat input.'],
+                        ['id' => 'q2-b', 'option_text' => 'Mouse',     'feedback' => 'Mouse adalah perangkat input.'],
+                        ['id' => 'q2-c', 'option_text' => 'Monitor',   'feedback' => 'Benar! Monitor menampilkan hasil keluaran.'],
+                        ['id' => 'q2-d', 'option_text' => 'Flashdisk', 'feedback' => 'Flashdisk adalah perangkat penyimpanan.'],
+                    ],
+                ],
+                [
+                    'id'            => 'q-003',
+                    'question_text' => 'Satuan terkecil dari data dalam komputer disebut …',
+                    'image'         => null,
+                    'order_number'  => 3,
+                    'options'       => [
+                        ['id' => 'q3-a', 'option_text' => 'Byte',     'feedback' => '1 byte = 8 bit, bukan terkecil.'],
+                        ['id' => 'q3-b', 'option_text' => 'Kilobyte', 'feedback' => 'Kilobyte jauh lebih besar.'],
+                        ['id' => 'q3-c', 'option_text' => 'Bit',      'feedback' => 'Benar! Bit adalah satuan data terkecil.'],
+                        ['id' => 'q3-d', 'option_text' => 'Megabyte', 'feedback' => 'Megabyte jauh lebih besar.'],
+                    ],
+                ],
+                [
+                    'id'            => 'q-004',
+                    'question_text' => 'Sistem operasi yang dikembangkan oleh Microsoft adalah …',
+                    'image'         => null,
+                    'order_number'  => 4,
+                    'options'       => [
+                        ['id' => 'q4-a', 'option_text' => 'macOS',   'feedback' => 'macOS dikembangkan oleh Apple.'],
+                        ['id' => 'q4-b', 'option_text' => 'Windows', 'feedback' => 'Benar! Windows adalah produk Microsoft.'],
+                        ['id' => 'q4-c', 'option_text' => 'Ubuntu',  'feedback' => 'Ubuntu adalah distro Linux.'],
+                        ['id' => 'q4-d', 'option_text' => 'Android', 'feedback' => 'Android dikembangkan oleh Google.'],
+                    ],
+                ],
+                [
+                    'id'            => 'q-005',
+                    'question_text' => 'Berapa jumlah bit dalam 1 byte?',
+                    'image'         => null,
+                    'order_number'  => 5,
+                    'options'       => [
+                        ['id' => 'q5-a', 'option_text' => '4 bit',  'feedback' => 'Kurang tepat.'],
+                        ['id' => 'q5-b', 'option_text' => '16 bit', 'feedback' => 'Terlalu banyak.'],
+                        ['id' => 'q5-c', 'option_text' => '2 bit',  'feedback' => 'Kurang tepat.'],
+                        ['id' => 'q5-d', 'option_text' => '8 bit',  'feedback' => 'Benar! 1 byte = 8 bit.'],
+                    ],
+                ],
             ],
-            [
-                'id' => 3,
-                'slug' => 'energi-matahari',
-                'title' => 'Energi Matahari: Sumber Kehidupan',
-                'description' => 'Memahami bagaimana energi matahari mendukung kehidupan di bumi.',
-                'subject' => 'IPA',
-                'icon' => '☀️',
-                'color' => 'linear-gradient(135deg, #ffd966 0%, #f0a500 100%)',
-                'duration' => '35 menit',
-                'grade' => '4–6',
-                'status' => 'selesai',
-                'progress' => 100,
-                'stars' => 3,
+
+            'mission' => [
+                'id'           => 'mission-001',
+                'name'         => 'Misi 1: Dasar Komputer',
+                'order_number' => 1,
+                'module_id'    => 'module-001',
             ],
-            [
-                'id' => 4,
-                'slug' => 'siklus-hidup',
-                'title' => 'Siklus Hidup Makhluk Hidup',
-                'description' => 'Mengamati siklus hidup hewan dan tumbuhan dari telur hingga dewasa.',
-                'subject' => 'IPA',
-                'icon' => '🦋',
-                'color' => 'linear-gradient(135deg, #f0a8e0 0%, #c020a0 100%)',
-                'duration' => '30 menit',
-                'grade' => '3–5',
-                'status' => 'selesai',
-                'progress' => 100,
-                'stars' => 2,
-            ],
-            [
-                'id' => 5,
-                'slug' => 'perubahan-iklim',
-                'title' => 'Perubahan Iklim & Kita',
-                'description' => 'Memahami dampak perubahan iklim dan apa yang bisa kita lakukan bersama.',
-                'subject' => 'IPS',
-                'icon' => '🌏',
-                'color' => 'linear-gradient(135deg, #aaccff 0%, #5580cc 100%)',
-                'duration' => '50 menit',
-                'grade' => '5–6',
-                'status' => 'segera',
-                'progress' => 0,
-                'stars' => 0,
-            ],
-            [
-                'id' => 6,
-                'slug' => 'dunia-mikroskopis',
-                'title' => 'Dunia Mikroskopis: Bakteri & Virus',
-                'description' => 'Mengenal makhluk hidup yang tidak bisa dilihat dengan mata telanjang.',
-                'subject' => 'IPA',
-                'icon' => '🔬',
-                'color' => 'linear-gradient(135deg, #ffb08a 0%, #e05020 100%)',
-                'duration' => '45 menit',
-                'grade' => '5–6',
-                'status' => 'segera',
-                'progress' => 0,
-                'stars' => 0,
+
+            'mascot'     => null,
+            'background' => null,
+            'attempt'    => null,
+
+            'user' => [
+                'id'    => null,
+                'name'  => 'Siswa Preview',
+                'class' => ['name' => 'Kelas Demo'],
             ],
         ];
     }
