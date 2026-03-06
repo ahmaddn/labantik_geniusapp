@@ -256,7 +256,7 @@ onUnmounted(() => { tClone?.remove() })
               v-for="item in zone.items"
               :key="item.id"
               class="dd-placed"
-              :class="item.correctGroupId === zone.id ? 'dd-placed--ok' : 'dd-placed--err'"
+              :class="item.correctGroupId === zone.id "
             >
               <!-- Placed item image -->
               <div class="dd-placed-visual">
@@ -273,10 +273,7 @@ onUnmounted(() => { tClone?.remove() })
               <span class="dd-placed-label">{{ item.label }}</span>
 
               <!-- Correct / wrong indicator -->
-              <div class="dd-placed-status">
-                <CheckCircle2 v-if="item.correctGroupId === zone.id" :size="11" :stroke-width="2.5" />
-                <XCircle      v-else                                  :size="11" :stroke-width="2.5" />
-              </div>
+
 
               <!-- Remove button -->
               <button class="dd-placed-remove" @click="removeItem(item, zone)" title="Kembalikan">
@@ -448,6 +445,7 @@ onUnmounted(() => { tClone?.remove() })
   padding: 6px 8px; border-radius: 10px; border: 2px solid;
   min-width: 64px; position: relative;
   animation: dd-popin .28s cubic-bezier(.34,1.56,.64,1);
+  background: #f0fdf4; border-color: #4ade80;
 }
 .dd-placed-visual { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .dd-placed-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }

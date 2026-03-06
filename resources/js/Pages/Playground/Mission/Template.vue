@@ -380,7 +380,7 @@ onUnmounted(() => {
             @click="openConfirm"
             :disabled="isSubmitting || !canGoNext"
           >
-            <span v-if="!isSubmitting">Selesaikan Misi 🎯</span>
+            <span v-if="!isSubmitting">Selesaikan Misi</span>
             <span v-else>Menyimpan…</span>
           </button>
         </template>
@@ -406,7 +406,6 @@ onUnmounted(() => {
     <Transition name="modal">
       <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
         <div class="modal">
-          <div class="modal-icon">🎯</div>
           <h2 class="modal-title">Apakah kamu yakin?</h2>
           <p class="modal-desc">
             Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
@@ -414,7 +413,7 @@ onUnmounted(() => {
           <div class="modal-actions">
             <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
             <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
-              <span v-if="!isSubmitting">Ya, Kumpulkan! 🚀</span>
+              <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
               <span v-else>Menyimpan…</span>
             </button>
           </div>
