@@ -12,7 +12,6 @@ class Templates extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
         'name',
         'backsound',
         'created_by'
@@ -22,7 +21,7 @@ class Templates extends Model
     {
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = Str::uuid();
+                $model->id = (string) Str::uuid(); // ← cast ke string
             }
         });
 

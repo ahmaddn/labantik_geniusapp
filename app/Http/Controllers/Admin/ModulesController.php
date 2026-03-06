@@ -21,14 +21,14 @@ class ModulesController extends Controller
     {
         $modules = Learning_modules::with(['template:id,name', 'createdBy:id,name'])
             ->latest()
-            ->get()
-            ->map(fn($m) => [
+            ->paginate(12)
+            ->through(fn($m) => [
                 'id'          => $m->id,
                 'name'        => $m->name,
                 'description' => $m->description,
                 'content'     => $m->content,
                 'quotes'      => $m->quotes,
-                'closing_text'=> $m->closing_text ?? null,
+                'closing_text' => $m->closing_text ?? null,
                 'thumbnail'   => $m->thumbnail ? Storage::url($m->thumbnail) : null,
                 'template_id' => $m->template_id,
                 'created_by'  => $m->created_by,
@@ -56,7 +56,7 @@ class ModulesController extends Controller
             'description' => 'nullable|string',
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
-            'closing_text'=> 'nullable|string',
+            'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
@@ -78,7 +78,7 @@ class ModulesController extends Controller
             'description' => $validated['description'] ?? null,
             'content'     => $validated['content'] ?? null,
             'quotes'      => $validated['quotes'] ?? null,
-            'closing_text'=> $validated['closing_text'] ?? null,
+            'closing_text' => $validated['closing_text'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'created_by'  => Auth::id(),
@@ -169,7 +169,7 @@ class ModulesController extends Controller
             'description' => 'nullable|string',
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
-            'closing_text'=> 'nullable|string',
+            'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
@@ -204,7 +204,7 @@ class ModulesController extends Controller
             'description' => $validated['description'] ?? null,
             'content'     => $validated['content'] ?? null,
             'quotes'      => $validated['quotes'] ?? null,
-            'closing_text'=> $validated['closing_text'] ?? null,
+            'closing_text' => $validated['closing_text'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'is_active'   => $validated['is_active'] ?? $modules->is_active, // ✅ Tambahkan ini

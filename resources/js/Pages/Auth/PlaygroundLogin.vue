@@ -37,6 +37,7 @@ function startBubble() {
 }
 
 const form = useForm({ nama: "", password: "" });
+const loginUrl = route('login');
 const localErrors = ref({ nama: "", password: "" });
 
 const handleVisibility = () => {
@@ -103,12 +104,15 @@ function handleLogin() {
 
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
-            <div class="tw">
-                <div class="brand">
-                    <div class="brand-ico"><Zap :size="14" color="#fff" fill="white" :stroke-width="2.5" /></div>
-                    <span class="brand-nm">Geniuss</span>
+            <div class="tw flex items-center justify-between">
+                    <div class="brand">
+                        <div class="brand-ico"><Zap :size="14" color="#fff" fill="white" :stroke-width="2.5" /></div>
+                        <span class="brand-nm">Geniuss</span>
+                    </div>
+                    <div>
+                        <a :href="loginUrl" class="btn btn--secondary">Kembali ke Login</a>
+                    </div>
                 </div>
-            </div>
         </header>
 
         <!-- ══ HERO SCENE ══ -->
@@ -568,6 +572,18 @@ function handleLogin() {
 .btn.shake   { animation: shake .5s ease; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 
+/* Secondary/alternate button for topbar back link */
+.btn--secondary {
+    height: auto; padding: 8px 12px; min-height: 36px;
+    background: linear-gradient(135deg, #6b7280, #374151); color: #fff;
+    box-shadow: 0 6px 18px rgba(55,65,81,.25);
+    font-size: 13px; border-radius: 10px;
+}
+.btn--secondary:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 28px rgba(55,65,81,.35);
+}
+.btn--secondary:active:not(:disabled) { transform: scale(.98); }
 @keyframes pulse-blue {
     0%,100% { box-shadow: 0 4px 16px rgba(29,78,216,.35); }
     50%      { box-shadow: 0 6px 24px rgba(29,78,216,.6), 0 0 0 7px rgba(29,78,216,.1); }

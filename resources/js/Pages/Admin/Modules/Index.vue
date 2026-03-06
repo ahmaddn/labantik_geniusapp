@@ -10,6 +10,7 @@ import TextAreaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
+import Pagination from "@/Components/UI/Pagination.vue";
 import {
     Plus,
     Image,
@@ -29,7 +30,11 @@ import {
 
 // ── Props ──
 const props = defineProps({
-    modules: { type: Array, default: () => [] },
+    /**
+     * Laravel paginator: { data, current_page, last_page, per_page, total, from, to }
+     * Controller: Module::paginate(12)
+     */
+    modules: { type: Object, default: () => ({ data: [] }) },
     templates: { type: Array, default: () => [] },
 });
 
@@ -81,7 +86,7 @@ const form = useForm({
     template_id: "",
     thumbnail: null,
     thumbnail_remove: false,
-    is_active: false, // ✅ Tambahkan field is_activ
+    is_active: false,
 });
 
 // ── Scroll lock ──
@@ -99,11 +104,11 @@ const handleEsc = (e) => {
 onMounted(() => window.addEventListener("keydown", handleEsc));
 onUnmounted(() => window.removeEventListener("keydown", handleEsc));
 
-// ── Computed: filter modules ──
+// ── Computed: filter modules dari data paginator ──
 const filteredModules = computed(() => {
     const q = searchQuery.value.toLowerCase().trim();
-    if (!q) return props.modules;
-    return props.modules.filter(
+    if (!q) return props.modules.data;
+    return props.modules.data.filter(
         (m) =>
             m.name?.toLowerCase().includes(q) ||
             m.description?.toLowerCase().includes(q),
@@ -142,7 +147,7 @@ const openEdit = (module) => {
     form.template_id = module.template_id ?? "";
     form.thumbnail = null;
     form.thumbnail_remove = false;
-    form.is_active = module.is_active ?? false; // ✅ Tambahkan ini
+    form.is_active = module.is_active ?? false;
 
     thumbnailPreview.value = module.thumbnail ?? null;
     showDialog.value = true;
@@ -203,6 +208,15 @@ const deleteModule = () => {
     });
 };
 
+// ── Pagination ──
+const handlePageChange = (pageNumber) => {
+    router.get(
+        route("admin.modules.index"),
+        { page: pageNumber },
+        { preserveScroll: true, preserveState: true },
+    );
+};
+
 // ── Navigation ──
 const goToShowModule = (id) => router.visit(route("admin.modules.show", id));
 
@@ -249,10 +263,10 @@ const toggleActive = (module) => {
                             <h1
                                 class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
                             >
-                                Learning Modules
+                                Modul Pembelajaran
                             </h1>
                             <p class="text-sm text-gray-500">
-                                {{ modules.length }} modul tersedia
+                                {{ props.modules.total ?? 0 }} modul tersedia
                             </p>
                         </div>
                     </div>
@@ -283,7 +297,7 @@ const toggleActive = (module) => {
 
             <!-- ░░ GRID MODULES ░░ -->
             <TransitionGroup
-                v-if="filteredModules.length > 0"
+                v-if="filteredModules?.length > 0"
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
@@ -463,6 +477,21 @@ const toggleActive = (module) => {
                     Tambah Modul Pertama
                 </Button>
             </div>
+
+            <!-- ░░ PAGINATION ░░ -->
+            <Pagination
+                v-if="!searchQuery"
+                :meta="{
+                    current_page: props.modules.current_page,
+                    last_page: props.modules.last_page,
+                    per_page: props.modules.per_page,
+                    total: props.modules.total,
+                    from: props.modules.from,
+                    to: props.modules.to,
+                }"
+                color="blue"
+                @change="handlePageChange"
+            />
         </div>
 
         <!-- ░░ MODAL CREATE / EDIT ░░ -->
@@ -472,7 +501,7 @@ const toggleActive = (module) => {
             @close="closeDialog"
             max-width="2xl"
         >
-            <div class="space-y-5 max-h-[65vh] overflow-y-auto pr-1">
+            <div>
                 <!-- Nama Modul -->
                 <InputField
                     v-model="form.name"
@@ -511,7 +540,7 @@ const toggleActive = (module) => {
                 <!-- Konten -->
                 <TextAreaField
                     v-model="form.content"
-                    label="Konten"
+                    label="Tujuan Pembelajaran"
                     placeholder="Isi materi / konten lengkap modul..."
                     :rows="5"
                     border-color="blue"
@@ -540,9 +569,9 @@ const toggleActive = (module) => {
                     />
                 </div>
 
-                <!-- ✅ Status Aktif -->
+                <!-- Status Aktif -->
                 <div
-                    class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border-2 border-blue-200"
+                    class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border-2 border-blue-200 mt-3"
                 >
                     <div class="flex items-center gap-3">
                         <Power class="w-5 h-5 text-blue-600" />
@@ -577,13 +606,12 @@ const toggleActive = (module) => {
                 </div>
 
                 <!-- Thumbnail -->
-                <div>
+                <div class="mt-3">
                     <label
                         class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"
                     >
                         <Image class="w-4 h-4 text-blue-400" />
                         Thumbnail (Cover Modul)
-                        <span class="text-gray-400 font-normal ml-1"></span>
                     </label>
 
                     <!-- Preview -->
@@ -618,7 +646,7 @@ const toggleActive = (module) => {
                         </button>
                     </div>
 
-                    <!-- Drop zone tanpa FileUpload component -->
+                    <!-- Drop zone -->
                     <div v-if="!thumbnailPreview">
                         <input
                             ref="thumbnailFileInput"

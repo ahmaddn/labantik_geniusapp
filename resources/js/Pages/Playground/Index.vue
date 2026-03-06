@@ -104,7 +104,7 @@ const scoreBg = (s) =>
           : "rgba(220,38,38,.1)";
 
 const goToMissions = (mod) => {
-    router.visit(route('playground.missions.index', mod.id));
+    router.visit(route("playground.missions.index", mod.id));
 };
 
 // Warna aksen per index — tetap berwarna-warni per kartu
@@ -136,7 +136,8 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     <div class="pg">
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
-            <div class="wrap">
+=======
+            <div class="wrap row-between gap-5">
                 <div class="brand">
                     <div class="brand-icon">
                         <Zap

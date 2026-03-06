@@ -15,6 +15,7 @@ import {
     AlertTriangle,
     Image as ImageIcon,
     Pencil,
+    Loader2,
 } from "lucide-vue-next";
 
 // Props — sesuai controller edit()
@@ -359,8 +360,20 @@ const toggleCardVariant = () => {
                             size="md"
                             :icon="Check"
                             @click="handleSubmit"
+                            :disabled="materialForm.processing"
                         >
-                            Simpan Perubahan
+                            <span
+                                v-if="materialForm.processing"
+                                class="flex items-center gap-2"
+                            >
+                                <Loader2 class="w-4 h-4 animate-spin" />
+                                Menyimpan...
+                            </span>
+                            <span v-else>
+                                <span class="flex items-center gap-2">
+                                    Simpan Semua Perubahan
+                                </span>
+                            </span>
                         </Button>
                     </div>
                 </template>

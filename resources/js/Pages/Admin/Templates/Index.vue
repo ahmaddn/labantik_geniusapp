@@ -8,6 +8,7 @@ import Toast from "@/Components/UI/Toast.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import FileUpload from "@/Components/UI/Forms/FileUpload.vue";
 import Button from "@/Components/UI/Button.vue";
+import Pagination from "@/Components/UI/Pagination.vue";
 import {
     Palette,
     Plus,
@@ -19,10 +20,12 @@ import {
     Pencil,
     Trash2,
     ChevronRight,
+    Loader2,
+    Save,
 } from "lucide-vue-next";
 
 const props = defineProps({
-    templates: Array,
+    templates: Object,
 });
 
 const page = usePage();
@@ -36,13 +39,10 @@ const toastType = ref("success");
 const editId = ref(null);
 
 const previewBacksound = ref(null);
-const previewBackgrounds = ref([]);
+const previewBackground = ref(null); // single: { name, file, preview }
 const previewMascots = ref([]);
 
-const form = useForm({
-    name: "",
-    backsound: null,
-});
+const form = useForm({ name: "", backsound: null });
 
 const showToast = (message, type = "success") => {
     successMessage.value = message;
@@ -62,9 +62,8 @@ watch(
 const lockScroll = (state) => {
     document.body.style.overflow = state ? "hidden" : "";
 };
-
-watch(showDialog, (val) => lockScroll(val));
-watch(showDeleteDialog, (val) => lockScroll(val));
+watch(showDialog, lockScroll);
+watch(showDeleteDialog, lockScroll);
 
 const handleEsc = (e) => {
     if (e.key === "Escape") {
@@ -72,28 +71,28 @@ const handleEsc = (e) => {
         showDeleteDialog.value = false;
     }
 };
-
 onMounted(() => window.addEventListener("keydown", handleEsc));
 onUnmounted(() => window.removeEventListener("keydown", handleEsc));
+
+const resetForm = () => {
+    form.reset();
+    previewBacksound.value = null;
+    previewBackground.value = null;
+    previewMascots.value = [];
+};
 
 const openCreate = () => {
     isEdit.value = false;
     editId.value = null;
-    previewBacksound.value = null;
-    previewBackgrounds.value = [];
-    previewMascots.value = [];
-    form.reset();
+    resetForm();
     showDialog.value = true;
 };
 
 const openEdit = (template) => {
     isEdit.value = true;
     editId.value = template.id;
-    previewBacksound.value = null;
-    previewBackgrounds.value = [];
-    previewMascots.value = [];
+    resetForm();
     form.name = template.name;
-    form.backsound = null;
     showDialog.value = true;
 };
 
@@ -102,71 +101,78 @@ const confirmDelete = (id) => {
     showDeleteDialog.value = true;
 };
 
-const goToDetail = (id) => {
-    router.visit(route("admin.templates.show", id));
+const goToDetail = (id) => router.visit(route("admin.templates.show", id));
+
+const handlePageChange = (pageNumber) => {
+    router.get(
+        route("admin.templates.index"),
+        { page: pageNumber },
+        { preserveScroll: true, preserveState: true },
+    );
 };
 
-// Upload backsound
+// ── Backsound ─────────────────────────────────────────────────────────────────
 const handleBacksoundUpload = (event) => {
     const file = event.target.files[0];
-    if (file) {
-        previewBacksound.value = { name: file.name };
-        form.backsound = file;
-    }
+    if (!file) return;
+    previewBacksound.value = { name: file.name };
+    form.backsound = file;
 };
-
 const removeBacksound = () => {
     previewBacksound.value = null;
     form.backsound = null;
 };
 
-// Upload background — satu per satu, langsung minta nama
+// ── Background — single ───────────────────────────────────────────────────────
 const handleBackgroundUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    previewBackgrounds.value.push({
-        id: Date.now() + Math.random(),
-        name: file.name.replace(/\.[^.]+$/, ""), // default nama = nama file tanpa ekstensi
-        file: file,
-    });
-    // reset input agar bisa upload lagi
+    previewBackground.value = {
+        name: file.name.replace(/\.[^.]+$/, ""),
+        file,
+        preview: URL.createObjectURL(file),
+    };
     event.target.value = "";
 };
-
-const removeBackground = (id) => {
-    previewBackgrounds.value = previewBackgrounds.value.filter(
-        (b) => b.id !== id,
-    );
+const removeBackground = () => {
+    previewBackground.value = null;
 };
 
-// Upload mascot — satu per satu, langsung minta nama pose
+// ── Mascots — multiple satu per satu ─────────────────────────────────────────
 const handleMascotUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
     previewMascots.value.push({
         id: Date.now() + Math.random(),
         name_pose: file.name.replace(/\.[^.]+$/, ""),
-        file: file,
+        file,
     });
     event.target.value = "";
 };
-
 const removeMascot = (id) => {
     previewMascots.value = previewMascots.value.filter((m) => m.id !== id);
 };
 
+// ── Save ──────────────────────────────────────────────────────────────────────
 const saveTemplate = () => {
-    if (!form.name.trim()) return;
-
-    // Bangun FormData manual karena kita punya array file + array nama
+    if (
+        !form.name.trim() ||
+        !form.backsound ||
+        !previewBackground.value ||
+        previewMascots.value.length === 0
+    ) {
+        showToast("Semua kolom wajib diisi.", "error");
+        return;
+    }
     const fd = new FormData();
     fd.append("name", form.name);
     if (form.backsound) fd.append("backsound", form.backsound);
 
-    previewBackgrounds.value.forEach((bg, i) => {
-        fd.append(`backgrounds[${i}]`, bg.file);
-        fd.append(`background_names[${i}]`, bg.name);
-    });
+    // Background single
+    if (previewBackground.value) {
+        fd.append("background", previewBackground.value.file);
+        fd.append("background_name", previewBackground.value.name);
+    }
 
     previewMascots.value.forEach((m, i) => {
         fd.append(`mascots[${i}]`, m.file);
@@ -175,25 +181,25 @@ const saveTemplate = () => {
 
     if (isEdit.value) fd.append("_method", "PUT");
 
-    const url = isEdit.value
-        ? route("admin.templates.update", editId.value)
-        : route("admin.templates.store");
-
-    router.post(url, fd, {
-        forceFormData: true,
-        onSuccess: () => {
-            showDialog.value = false;
-            form.reset();
-            previewBacksound.value = null;
-            previewBackgrounds.value = [];
-            previewMascots.value = [];
+    router.post(
+        isEdit.value
+            ? route("admin.templates.update", editId.value)
+            : route("admin.templates.store"),
+        fd,
+        {
+            forceFormData: true,
+            onSuccess: () => {
+                showDialog.value = false;
+                resetForm();
+            },
+            onError: (errors) => showToast(Object.values(errors)[0], "error"),
         },
-        onError: (errors) => showToast(Object.values(errors)[0], "error"),
-    });
+    );
 };
 
 const deleteTemplate = () => {
-    useForm({}).delete(route("admin.templates.destroy", selectedId.value), {
+    router.delete(route("admin.templates.destroy", selectedId.value), {
+        preserveScroll: true,
         onSuccess: () => {
             showDeleteDialog.value = false;
         },
@@ -243,12 +249,13 @@ const deleteTemplate = () => {
 
             <!-- Grid -->
             <TransitionGroup
+                v-if="props.templates?.data?.length > 0"
                 name="card"
                 tag="div"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
                 <div
-                    v-for="template in props.templates"
+                    v-for="template in props.templates.data"
                     :key="template.id"
                     class="bg-white rounded-3xl shadow-playful border-4 border-blue-200 p-6 hover:scale-105 transition-all cursor-pointer group"
                     @click="goToDetail(template.id)"
@@ -261,7 +268,6 @@ const deleteTemplate = () => {
                             class="w-5 h-5 text-gray-300 group-hover:text-blue-400 transition-colors shrink-0 mt-1"
                         />
                     </div>
-
                     <div
                         class="mb-3 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -274,7 +280,6 @@ const deleteTemplate = () => {
                             }}
                         </span>
                     </div>
-
                     <div
                         class="mb-3 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -283,7 +288,6 @@ const deleteTemplate = () => {
                             >{{ template.backgrounds_count }} Background</span
                         >
                     </div>
-
                     <div
                         class="mb-6 flex items-center gap-2 text-sm text-gray-600"
                     >
@@ -292,7 +296,6 @@ const deleteTemplate = () => {
                             >{{ template.mascots_count }} Maskot</span
                         >
                     </div>
-
                     <div class="flex justify-end gap-2" @click.stop>
                         <Button
                             variant="warning"
@@ -309,6 +312,47 @@ const deleteTemplate = () => {
                     </div>
                 </div>
             </TransitionGroup>
+
+            <!-- Empty State -->
+            <div
+                v-else
+                class="flex flex-col items-center justify-center py-20 text-center"
+            >
+                <div
+                    class="bg-blue-50 p-6 rounded-3xl border-4 border-blue-100 mb-5"
+                >
+                    <Palette class="w-14 h-14 text-blue-300 mx-auto" />
+                </div>
+                <h3 class="font-heading font-bold text-gray-600 text-lg mb-1">
+                    Belum ada template
+                </h3>
+                <p class="text-sm text-gray-400 mb-5">
+                    Mulai dengan menambahkan template pertama untuk
+                    pembelajaran.
+                </p>
+                <Button
+                    variant="primary"
+                    size="md"
+                    :icon="Plus"
+                    @click="openCreate"
+                >
+                    Tambah Template Pertama
+                </Button>
+            </div>
+
+            <!-- Pagination -->
+            <Pagination
+                :meta="{
+                    current_page: props.templates.current_page,
+                    last_page: props.templates.last_page,
+                    per_page: props.templates.per_page,
+                    total: props.templates.total,
+                    from: props.templates.from,
+                    to: props.templates.to,
+                }"
+                color="blue"
+                @change="handlePageChange"
+            />
         </div>
 
         <!-- Modal -->
@@ -319,7 +363,7 @@ const deleteTemplate = () => {
             max-width="3xl"
         >
             <div class="space-y-6">
-                <!-- Nama Template -->
+                <!-- Nama -->
                 <InputField
                     v-model="form.name"
                     label="Nama Template"
@@ -358,28 +402,31 @@ const deleteTemplate = () => {
                     />
                 </div>
 
-                <!-- Backgrounds — satu per satu dengan nama -->
+                <!-- Background — single -->
                 <div>
                     <p class="text-sm font-bold text-gray-700 mb-2">
                         Background
                         <span class="font-normal text-gray-400"
-                            >(isi nama untuk setiap gambar)</span
+                            >(1 gambar)</span
                         >
                     </p>
 
-                    <!-- List background yang sudah dipilih -->
+                    <!-- Preview -->
                     <div
-                        v-if="previewBackgrounds.length > 0"
-                        class="space-y-2 mb-3"
+                        v-if="previewBackground"
+                        class="rounded-2xl overflow-hidden border-2 border-green-200 bg-green-50 mb-2"
                     >
+                        <img
+                            :src="previewBackground.preview"
+                            :alt="previewBackground.name"
+                            class="w-full h-40 object-cover"
+                        />
                         <div
-                            v-for="bg in previewBackgrounds"
-                            :key="bg.id"
-                            class="flex items-center gap-3 bg-green-50 p-3 rounded-xl border-2 border-green-200"
+                            class="flex items-center gap-3 px-3 py-2 border-t-2 border-green-200"
                         >
                             <Image class="text-green-500 w-4 h-4 shrink-0" />
                             <input
-                                v-model="bg.name"
+                                v-model="previewBackground.name"
                                 type="text"
                                 placeholder="Nama background..."
                                 class="flex-1 text-sm font-medium bg-transparent outline-none border-b-2 border-green-300 focus:border-green-500 pb-0.5 transition-colors"
@@ -388,14 +435,14 @@ const deleteTemplate = () => {
                                 variant="danger"
                                 size="sm"
                                 :icon="X"
-                                @click="removeBackground(bg.id)"
+                                @click="removeBackground"
                             />
                         </div>
                     </div>
 
-                    <!-- Tombol tambah background -->
                     <FileUpload
-                        label="Tambah Background"
+                        v-else
+                        label="Pilih Background"
                         accept="image/*"
                         :multiple="false"
                         button-color="green"
@@ -403,7 +450,7 @@ const deleteTemplate = () => {
                     />
                 </div>
 
-                <!-- Mascots — satu per satu dengan nama pose -->
+                <!-- Mascots -->
                 <div>
                     <p class="text-sm font-bold text-gray-700 mb-2">
                         Maskot
@@ -411,8 +458,6 @@ const deleteTemplate = () => {
                             >(isi nama pose untuk setiap maskot)</span
                         >
                     </p>
-
-                    <!-- List mascot yang sudah dipilih -->
                     <div
                         v-if="previewMascots.length > 0"
                         class="space-y-2 mb-3"
@@ -437,8 +482,6 @@ const deleteTemplate = () => {
                             />
                         </div>
                     </div>
-
-                    <!-- Tombol tambah maskot -->
                     <FileUpload
                         label="Tambah Maskot"
                         accept="image/*"
@@ -457,8 +500,22 @@ const deleteTemplate = () => {
                         @click="showDialog = false"
                         >Batal</Button
                     >
-                    <Button variant="primary" size="md" @click="saveTemplate">
-                        Simpan
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="saveTemplate"
+                        :disabled="form.processing"
+                    >
+                        <span
+                            v-if="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else class="flex items-center gap-2">
+                            <Save class="w-4 h-4" /> Simpan
+                        </span>
                     </Button>
                 </div>
             </template>

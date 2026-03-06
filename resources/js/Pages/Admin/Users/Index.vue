@@ -19,6 +19,7 @@ import {
     Save,
     BookOpen,
     LockIcon,
+    Loader2,
 } from "lucide-vue-next";
 import { useForm, usePage } from "@inertiajs/vue3";
 
@@ -351,8 +352,20 @@ onUnmounted(() => {
                         size="md"
                         :icon="Save"
                         @click="saveUser"
+                        :disabled="form.processing"
                     >
-                        Simpan
+                        <span
+                            v-if="form.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Menyimpan...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                Simpan
+                            </span>
+                        </span>
                     </Button>
                 </div>
             </template>

@@ -27,6 +27,8 @@ import {
     Image as ImageIcon,
     ToggleLeft,
     CheckSquare,
+    Loader2,
+    Save,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -150,7 +152,7 @@ const quizTypeOptions = [
     { value: "multiple_choices", label: "Multiple Choice" },
     { value: "drag_drop", label: "Drag & Drop" },
     { value: "true_false", label: "True / False (Pilih Gambar)" },
-    { value: "case_study", label: "Case Study" },
+    { value: "case_study", label: "Studo Kasus" },
 ];
 const categoryOptions = [
     { value: "pretest", label: "Tes Awal" },
@@ -1584,8 +1586,20 @@ const toggleCardVariant = () => {
                                 size="lg"
                                 :icon="Check"
                                 @click="finalSave"
-                                >Simpan Kuis</Button
-                            >
+                                :disabled="quizForm.processing"
+                                ><span
+                                    v-if="quizForm.processing"
+                                    class="flex items-center gap-2"
+                                >
+                                    <Loader2 class="w-4 h-4 animate-spin" />
+                                    Menyimpan...
+                                </span>
+                                <span v-else>
+                                    <span class="flex items-center gap-2">
+                                        Simpan
+                                    </span>
+                                </span>
+                            </Button>
                         </div>
                     </template>
                 </Card>
