@@ -23,7 +23,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route("login"), {
+    form.post(route("login.admin"), {
         onFinish: () => form.reset("password"),
         onSuccess: () => {
             toastMessage.value = "Successfully logged in!";

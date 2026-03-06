@@ -71,6 +71,6 @@ class PlaygroundLoginController extends Controller
     public function logout(Request $request)
     {
         $request->session()->forget('player');
-        return redirect()->route('playground.login');
+        return redirect('/');
     }
 }
