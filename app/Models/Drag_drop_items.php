@@ -21,7 +21,7 @@ class Drag_drop_items extends Model
     {
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = Str::uuid();
+                $model->id = (string) Str::uuid(); // ← cast ke string
             }
         });
     }

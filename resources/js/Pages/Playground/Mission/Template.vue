@@ -33,6 +33,11 @@ const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials
 const props = defineProps({
   mission: { type: Object, required: true },
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
+
+   module: {
+    type: Object,
+    default: () => ({ id: null, name: 'Module', description: '' }),
+  }
 })
 
 // ── Steps ──────────────────────────────────────────────────────
@@ -44,6 +49,8 @@ const steps = computed(() =>
     isDragDrop: quiz.type === 'drag_drop',
   }))
 )
+
+
 
 // ── State ──────────────────────────────────────────────────────
 const currentStep  = ref(0)
@@ -292,6 +299,36 @@ onUnmounted(() => {
               <span>{{ BUBBLES[bubbleIdx] }}</span>
               <i class="bbl-tail-out"></i>
               <i class="bbl-tail-in"></i>
+
+            </div>
+          </Transition>
+          <div class="mascot-shadow"></div>
+          <img src="/images/templates/pose_nunjuk.png" class="mascot" alt="Maskot" />
+        </div>
+      </aside>
+
+      <!-- ─── GAME PANEL ─── -->
+      <section class="game" :class="{ 'game--on': ready }">
+        <div class="card" v-if="step">
+          <div class="card-bar" :style="{ background: `linear-gradient(90deg, ${typeMeta(step.quiz.type).color}, ${typeMeta(step.quiz.type).color}88)` }"></div>
+
+          <div class="card-body">
+            <div class="card-head">
+              <div class="card-brand">
+                <div class="card-brand-ico">
+                  <Zap :size="14" color="#fff" fill="white" :stroke-width="2.4" />
+                </div>
+                <div>
+                  <div class="card-brand-nm"><span>{{ module.name }}</span></div>
+                  <div class="card-brand-sub">{{ typeMeta(step.quiz.type).label }}</div>
+                </div>
+              </div>
+              <span
+                class="card-type-pill"
+                :style="{ background: typeMeta(step.quiz.type).bg, color: typeMeta(step.quiz.type).color }"
+              >
+                Kuis {{ (step.quizIndex ?? 0) + 1 }} / {{ steps.length }}
+              </span>
             </div>
           </Transition>
           <div class="mascot-shadow"></div>
@@ -348,6 +385,32 @@ onUnmounted(() => {
                 />
               </div>
 
+
+            <div class="divider"></div>
+
+            <div class="questions-area">
+              <div
+                v-for="(question, qIdx) in (step.quiz.questions || [])"
+                :key="question.id"
+                class="question-item"
+                :class="{ 'question-item--done': isQuestionAnswered(question, step.quiz.type) }"
+              >
+                <div class="q-label" v-if="!step.isMaterial">
+                  <span class="q-num" :style="{ background: typeMeta(step.quiz.type).color }">{{ qIdx + 1 }}</span>
+                  <span class="q-text">{{ question.question_text }}</span>
+                  <CheckCircle2
+                    v-if="isQuestionAnswered(question, step.quiz.type)"
+                    :size="15" color="#10b981" :stroke-width="2.5"
+                  />
+                </div>
+                <component
+                  :is="COMPONENT_MAP[step.quiz.type]"
+                  :question="question"
+                  :modelValue="answers[question.id]"
+                  @update-answer="updateAnswer"
+                />
+              </div>
+
               <div v-if="!step.quiz.questions?.length" class="empty-qs">
                 <Zap :size="26" color="#94a3b8" :stroke-width="1.4" />
                 <p>Tidak ada soal</p>
@@ -375,7 +438,8 @@ onUnmounted(() => {
             @click="openConfirm"
             :disabled="isSubmitting || !canGoNext"
           >
-            <span v-if="!isSubmitting">Selesaikan Misi 🎯</span>
+
+            <span v-if="!isSubmitting">Selesaikan Misi</span>
             <span v-else>Menyimpan…</span>
           </button>
         </template>
@@ -401,7 +465,7 @@ onUnmounted(() => {
     <Transition name="modal">
       <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
         <div class="modal">
-          <div class="modal-icon">🎯</div>
+
           <h2 class="modal-title">Apakah kamu yakin?</h2>
           <p class="modal-desc">
             Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
@@ -409,7 +473,8 @@ onUnmounted(() => {
           <div class="modal-actions">
             <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
             <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
-              <span v-if="!isSubmitting">Ya, Kumpulkan! 🚀</span>
+
+              <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
               <span v-else>Menyimpan…</span>
             </button>
           </div>

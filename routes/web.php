@@ -86,6 +86,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::delete('/mascots/{mascot}', [TemplatesController::class, 'destroyMascot'])->name('mascots.destroy');
     });
 
+
+
     // Pengguna
     Route::name('users.')->group(function () {
         Route::get('/users', [UsersController::class, 'index'])->name('index');
