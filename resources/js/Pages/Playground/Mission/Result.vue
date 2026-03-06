@@ -18,7 +18,7 @@ const props = defineProps({
 
 const TYPE_META = {
   multiple_choices: { label: 'Pilihan Ganda', color: '#3b82f6', bg: '#dbeafe' },
-  true_false:       { label: 'Benar / Salah', color: '#8b5cf6', bg: '#ede9fe' },
+  true_false:       { label: 'Pilih Gambar Yang Benar', color: '#8b5cf6', bg: '#ede9fe' },
   case_study:       { label: 'Studi Kasus',   color: '#0891b2', bg: '#cffafe' },
   drag_drop:        { label: 'Seret & Letakkan', color: '#f59e0b', bg: '#fef3c7' },
 }
