@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
 use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\PretestController;
+use App\Http\Controllers\Student\PostController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,8 +33,13 @@ Route::middleware('auth')->group(function () {
 // Preview route untuk Pretest (tanpa auth) - hanya untuk pengembangan UI
 Route::get('/playground/pretest/preview', [PretestController::class, 'preview'])
     ->name('playground.pretest.preview');
+Route::get('/posttest/preview', [PostController::class, 'preview'])
+        ->name('posttest.preview');
+Route::post('/posttest/submit', [PostController::class, 'submit'])
+        ->name('posttest.submit');
 
 
+        
 // ── Route asli dengan middleware ─────────────────────────────
 Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {
     Route::get('/missions/{mission}/dragdrop', [DragDropController::class, 'show'])

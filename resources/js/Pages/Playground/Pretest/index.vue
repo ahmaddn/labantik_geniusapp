@@ -22,7 +22,7 @@ const props = defineProps({
 const mascotSrc = computed(() =>
     props.mascot?.image
         ? `/storage/${props.mascot.image}`
-        : "/images/templates/pose_nunjuk.png"
+        : "/images/templates/pose_pikir.png"
 );
 
 // ── Phase ─────────────────────────────────────────────────────────
@@ -83,9 +83,10 @@ const toggleMusic = async () => {
 
 // ── Mascot bubble ─────────────────────────────────────────────────
 const BUBBLES = [
-    "Ayo semangat! 💪", "Baca dengan teliti 👀",
-    "Kamu pasti bisa! 🔥", "Pikirkan baik-baik 🤔",
-    "Hampir selesai! ✨", "Fokus ya! 🎯",
+    "Semangat Yah! 💪", "Baca dengan teliti 👀",
+    "Awas, Ada jebakan!", "Pikirkan baik-baik ",
+    "Hampir selesai?", "Fokus ya! 🎯",
+    "Hati-hati! Jangan salah pilih",
 ];
 const bubbleIdx     = ref(0);
 const bubbleVisible = ref(true);
@@ -295,17 +296,7 @@ const OPT_LABELS = ["A", "B", "C", "D", "E"];
                         </div>
                     </div>
 
-                    <!-- Step dots (quiz only) -->
-                    <div class="step-dots" v-if="phase === 'quiz'">
-                        <button
-                            v-for="(q, i) in questions" :key="q.id"
-                            class="step-dot" :class="dotStatus(i)"
-                            @click.stop="currentIdx = i"
-                            :title="`Soal ${i + 1}`">
-                            <span v-if="dotStatus(i) === 'done'">✓</span>
-                            <span v-else>{{ i + 1 }}</span>
-                        </button>
-                    </div>
+
 
                 </div>
 
