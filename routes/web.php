@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
 use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\PretestController;
+use App\Http\Controllers\Student\PosttestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -44,6 +45,14 @@ Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->grou
 Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
+
+    // ── Pretest ──────────────────────────────────────────────────
+    Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])  ->name('pretest.show');
+    Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
+
+    // ── Posttest ─────────────────────────────────────────────────
+    Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])  ->name('posttest.show');
+    Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {

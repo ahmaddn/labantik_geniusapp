@@ -6,7 +6,6 @@ const props = defineProps({
   question: {
     type: Object,
     required: true,
-    // shape: { id, question_text, options: [{ id, option_text, option_image, is_correct }] }
   },
   modelValue: {
     type: [String, Number, Array],
@@ -16,7 +15,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update-answer'])
 
-// Count how many correct answers exist to determine single vs multi
 const correctCount = computed(() => {
   if (!props.question?.options) return 1
   return props.question.options.filter(o => o.is_correct).length
@@ -24,7 +22,6 @@ const correctCount = computed(() => {
 
 const isMultiple = computed(() => correctCount.value > 1)
 
-// For multiple: array of selected IDs; for single: single ID
 const selectedOptions = ref([])
 
 watch(() => props.modelValue, (newVal) => {
@@ -39,28 +36,20 @@ const isSelected = (optionId) => selectedOptions.value.includes(optionId)
 
 const handleSelect = (optionId) => {
   if (isMultiple.value) {
-    // Toggle selection, allow up to correctCount selections
     const idx = selectedOptions.value.indexOf(optionId)
     if (idx === -1) {
       if (selectedOptions.value.length < correctCount.value) {
         selectedOptions.value = [...selectedOptions.value, optionId]
       } else {
-        // Replace oldest selection
         selectedOptions.value = [...selectedOptions.value.slice(1), optionId]
       }
     } else {
       selectedOptions.value = selectedOptions.value.filter(id => id !== optionId)
     }
-    emit('update-answer', {
-      questionId: props.question.id,
-      value: [...selectedOptions.value],
-    })
+    emit('update-answer', { questionId: props.question.id, value: [...selectedOptions.value] })
   } else {
     selectedOptions.value = [optionId]
-    emit('update-answer', {
-      questionId: props.question.id,
-      value: optionId,
-    })
+    emit('update-answer', { questionId: props.question.id, value: optionId })
   }
 }
 </script>
@@ -112,16 +101,21 @@ const handleSelect = (optionId) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .mc-hint {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .mc-hint-badge {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 800;
@@ -130,22 +124,26 @@ const handleSelect = (optionId) => {
   border: 1.5px solid rgba(124, 58, 237, 0.2);
   border-radius: 50px;
   padding: 4px 12px;
+  word-break: break-word;
 }
 
 .mc-hint-count {
   font-weight: 900;
   color: #6d28d9;
+  white-space: nowrap;
 }
 
 .mc-options {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .mc-option {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* top-align agar icon tidak lari saat teks panjang wrap */
   gap: 0.75rem;
   padding: 0.9rem 1rem;
   background: #f8fafc;
@@ -156,6 +154,9 @@ const handleSelect = (optionId) => {
   font-family: inherit;
   text-align: left;
   width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden; /* cegah konten option keluar */
 }
 
 .mc-option:hover {
@@ -182,6 +183,7 @@ const handleSelect = (optionId) => {
   justify-content: center;
   flex-shrink: 0;
   color: #64748b;
+  margin-top: 1px; /* sejajar visual dengan baris pertama teks */
 }
 
 .mc-option.selected .mc-radio {
@@ -194,9 +196,11 @@ const handleSelect = (optionId) => {
 
 .mc-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   flex: 1;
+  min-width: 0; /* ← kunci utama agar flex child bisa shrink */
+  overflow: hidden;
 }
 
 .mc-img {
@@ -211,11 +215,32 @@ const handleSelect = (optionId) => {
   font-size: 0.93rem;
   font-weight: 600;
   color: #334155;
-  line-height: 1.4;
+  line-height: 1.5;
+  /* ↓ teks panjang turun ke baris baru, tidak terpotong */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  flex: 1;
+  min-width: 0;
 }
 
 .mc-option.selected .mc-label {
   color: #1e293b;
   font-weight: 700;
 }
-</style>
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .mc-option {
+    padding: 0.75rem 0.85rem;
+    gap: 0.6rem;
+  }
+  .mc-label {
+    font-size: 0.875rem;
+  }
+  .mc-hint-badge {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+  }
+}
+</style>    

@@ -4,16 +4,15 @@ import { router } from '@inertiajs/vue3'
 import {
   CheckCircle2, XCircle, ArrowLeft, Trophy,
   LayoutGrid, ToggleLeft, FileSearch, ClipboardList, BookOpen,
-  ChevronRight, Star
+  ChevronRight, Star, Rocket, MapPin
 } from 'lucide-vue-next'
 
 const props = defineProps({
-  mission: { type: Object, required: true },
-  // results: { score, correct, incorrect, total, breakdown, questions_result }
-  // questions_result: [{ question_id, question_text, quiz_type, quiz_title,
-  //   is_correct, user_answer_text, correct_answer_text }]
-  results: { type: Object, required: true },
-  user: { type: Object, default: () => ({ name: 'Siswa' }) },
+  mission:           { type: Object,  required: true },
+  results:           { type: Object,  required: true },
+  user:              { type: Object,  default: () => ({ name: 'Siswa' }) },
+  module:            { type: Object,  default: () => ({ id: null, name: 'Modul' }) },
+  all_missions_done: { type: Boolean, default: false },
 })
 
 const TYPE_META = {
@@ -44,7 +43,9 @@ const hasIncorrect = computed(() =>
   (props.results.questions_result || []).some(q => !q.is_correct)
 )
 
-const goBack = () => router.visit(route('playground.index'))
+const goToMissions = () => router.visit(route('playground.missions.index', props.module?.id))
+const goToPosttest = () => router.visit(route('playground.posttest.show', props.module?.id))
+const goBack       = () => router.visit(route('playground.index'))
 </script>
 
 <template>
@@ -55,9 +56,9 @@ const goBack = () => router.visit(route('playground.index'))
 
     <!-- ── TOPBAR ── -->
     <header class="topbar">
-      <button class="back-btn" @click="goBack">
+      <button class="back-btn" @click="goToMissions">
         <ArrowLeft :size="16" :stroke-width="2.5" />
-        Beranda
+        Daftar Misi
       </button>
       <span class="topbar-title">Hasil Misi</span>
       <div class="topbar-spacer"></div>
@@ -204,9 +205,15 @@ const goBack = () => router.visit(route('playground.index'))
       </section>
 
       <div class="bottom-action">
-        <button class="btn-home" @click="goBack">
+        <!-- If all missions done → prompt to start posttest -->
+        <button v-if="all_missions_done" class="btn-posttest" @click="goToPosttest">
+          <Rocket :size="15" :stroke-width="2.5" />
+          Lanjut ke Posttest
+        </button>
+        <!-- Otherwise → back to missions list -->
+        <button v-else class="btn-home" @click="goToMissions">
           <ArrowLeft :size="15" :stroke-width="2.5" />
-          Kembali ke Beranda
+          Kembali ke Daftar Misi
         </button>
       </div>
     </main>
@@ -469,7 +476,7 @@ const goBack = () => router.visit(route('playground.index'))
 .ac-text { font-family: 'Righteous', cursive; font-size: 18px; color: #065f46; }
 
 /* ── BOTTOM ACTION ── */
-.bottom-action { display: flex; justify-content: center; }
+.bottom-action { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .btn-home {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 13px 32px;
@@ -482,6 +489,18 @@ const goBack = () => router.visit(route('playground.index'))
   transition: all 0.17s cubic-bezier(0.34,1.56,0.64,1);
 }
 .btn-home:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(29,78,216,0.4); }
+.btn-posttest {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 32px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none; border-radius: 14px;
+  font-family: 'Righteous', cursive; font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+  transition: all 0.17s cubic-bezier(0.34,1.56,0.64,1);
+}
+.btn-posttest:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,185,129,0.48); }
 
 @media (max-width: 480px) {
   .breakdown-grid { grid-template-columns: 1fr; }
