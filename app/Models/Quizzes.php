@@ -17,6 +17,7 @@ class Quizzes extends Model
         'time_limit',
         'type',
         'category',
+        'image',
         'created_by',
         'module_id',
         'mission_id',
