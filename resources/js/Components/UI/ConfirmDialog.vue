@@ -57,7 +57,7 @@ const cancel = () => {
         >
             <div
                 @click.stop
-                class="bg-white rounded-3xl p-8 w-full max-w-sm border-4 border-red-400 shadow-playful-lg text-center"
+                class="bg-white rounded-3xl p-8 w-full max-w-sm border-4 border-blue-200 shadow-playful-lg text-center"
             >
                 <h2 class="text-xl font-bold mb-4 text-gray-800">
                     {{ title }}

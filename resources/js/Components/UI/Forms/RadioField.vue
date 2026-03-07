@@ -58,10 +58,10 @@ const updateValue = (value) => {
 const getColorClass = computed(() => {
     const colors = {
         blue: "accent-blue-500",
-        green: "accent-green-500",
-        yellow: "accent-yellow-500",
+        green: "accent-blue-400",
+        yellow: "accent-amber-400",
         red: "accent-red-500",
-        purple: "accent-purple-500",
+        purple: "accent-indigo-500",
     };
     return colors[props.color];
 });

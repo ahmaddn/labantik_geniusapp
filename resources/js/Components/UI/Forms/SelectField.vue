@@ -149,12 +149,12 @@ onUnmounted(() => {
 const borderClasses = computed(() => {
     const colors = {
         blue: "border-blue-200 focus-within:border-blue-400",
-        green: "border-green-200 focus-within:border-green-400",
-        yellow: "border-yellow-200 focus-within:border-yellow-400",
+        green: "border-blue-100 focus-within:border-blue-300",
+        yellow: "border-amber-200 focus-within:border-amber-400",
         red: "border-red-200 focus-within:border-red-400",
-        purple: "border-purple-200 focus-within:border-purple-400",
+        purple: "border-indigo-200 focus-within:border-indigo-400",
         gray: "border-gray-200 focus-within:border-gray-400",
-        orange: "border-orange-200 focus-within:border-orange-400",
+        orange: "border-amber-300 focus-within:border-amber-500",
     };
     return colors[props.borderColor];
 });
@@ -162,12 +162,12 @@ const borderClasses = computed(() => {
 const activeColorClasses = computed(() => {
     const colors = {
         blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        yellow: "bg-yellow-50 text-yellow-600",
+        green: "bg-blue-50 text-blue-500",
+        yellow: "bg-amber-50 text-amber-600",
         red: "bg-red-50 text-red-600",
-        purple: "bg-purple-50 text-purple-600",
+        purple: "bg-indigo-50 text-indigo-600",
         gray: "bg-gray-50 text-gray-600",
-        orange: "bg-orange-50 text-orange-600",
+        orange: "bg-amber-50 text-amber-600",
     };
     return colors[props.borderColor];
 });
@@ -175,12 +175,12 @@ const activeColorClasses = computed(() => {
 const checkColorClass = computed(() => {
     const colors = {
         blue: "text-blue-500",
-        green: "text-green-500",
-        yellow: "text-yellow-500",
+        green: "text-blue-400",
+        yellow: "text-amber-500",
         red: "text-red-500",
-        purple: "text-purple-500",
+        purple: "text-indigo-500",
         gray: "text-gray-500",
-        orange: "text-orange-500",
+        orange: "text-amber-500",
     };
     return colors[props.borderColor];
 });

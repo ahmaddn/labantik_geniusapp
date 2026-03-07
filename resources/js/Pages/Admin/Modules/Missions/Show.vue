@@ -215,16 +215,16 @@ const formatDate = (dateString) => {
         <div class="p-5 max-w-7xl mx-auto">
             <!-- Header -->
             <div
-                class="bg-white rounded-3xl border-4 border-purple-200 shadow-playful p-6 mb-8"
+                class="bg-white rounded-3xl border-4 border-gray-200 shadow-playful p-6 mb-8"
             >
                 <div
                     class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4"
                 >
                     <button
                         @click="goBack"
-                        class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 hover:bg-purple-200 transition-all"
+                        class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 hover:bg-blue-200 transition-all"
                     >
-                        <ArrowLeft class="text-purple-600 w-5 h-5" />
+                        <ArrowLeft class="text-blue-500 w-5 h-5" />
                     </button>
 
                     <div class="flex-1">
@@ -234,7 +234,7 @@ const formatDate = (dateString) => {
                         >
                             <span>{{ module.title || module.name }}</span>
                             <ChevronRight class="w-3 h-3" />
-                            <span class="text-purple-600 font-medium">
+                            <span class="text-blue-600 font-medium">
                                 Misi {{ mission.order_number }}
                             </span>
                         </div>
@@ -257,7 +257,7 @@ const formatDate = (dateString) => {
                 <div class="flex flex-wrap gap-3">
                     <Button
                         class="w-full sm:w-auto"
-                        variant="success"
+                        variant="blueLight"
                         size="md"
                         :icon="Plus"
                         @click="goToAddMaterial"
@@ -279,13 +279,13 @@ const formatDate = (dateString) => {
             <!-- Combined Materials & Quizzes Section -->
             <div>
                 <div
-                    class="bg-gradient-to-r from-green-100 to-orange-100 rounded-2xl p-4 flex items-center justify-between mb-6"
+                    class="bg-blue-50 border-4 border-blue-100 rounded-2xl p-4 flex items-center justify-between mb-6"
                 >
                     <h2 class="text-xl font-bold text-gray-800">
                         Materi & Kuis
                     </h2>
                     <span
-                        class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-bold shadow-sm"
+                        class="bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-bold shadow-sm border-2 border-blue-100"
                     >
                         {{ totalItems }} Konten
                     </span>
@@ -305,7 +305,7 @@ const formatDate = (dateString) => {
                     </p>
                     <div class="flex justify-center gap-3">
                         <Button
-                            variant="success"
+                            variant="blueLight"
                             size="md"
                             :icon="Plus"
                             @click="goToAddMaterial"

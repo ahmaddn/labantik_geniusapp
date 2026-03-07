@@ -92,6 +92,7 @@ const editId = ref(null);
 const form = useForm({
     id: null,
     name: "",
+    username: "",
     email: "",
     role: "",
     password: "",
@@ -144,7 +145,13 @@ const getFirstError = (errors) => {
 };
 
 const saveUser = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.role) {
+    if (
+        !form.name.trim() ||
+        !form.username.trim() ||
+        !form.password.trim() ||
+        !form.email.trim() ||
+        !form.role
+    ) {
         showToast("Semua kolom wajib diisi.", "error");
         return;
     }
@@ -293,6 +300,16 @@ onUnmounted(() => {
                     type="email"
                     label="Email"
                     placeholder="Email"
+                    :icon="Mail"
+                    required
+                    border-color="blue"
+                />
+
+                <InputField
+                    v-model="form.username"
+                    type="text"
+                    label="Username"
+                    placeholder="Username"
                     :icon="Mail"
                     required
                     border-color="blue"

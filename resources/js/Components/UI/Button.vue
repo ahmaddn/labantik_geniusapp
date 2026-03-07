@@ -11,6 +11,7 @@ const props = defineProps({
                 "primary",
                 "secondary",
                 "success",
+                "blueLight",
                 "warning",
                 "danger",
                 "info",
@@ -64,15 +65,17 @@ const getVariantClass = computed(() => {
         primary:
             "bg-blue-500 text-white border-blue-600 hover:bg-blue-600 active:bg-blue-700",
         secondary:
-            "bg-gray-500 text-white border-gray-600 hover:bg-gray-600 active:bg-gray-700",
+            "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 active:bg-blue-300",
         success:
-            "bg-green-500 text-white border-green-600 hover:bg-green-600 active:bg-green-700",
+            "bg-green-400 text-white border-green-500 hover:bg-green-500 active:bg-green-600",
+        blueLight:
+            "bg-blue-400 text-white border-blue-500 hover:bg-blue-500 active:bg-blue-600",
         warning:
-            "bg-yellow-400 text-white border-yellow-500 hover:bg-yellow-500 active:bg-yellow-600",
+            "bg-amber-500 text-white border-amber-600 hover:bg-amber-600 active:bg-amber-600",
         danger: "bg-red-400 text-white border-red-500 hover:bg-red-500 active:bg-red-600",
-        info: "bg-cyan-500 text-white border-cyan-600 hover:bg-cyan-600 active:bg-cyan-700",
-        light: "bg-white text-gray-800 border-gray-300 hover:bg-gray-50 active:bg-gray-100",
-        dark: "bg-gray-800 text-white border-gray-900 hover:bg-gray-900 active:bg-black",
+        info: "bg-indigo-400 text-white border-indigo-500 hover:bg-indigo-500 active:bg-indigo-600",
+        light: "bg-white text-blue-700 border-blue-200 hover:bg-blue-50 active:bg-blue-100",
+        dark: "bg-blue-800 text-white border-blue-900 hover:bg-blue-900 active:bg-blue-950",
     };
     return variants[props.variant];
 });

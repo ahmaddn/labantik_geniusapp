@@ -13,36 +13,21 @@ use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
 {
-    /**
-     * Show form to create material
-     */
     public function create(Learning_modules $modules, Missions $missions)
     {
-        // Pastikan mission milik module yang benar
         if ($missions->module_id !== $modules->id) {
             abort(404);
         }
 
-        // Load template mascots if exists
         $mascots = $modules->template?->mascots ?? [];
 
         return Inertia::render('Admin/Modules/Materials/Create', [
-            'module' => [
-                'id' => $modules->id,
-                'name' => $modules->name,
-            ],
-            'mission' => [
-                'id' => $missions->id,
-                'name' => $missions->name,
-                'order_number' => $missions->order_number,
-            ],
+            'module'  => ['id' => $modules->id, 'name' => $modules->name],
+            'mission' => ['id' => $missions->id, 'name' => $missions->name, 'order_number' => $missions->order_number],
             'mascots' => $mascots,
         ]);
     }
 
-    /**
-     * Store material
-     */
     public function store(Learning_modules $modules, Missions $missions, Request $request)
     {
         if ($missions->module_id !== $modules->id) {
@@ -50,31 +35,36 @@ class MaterialController extends Controller
         }
 
         $validated = $request->validate([
-            'materials' => 'required|array|min:1',
-            'materials.*.title' => 'required|string|max:255',
+            'materials'               => 'required|array|min:1',
+            'materials.*.title'       => 'required|string|max:255',
             'materials.*.description' => 'nullable|string',
-            'materials.*.content' => 'required|string',
-            'materials.*.mascot_id' => 'nullable|exists:mascots,id',
-            'materials.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'materials.*.content'     => 'required|string',
+            'materials.*.mascot_id'   => 'nullable|exists:mascots,id',
+            'materials.*.image'       => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
         ], [
-            'materials.*.title.required' => 'Judul material wajib diisi.',
+            'materials.*.title.required'   => 'Judul material wajib diisi.',
             'materials.*.content.required' => 'Konten material wajib diisi.',
+            'materials.*.image.mimes'      => 'Format file tidak didukung. Gunakan JPG, PNG, GIF, MP4, MOV, AVI, atau WebM.',
+            'materials.*.image.max'        => 'Ukuran file maksimal 50MB.',
         ]);
 
         foreach ($validated['materials'] as $index => $material) {
             $data = [
-                'mission_id' => $missions->id,
-                'module_id' => $modules->id,
-                'title' => $material['title'],
+                'mission_id'  => $missions->id,
+                'module_id'   => $modules->id,
+                'title'       => $material['title'],
                 'description' => $material['description'] ?? null,
-                'content' => $material['content'],
-                'mascot_id' => $material['mascot_id'] ?? null,
-                'created_by' => Auth::id(),
+                'content'     => $material['content'],
+                'mascot_id'   => $material['mascot_id'] ?? null,
+                'created_by'  => Auth::id(),
             ];
 
+            // Upload gambar atau video ke kolom image
             if ($request->hasFile("materials.{$index}.image")) {
-                $path = $request->file("materials.{$index}.image")->store('materials/images', 'public');
-                $data['image'] = $path;
+                $file    = $request->file("materials.{$index}.image");
+                $isVideo = in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'wmv', 'webm']);
+                $folder  = $isVideo ? 'materials/videos' : 'materials/images';
+                $data['image'] = $file->store($folder, 'public');
             }
 
             Materials::create($data);
@@ -85,12 +75,8 @@ class MaterialController extends Controller
             ->with('success', 'Semua material berhasil ditambahkan.');
     }
 
-    /**
-     * Show material detail
-     */
     public function show(Learning_modules $modules, Missions $missions, Materials $materials)
     {
-        // Pastikan material milik mission yang benar
         if ($materials->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
             abort(404);
         }
@@ -98,24 +84,14 @@ class MaterialController extends Controller
         $materials->load(['mascot', 'createdBy']);
 
         return Inertia::render('Admin/Modules/Materials/Show', [
-            'module' => [
-                'id' => $modules->id,
-                'name' => $modules->name,
-            ],
-            'mission' => [
-                'id' => $missions->id,
-                'name' => $missions->name,
-            ],
+            'module'   => ['id' => $modules->id, 'name' => $modules->name],
+            'mission'  => ['id' => $missions->id, 'name' => $missions->name],
             'material' => $materials,
         ]);
     }
 
-    /**
-     * Show edit form
-     */
     public function edit(Learning_modules $modules, Missions $missions, Materials $materials)
     {
-        // Pastikan material milik mission yang benar
         if ($materials->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
             abort(404);
         }
@@ -124,82 +100,55 @@ class MaterialController extends Controller
         $mascots = $modules->template?->mascots ?? [];
 
         return Inertia::render('Admin/Modules/Materials/Edit', [
-            'module' => [
-                'id' => $modules->id,
-                'name' => $modules->name,
-            ],
-            'mission' => [
-                'id' => $missions->id,
-                'name' => $missions->name,
-            ],
+            'module'   => ['id' => $modules->id, 'name' => $modules->name],
+            'mission'  => ['id' => $missions->id, 'name' => $missions->name],
             'material' => $materials,
-            'mascots' => $mascots,
+            'mascots'  => $mascots,
         ]);
     }
 
-    /**
-     * Update material
-     */
     public function update(Learning_modules $modules, Missions $missions, Materials $materials, Request $request)
     {
-        // Pastikan material milik mission yang benar
         if ($materials->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
             abort(404);
         }
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content' => 'required|string',
-            'mascot_id' => 'nullable|exists:mascots,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string',
+            'content'      => 'required|string',
+            'mascot_id'    => 'nullable|exists:mascots,id',
+            'image'        => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
             'remove_image' => 'nullable|boolean',
-            'remove_thumbnail' => 'nullable|boolean',
         ], [
-            'title.required' => 'Judul material wajib diisi.',
+            'title.required'   => 'Judul material wajib diisi.',
             'content.required' => 'Konten material wajib diisi.',
+            'image.mimes'      => 'Format file tidak didukung. Gunakan JPG, PNG, GIF, MP4, MOV, AVI, atau WebM.',
+            'image.max'        => 'Ukuran file maksimal 50MB.',
         ]);
 
         $data = [
-            'title' => $validated['title'],
+            'title'       => $validated['title'],
             'description' => $validated['description'],
-            'content' => $validated['content'],
-            'mascot_id' => $validated['mascot_id'],
+            'content'     => $validated['content'],
+            'mascot_id'   => $validated['mascot_id'],
         ];
 
-        // Handle remove image
+        // Handle remove / replace image or video
         if ($request->input('remove_image')) {
             if ($materials->image) {
                 Storage::disk('public')->delete($materials->image);
-                $data['image'] = null;
             }
+            $data['image'] = null;
         }
-
-        // Handle remove thumbnail
-        if ($request->input('remove_thumbnail')) {
-            if ($materials->thumbnail) {
-                Storage::disk('public')->delete($materials->thumbnail);
-                $data['thumbnail'] = null;
-            }
-        }
-
-        // Handle new image upload
         if ($request->hasFile('image')) {
             if ($materials->image) {
                 Storage::disk('public')->delete($materials->image);
             }
-            $path = $request->file('image')->store('materials/images', 'public');
-            $data['image'] = $path;
-        }
-
-        // Handle new thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            if ($materials->thumbnail) {
-                Storage::disk('public')->delete($materials->thumbnail);
-            }
-            $path = $request->file('thumbnail')->store('materials/thumbnails', 'public');
-            $data['thumbnail'] = $path;
+            $file    = $request->file('image');
+            $isVideo = in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'wmv', 'webm']);
+            $folder  = $isVideo ? 'materials/videos' : 'materials/images';
+            $data['image'] = $file->store($folder, 'public');
         }
 
         $materials->update($data);
@@ -209,22 +158,14 @@ class MaterialController extends Controller
             ->with('success', 'Material berhasil diperbarui.');
     }
 
-    /**
-     * Delete material
-     */
     public function destroy(Learning_modules $modules, Missions $missions, Materials $materials)
     {
-        // Pastikan material milik mission yang benar
         if ($materials->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
             abort(404);
         }
 
-        // Delete images if exists
         if ($materials->image) {
             Storage::disk('public')->delete($materials->image);
-        }
-        if ($materials->thumbnail) {
-            Storage::disk('public')->delete($materials->thumbnail);
         }
 
         $materials->delete();
