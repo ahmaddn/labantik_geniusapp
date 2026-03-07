@@ -12,12 +12,11 @@ const audioRef = ref(null);
 // ── Speech bubble ─────────────────────────────────────────────────
 const BUBBLE_LINES = [
     "Hai! Aku Geni 👋",
-    "Udah siap Maki pemerintah? 😎",
+    "Udah siap belajar? 😎",
     "Kamu pasti bisa! 💪",
     "Yuk, masuk dulu~",
-    "Hidupp Jokowiii ⚡",
-    "AHH... Pria Solo itu lagi!",
-    "Ayo jadi Maniac Sawit! 🏆",
+    "Siap jadi jagoan Geniuss? 🚀",
+    "Ayo kita berkompetisi 🏆",
     "Halo, sobat Geniuss! 😊",
 ];
 const bubbleText = ref(BUBBLE_LINES[0]);
@@ -93,7 +92,7 @@ function validateNama() {
         localErrors.value.nama = "Nama siswa wajib diisi!";
         return false;
     }
-    
+
     localErrors.value.nama = "";
     return true;
 }
