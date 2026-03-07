@@ -93,10 +93,7 @@ function validateNama() {
         localErrors.value.nama = "Nama siswa wajib diisi!";
         return false;
     }
-    if (form.nama.trim().length < 2) {
-        localErrors.value.nama = "Nama minimal 2 karakter";
-        return false;
-    }
+    
     localErrors.value.nama = "";
     return true;
 }

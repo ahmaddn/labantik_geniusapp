@@ -1,5 +1,4 @@
 <script setup>
-
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { Layers, XCircle, CheckCircle2, RotateCcw, GripHorizontal } from 'lucide-vue-next'
 
@@ -7,37 +6,31 @@ const props = defineProps({
   question: {
     type: Object,
     required: true,
-    // {
-    //   id, question_text,
-    //   drag_drop_items:  [{ id, item_text, item_image, correct_group_id }],
-    //   drag_drop_groups: [{ id, group_name }]
-    // }
   },
   modelValue: {
     type: Object,
     default: () => ({}),
-    // { [itemId]: groupId }
   },
 })
 
 const emit = defineEmits(['update-answer'])
 
 // ── State ─────────────────────────────────────────────────────
-const items   = ref([])
-const zones   = ref([])
-const placed  = ref({})   // { itemId: groupId } — source of truth for emit
-const dragged = ref(null)
+const items        = ref([])
+const zones        = ref([])
+const placed       = ref({})
+const dragged      = ref(null)
 const dragOverZone = ref(null)
 let tItem = null, tClone = null
 
-// ── Init from question data + existing answers ─────────────────
+// ── Init ──────────────────────────────────────────────────────
 const init = () => {
   const q = props.question
 
   items.value = (q.drag_drop_items || []).map(it => ({
     id:             String(it.id),
     label:          it.item_text,
-    image:          it.item_image || null,       // path relative to /storage/
+    image:          it.item_image || null,
     correctGroupId: String(it.correct_group_id),
   }))
 
@@ -47,14 +40,12 @@ const init = () => {
     items: [],
   }))
 
-  // Restore from modelValue
   placed.value = {}
   const mv = props.modelValue || {}
   for (const [itemId, groupId] of Object.entries(mv)) {
     placed.value[String(itemId)] = String(groupId)
   }
 
-  // Populate zone.items from placed
   zones.value.forEach(z => (z.items = []))
   for (const item of items.value) {
     const gId = placed.value[item.id]
@@ -65,8 +56,8 @@ const init = () => {
   }
 }
 
-watch(() => props.question, init, { immediate: true, deep: true })
-watch(() => props.modelValue, () => init(), { deep: true })
+watch(() => props.question,    init, { immediate: true, deep: true })
+watch(() => props.modelValue,  () => init(), { deep: true })
 
 // ── Derived ───────────────────────────────────────────────────
 const unplaced    = computed(() => items.value.filter(i => !placed.value[i.id]))
@@ -75,12 +66,12 @@ const totalCount  = computed(() => items.value.length)
 const progressPct = computed(() => Math.round((placedCount.value / Math.max(totalCount.value, 1)) * 100))
 
 const ZONE_COLORS = [
-  { bg: '#f0fdf4', border: 'rgba(74,222,128,.5)',   head: '#15803d', badge: '#22c55e', light: '#dcfce7' },
-  { bg: '#eff6ff', border: 'rgba(96,165,250,.5)',   head: '#1d4ed8', badge: '#3b82f6', light: '#dbeafe' },
-  { bg: '#fdf4ff', border: 'rgba(192,132,252,.5)',  head: '#7e22ce', badge: '#a855f7', light: '#f3e8ff' },
-  { bg: '#fff7ed', border: 'rgba(251,191,36,.5)',   head: '#92400e', badge: '#f59e0b', light: '#fef3c7' },
-  { bg: '#fff1f2', border: 'rgba(251,113,133,.5)',  head: '#9f1239', badge: '#f43f5e', light: '#ffe4e6' },
-  { bg: '#f0f9ff', border: 'rgba(56,189,248,.5)',   head: '#0369a1', badge: '#0ea5e9', light: '#e0f2fe' },
+  { bg: '#f0fdf4', border: 'rgba(74,222,128,.5)',  head: '#15803d', badge: '#22c55e', light: '#dcfce7' },
+  { bg: '#eff6ff', border: 'rgba(96,165,250,.5)',  head: '#1d4ed8', badge: '#3b82f6', light: '#dbeafe' },
+  { bg: '#fdf4ff', border: 'rgba(192,132,252,.5)', head: '#7e22ce', badge: '#a855f7', light: '#f3e8ff' },
+  { bg: '#fff7ed', border: 'rgba(251,191,36,.5)',  head: '#92400e', badge: '#f59e0b', light: '#fef3c7' },
+  { bg: '#fff1f2', border: 'rgba(251,113,133,.5)', head: '#9f1239', badge: '#f43f5e', light: '#ffe4e6' },
+  { bg: '#f0f9ff', border: 'rgba(56,189,248,.5)',  head: '#0369a1', badge: '#0ea5e9', light: '#e0f2fe' },
 ]
 const zc = (i) => ZONE_COLORS[i % ZONE_COLORS.length]
 
@@ -89,9 +80,8 @@ const emitUpdate = () => {
   emit('update-answer', { questionId: props.question.id, value: { ...placed.value } })
 }
 
-// ── Place item in zone ────────────────────────────────────────
+// ── Place / Remove ────────────────────────────────────────────
 const placeItem = (item, zone) => {
-  // Remove from old zone if already placed
   if (placed.value[item.id]) {
     const oldZone = zones.value.find(z => z.id === placed.value[item.id])
     if (oldZone) oldZone.items = oldZone.items.filter(i => i.id !== item.id)
@@ -101,14 +91,12 @@ const placeItem = (item, zone) => {
   emitUpdate()
 }
 
-// ── Remove item from zone (return to bank) ─────────────────────
 const removeItem = (item, zone) => {
   zone.items = zone.items.filter(i => i.id !== item.id)
   delete placed.value[item.id]
   emitUpdate()
 }
 
-// ── Reset ─────────────────────────────────────────────────────
 const reset = () => {
   placed.value = {}
   zones.value.forEach(z => (z.items = []))
@@ -116,10 +104,10 @@ const reset = () => {
 }
 
 // ── Mouse drag ────────────────────────────────────────────────
-const onDragStart = (item) => { dragged.value = item }
-const onDragOver  = (e, zoneId) => { e.preventDefault(); dragOverZone.value = zoneId }
-const onDragLeave = () => { dragOverZone.value = null }
-const onDrop      = (zone) => {
+const onDragStart = (item)          => { dragged.value = item }
+const onDragOver  = (e, zoneId)     => { e.preventDefault(); dragOverZone.value = zoneId }
+const onDragLeave = ()              => { dragOverZone.value = null }
+const onDrop      = (zone)          => {
   dragOverZone.value = null
   if (!dragged.value) return
   placeItem(dragged.value, zone)
@@ -150,8 +138,8 @@ const onTouchMove = (e) => {
 const onTouchEnd = (e) => {
   tClone?.remove(); tClone = null
   if (!tItem) return
-  const t   = e.changedTouches[0]
-  const el  = document.elementsFromPoint(t.clientX, t.clientY).find(el => el.dataset.zoneid)
+  const t  = e.changedTouches[0]
+  const el = document.elementsFromPoint(t.clientX, t.clientY).find(el => el.dataset.zoneid)
   if (el) {
     const z = zones.value.find(z => z.id === el.dataset.zoneid)
     if (z) placeItem(tItem, z)
@@ -163,11 +151,8 @@ onUnmounted(() => { tClone?.remove() })
 </script>
 
 <template>
-  <div
-    class="dd"
-    @touchmove.prevent="onTouchMove"
-    @touchend="onTouchEnd"
-  >
+  <div class="dd" @touchmove.prevent="onTouchMove" @touchend="onTouchEnd">
+
     <!-- ── Progress ── -->
     <div class="dd-progress">
       <div class="dd-prog-row">
@@ -197,7 +182,6 @@ onUnmounted(() => { tClone?.remove() })
             @dragstart="onDragStart(item)"
             @touchstart.prevent="onTouchStart(item, $event)"
           >
-            <!-- Image from database (storage) -->
             <div class="dd-item-visual">
               <img
                 v-if="item.image"
@@ -205,7 +189,6 @@ onUnmounted(() => { tClone?.remove() })
                 :alt="item.label"
                 class="dd-item-img"
               />
-              <!-- Placeholder only if no image at all -->
               <div v-else class="dd-item-placeholder">
                 <span class="dd-item-initial">{{ item.label.charAt(0).toUpperCase() }}</span>
               </div>
@@ -219,7 +202,8 @@ onUnmounted(() => { tClone?.remove() })
           <CheckCircle2 :size="20" color="#22c55e" :stroke-width="2" />
           <span>Semua sudah ditempatkan!</span>
         </div>
-
+      </div>
+    </div>
 
     <!-- ── Drop Zones ── -->
     <div class="dd-zones">
@@ -248,8 +232,6 @@ onUnmounted(() => { tClone?.remove() })
           <span class="dd-zone-name">{{ zone.label }}</span>
           <span class="dd-zone-count">{{ zone.items.length }}</span>
         </div>
-    </div>
-
 
         <!-- Drop body -->
         <div class="dd-zone-body" :data-zoneid="zone.id">
@@ -258,9 +240,8 @@ onUnmounted(() => { tClone?.remove() })
               v-for="item in zone.items"
               :key="item.id"
               class="dd-placed"
-              :class="item.correctGroupId === zone.id "
+              :class="item.correctGroupId === zone.id ? 'dd-placed--ok' : 'dd-placed--err'"
             >
-              <!-- Placed item image -->
               <div class="dd-placed-visual">
                 <img
                   v-if="item.image"
@@ -274,10 +255,6 @@ onUnmounted(() => { tClone?.remove() })
               </div>
               <span class="dd-placed-label">{{ item.label }}</span>
 
-              <!-- Correct / wrong indicator -->
-
-
-              <!-- Remove button -->
               <button class="dd-placed-remove" @click="removeItem(item, zone)" title="Kembalikan">
                 <XCircle :size="13" />
               </button>
@@ -289,7 +266,8 @@ onUnmounted(() => { tClone?.remove() })
             <span>Letakkan di sini</span>
           </div>
         </div>
-
+      </div>
+    </div>
 
     <!-- ── Reset ── -->
     <div class="dd-actions">
@@ -298,10 +276,11 @@ onUnmounted(() => { tClone?.remove() })
         Ulangi Soal Ini
       </button>
     </div>
+
+  </div>
 </template>
 
 <style scoped>
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .dd { display: flex; flex-direction: column; gap: 12px; }
@@ -322,7 +301,6 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Bank ── */
 .dd-bank {
-
   background: rgba(248,250,252,.9);
   border: 1.5px solid #e2e8f0;
   border-radius: 12px; padding: 10px 12px;
@@ -351,7 +329,6 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Item card ── */
 .dd-item {
-
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   background: #fff;
   border: 2px solid rgba(29,78,216,0.1);
@@ -370,22 +347,14 @@ onUnmounted(() => { tClone?.remove() })
 .dd-item:active { cursor: grabbing; transform: scale(.97); }
 
 .dd-item-visual { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
-.dd-item-img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  display: block;
-}
+.dd-item-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
 .dd-item-placeholder {
   width: 60px; height: 60px;
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
 }
-.dd-item-initial {
-  font-size: 22px; font-weight: 900; color: #3b82f6;
-  line-height: 1;
-}
+.dd-item-initial { font-size: 22px; font-weight: 900; color: #3b82f6; line-height: 1; }
 .dd-item-label {
   font-size: 11px; font-weight: 800; color: #1e293b;
   text-align: center; line-height: 1.3;
@@ -395,11 +364,7 @@ onUnmounted(() => { tClone?.remove() })
 .dd-item:hover .dd-item-grip { opacity: 1; }
 
 /* ── Zones ── */
-.dd-zones {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
+.dd-zones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .dd-zone {
   background: var(--zbg);
   border: 2.5px dashed var(--zbdr);
@@ -444,13 +409,14 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Placed item ── */
 .dd-placed {
-
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 6px 8px; border-radius: 10px; border: 2px solid;
   min-width: 64px; position: relative;
   animation: dd-popin .28s cubic-bezier(.34,1.56,.64,1);
-  background: #f0fdf4; border-color: #4ade80;
 }
+.dd-placed--ok  { background: #f0fdf4; border-color: #4ade80; }
+.dd-placed--err { background: #fef2f2; border-color: #fca5a5; }
+
 .dd-placed-visual { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .dd-placed-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
 .dd-placed-initial {
@@ -460,18 +426,6 @@ onUnmounted(() => { tClone?.remove() })
   display: flex; align-items: center; justify-content: center;
 }
 .dd-placed-label { font-size: 10px; font-weight: 800; color: #1e293b; text-align: center; line-height: 1.2; }
-
-.dd-placed--ok { background: #f0fdf4; border-color: #4ade80; }
-.dd-placed--err { background: #fef2f2; border-color: #fca5a5; }
-
-.dd-placed-status {
-  position: absolute; top: -6px; left: -6px;
-  width: 17px; height: 17px; border-radius: 50%;
-  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.12);
-  display: flex; align-items: center; justify-content: center;
-}
-.dd-placed--ok  .dd-placed-status { color: #22c55e; }
-.dd-placed--err .dd-placed-status { color: #ef4444; }
 
 .dd-placed-remove {
   position: absolute; top: -7px; right: -7px;
@@ -506,7 +460,10 @@ onUnmounted(() => { tClone?.remove() })
 .dd-place-leave-active { transition: all .15s ease; }
 .dd-place-leave-to { opacity: 0; transform: scale(.4); }
 
-@keyframes dd-popin { from { transform: scale(.3) rotate(-8deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes dd-popin {
+  from { transform: scale(.3) rotate(-8deg); opacity: 0; }
+  to   { transform: scale(1)  rotate(0deg);  opacity: 1; }
+}
 
 @media (max-width: 540px) {
   .dd-zones { grid-template-columns: repeat(2, 1fr); gap: 7px; }
