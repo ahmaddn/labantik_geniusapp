@@ -29,11 +29,10 @@ class PlaygroundLoginController extends Controller
     public function authenticate(Request $request)
     {
         $validated = $request->validate([
-            'nama' => ['required', 'string', 'min:2', 'max:60'],
+            'nama' => ['required', 'string', 'max:60'],
             'password' => ['required', 'string', 'min:6'],
         ], [
             'nama.required' => 'Nama siswa wajib diisi!',
-            'nama.min' => 'Nama minimal 2 karakter.',
             'nama.max' => 'Nama maksimal 60 karakter.',
             'password.required' => 'Password wajib diisi!',
             'password.min' => 'Password minimal 6 karakter.',

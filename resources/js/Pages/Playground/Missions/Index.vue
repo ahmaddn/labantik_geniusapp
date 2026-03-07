@@ -81,10 +81,9 @@ onUnmounted(() => {
 const goBack = () => router.visit(route("playground.index"));
 
 const startMission = (mission) => {
-    if (mission.status === "completed") return;
-    router.visit(route("playground.missions.show", mission.id));
-};
-
+  if (mission.status === 'completed') return
+  router.visit(route('playground.missions.show', mission.id))
+}
 // ── Status helpers (pakai field 'status' dari controller) ─────────
 const getMissionStatus = (mission) => {
     if (mission.status === "completed") return "Selesai";
@@ -489,32 +488,18 @@ const notStartedMissions = computed(
 
 /* ── MISSION CARD ── */
 .mission-card {
-    background: #fff;
-    border: 1.5px solid rgba(29, 78, 216, 0.12);
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    opacity: 0;
-    transform: translateY(20px) scale(0.97);
-    transition:
-        opacity 0.4s var(--delay, 0ms) ease,
-        transform 0.4s var(--delay, 0ms) cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  background: #fff; border: 1.5px solid rgba(29,78,216,0.12);
+  border-radius: 16px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  opacity: 0; transform: translateY(20px) scale(0.97);
+  transition:
+    opacity 0.4s var(--delay,0ms) ease,
+    transform 0.4s var(--delay,0ms) cubic-bezier(0.34,1.56,0.64,1),
+    box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
 }
-
-.mission-card.card-show {
-    opacity: 1;
-    transform: none;
-}
-.mission-card:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-    border-color: rgba(29, 78, 216, 0.28);
-}
+.mission-card.card-show { opacity: 1; transform: none; }
+.mission-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: rgba(29,78,216,0.28); }
 
 /* Completed card: subtle green tint */
 .mission-card.card-completed {
