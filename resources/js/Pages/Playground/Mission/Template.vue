@@ -21,11 +21,11 @@ const COMPONENT_MAP = {
   drag_drop:        Drag_drop,
 }
 const TYPE_META = {
-  multiple_choices: { label: 'Pilihan Ganda',    color: '#3b82f6', bg: '#dbeafe' },
-  true_false:       { label: 'Pilih Gambar Yang Benar',    color: '#8b5cf6', bg: '#ede9fe' },
-  case_study:       { label: 'Studi Kasus',      color: '#0891b2', bg: '#cffafe' },
-  drag_drop:        { label: 'Seret & Letakkan', color: '#f59e0b', bg: '#fef3c7' },
-  materials:        { label: 'Materi',           color: '#10b981', bg: '#dcfce7' },
+  multiple_choices: { label: 'Pilihan Ganda',         color: '#3b82f6', bg: '#dbeafe' },
+  true_false:       { label: 'Pilih Gambar Yang Benar', color: '#8b5cf6', bg: '#ede9fe' },
+  case_study:       { label: 'Studi Kasus',            color: '#0891b2', bg: '#cffafe' },
+  drag_drop:        { label: 'Seret & Letakkan',       color: '#f59e0b', bg: '#fef3c7' },
+  materials:        { label: 'Materi',                 color: '#10b981', bg: '#dcfce7' },
 }
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials
 
@@ -33,11 +33,7 @@ const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials
 const props = defineProps({
   mission: { type: Object, required: true },
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
-
-   module: {
-    type: Object,
-    default: () => ({ id: null, name: 'Module', description: '' }),
-  }
+  module:  { type: Object, default: () => ({ id: null, name: 'Module', description: '' }) },
 })
 
 // ── Steps ──────────────────────────────────────────────────────
@@ -49,8 +45,6 @@ const steps = computed(() =>
     isDragDrop: quiz.type === 'drag_drop',
   }))
 )
-
-
 
 // ── State ──────────────────────────────────────────────────────
 const currentStep  = ref(0)
@@ -84,7 +78,7 @@ const isStepAnswered = (s) => {
   return qs.length === 0 || qs.every(q => isQuestionAnswered(q, s.quiz.type))
 }
 
-const canGoNext       = computed(() => isStepAnswered(step.value))
+const canGoNext        = computed(() => isStepAnswered(step.value))
 const allStepsAnswered = computed(() =>
   steps.value.filter(s => !s.isMaterial).every(s => isStepAnswered(s))
 )
@@ -250,12 +244,12 @@ onUnmounted(() => {
       <aside class="sidebar" :class="{ 'sidebar--on': ready }" @click="rotateBubble">
         <div class="sb-info">
           <span class="activity-tag">
-            <GripHorizontal v-if="step?.isDragDrop"                            :size="11" :stroke-width="2.5" />
-            <BookOpen       v-else-if="step?.isMaterial"                       :size="11" :stroke-width="2.5" />
-            <ClipboardList  v-else-if="step?.quiz?.type === 'multiple_choices'" :size="11" :stroke-width="2.5" />
-            <ToggleLeft     v-else-if="step?.quiz?.type === 'true_false'"       :size="11" :stroke-width="2.5" />
-            <FileSearch     v-else-if="step?.quiz?.type === 'case_study'"       :size="11" :stroke-width="2.5" />
-            <LayoutGrid     v-else                                              :size="11" :stroke-width="2.5" />
+            <GripHorizontal v-if="step?.isDragDrop"                             :size="11" :stroke-width="2.5" />
+            <BookOpen       v-else-if="step?.isMaterial"                        :size="11" :stroke-width="2.5" />
+            <ClipboardList  v-else-if="step?.quiz?.type === 'multiple_choices'"  :size="11" :stroke-width="2.5" />
+            <ToggleLeft     v-else-if="step?.quiz?.type === 'true_false'"        :size="11" :stroke-width="2.5" />
+            <FileSearch     v-else-if="step?.quiz?.type === 'case_study'"        :size="11" :stroke-width="2.5" />
+            <LayoutGrid     v-else                                               :size="11" :stroke-width="2.5" />
             {{ typeMeta(step?.quiz?.type).label }}
           </span>
 
@@ -277,7 +271,20 @@ onUnmounted(() => {
             </div>
           </div>
 
-
+          <div class="step-dots">
+            <button
+              v-for="(s, idx) in steps"
+              :key="idx"
+              class="step-dot"
+              :class="stepStatus(idx)"
+              @click.stop="goToStep(idx)"
+              :title="s.isMaterial ? 'Materi' : s.quiz.title"
+            >
+              <span v-if="stepStatus(idx) === 'done'">✓</span>
+              <span v-else-if="s.isMaterial">📖</span>
+              <span v-else>{{ idx + 1 }}</span>
+            </button>
+          </div>
         </div>
 
         <div class="mascot-wrap">
@@ -286,7 +293,6 @@ onUnmounted(() => {
               <span>{{ BUBBLES[bubbleIdx] }}</span>
               <i class="bbl-tail-out"></i>
               <i class="bbl-tail-in"></i>
-
             </div>
           </Transition>
           <div class="mascot-shadow"></div>
@@ -306,7 +312,7 @@ onUnmounted(() => {
                   <Zap :size="14" color="#fff" fill="white" :stroke-width="2.4" />
                 </div>
                 <div>
-                  <div class="card-brand-nm"><span>{{ module.name }}</span></div>
+                  <div class="card-brand-nm">{{ module.name }}</div>
                   <div class="card-brand-sub">{{ typeMeta(step.quiz.type).label }}</div>
                 </div>
               </div>
@@ -317,61 +323,6 @@ onUnmounted(() => {
                 Kuis {{ (step.quizIndex ?? 0) + 1 }} / {{ steps.length }}
               </span>
             </div>
-          </Transition>
-          <div class="mascot-shadow"></div>
-          <img src="/images/templates/pose_nunjuk.png" class="mascot" alt="Maskot" />
-        </div>
-      </aside>
-
-      <!-- ─── GAME PANEL ─── -->
-      <section class="game" :class="{ 'game--on': ready }">
-        <div class="card" v-if="step">
-          <div class="card-bar" :style="{ background: `linear-gradient(90deg, ${typeMeta(step.quiz.type).color}, ${typeMeta(step.quiz.type).color}88)` }"></div>
-
-          <div class="card-body">
-            <div class="card-head">
-              <div class="card-brand">
-                <div class="card-brand-ico">
-                  <Zap :size="14" color="#fff" fill="white" :stroke-width="2.4" />
-                </div>
-                <div>
-                  <div class="card-brand-nm">Geni<span class="ac">uss</span></div>
-                  <div class="card-brand-sub">{{ typeMeta(step.quiz.type).label }}</div>
-                </div>
-              </div>
-              <span
-                class="card-type-pill"
-                :style="{ background: typeMeta(step.quiz.type).bg, color: typeMeta(step.quiz.type).color }"
-              >
-                Kuis {{ (step.quizIndex ?? 0) + 1 }} / {{ steps.length }}
-              </span>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="questions-area">
-              <div
-                v-for="(question, qIdx) in (step.quiz.questions || [])"
-                :key="question.id"
-                class="question-item"
-                :class="{ 'question-item--done': isQuestionAnswered(question, step.quiz.type) }"
-              >
-                <div class="q-label" v-if="!step.isMaterial">
-                  <span class="q-num" :style="{ background: typeMeta(step.quiz.type).color }">{{ qIdx + 1 }}</span>
-                  <span class="q-text">{{ question.question_text }}</span>
-                  <CheckCircle2
-                    v-if="isQuestionAnswered(question, step.quiz.type)"
-                    :size="15" color="#10b981" :stroke-width="2.5"
-                  />
-                </div>
-                <component
-                  :is="COMPONENT_MAP[step.quiz.type]"
-                  :question="question"
-                  :modelValue="answers[question.id]"
-                  @update-answer="updateAnswer"
-                />
-              </div>
-
 
             <div class="divider"></div>
 
@@ -406,6 +357,7 @@ onUnmounted(() => {
           </div>
         </div>
       </section>
+
     </div>
 
     <!-- ══ FOOTER NAV ══ -->
@@ -425,7 +377,6 @@ onUnmounted(() => {
             @click="openConfirm"
             :disabled="isSubmitting || !canGoNext"
           >
-
             <span v-if="!isSubmitting">Selesaikan Misi</span>
             <span v-else>Menyimpan…</span>
           </button>
@@ -449,28 +400,25 @@ onUnmounted(() => {
     </footer>
 
     <!-- ══ CONFIRM MODAL ══ -->
-
-<Transition name="overlay-fade">
-  <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
-    <Transition name="modal-pop" appear>
-      <div v-if="showConfirm" class="modal">
-        <h2 class="modal-title">Apakah kamu yakin?</h2>
-        <p class="modal-desc">
-          Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
-        </p>
-        <div class="modal-actions">
-          <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
-          <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
-            <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
-            <span v-else>Menyimpan…</span>
-          </button>
-</div>
+    <Transition name="overlay-fade">
+      <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
+        <Transition name="modal-pop" appear>
+          <div v-if="showConfirm" class="modal">
+            <h2 class="modal-title">Apakah kamu yakin?</h2>
+            <p class="modal-desc">
+              Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
+            </p>
+            <div class="modal-actions">
+              <button class="modal-btn modal-btn--cancel" @click="closeConfirm" :disabled="isSubmitting">Batal</button>
+              <button class="modal-btn modal-btn--confirm" @click="submit" :disabled="isSubmitting">
+                <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
+                <span v-else>Menyimpan…</span>
+              </button>
+            </div>
+          </div>
+        </Transition>
       </div>
     </Transition>
-  </div>
-</Transition>
-    <!-- ══ MUSIC FAB ══ -->
-
 
   </div>
 </template>
@@ -574,8 +522,8 @@ onUnmounted(() => {
   flex-shrink: 0; transition: all .2s cubic-bezier(.34,1.56,.64,1); backdrop-filter: blur(4px);
 }
 .step-dot:hover { transform: scale(1.15); }
-.step-dot.active { background: #fff; border-color: #fff; color: #1d4ed8; box-shadow: 0 3px 10px rgba(0,0,0,.2); transform: scale(1.15); }
-.step-dot.done   { background: rgba(74,222,128,.3); border-color: #4ade80; color: #fff; }
+.step-dot.active   { background: #fff; border-color: #fff; color: #1d4ed8; box-shadow: 0 3px 10px rgba(0,0,0,.2); transform: scale(1.15); }
+.step-dot.done     { background: rgba(74,222,128,.3); border-color: #4ade80; color: #fff; }
 .step-dot.material { background: rgba(16,185,129,.25); border-color: #34d399; font-size: 12px; }
 
 /* Mascot */
@@ -610,7 +558,6 @@ onUnmounted(() => {
 .card-brand { display: flex; align-items: center; gap: 10px; }
 .card-brand-ico { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(140deg,#60a5fa,#1d4ed8); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(29,78,216,.28); }
 .card-brand-nm { font-family: 'Righteous', cursive; font-size: 17px; color: #1e3a8a; line-height: 1.1; }
-.ac { color: #1d4ed8; }
 .card-brand-sub { font-size: 9.5px; font-weight: 800; color: #9ca3af; letter-spacing: .5px; text-transform: uppercase; margin-top: 2px; }
 .card-type-pill { font-size: 11px; font-weight: 900; border-radius: 99px; padding: 4px 12px; letter-spacing: .2px; }
 .divider { height: 1px; background: linear-gradient(90deg,transparent,rgba(29,78,216,.1),transparent); margin-bottom: 16px; }
@@ -674,52 +621,17 @@ onUnmounted(() => {
 .modal-btn--confirm:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,185,129,.45); }
 .modal-btn:disabled { opacity: .55; cursor: not-allowed; }
 
-/* Overlay: fade in/out */
+/* Overlay: fade */
 .overlay-fade-enter-active { transition: opacity .25s ease; }
 .overlay-fade-leave-active { transition: opacity .2s ease; }
 .overlay-fade-enter-from,
 .overlay-fade-leave-to { opacity: 0; }
 
-/* Modal card: pop in, shrink out */
-.modal-pop-enter-active {
-  transition: opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
-}
-.modal-pop-leave-active {
-  transition: opacity .18s ease, transform .18s ease;
-}
-.modal-pop-enter-from {
-  opacity: 0;
-  transform: scale(.82) translateY(24px);
-}
-.modal-pop-leave-to {
-  opacity: 0;
-  transform: scale(.94);
-}
-/* ══ MUSIC FAB ══ */
-.music-fab {
-   bottom: 26px; left: 26px; z-index: 301;
-  width: 50px; height: 50px; border-radius: 50%; border: none;
-  cursor: pointer; outline: none;
-  background: rgba(255,255,255,0.18); backdrop-filter: blur(10px);
-  color: #fff; box-shadow: 0 4px 20px rgba(29,78,216,0.22);
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-}
-.music-fab:hover { transform: scale(1.1); background: rgba(255,255,255,0.28); }
-.music-fab.on {
-  background: linear-gradient(135deg,#60a5fa,#1d4ed8); color: #fff;
-  box-shadow: 0 6px 24px rgba(29,78,216,0.44);
-}
-.music-fab svg { width: 21px; height: 21px; }
-.fab-pulse {
-  position: absolute; inset: -5px; border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.5);
-  animation: fab-ring 2s ease-out infinite; pointer-events: none;
-}
-@keyframes fab-ring {
-  0%   { transform: scale(1);    opacity: 0.8; }
-  100% { transform: scale(1.55); opacity: 0; }
-}
+/* Modal: pop */
+.modal-pop-enter-active { transition: opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1); }
+.modal-pop-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.modal-pop-enter-from   { opacity: 0; transform: scale(.82) translateY(24px); }
+.modal-pop-leave-to     { opacity: 0; transform: scale(.94); }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 820px) {

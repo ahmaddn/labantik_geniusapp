@@ -81,7 +81,7 @@ const goBack = () => router.visit(route('playground.index'))
 const startMission = (mission) => {
   if (mission.status === 'completed') return
   router.visit(route('playground.missions.show', mission.id))
-
+}
 // ── Status helpers (pakai field 'status' dari controller) ─────────
 const getMissionStatus = (mission) => {
 
@@ -340,7 +340,7 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
     transform 0.4s var(--delay,0ms) cubic-bezier(0.34,1.56,0.64,1),
     box-shadow 0.2s ease, border-color 0.2s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-
+}
 .mission-card.card-show { opacity: 1; transform: none; }
 .mission-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: rgba(29,78,216,0.28); }
 
