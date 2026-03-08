@@ -48,15 +48,7 @@ const OPT_VARIANTS = ['a', 'b', 'c', 'd', 'e']
   <div class="cs">
 
     <!-- ── Case study text box ── -->
-    <div class="cs-box">
-      <div class="cs-box-head">
-        <span class="cs-badge">📖 Kasus</span>
-      </div>
-      <p class="cs-text">{{ textShown }}</p>
-      <button v-if="isLong" class="cs-expand" @click="expandText = !expandText">
-        {{ expandText ? 'Sembunyikan ▲' : 'Baca Selengkapnya ▼' }}
-      </button>
-    </div>
+    
 
     <!-- ── Options — gaya A/B/C/D seperti index.vue ── -->
     <div class="cs-opts">

@@ -1,13 +1,19 @@
 <script setup>
+import { ref, onUnmounted } from 'vue'
 import { BookOpen, Music, Video } from 'lucide-vue-next'
 
 const props = defineProps({
   question: {
     type: Object,
     required: true,
-    // shape: { id, title, subtitle, content, image, material_type: 'text|video|audio' }
   },
 })
+
+const isVideo = (path) => {
+  if (!path) return false
+  const ext = path.split('?')[0].split('.').pop().toLowerCase()
+  return ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(ext)
+}
 
 const imageUrl = (path) => {
   if (!path) return null
@@ -16,14 +22,156 @@ const imageUrl = (path) => {
   const clean = path.startsWith('/') ? path : `/storage/${path}`
   return `${base}${clean}`
 }
+
+// ── Canvas draw helper ──
+const makeDrawLoop = (videoRef, canvasRef) => {
+  let rafId = null
+  const draw = () => {
+    const video = videoRef.value
+    const canvas = canvasRef.value
+    if (!video || !canvas) return
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    if (!video.paused && !video.ended) {
+      rafId = requestAnimationFrame(draw)
+    }
+  }
+  const start = () => {
+    cancelAnimationFrame(rafId)
+    draw()
+  }
+  const stop = () => {
+    cancelAnimationFrame(rafId)
+    // draw one last frame so it doesn't freeze on black
+    const video = videoRef.value
+    const canvas = canvasRef.value
+    if (!video || !canvas) return
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+  }
+  const cleanup = () => cancelAnimationFrame(rafId)
+  return { start, stop, cleanup }
+}
+
+// ── Banner player ──
+const bannerVideoEl = ref(null)
+const bannerCanvasEl = ref(null)
+const bannerPlaying = ref(false)
+const bannerLoop = ref(null)
+
+const onBannerLoaded = () => {
+  bannerLoop.value = makeDrawLoop(bannerVideoEl, bannerCanvasEl)
+}
+
+const toggleBannerPlay = () => {
+  if (!bannerVideoEl.value) return
+  if (bannerPlaying.value) {
+    bannerVideoEl.value.pause()
+  } else {
+    bannerVideoEl.value.play()
+  }
+  bannerPlaying.value = !bannerPlaying.value
+}
+
+const onBannerPlay = () => {
+  bannerPlaying.value = true
+  bannerLoop.value?.start()
+}
+const onBannerPause = () => {
+  bannerPlaying.value = false
+  bannerLoop.value?.stop()
+}
+const onBannerSeeked = () => {
+  // redraw immediately on seek so canvas doesn't lag
+  const video = bannerVideoEl.value
+  const canvas = bannerCanvasEl.value
+  if (!video || !canvas) return
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+  if (!video.paused) bannerLoop.value?.start()
+}
+
+// ── Content player ──
+const videoEl = ref(null)
+const canvasEl = ref(null)
+const playing = ref(false)
+const loop = ref(null)
+
+const onLoaded = () => {
+  loop.value = makeDrawLoop(videoEl, canvasEl)
+}
+
+const togglePlay = () => {
+  if (!videoEl.value) return
+  if (playing.value) {
+    videoEl.value.pause()
+  } else {
+    videoEl.value.play()
+  }
+  playing.value = !playing.value
+}
+
+const onPlay = () => {
+  playing.value = true
+  loop.value?.start()
+}
+const onPause = () => {
+  playing.value = false
+  loop.value?.stop()
+}
+const onSeeked = () => {
+  const video = videoEl.value
+  const canvas = canvasEl.value
+  if (!video || !canvas) return
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+  if (!video.paused) loop.value?.start()
+}
+
+onUnmounted(() => {
+  loop.value?.cleanup()
+  bannerLoop.value?.cleanup()
+})
 </script>
 
 <template>
   <div class="mat-container">
 
-    <!-- Image Banner (if exists) -->
+    <!-- Image/Video Banner -->
     <div v-if="props.question?.image" class="mat-image-wrap">
-      <img :src="imageUrl(props.question.image)" :alt="props.question?.title || 'Materi'" class="mat-image" />
+
+      <!-- Banner: Video -->
+      <div v-if="isVideo(props.question.image)" class="video-wrap">
+        <div class="vid-inner">
+          <canvas ref="bannerCanvasEl" class="mat-canvas-bg" width="640" height="360"></canvas>
+          <video
+            ref="bannerVideoEl"
+            :src="imageUrl(props.question.image)"
+            class="mat-video"
+            controls
+            @loadeddata="onBannerLoaded"
+            @play="onBannerPlay"
+            @pause="onBannerPause"
+            @seeked="onBannerSeeked"
+          ></video>
+        </div>
+
+        <div class="vid-controls">
+          <button class="vid-play-btn" @click="toggleBannerPlay">
+            <svg v-if="!bannerPlaying" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            {{ bannerPlaying ? 'Pause' : 'Play' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner: Image -->
+      <img
+        v-else
+        :src="imageUrl(props.question.image)"
+        :alt="props.question?.title || 'Materi'"
+        class="mat-image"
+      />
     </div>
 
     <!-- Header -->
@@ -51,12 +199,29 @@ const imageUrl = (path) => {
 
       <!-- Video -->
       <div v-else-if="props.question?.material_type === 'video'" class="mat-media">
-        <video
-          v-if="props.question?.content"
-          :src="props.question.content"
-          controls
-          class="mat-video"
-        ></video>
+        <div v-if="props.question?.content" class="video-wrap">
+          <div class="vid-inner">
+            <canvas ref="canvasEl" class="mat-canvas-bg" width="640" height="360"></canvas>
+            <video
+              ref="videoEl"
+              :src="props.question.content"
+              class="mat-video"
+              controls
+              @loadeddata="onLoaded"
+              @play="onPlay"
+              @pause="onPause"
+              @seeked="onSeeked"
+            ></video>
+          </div>
+
+          <div class="vid-controls">
+            <button class="vid-play-btn" @click="togglePlay">
+              <svg v-if="!playing" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+              <svg v-else viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              {{ playing ? 'Pause' : 'Amati Perbuatan' }}
+            </button>
+          </div>
+        </div>
         <p v-else class="mat-error">Video tidak tersedia</p>
       </div>
 
@@ -90,14 +255,12 @@ const imageUrl = (path) => {
 /* ── Image Banner ── */
 .mat-image-wrap {
   width: 100%;
-  max-height: 280px;
   overflow: hidden;
   background: #f1f5f9;
 }
 
 .mat-image {
   width: 100%;
-  height: 100%;
   max-height: 280px;
   object-fit: cover;
   display: block;
@@ -124,10 +287,7 @@ const imageUrl = (path) => {
   flex-shrink: 0;
 }
 
-.mat-title-section {
-  flex: 1;
-  text-align: left;
-}
+.mat-title-section { flex: 1; text-align: left; }
 
 .mat-title {
   margin: 0;
@@ -144,21 +304,12 @@ const imageUrl = (path) => {
 }
 
 /* ── Divider ── */
-.mat-divider {
-  height: 1px;
-  background: #e2e8f0;
-}
+.mat-divider { height: 1px; background: #e2e8f0; }
 
 /* ── Content ── */
-.mat-content {
-  padding: 1.25rem;
-  background: #ffffff;
-}
+.mat-content { padding: 1.25rem; background: #ffffff; }
 
-.mat-text {
-  line-height: 1.7;
-  color: #475569;
-}
+.mat-text { line-height: 1.7; color: #475569; }
 
 .mat-text p {
   margin: 0;
@@ -172,40 +323,13 @@ const imageUrl = (path) => {
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .mat-image-wrap {
-    max-height: 200px;
-  }
-
-  .mat-image {
-    max-height: 200px;
-  }
-
-  .mat-header {
-    padding: 0.85rem;
-    gap: 0.65rem;
-  }
-
-  .mat-icon {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-  }
-
-  .mat-title {
-    font-size: 0.875rem;
-  }
-
-  .mat-subtitle {
-    font-size: 0.75rem;
-  }
-
-  .mat-content {
-    padding: 0.9rem;
-  }
-
-  .mat-text p {
-    font-size: 0.875rem;
-  }
+  .mat-image { max-height: 200px; }
+  .mat-header { padding: 0.85rem; gap: 0.65rem; }
+  .mat-icon { width: 34px; height: 34px; }
+  .mat-title { font-size: 0.875rem; }
+  .mat-subtitle { font-size: 0.75rem; }
+  .mat-content { padding: 0.9rem; }
+  .mat-text p { font-size: 0.875rem; }
 }
 
 .mat-media {
@@ -215,17 +339,73 @@ const imageUrl = (path) => {
   align-items: center;
 }
 
-.mat-video {
+/* ── Video Player ── */
+.video-wrap { width: 100%; display: flex; flex-direction: column; }
+
+.vid-inner {
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  border-radius: 8px;
+  max-height: 400px;
+  overflow: hidden;
   background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mat-audio {
+/* Canvas blur background */
+.mat-canvas-bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(18px) brightness(0.45) saturate(1.4);
+  transform: scale(1.12);
+  pointer-events: none;
+  z-index: 0;
 }
+
+.mat-video {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  background: transparent;
+}
+
+/* ── Controls ── */
+.vid-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.vid-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 28px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(29,78,216,0.35);
+  transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+.vid-play-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29,78,216,0.45); }
+.vid-play-btn:active { transform: translateY(1px); }
+
+/* ── Audio ── */
+.mat-audio { width: 100%; max-width: 100%; }
 
 .mat-error {
   text-align: center;
