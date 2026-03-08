@@ -8,11 +8,11 @@ import {
   Timer, ChevronRight, CheckCircle2, MousePointerClick,
 } from 'lucide-vue-next'
 
-import Multiple_choice from './Multiple_choice.vue'
-import True_false      from './True_false.vue'
-import Case_study      from './Case_study.vue'
-import Drag_drop       from './Drag_drop.vue'
-import Materials       from './Materials.vue'
+import Multiple_choice from '@/Components/Quiz/Multiple_choice.vue'
+import True_false      from '@/Components/Quiz/True_false.vue'
+import Case_study      from '@/Components/Quiz/Case_study.vue'
+import Drag_drop       from '@/Components/Quiz/Drag_drop.vue'
+import Materials       from '@/Components/Quiz/Materials.vue'
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 const props = defineProps({

@@ -40,7 +40,14 @@ class PretestController extends Controller
             return redirect()->route('playground.missions.index', $module->id);
         }
 
-        // Format sama persis dengan cara MissionController memformat quiz
+        // Kalau pretest sudah pernah dikerjakan → skip, langsung ke daftar misi
+        $alreadyDone = Quiz_attempts::where('quiz_id', $quiz->id)
+            ->where('student_id', $player['id'] ?? null)
+            ->exists();
+
+        if ($alreadyDone) {
+            return redirect()->route('playground.missions.index', $module->id);
+        }
         $formattedQuiz = [
             'id'         => $quiz->id,
             'type'       => $quiz->type,

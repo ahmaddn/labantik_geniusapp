@@ -13,11 +13,12 @@ import {
   FileSearch, GripHorizontal,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
-import Multiple_choice from './Multiple_choice.vue'
-import True_false      from './True_false.vue'
-import Case_study      from './Case_study.vue'
-import Materials       from './Materials.vue'
-import Drag_drop       from './Drag_drop.vue'
+
+import True_false      from '@/Components/Quiz/True_false.vue'
+import Multiple_choice from '@/Components/Quiz/Multiple_choice.vue'
+import Case_study      from '@/Components/Quiz/Case_study.vue'
+import Materials       from '@/Components/Quiz/Materials.vue'
+import Drag_drop       from '@/Components/Quiz/Drag_drop.vue'
 
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -433,11 +434,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
                 <span>{{ typeMeta(step.quiz.type).label }}</span>
               </div>
               <span class="qcard-mission">{{ module.name }}</span>
-              <div class="qcard-counter">
-                <span class="qcard-counter-num">{{ step.questionIndex + 1 }}</span>
-                <span class="qcard-counter-sep">/</span>
-                <span class="qcard-counter-tot">{{ step.totalInQuiz }}</span>
-              </div>
+
             </div>
           </div>
 
@@ -446,10 +443,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
 
             <!-- Question header: nomor soal + teks pertanyaan -->
             <div class="qcard-title-row" v-if="step.question && !step.isMaterial">
-              <div class="q-num-badge"
-                   :style="{ background: typeMeta(step.quiz.type).color }">
-                <Hash :size="12" :stroke-width="3"/>{{ step.questionIndex + 1 }}
-              </div>
+
               <p class="qcard-step-title">{{ step.question.question_text }}</p>
               <div v-if="canGoNext" class="q-answered-badge">
                 <CheckCircle2 :size="13" :stroke-width="2.5"/>

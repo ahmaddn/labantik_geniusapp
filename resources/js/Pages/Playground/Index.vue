@@ -166,9 +166,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         <section class="hero-section" :class="{ show: ready }">
             <div class="wrap">
                 <div class="hero-card">
-                    <div class="hblob hblob-a"></div>
-                    <div class="hblob hblob-b"></div>
-
+<div v-for="n in 30" :key="n" class="bubble" :class="`bubble-${n}`"></div>
                     <div class="hero-body">
                         <div class="hero-greet">
                             <Sparkles :size="12" :stroke-width="2.3" />
@@ -431,9 +429,71 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     display: flex; align-items: center; justify-content: space-between; gap: 20px;
     box-shadow: 0 12px 44px rgba(29,78,216,0.38), 0 4px 0 rgba(14,57,165,0.22), inset 0 1px 0 rgba(255,255,255,0.18);
 }
-.hblob { position: absolute; border-radius: 50%; pointer-events: none; }
-.hblob-a { width: 300px; height: 300px; top: -100px; right: 80px; background: rgba(255,255,255,0.07); }
-.hblob-b { width: 120px; height: 120px; bottom: -50px; left: 160px; background: rgba(147,197,253,0.12); }
+/* ── BUBBLES ── */
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+    animation: bubble-rise var(--dur, 6s) var(--delay, 0s) ease-in infinite;
+    bottom: -40px;
+    left: var(--left, 50%);
+    width: var(--size, 20px);
+    height: var(--size, 20px);
+}
+
+@keyframes bubble-rise {
+    0%   { transform: translateY(0)      translateX(0);                 opacity: 0.6; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-420px) translateX(var(--sway, 12px)); opacity: 0;   }
+}
+
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+    bottom: -40px;
+    left: var(--left, 50%);
+    width: var(--size, 20px);
+    height: var(--size, 20px);
+    animation: bubble-rise var(--dur, 6s) var(--delay, 0s) linear infinite;
+}
+
+.bubble-1  { --size:12px; --left:8%;   --dur:7s;   --delay:-3.5s;  --sway:14px;  }
+.bubble-2  { --size:55px; --left:15%;  --dur:13s;  --delay:-2s;    --sway:24px;  }
+.bubble-3  { --size:9px;  --left:22%;  --dur:6s;   --delay:-5s;    --sway:8px;   }
+.bubble-4  { --size:20px; --left:30%;  --dur:9s;   --delay:-7s;    --sway:-10px; }
+.bubble-5  { --size:62px; --left:37%;  --dur:15s;  --delay:-1s;    --sway:-28px; }
+.bubble-6  { --size:10px; --left:44%;  --dur:6.5s; --delay:-4s;    --sway:-7px;  }
+.bubble-7  { --size:26px; --left:51%;  --dur:11s;  --delay:-9s;    --sway:-18px; }
+.bubble-8  { --size:8px;  --left:57%;  --dur:7.5s; --delay:-3s;    --sway:-5px;  }
+.bubble-9  { --size:48px; --left:63%;  --dur:12s;  --delay:-6s;    --sway:20px;  }
+.bubble-10 { --size:11px; --left:70%;  --dur:6s;   --delay:-2.5s;  --sway:-9px;  }
+.bubble-11 { --size:22px; --left:76%;  --dur:10s;  --delay:-8s;    --sway:16px;  }
+.bubble-12 { --size:70px; --left:38%;  --dur:16s;  --delay:-12s;   --sway:-32px; }
+.bubble-13 { --size:13px; --left:82%;  --dur:8s;   --delay:-1.5s;  --sway:-13px; }
+.bubble-14 { --size:17px; --left:93%;  --dur:9.5s; --delay:-5.5s;  --sway:12px;  }
+.bubble-15 { --size:58px; --left:11%;  --dur:14s;  --delay:-4s;    --sway:26px;  }
+.bubble-16 { --size:10px; --left:48%;  --dur:7s;   --delay:-7.5s;  --sway:10px;  }
+.bubble-17 { --size:21px; --left:26%;  --dur:11s;  --delay:-3s;    --sway:17px;  }
+.bubble-18 { --size:9px;  --left:67%;  --dur:6.5s; --delay:-9.5s;  --sway:-8px;  }
+.bubble-19 { --size:16px; --left:5%;   --dur:8s;   --delay:-2s;    --sway:12px;  }
+.bubble-20 { --size:24px; --left:19%;  --dur:12s;  --delay:-6s;    --sway:20px;  }
+.bubble-21 { --size:7px;  --left:34%;  --dur:5.5s; --delay:-3.5s;  --sway:6px;   }
+.bubble-22 { --size:15px; --left:55%;  --dur:9s;   --delay:-1s;    --sway:-11px; }
+.bubble-23 { --size:19px; --left:72%;  --dur:9s;   --delay:-8s;    --sway:15px;  }
+.bubble-24 { --size:14px; --left:85%;  --dur:8s;   --delay:-4.5s;  --sway:10px;  }
+.bubble-25 { --size:23px; --left:96%;  --dur:10s;  --delay:-7s;    --sway:19px;  }
+.bubble-26 { --size:18px; --left:12%;  --dur:10s;  --delay:-5s;    --sway:-15px; }
+.bubble-27 { --size:8px;  --left:43%;  --dur:6s;   --delay:-10s;   --sway:-6px;  }
+.bubble-28 { --size:13px; --left:59%;  --dur:7.5s; --delay:-2.5s;  --sway:-11px; }
+.bubble-29 { --size:11px; --left:78%;  --dur:7s;   --delay:-6.5s;  --sway:-9px;  }
+.bubble-30 { --size:17px; --left:91%;  --dur:11s;  --delay:-3s;    --sway:22px;  }
 .hero-body { position: relative; z-index: 2; flex: 1; min-width: 0; }
 .hero-greet {
     display: inline-flex; align-items: center; gap: 5px;
