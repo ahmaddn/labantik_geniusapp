@@ -34,36 +34,36 @@ const colorMap = {
         info: "text-blue-500",
     },
     green: {
-        active: "bg-green-500 border-green-600 text-white shadow-[0_4px_0_#15803d]",
-        hover: "hover:bg-green-50 hover:border-green-300 hover:text-green-600",
-        nav: "bg-green-100 border-green-300 text-green-600 hover:bg-green-200 shadow-[0_4px_0_#86efac]",
+        active: "bg-blue-400 border-blue-500 text-white shadow-[0_4px_0_#2563eb]",
+        hover: "hover:bg-blue-50 hover:border-blue-200 hover:text-blue-500",
+        nav: "bg-blue-50 border-blue-200 text-blue-500 hover:bg-blue-100 shadow-[0_4px_0_#bfdbfe]",
         navDisabled:
             "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed shadow-none",
-        info: "text-green-500",
+        info: "text-blue-400",
     },
     yellow: {
-        active: "bg-yellow-400 border-yellow-500 text-white shadow-[0_4px_0_#ca8a04]",
-        hover: "hover:bg-yellow-50 hover:border-yellow-300 hover:text-yellow-600",
-        nav: "bg-yellow-100 border-yellow-300 text-yellow-600 hover:bg-yellow-200 shadow-[0_4px_0_#fde68a]",
+        active: "bg-amber-400 border-amber-500 text-white shadow-[0_4px_0_#d97706]",
+        hover: "hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600",
+        nav: "bg-amber-100 border-amber-300 text-amber-600 hover:bg-amber-200 shadow-[0_4px_0_#fde68a]",
         navDisabled:
             "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed shadow-none",
-        info: "text-yellow-500",
+        info: "text-amber-500",
     },
     purple: {
-        active: "bg-purple-500 border-purple-600 text-white shadow-[0_4px_0_#6d28d9]",
-        hover: "hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600",
-        nav: "bg-purple-100 border-purple-300 text-purple-600 hover:bg-purple-200 shadow-[0_4px_0_#c4b5fd]",
+        active: "bg-indigo-500 border-indigo-600 text-white shadow-[0_4px_0_#4338ca]",
+        hover: "hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600",
+        nav: "bg-indigo-100 border-indigo-300 text-indigo-600 hover:bg-indigo-200 shadow-[0_4px_0_#c7d2fe]",
         navDisabled:
             "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed shadow-none",
-        info: "text-purple-500",
+        info: "text-indigo-500",
     },
     pink: {
-        active: "bg-pink-500 border-pink-600 text-white shadow-[0_4px_0_#be185d]",
-        hover: "hover:bg-pink-50 hover:border-pink-300 hover:text-pink-600",
-        nav: "bg-pink-100 border-pink-300 text-pink-600 hover:bg-pink-200 shadow-[0_4px_0_#f9a8d4]",
+        active: "bg-blue-600 border-blue-700 text-white shadow-[0_4px_0_#1d4ed8]",
+        hover: "hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600",
+        nav: "bg-blue-100 border-blue-300 text-blue-600 hover:bg-blue-200 shadow-[0_4px_0_#93c5fd]",
         navDisabled:
             "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed shadow-none",
-        info: "text-pink-500",
+        info: "text-blue-600",
     },
 };
 

@@ -52,10 +52,10 @@ watch(
 
 const getTypeClasses = (type) => {
     const classes = {
-        success: "bg-green-500 border-green-600",
+        success: "bg-blue-500 border-blue-600",
         error: "bg-red-500 border-red-600",
-        warning: "bg-yellow-500 border-yellow-600",
-        info: "bg-blue-500 border-blue-600",
+        warning: "bg-amber-400 border-amber-500",
+        info: "bg-indigo-500 border-indigo-600",
     };
     return classes[type] || classes.success;
 };

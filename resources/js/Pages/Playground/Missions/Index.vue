@@ -1,6 +1,6 @@
 //ini page daftar misi
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   ArrowLeft,
   Play,
@@ -35,9 +35,9 @@ const props = defineProps({
 })
 
 // ── State ─────────────────────────────────────────────────────────
-const ready    = ref(false)
-const musicOn  = ref(false)
-const audioRef = ref(null)
+const ready = ref(false);
+const musicOn = ref(false);
+const audioRef = ref(null);
 
 // ── Music ─────────────────────────────────────────────────────────
 const handleVisibility = () => {
@@ -47,38 +47,41 @@ const handleVisibility = () => {
     : musicOn.value && audioRef.value.play().catch(() => {})
 }
 const toggleMusic = async () => {
-  if (!audioRef.value) {
-    audioRef.value = new Audio('/backsound/backsound.mp3')
-    audioRef.value.loop    = true
-    audioRef.value.volume  = 0.4
-    audioRef.value.preload = 'auto'
-    audioRef.value.addEventListener('error', () => {
-      audioRef.value = null
-      musicOn.value  = false
-    })
-  }
-  if (musicOn.value) {
-    audioRef.value.pause()
-    musicOn.value = false
-  } else {
-    try {
-      await audioRef.value.play()
-      musicOn.value = true
-    } catch {
-      musicOn.value = false
+    if (!audioRef.value) {
+        audioRef.value = new Audio("/backsound/backsound.mp3");
+        audioRef.value.loop = true;
+        audioRef.value.volume = 0.4;
+        audioRef.value.preload = "auto";
+        audioRef.value.addEventListener("error", () => {
+            audioRef.value = null;
+            musicOn.value = false;
+        });
     }
-  }
-}
+    if (musicOn.value) {
+        audioRef.value.pause();
+        musicOn.value = false;
+    } else {
+        try {
+            await audioRef.value.play();
+            musicOn.value = true;
+        } catch {
+            musicOn.value = false;
+        }
+    }
+};
 
 // ── Lifecycle ─────────────────────────────────────────────────────
 onMounted(() => {
-  setTimeout(() => (ready.value = true), 80)
-  document.addEventListener('visibilitychange', handleVisibility)
-})
+    setTimeout(() => (ready.value = true), 80);
+    document.addEventListener("visibilitychange", handleVisibility);
+});
 onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibility)
-  if (audioRef.value) { audioRef.value.pause(); audioRef.value = null }
-})
+    document.removeEventListener("visibilitychange", handleVisibility);
+    if (audioRef.value) {
+        audioRef.value.pause();
+        audioRef.value = null;
+    }
+});
 
 // ── Navigation ────────────────────────────────────────────────────
 const goBack = () => router.visit(route('playground.index'))
@@ -114,10 +117,16 @@ const getStatusIcon = (mission) => {
 }
 
 // ── Stats ─────────────────────────────────────────────────────────
-const totalMissions      = computed(() => props.missions?.length || 0)
-const completedMissions  = computed(() => props.missions?.filter(m => m.status === 'completed').length || 0)
-const inProgressMissions = computed(() => props.missions?.filter(m => m.status === 'in_progress').length || 0)
-const notStartedMissions = computed(() => props.missions?.filter(m => m.status === 'not_started').length || 0)
+const totalMissions = computed(() => props.missions?.length || 0);
+const completedMissions = computed(
+    () => props.missions?.filter((m) => m.status === "completed").length || 0,
+);
+const inProgressMissions = computed(
+    () => props.missions?.filter((m) => m.status === "in_progress").length || 0,
+);
+const notStartedMissions = computed(
+    () => props.missions?.filter((m) => m.status === "not_started").length || 0,
+);
 </script>
 
 <template>
@@ -232,42 +241,64 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
               {{ getMissionStatus(mission) }}
             </div>
 
-            <!-- Body -->
-            <div class="mission-body">
-              <h3 class="mission-title">{{ mission.name }}</h3>
-              <p class="mission-desc">{{ mission.description }}</p>
-              <div class="mission-meta">
-                <div v-if="mission.total_questions" class="meta-item">
-                  <span class="meta-icon">❓</span>
-                  <span>{{ mission.total_questions }} soal</span>
+                        <!-- Body -->
+                        <div class="mission-body">
+                            <h3 class="mission-title">{{ mission.name }}</h3>
+                            <p class="mission-desc">
+                                {{ mission.description }}
+                            </p>
+                            <div class="mission-meta">
+                                <div
+                                    v-if="mission.total_questions"
+                                    class="meta-item"
+                                >
+                                    <span class="meta-icon">❓</span>
+                                    <span
+                                        >{{
+                                            mission.total_questions
+                                        }}
+                                        soal</span
+                                    >
+                                </div>
+                                <div
+                                    v-if="
+                                        mission.best_score != null &&
+                                        mission.status !== 'not_started'
+                                    "
+                                    class="meta-item"
+                                >
+                                    <span class="meta-icon">⭐</span>
+                                    <span>Skor: {{ mission.best_score }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <button
+                            class="mission-btn"
+                            :class="`btn--${mission.status}`"
+                            :disabled="mission.status === 'completed'"
+                            @click="startMission(mission)"
+                        >
+                            <component
+                                :is="getStatusIcon(mission)"
+                                :size="14"
+                                :stroke-width="2.5"
+                            />
+                            {{ getMissionStatus(mission) }}
+                        </button>
+                    </article>
                 </div>
-                <div v-if="mission.best_score != null && mission.status !== 'not_started'" class="meta-item">
-                  <span class="meta-icon">⭐</span>
-                  <span>Skor: {{ mission.best_score }}</span>
+
+                <div v-else class="empty-state">
+                    <BookOpen :size="48" color="#cbd5e1" :stroke-width="1.4" />
+                    <p class="empty-title">Belum ada misi</p>
+                    <p class="empty-desc">
+                        Misi akan segera tersedia untuk modul ini.
+                    </p>
                 </div>
-              </div>
             </div>
-
-            <!-- CTA Button -->
-            <button
-              class="mission-btn"
-              :class="`btn--${mission.status}`"
-              :disabled="mission.status === 'completed'"
-              @click="startMission(mission)"
-            >
-              <component :is="getStatusIcon(mission)" :size="14" :stroke-width="2.5" />
-              {{ getMissionStatus(mission) }}
-            </button>
-          </article>
-        </div>
-
-        <div v-else class="empty-state">
-          <BookOpen :size="48" color="#cbd5e1" :stroke-width="1.4" />
-          <p class="empty-title">Belum ada misi</p>
-          <p class="empty-desc">Misi akan segera tersedia untuk modul ini.</p>
-        </div>
-      </div>
-    </main>
+        </main>
 
     <!-- ══ MUSIC FAB ══ -->
     <button
@@ -294,17 +325,26 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
   min-height: 100vh; font-family: 'Nunito', sans-serif; padding-bottom: 60px;
   background: url('/images/templates/background.png') top center / cover no-repeat fixed;
 }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 
 /* ── HEADER ── */
 .missions-header {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.35);
-  padding: 14px 32px;
-  box-shadow: 0 1px 18px rgba(0,0,0,0.08);
-  display: flex; align-items: center; gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 14px 32px;
+    box-shadow: 0 1px 18px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 .back-btn {
   display: flex; align-items: center; gap: 8px;
@@ -369,28 +409,71 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
   padding: 14px 0; opacity: 0; transform: translateY(16px);
   transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
-.stats-section.show { opacity: 1; transform: none; }
-.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
-.stat-card {
-  background: rgba(255,255,255,0.92);
-  border: 1.5px solid rgba(29,78,216,0.12);
-  border-radius: 14px; padding: 14px;
-  display: flex; align-items: center; gap: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s;
+.stats-section.show {
+    opacity: 1;
+    transform: none;
 }
-.stat-card:hover { border-color: rgba(29,78,216,0.28); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.stat-content { flex: 1; }
-.stat-value { font-family: 'Righteous', cursive; font-size: 18px; color: #1e3a8a; line-height: 1; }
-.stat-label { font-size: 10px; font-weight: 800; color: #6b7181; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 3px; }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+.stat-card {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1.5px solid rgba(29, 78, 216, 0.12);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+}
+.stat-card:hover {
+    border-color: rgba(29, 78, 216, 0.28);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.stat-content {
+    flex: 1;
+}
+.stat-value {
+    font-family: "Righteous", cursive;
+    font-size: 18px;
+    color: #1e3a8a;
+    line-height: 1;
+}
+.stat-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #6b7181;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 3px;
+}
 
 /* ── MISSIONS GRID ── */
 .missions-section {
   padding: 16px 0; opacity: 0; transform: translateY(8px);
   transition: opacity 0.4s 0.12s ease, transform 0.4s 0.12s cubic-bezier(0.34,1.56,0.64,1);
 }
-.missions-section.show { opacity: 1; transform: none; }
-.missions-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.missions-section.show {
+    opacity: 1;
+    transform: none;
+}
+.missions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
 
 /* ── MISSION CARD ── */
 .mission-card {
@@ -450,13 +533,24 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
 
 /* ── MUSIC FAB ── */
 .music-fab {
-  position: fixed; bottom: 26px; left: 26px; z-index: 301;
-  width: 50px; height: 50px; border-radius: 50%; border: none;
-  cursor: pointer; outline: none;
-  background: rgba(255,255,255,0.92); backdrop-filter: blur(10px);
-  color: #1d4ed8; box-shadow: 0 4px 20px rgba(29,78,216,0.22);
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    position: fixed;
+    bottom: 26px;
+    left: 26px;
+    z-index: 301;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    color: #1d4ed8;
+    box-shadow: 0 4px 20px rgba(29, 78, 216, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .music-fab:hover { transform: scale(1.1); background: #fff; }
 .music-fab.on { background: linear-gradient(135deg,#60a5fa,#1d4ed8); color: #fff; box-shadow: 0 6px 24px rgba(29,78,216,0.44); }
@@ -465,7 +559,11 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
 @keyframes fab-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.55); opacity: 0; } }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 1100px) { .missions-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 1100px) {
+    .missions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 @media (max-width: 768px) {
   .missions-header { flex-wrap: wrap; padding: 12px 16px; }
   .stats-grid { grid-template-columns: repeat(2,1fr); }
@@ -478,12 +576,29 @@ const notStartedMissions = computed(() => props.missions?.filter(m => m.status =
   .posttest-btn span { display: none; }
 }
 @media (max-width: 480px) {
-  .missions-title { font-size: 16px; }
-  .missions-subtitle { font-size: 11px; }
-  .stat-card { padding: 12px; }
-  .stat-value { font-size: 16px; }
-  .mission-title { font-size: 14px; }
-  .mission-desc { font-size: 11px; }
-  .music-fab { bottom: 18px; left: 18px; width: 44px; height: 44px; }
+    .missions-title {
+        font-size: 16px;
+    }
+    .missions-subtitle {
+        font-size: 11px;
+    }
+    .stat-card {
+        padding: 12px;
+    }
+    .stat-value {
+        font-size: 16px;
+    }
+    .mission-title {
+        font-size: 14px;
+    }
+    .mission-desc {
+        font-size: 11px;
+    }
+    .music-fab {
+        bottom: 18px;
+        left: 18px;
+        width: 44px;
+        height: 44px;
+    }
 }
 </style>

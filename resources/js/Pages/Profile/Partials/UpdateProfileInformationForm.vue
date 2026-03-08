@@ -19,6 +19,7 @@ const toastType = ref("success");
 const form = useForm({
     name: user.name,
     email: user.email,
+    username: user.username,
 });
 
 const updateProfile = () => {
@@ -63,6 +64,18 @@ const handleToastClose = () => {
                 :error="form.errors.name"
                 border-color="blue"
             />
+            <InputField
+                id="name"
+                v-model="form.username"
+                type="text"
+                label="Username"
+                :icon="User"
+                required
+                autofocus
+                autocomplete="username"
+                :error="form.errors.username"
+                border-color="blue"
+            />
 
             <InputField
                 id="email"
@@ -71,7 +84,7 @@ const handleToastClose = () => {
                 label="Email"
                 :icon="Mail"
                 required
-                autocomplete="username"
+                autocomplete="email"
                 :error="form.errors.email"
                 border-color="blue"
             />

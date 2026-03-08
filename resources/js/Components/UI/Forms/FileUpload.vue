@@ -55,10 +55,10 @@ const triggerFileInput = () => {
 const getButtonColorClass = computed(() => {
     const colors = {
         blue: "file:bg-blue-500 hover:file:bg-blue-600",
-        green: "file:bg-green-500 hover:file:bg-green-600",
-        yellow: "file:bg-yellow-500 hover:file:bg-yellow-600",
+        green: "file:bg-blue-400 hover:file:bg-blue-500",
+        yellow: "file:bg-amber-400 hover:file:bg-amber-500",
         red: "file:bg-red-500 hover:file:bg-red-600",
-        purple: "file:bg-purple-500 hover:file:bg-purple-600",
+        purple: "file:bg-indigo-500 hover:file:bg-indigo-600",
     };
     return colors[props.buttonColor];
 });
@@ -66,10 +66,10 @@ const getButtonColorClass = computed(() => {
 const getBorderColorClass = computed(() => {
     const colors = {
         blue: "border-blue-200 focus:border-blue-400",
-        green: "border-green-200 focus:border-green-400",
-        yellow: "border-yellow-200 focus:border-yellow-400",
+        green: "border-blue-100 focus:border-blue-300",
+        yellow: "border-amber-200 focus:border-amber-400",
         red: "border-red-200 focus:border-red-400",
-        purple: "border-purple-200 focus:border-purple-400",
+        purple: "border-indigo-200 focus:border-indigo-400",
     };
     return colors[props.buttonColor];
 });

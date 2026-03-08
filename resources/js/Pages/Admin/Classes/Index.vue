@@ -40,7 +40,6 @@ const isEdit = ref(false);
 const selectedId = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
-const cardVariant = ref("playful");
 const toastType = ref("success");
 const editingClass = ref(null);
 const editId = ref(null);
@@ -128,10 +127,6 @@ const availableTeachers = computed(() => {
     return props.teachers;
 });
 
-const toggleCardVariant = () => {
-    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
-};
-
 // ── Pagination ────────────────────────────────────────────────────────────────
 const handlePageChange = (pageNumber) => {
     router.get(
@@ -204,19 +199,6 @@ onUnmounted(() => {
 
                     <!-- Kanan -->
                     <div class="flex items-center gap-3">
-                        <Button
-                            :variant="
-                                cardVariant === 'playful' ? 'warning' : 'light'
-                            "
-                            size="md"
-                            :icon="Star"
-                            @click="toggleCardVariant"
-                        >
-                            {{
-                                cardVariant === "playful" ? "Playful" : "Normal"
-                            }}
-                        </Button>
-
                         <Button
                             variant="primary"
                             size="lg"
