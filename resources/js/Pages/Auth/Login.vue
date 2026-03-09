@@ -7,7 +7,7 @@ import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import { LogIn, Lock, Mail, CheckCircle, Loader2 } from "lucide-vue-next";
 
-defineProps({
+const props = defineProps({
     canResetPassword: Boolean,
     status: String,
 });

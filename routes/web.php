@@ -52,11 +52,11 @@ Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
 
     // ── Pretest ──────────────────────────────────────────────────
-    Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])  ->name('pretest.show');
+    Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])->name('pretest.show');
     Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
 
     // ── Posttest ─────────────────────────────────────────────────
-    Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])  ->name('posttest.show');
+    Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])->name('posttest.show');
     Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
 
     // Student mission routes (session-based authentication)
@@ -122,6 +122,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::prefix('{modules}/quizzes')->name('quizzes.')->group(function () {
             Route::get('/create/{category}', [QuizController::class, 'createModule'])->name('create');
             Route::post('/', [QuizController::class, 'storeModule'])->name('store');
+            // Import module-level quizzes (CSV)
+            Route::post('/import', [QuizController::class, 'importModule'])->name('import');
             Route::get('/{quizzes}', [QuizController::class, 'showModule'])->name('show');
             // Note: creation of quizzes for pretest/posttest is available here
         });
@@ -137,6 +139,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::prefix('{missions}/materials')->name('materials.')->group(function () {
                 Route::get('/create', [MaterialController::class, 'create'])->name('create');
                 Route::post('/', [MaterialController::class, 'store'])->name('store');
+                // Import materials via CSV
+                Route::post('/import', [MaterialController::class, 'import'])->name('import');
                 Route::get('/{materials}', [MaterialController::class, 'show'])->name('show');
                 Route::get('/{materials}/edit', [MaterialController::class, 'edit'])->name('edit');
                 Route::put('/{materials}', [MaterialController::class, 'update'])->name('update');
@@ -147,6 +151,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::prefix('{missions}/quizzes')->name('quizzes.')->group(function () {
                 Route::get('/create', [QuizController::class, 'create'])->name('create');
                 Route::post('/', [QuizController::class, 'store'])->name('store');
+                // Import mission-level quizzes (CSV)
+                Route::post('/import', [QuizController::class, 'importMission'])->name('import');
                 Route::get('/{quizzes}', [QuizController::class, 'show'])->name('show');
                 Route::get('/{quizzes}/edit', [QuizController::class, 'edit'])->name('edit');
                 Route::put('/{quizzes}', [QuizController::class, 'update'])->name('update');
