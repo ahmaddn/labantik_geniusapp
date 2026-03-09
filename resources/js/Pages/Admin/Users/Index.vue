@@ -20,6 +20,7 @@ import {
     BookOpen,
     LockIcon,
     Loader2,
+    User2,
 } from "lucide-vue-next";
 import { useForm, usePage } from "@inertiajs/vue3";
 
@@ -129,6 +130,7 @@ const openEdit = (userItem) => {
     editId.value = userItem.id;
     form.name = userItem.name;
     form.email = userItem.email;
+    form.username = userItem.username;
     form.role = userItem.role;
     form.class_id = userItem.class_id || "";
     showDialog.value = true;
@@ -148,7 +150,6 @@ const saveUser = () => {
     if (
         !form.name.trim() ||
         !form.username.trim() ||
-        !form.password.trim() ||
         !form.email.trim() ||
         !form.role
     ) {
@@ -214,7 +215,6 @@ const handleEsc = (e) => {
         showDeleteDialog.value = false;
     }
 };
-
 onMounted(() => {
     window.addEventListener("keydown", handleEsc);
 });
@@ -310,7 +310,7 @@ onUnmounted(() => {
                     type="text"
                     label="Username"
                     placeholder="Username"
-                    :icon="Mail"
+                    :icon="User2"
                     required
                     border-color="blue"
                 />
