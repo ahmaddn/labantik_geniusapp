@@ -12,7 +12,10 @@ const ready      = ref(false);
 const brandMoved = ref(false);
 const musicOn    = ref(false);
 const audioRef   = ref(null);
-
+const props      = defineProps({
+    backsound: { type: String, default: null },
+    background: { type: String, default: null },
+});
 // ── Speech bubble ──────────────────────────────────────────────────
 const BUBBLE_LINES = [
     "Hai! Aku Geni 👋",
@@ -55,7 +58,8 @@ const handleVisibility = () => {
 
 const toggleMusic = async () => {
     if (!audioRef.value) {
-        audioRef.value = new Audio("/backsound/intro-song.mp3");
+// Update toggleMusic — ganti hardcode dengan props
+audioRef.value = new Audio(props.backsound)
         audioRef.value.loop   = true;
         audioRef.value.volume = 0.4;
         audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
@@ -68,7 +72,8 @@ const toggleMusic = async () => {
 };
 
 const initAutoMusic = async () => {
-    audioRef.value = new Audio("/backsound/intro-song.mp3");
+    audioRef.value = new Audio(props.backsound)
+
     audioRef.value.loop   = true;
     audioRef.value.volume = 0.4;
     audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
@@ -123,7 +128,7 @@ onUnmounted(() => {
 
         <!-- ══ BG ══ -->
         <div class="bg">
-            <div class="bg-img"></div>
+            <div class="bg-img" :style="background ? `background-image: url('${background}')` : ''"></div>
             <div class="bg-tint"></div>
             <div class="blob b1"></div>
             <div class="blob b2"></div>

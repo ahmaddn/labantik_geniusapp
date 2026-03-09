@@ -31,16 +31,18 @@ class PlaygroundController extends Controller
                 'name' => $player['nama_kelas'] ?? '-',
             ],
         ];
-        $template = Templates::first();
-    $backsound = $template?->backsound
-        ? asset('storage/' . $template->backsound)
-        : null;
+        $template   = Templates::with('backgrounds')->orderBy('created_at')->first();
+$backsound  = $template?->backsound  ? asset('storage/' . $template->backsound)  : null;
+$background = $template?->backgrounds->first()?->image
+              ? asset('storage/' . $template->backgrounds->first()->image)
+              : null;
         $learningModules = $this->getLearningModules($player['id'] ?? null);
 
         return Inertia::render('Playground/Index', [
             'user'            => $userData,
             'learningModules' => $learningModules,
             'backsound'       => $backsound,
+            'background'      => $background,
         ]);
     }
 

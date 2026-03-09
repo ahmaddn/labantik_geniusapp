@@ -20,6 +20,8 @@ const props = defineProps({
   // quiz.questions[] — array of question objects
   module:  { type: Object, default: () => ({ id: null, name: 'Modul' }) },
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
+  backsound: { type: String, default: null },
+    background: { type: String, default: null },
 })
 
 // ─── Component map (same as Template.vue) ───────────────────────────────────
@@ -97,13 +99,27 @@ const handleVisibility = () => {
 }
 const toggleMusic = async () => {
   if (!audioRef.value) {
-    audioRef.value = new Audio('/backsound/backsound.mp3')
-    audioRef.value.loop = true; audioRef.value.volume = 0.4; audioRef.value.preload = 'auto'
-    audioRef.value.addEventListener('error', () => { audioRef.value = null; musicOn.value = false })
+    const src = props.backsound ?? "/backsound/backsound.mp3";
+    audioRef.value = new Audio(src);
+    audioRef.value.loop = true;
+    audioRef.value.volume = 0.4;
+    audioRef.value.preload = "auto";
+    audioRef.value.addEventListener("error", () => {
+      audioRef.value = null;
+      musicOn.value = false;
+    });
   }
-  if (musicOn.value) { audioRef.value.pause(); musicOn.value = false }
-  else { try { await audioRef.value.play(); musicOn.value = true } catch { musicOn.value = false } }
-}
+  if (musicOn.value) {
+    audioRef.value.pause();
+    musicOn.value = false;
+  } else {
+    try {
+      await audioRef.value.play();
+      musicOn.value = true;
+    } catch {
+      musicOn.value = false;
+    }
+}}
 
 // ─── Questions & answers ─────────────────────────────────────────────────────
 const questions   = computed(() => props.quiz?.questions ?? [])
@@ -214,7 +230,7 @@ onUnmounted(() => {
 
     <!-- ══ BG ══ -->
     <div class="bg">
-      <div class="bg-img"></div>
+      <div class="bg-img" :style="{ backgroundImage: `url(${props.background})` }"></div>
       <div class="bg-tint"></div>
       <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
       <div class="sh sh-circle c1"></div><div class="sh sh-circle c2"></div>

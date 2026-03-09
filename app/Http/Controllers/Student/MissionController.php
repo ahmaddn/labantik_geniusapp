@@ -26,7 +26,7 @@ class MissionController extends Controller
         return redirect()->route('playground.login');
     }
 
-    $module->load(['missions.quizzes', 'template']); // ← tambah 'template'
+    $module->load(['missions.quizzes', 'template.backgrounds']); // ← tambah 'template'
 
     $missions = $module->missions->map(function ($mission) use ($player) {
         $totalQuestions = $mission->quizzes->sum(fn ($q) => count($q->questions ?? []));
@@ -61,10 +61,13 @@ class MissionController extends Controller
     $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn ($m) => $m['status'] === 'completed');
 
     // Ambil backsound dari template module
-    $backsound = null;
-    if (!empty($module->template?->backsound)) {
-        $backsound = asset('storage/' . $module->template->backsound);
-    }
+    $backsound  = $module->template?->backsound
+              ? asset('storage/' . $module->template->backsound)
+              : null;
+$background = $module->template?->backgrounds->first()?->image
+              ? asset('storage/' . $module->template->backgrounds->first()->image)
+              : null;
+
 
     return Inertia::render('Playground/Missions/Index', [
         'module'            => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
@@ -72,6 +75,7 @@ class MissionController extends Controller
         'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
         'all_missions_done' => $allMissionsDone,
         'backsound'         => $backsound, // ← tambah ini
+        'background'        => $background, // ← tambah ini
     ]);
 }
     public function showMission(Request $request, Missions $mission)
@@ -90,6 +94,7 @@ class MissionController extends Controller
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
             'module.template',
+            'module.template.backgrounds', // ← tambah ini
         ]);
 
         // Format quizzes
@@ -169,6 +174,10 @@ class MissionController extends Controller
 if (!empty($mission->module?->template?->backsound)) {
     $backsound = asset('storage/' . $mission->module->template->backsound);
 }
+$background = null;
+if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
+    $background = asset('storage/' . $mission->module->template->backgrounds->first()->image);
+}
 
         // Merge materials and quizzes, sorted by created_at ascending (oldest first)
         $allItems = collect(array_merge($quizzes, $materials))
@@ -187,6 +196,7 @@ if (!empty($mission->module?->template?->backsound)) {
             'user'   => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'module' => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? ''],
             'backsound' => $backsound,
+            'background' => $background,
         ]);
     }
 

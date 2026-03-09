@@ -44,6 +44,7 @@ const props = defineProps({
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
   module:  { type: Object, default: () => ({ id: null, name: 'Module', description: '' }) },
    backsound: { type: String, default: null },
+   background: { type: String, default: null },
 })
 
 // ── Steps — 1 question per page ───────────────────────────────
@@ -346,7 +347,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
 
     <!-- ══ BG ══ -->
     <div class="bg">
-      <div class="bg-img"></div>
+      <div class="bg-img" :style="{ backgroundImage: `url(${props.background})` }"></div>
       <div class="bg-tint"></div>
       <div class="blob b1"></div>
       <div class="blob b2"></div>

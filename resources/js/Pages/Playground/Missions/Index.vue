@@ -31,6 +31,7 @@ const props = defineProps({
     default: false,
   },
   backsound: { type: String, default: null }, // ← tambah ini
+    background: { type: String, default: null }, // ← tambah ini
 })
 
 // ── State ─────────────────────────────────────────────────────────
@@ -151,7 +152,7 @@ const notStartedMissions = computed(
 </script>
 
 <template>
-  <div class="pg-missions">
+  <div class="pg-missions" :style="background ? `background-image: url('${background}')` : ''">
     <!-- ══ HEADER ══ -->
     <header class="missions-header">
       <button class="back-btn" @click="goBack">

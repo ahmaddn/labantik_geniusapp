@@ -22,15 +22,15 @@ class PlaygroundLoginController extends Controller
     }
 
     // Ambil template yang aktif / sesuai kebutuhan
-    $template = \App\Models\Templates::first(); // atau sesuaikan query-nya
-
-   $backsound = null;
-if ($template && $template->backsound) {
-    $backsound = asset('storage/' . $template->backsound);
-}
+$template   = Templates::with('backgrounds')->orderBy('created_at')->first();
+$backsound  = $template?->backsound  ? asset('storage/' . $template->backsound)  : null;
+$background = $template?->backgrounds->first()?->image
+              ? asset('storage/' . $template->backgrounds->first()->image)
+              : null;
 
     return Inertia::render('Auth/PlaygroundLogin', [
         'backsound' => $backsound,
+        'background' => $background,
     ]);
 }
 
@@ -38,42 +38,36 @@ if ($template && $template->backsound) {
      * Proses login dengan nama dan password
      */
     public function authenticate(Request $request)
-    {
-        $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:60'],
-            'password' => ['required', 'string', 'min:6'],
-        ], [
-            'nama.required' => 'Nama siswa wajib diisi!',
-            'nama.max' => 'Nama maksimal 60 karakter.',
-            'password.required' => 'Password wajib diisi!',
-            'password.min' => 'Password minimal 6 karakter.',
-        ]);
+{
+    $validated = $request->validate([
+        'nama' => ['required', 'string', 'max:60'],
+    ], [
+        'nama.required' => 'Username wajib diisi!',
+        'nama.max'      => 'Username maksimal 60 karakter.',
+    ]);
 
-        // Cari user berdasarkan nama
-        $user = User::where('name', $validated['nama'])->first();
+    // Cari user berdasarkan username
+    $user = User::where('username', $validated['nama'])->first();
 
-        // Validasi user dan password
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
-            return redirect()->back()->withErrors([
-                'nama' => 'Nama atau password salah!',
-            ])->withInput();
-        }
-
-        // Simpan data user ke session
-        session([
-            'player' => [
-                'id' => $user->id,
-                'nama' => $user->name,
-                'kelas' => $user->class_id ?? 'SD-4',
-                'role' => $user->role,
-                'email' => $user->email,
-                'nama_kelas' => $user->class?->name ?? 'SD-4',
-            ],
-        ]);
-
-        // Redirect ke playground index (akan otomatis ke /player/playground)
-        return redirect()->route('playground.index');
+    if (!$user) {
+        return redirect()->back()->withErrors([
+            'nama' => 'Username tidak ditemukan!',
+        ])->withInput();
     }
+
+    session([
+        'player' => [
+            'id'         => $user->id,
+            'nama'       => $user->name,
+            'kelas'      => $user->class_id ?? 'SD-4',
+            'role'       => $user->role,
+            'email'      => $user->email,
+            'nama_kelas' => $user->class?->name ?? 'SD-4',
+        ],
+    ]);
+
+    return redirect()->route('playground.index');
+}
 
     /**
      * Handle logout from playground (menggunakan session player)
