@@ -14,6 +14,7 @@ const musicOn    = ref(false);
 const audioRef   = ref(null);
 const showPassword = ref(false);
 
+
 // ── Speech bubble ──────────────────────────────────────────────────
 const BUBBLE_LINES = [
     "Hai! Aku Geni 👋",
@@ -47,6 +48,14 @@ const errors = {
     get password() { return localErrors.value.password || form.errors.password || ""; },
 };
 
+// props
+const props = defineProps({
+    backsound: {
+        type: String,
+        default: null,
+    },
+});
+
 // ── Music ──────────────────────────────────────────────────────────
 const handleVisibility = () => {
     if (!audioRef.value) return;
@@ -57,10 +66,14 @@ const handleVisibility = () => {
 
 const toggleMusic = async () => {
     if (!audioRef.value) {
-        audioRef.value = new Audio("/backsound/intro-song.mp3");
+        const src = props.backsound ?? "/backsound/intro-song.mp3"; // fallback
+        audioRef.value = new Audio(src);
         audioRef.value.loop   = true;
         audioRef.value.volume = 0.4;
-        audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
+        audioRef.value.addEventListener("error", () => {
+            audioRef.value = null;
+            musicOn.value = false;
+        });
     }
     if (musicOn.value) { audioRef.value.pause(); musicOn.value = false; }
     else {
@@ -68,7 +81,20 @@ const toggleMusic = async () => {
         catch { musicOn.value = false; }
     }
 };
+onMounted(() => {
+    if (props.backsound) {
+        toggleMusic();
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+});
 
+onUnmounted(() => {
+    document.removeEventListener("visibilitychange", handleVisibility);
+    if (audioRef.value) {
+        audioRef.value.pause();
+        audioRef.value = null;
+    }
+});
 // ── Validation ─────────────────────────────────────────────────────
 function validateNama() {
     if (!form.nama.trim()) { localErrors.value.nama = "Nama siswa wajib diisi!"; return false; }

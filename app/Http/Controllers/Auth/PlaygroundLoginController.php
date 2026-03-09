@@ -7,21 +7,32 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Storage;
+use App\Models\Templates;
 class PlaygroundLoginController extends Controller
 {
     /**
      * Tampilkan halaman form login playground
      */
     public function login()
-    {
-        // Jika sudah login, redirect ke playground
-        if (session()->has('player')) {
-            return redirect()->route('playground.index');
-        }
-
-        return Inertia::render('Auth/PlaygroundLogin');
+{
+    // Jika sudah login, redirect ke playground
+    if (session()->has('player')) {
+        return redirect()->route('playground.index');
     }
+
+    // Ambil template yang aktif / sesuai kebutuhan
+    $template = \App\Models\Templates::first(); // atau sesuaikan query-nya
+
+   $backsound = null;
+if ($template && $template->backsound) {
+    $backsound = asset('storage/' . $template->backsound);
+}
+
+    return Inertia::render('Auth/PlaygroundLogin', [
+        'backsound' => $backsound,
+    ]);
+}
 
     /**
      * Proses login dengan nama dan password
