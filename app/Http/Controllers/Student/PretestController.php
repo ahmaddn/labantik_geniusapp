@@ -34,6 +34,11 @@ class PretestController extends Controller
                 'questions.dragDropGroups.items',
             ])
             ->first();
+            $module->load('template');
+$backsound = null;
+if (!empty($module->template?->backsound)) {
+    $backsound = asset('storage/' . $module->template->backsound);
+}
 
         // Kalau tidak ada pretest → langsung ke daftar misi
         if (! $quiz) {
@@ -100,11 +105,13 @@ class PretestController extends Controller
                 'id'          => $module->id,
                 'name'        => $module->name,
                 'description' => $module->description,
+
             ],
             'user' => [
                 'name'  => $player['nama'] ?? 'Siswa',
                 'class' => $player['nama_kelas'] ?? '-',
             ],
+            'backsound' => $backsound,
         ]);
     }
 

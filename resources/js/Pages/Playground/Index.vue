@@ -1,4 +1,3 @@
-//ini page daftar modul
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import {
@@ -23,6 +22,7 @@ const props = defineProps({
         default: () => ({ name: "Siswa", class: { name: "-" } }),
     },
     learningModules: { type: Array, default: () => [] },
+    backsound: { type: String, default: null }, // ← tambah ini
 });
 
 const ready = ref(false);
@@ -39,7 +39,8 @@ const handleVisibility = () => {
 };
 const toggleMusic = async () => {
     if (!audioRef.value) {
-        audioRef.value = new Audio("/backsound/backsound.mp3");
+        const src = props.backsound ?? "/backsound/backsound.mp3"; // fallback
+        audioRef.value = new Audio(src);
         audioRef.value.loop = true;
         audioRef.value.volume = 0.4;
         audioRef.value.preload = "auto";
@@ -60,7 +61,6 @@ const toggleMusic = async () => {
         }
     }
 };
-
 const handleClickOutside = (e) => {
     if (menuRef.value && !menuRef.value.contains(e.target))
         dropdownOpen.value = false;
@@ -74,6 +74,28 @@ onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("visibilitychange", handleVisibility);
+
+    // Auto-play musik
+    if (props.backsound) {
+        audioRef.value = new Audio(props.backsound);
+        audioRef.value.loop = true;
+        audioRef.value.volume = 0.4;
+        audioRef.value.preload = "auto";
+        audioRef.value.addEventListener("error", () => {
+            audioRef.value = null;
+            musicOn.value = false;
+        });
+
+        audioRef.value.play()
+            .then(() => { musicOn.value = true; })
+            .catch(() => {
+                document.addEventListener("click", () => {
+                    audioRef.value?.play()
+                        .then(() => { musicOn.value = true; })
+                        .catch(() => {});
+                }, { once: true });
+            });
+    }
 });
 onUnmounted(() => {
     document.removeEventListener("mousedown", handleClickOutside);

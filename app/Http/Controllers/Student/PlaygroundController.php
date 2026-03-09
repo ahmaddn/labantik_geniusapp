@@ -9,6 +9,7 @@ use App\Models\Missions;
 use App\Models\Quiz_attempts;
 use App\Models\Quizzes;
 use App\Http\Controllers\Controller;
+use App\Models\Templates;
 
 class PlaygroundController extends Controller
 {
@@ -30,12 +31,16 @@ class PlaygroundController extends Controller
                 'name' => $player['nama_kelas'] ?? '-',
             ],
         ];
-
+        $template = Templates::first();
+    $backsound = $template?->backsound
+        ? asset('storage/' . $template->backsound)
+        : null;
         $learningModules = $this->getLearningModules($player['id'] ?? null);
 
         return Inertia::render('Playground/Index', [
             'user'            => $userData,
             'learningModules' => $learningModules,
+            'backsound'       => $backsound,
         ]);
     }
 
