@@ -2,18 +2,16 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 import {
-    Eye, EyeOff, Zap, LogIn, User, Lock,
-    Rocket, Music2, VolumeX, Home, ArrowLeft,
+    Zap, LogIn, User,
+    Rocket, Music2, VolumeX, ArrowLeft,
     GraduationCap, Sparkles, Star, BookOpen,
-    PartyPopper, Shield,
+    Shield,
 } from "lucide-vue-next";
 
 const ready      = ref(false);
 const brandMoved = ref(false);
 const musicOn    = ref(false);
 const audioRef   = ref(null);
-const showPassword = ref(false);
-
 
 // ── Speech bubble ──────────────────────────────────────────────────
 const BUBBLE_LINES = [
@@ -38,23 +36,14 @@ const rotateBubble = () => {
 };
 
 // ── Form ───────────────────────────────────────────────────────────
-const form        = useForm({ nama: "", password: "" });
+const form        = useForm({ nama: "" });
 const loginUrl    = route("login.admin");
-const localErrors = ref({ nama: "", password: "" });
+const localErrors = ref({ nama: "" });
 const shakeBtn    = ref(false);
 
 const errors = {
-    get nama()     { return localErrors.value.nama     || form.errors.nama     || ""; },
-    get password() { return localErrors.value.password || form.errors.password || ""; },
+    get nama() { return localErrors.value.nama || form.errors.nama || ""; },
 };
-
-// props
-const props = defineProps({
-    backsound: {
-        type: String,
-        default: null,
-    },
-});
 
 // ── Music ──────────────────────────────────────────────────────────
 const handleVisibility = () => {
@@ -66,14 +55,10 @@ const handleVisibility = () => {
 
 const toggleMusic = async () => {
     if (!audioRef.value) {
-        const src = props.backsound ?? "/backsound/intro-song.mp3"; // fallback
-        audioRef.value = new Audio(src);
+        audioRef.value = new Audio("/backsound/intro-song.mp3");
         audioRef.value.loop   = true;
         audioRef.value.volume = 0.4;
-        audioRef.value.addEventListener("error", () => {
-            audioRef.value = null;
-            musicOn.value = false;
-        });
+        audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
     }
     if (musicOn.value) { audioRef.value.pause(); musicOn.value = false; }
     else {
@@ -81,32 +66,24 @@ const toggleMusic = async () => {
         catch { musicOn.value = false; }
     }
 };
-onMounted(() => {
-    if (props.backsound) {
-        toggleMusic();
-    }
-    document.addEventListener("visibilitychange", handleVisibility);
-});
 
-onUnmounted(() => {
-    document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) {
-        audioRef.value.pause();
-        audioRef.value = null;
-    }
-});
+const initAutoMusic = async () => {
+    audioRef.value = new Audio("/backsound/intro-song.mp3");
+    audioRef.value.loop   = true;
+    audioRef.value.volume = 0.4;
+    audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
+    try { await audioRef.value.play(); musicOn.value = true; }
+    catch { musicOn.value = false; }
+};
+
 // ── Validation ─────────────────────────────────────────────────────
 function validateNama() {
-    if (!form.nama.trim()) { localErrors.value.nama = "Nama siswa wajib diisi!"; return false; }
+    if (!form.nama.trim()) { localErrors.value.nama = "Username wajib diisi!"; return false; }
     localErrors.value.nama = ""; return true;
 }
-function validatePassword() {
-    if (!form.password)              { localErrors.value.password = "Password wajib diisi!";      return false; }
-    if (form.password.length < 6)    { localErrors.value.password = "Password minimal 6 karakter"; return false; }
-    localErrors.value.password = ""; return true;
-}
+
 function handleLogin() {
-    if (!validateNama() | !validatePassword()) {
+    if (!validateNama()) {
         shakeBtn.value = true;
         setTimeout(() => (shakeBtn.value = false), 600);
         return;
@@ -126,6 +103,7 @@ onMounted(() => {
     setTimeout(() => { ready.value = true; brandMoved.value = true; }, 80);
     setTimeout(() => { bubbleTimer = setInterval(rotateBubble, 2800); }, 1200);
     document.addEventListener("visibilitychange", handleVisibility);
+    setTimeout(() => { initAutoMusic(); }, 500);
 });
 onUnmounted(() => {
     clearInterval(bubbleTimer);
@@ -143,7 +121,7 @@ onUnmounted(() => {
 
     <div class="root">
 
-        <!-- ══ BG — identik posttest ══ -->
+        <!-- ══ BG ══ -->
         <div class="bg">
             <div class="bg-img"></div>
             <div class="bg-tint"></div>
@@ -163,7 +141,7 @@ onUnmounted(() => {
             <div class="bg-dots"></div>
         </div>
 
-        <!-- ══ TOPBAR — identik posttest ══ -->
+        <!-- ══ TOPBAR ══ -->
         <header class="topbar">
             <button class="tbtn" @click="goBack">
                 <ArrowLeft :size="16" :stroke-width="2.5"/>
@@ -175,7 +153,6 @@ onUnmounted(() => {
                 <span class="brand-name">Geniuss</span>
             </div>
 
-            <!-- Center brand always visible on login page -->
             <div class="brand brand--center">
                 <div class="brand-dot"><Zap :size="13" color="#fff" fill="white" :stroke-width="2"/></div>
                 <span class="brand-name">Geniuss</span>
@@ -186,14 +163,13 @@ onUnmounted(() => {
                     <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
                     <VolumeX v-else        :size="15" :stroke-width="2"/>
                 </button>
-
             </div>
         </header>
 
         <!-- ══ BODY ══ -->
         <div class="body" :class="{ 'body--on': ready }">
 
-            <!-- ── SIDEBAR — identik posttest ── -->
+            <!-- ── SIDEBAR ── -->
             <aside class="sidebar" :class="{ 'sidebar--on': ready }" @click="rotateBubble">
                 <div class="sb-info">
                     <span class="sb-chip">
@@ -237,7 +213,7 @@ onUnmounted(() => {
                 <!-- ══ LOGIN CARD ══ -->
                 <div class="icard">
 
-                    <!-- Blue header band — identik icard-head posttest -->
+                    <!-- Blue header band -->
                     <div class="icard-head">
                         <div class="icard-hdeco icard-hdeco-1"></div>
                         <div class="icard-hdeco icard-hdeco-2"></div>
@@ -248,12 +224,12 @@ onUnmounted(() => {
                             </div>
                             <h2 class="icard-title">Masuk ke Playground</h2>
                             <p class="icard-sub">
-                                Masukkan nama lengkap &amp; password dari gurumu untuk memulai.
+                                Masukkan username dari gurumu untuk memulai.
                             </p>
                         </div>
                     </div>
 
-                    <!-- 3 stat tiles — Merah · Kuning · Hijau -->
+                    <!-- 3 stat tiles -->
                     <div class="icard-stats">
                         <div class="istat istat--red">
                             <div class="istat-icon"><Rocket :size="19" :stroke-width="1.8"/></div>
@@ -275,15 +251,15 @@ onUnmounted(() => {
                     <!-- Form body -->
                     <div class="icard-body">
 
-                        <!-- Field: Nama -->
+                        <!-- Field: Username saja -->
                         <div class="fw">
-                            <label class="flabel">Nama Siswa <span class="req">*</span></label>
+                            <label class="flabel">Username <span class="req">*</span></label>
                             <div class="if-wrap">
                                 <User :size="16" :stroke-width="2.2" class="if-icon"/>
                                 <input
                                     v-model="form.nama"
                                     type="text"
-                                    placeholder="Tulis nama lengkapmu"
+                                    placeholder="Tulis username"
                                     maxlength="60"
                                     autocomplete="off"
                                     :class="['if-input', errors.nama ? 'if-err' : 'if-blue']"
@@ -296,38 +272,13 @@ onUnmounted(() => {
                             <p v-if="errors.nama" class="errmsg">{{ errors.nama }}</p>
                         </div>
 
-                        <!-- Field: Password -->
-                        <div class="fw">
-                            <label class="flabel">Password <span class="req">*</span></label>
-                            <div class="if-wrap">
-                                <Lock :size="16" :stroke-width="2.2" class="if-icon"/>
-                                <input
-                                    v-model="form.password"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    placeholder="Masukkan password"
-                                    maxlength="60"
-                                    autocomplete="off"
-                                    :class="['if-input', 'if-input--pr', errors.password ? 'if-err' : 'if-blue']"
-                                    @focus="localErrors.password = ''; form.clearErrors('password')"
-                                    @blur="validatePassword()"
-                                    @input="localErrors.password = ''; form.clearErrors('password')"
-                                    @keyup.enter="handleLogin"
-                                />
-                                <button type="button" class="if-eye" @click="showPassword = !showPassword">
-                                    <Eye    v-if="showPassword" :size="18" :stroke-width="2.2"/>
-                                    <EyeOff v-else              :size="18" :stroke-width="2.2"/>
-                                </button>
-                            </div>
-                            <p v-if="errors.password" class="errmsg">{{ errors.password }}</p>
-                        </div>
-
                     </div>
                 </div>
 
             </section>
         </div>
 
-        <!-- ══ FOOTER — identik posttest ══ -->
+        <!-- ══ FOOTER ══ -->
         <footer class="footer">
             <div class="footer-inner">
                 <div class="f-space"></div>
@@ -364,7 +315,7 @@ onUnmounted(() => {
 }
 
 /* ════════════════════════════════
-   BG — identik posttest
+   BG
 ════════════════════════════════ */
 .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
 .bg-img  { position: absolute; inset: 0; background: url('/images/templates/background.png') center/cover no-repeat; }
@@ -397,7 +348,7 @@ onUnmounted(() => {
 .bg-dots { position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(255,255,255,.09) 1px,transparent 1px);background-size:34px 34px; }
 
 /* ════════════════════════════════
-   TOPBAR — identik posttest
+   TOPBAR
 ════════════════════════════════ */
 .topbar {
     position: relative; z-index: 50; height: 56px; flex-shrink: 0;
@@ -417,17 +368,15 @@ onUnmounted(() => {
 .tbtn-sq  { padding: 7px 10px; }
 .tbtn--on { background: #2563EB; border-color: #BFDBFE; }
 
-/* Hidden original brand (animates away) */
 .brand {
     position: absolute; left: 50%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 8px;
     pointer-events: none; z-index: 2;
     transition: opacity .34s, transform .34s;
-    opacity: 0; /* always hidden, replaced by brand--center */
+    opacity: 0;
 }
 .brand--hide { opacity: 0; transform: translateX(-50%) scale(.88); }
 
-/* Persistent center brand for login page */
 .brand--center {
     opacity: 1 !important;
     transform: translateX(-50%) !important;
@@ -450,7 +399,7 @@ onUnmounted(() => {
 .body--on { opacity: 1; }
 
 /* ════════════════════════════════
-   SIDEBAR — identik posttest
+   SIDEBAR
 ════════════════════════════════ */
 .sidebar {
     display: flex; flex-direction: column;
@@ -474,7 +423,6 @@ onUnmounted(() => {
 .sb-pills { display: flex; flex-direction: column; gap: 8px; }
 .sb-pill  { display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:800;color:#fff;backdrop-filter:blur(6px); }
 
-/* Mascot area */
 .mascot-wrap { position:relative; padding-left:4px; }
 
 .bubble {
@@ -524,7 +472,7 @@ onUnmounted(() => {
 .main--on { opacity: 1; transform: none; }
 
 /* ════════════════════════════════
-   LOGIN CARD — identik icard posttest
+   LOGIN CARD
 ════════════════════════════════ */
 .icard {
     background: #FDFCFB; border-radius: 20px; overflow: hidden;
@@ -532,7 +480,6 @@ onUnmounted(() => {
     box-shadow: 0 4px 0 #BFDBFE, 0 10px 32px rgba(59,130,246,.10);
 }
 
-/* Blue header */
 .icard-head {
     background: linear-gradient(135deg,#3B82F6 0%,#2563EB 100%);
     position: relative; overflow: hidden;
@@ -550,7 +497,6 @@ onUnmounted(() => {
 .icard-title { font-family:'Righteous',cursive;font-size:clamp(18px,2.5vw,25px);color:#fff;line-height:1.2;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,.15); }
 .icard-sub   { font-size:13px;font-weight:700;color:rgba(255,255,255,.88);line-height:1.6;max-width:460px; }
 
-/* Stat tiles */
 .icard-stats { display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1.5px solid #e2e8f0; }
 .istat { display:flex;flex-direction:column;align-items:center;gap:5px;padding:20px 12px 18px;border-right:1.5px solid #e2e8f0; }
 .istat:last-child { border-right:none; }
@@ -574,7 +520,6 @@ onUnmounted(() => {
 .istat-val  { font-family:'Righteous',cursive;font-size:24px;line-height:1; }
 .istat-lbl  { font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px; }
 
-/* Form body */
 .icard-body { padding: 20px 22px 26px; }
 
 .fw { display:flex;flex-direction:column;gap:5px;margin-bottom:14px; }
@@ -591,7 +536,6 @@ onUnmounted(() => {
     font-weight:700; color:#111827; background:#fff;
     transition:border-color .2s, background .2s, box-shadow .2s;
 }
-.if-input--pr { padding-right:46px; }
 .if-input::placeholder { color:#9ca3af;font-weight:600; }
 .if-blue { border-color:#BFDBFE; }
 .if-blue:hover { border-color:#93c5fd; }
@@ -600,14 +544,11 @@ onUnmounted(() => {
 .if-err { border-color:#fca5a5;background:#fef2f2; }
 .if-err:focus { border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.1); }
 
-.if-eye { position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:#9ca3af;transition:color .15s; }
-.if-eye:hover { color:#3b82f6; }
-
 .errmsg { font-size:11.5px;font-weight:700;color:#ef4444;padding-left:2px;animation:errin .18s ease; }
 @keyframes errin { from{opacity:0;transform:translateY(-3px)} to{opacity:1;transform:none} }
 
 /* ════════════════════════════════
-   FOOTER — identik posttest
+   FOOTER
 ════════════════════════════════ */
 .footer {
     position:relative;z-index:50;
@@ -624,7 +565,6 @@ onUnmounted(() => {
     font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;
     transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;
 }
-/* Yellow = biru sesuai posttest */
 .fbtn--yellow { background:#2563EB;color:#fff;box-shadow:0 3px 12px rgba(37,99,235,.4); }
 .fbtn--yellow:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 5px 16px rgba(37,99,235,.5); }
 .fbtn--yellow:disabled { opacity:.5;cursor:not-allowed; }
