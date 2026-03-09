@@ -11,12 +11,12 @@ use App\Models\User_answers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class PretestController extends Controller
+class PosttestController extends Controller
 {
     /**
-     * Tampilkan halaman pretest.
-     * Route: GET /player/modules/{module}/pretest
-     * Name:  playground.pretest.show
+     * Tampilkan halaman posttest.
+     * Route: GET /player/modules/{module}/posttest
+     * Name:  playground.posttest.show
      */
     public function show(Learning_modules $module)
     {
@@ -25,9 +25,9 @@ class PretestController extends Controller
             return redirect()->route('playground.login');
         }
 
-        // Ambil quiz pretest milik modul ini
+        // Ambil quiz posttest milik modul ini
         $quiz = Quizzes::where('module_id', $module->id)
-            ->where('category', 'pretest')
+            ->where('category', 'posttest')
             ->with([
                 'questions.options',
                 'questions.mascot',
@@ -35,19 +35,12 @@ class PretestController extends Controller
             ])
             ->first();
 
-        // Kalau tidak ada pretest → langsung ke daftar misi
+        // Kalau tidak ada posttest → kembali ke beranda
         if (! $quiz) {
-            return redirect()->route('playground.missions.index', $module->id);
+            return redirect()->route('playground.index');
         }
 
-        // Kalau pretest sudah pernah dikerjakan → skip, langsung ke daftar misi
-        $alreadyDone = Quiz_attempts::where('quiz_id', $quiz->id)
-            ->where('student_id', $player['id'] ?? null)
-            ->exists();
-
-        if ($alreadyDone) {
-            return redirect()->route('playground.missions.index', $module->id);
-        }
+        // Format sama persis dengan MissionController
         $formattedQuiz = [
             'id'         => $quiz->id,
             'type'       => $quiz->type,
@@ -94,7 +87,7 @@ class PretestController extends Controller
             })->toArray(),
         ];
 
-        return Inertia::render('Playground/Mission/TemplatePretest', [
+        return Inertia::render('Playground/Mission/TemplatePosttest', [
             'quiz'   => $formattedQuiz,
             'module' => [
                 'id'          => $module->id,
@@ -109,9 +102,9 @@ class PretestController extends Controller
     }
 
     /**
-     * Simpan jawaban pretest.
-     * Route: POST /player/pretest/submit
-     * Name:  playground.pretest.submit
+     * Simpan jawaban posttest.
+     * Route: POST /player/posttest/submit
+     * Name:  playground.posttest.submit
      *
      * Payload dari Vue:
      * {
@@ -146,7 +139,7 @@ class PretestController extends Controller
             ['started_at' => now(), 'finished_at' => now()]
         );
 
-        // Simpan tiap jawaban — format sama dengan MissionController
+        // Simpan tiap jawaban
         $quizQuestionIds = Questions::where('quiz_id', $quizId)
             ->pluck('id')
             ->map(fn ($id) => (string) $id)
@@ -181,22 +174,12 @@ class PretestController extends Controller
             }
         }
 
-        // Hitung skor pakai helper yang sama dengan MissionController
+        // Hitung dan simpan skor
         $score = $this->calcScore($quizId, $studentId);
         $attempt->update(['score' => $score]);
 
-        // Setelah pretest → ke daftar misi
-        return redirect()->route('playground.missions.index', $request->module_id);
-    }
-
-    // ── Preview (untuk development UI, tanpa session) ───────────────
-    public function preview()
-    {
-        return Inertia::render('Playground/Mission/TemplatePretest', [
-            'quiz'   => null,
-            'module' => ['id' => null, 'name' => 'Preview Pretest', 'description' => ''],
-            'user'   => ['name' => 'Preview', 'class' => '-'],
-        ]);
+        // Setelah posttest → kembali ke beranda
+        return redirect()->route('playground.index');
     }
 
     // ── Helpers ────────────────────────────────────────────────────
@@ -230,7 +213,7 @@ class PretestController extends Controller
     }
 
     /**
-     * Sama persis dengan MissionController::checkAnswer()
+     * Identik dengan MissionController::checkAnswer() dan PretestController::checkAnswer()
      */
     private function checkAnswer(User_answers $answer, $question): array
     {

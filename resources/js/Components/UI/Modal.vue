@@ -45,10 +45,10 @@ const getMaxWidthClass = (size) => {
 const getBorderColorClass = (color) => {
     const colors = {
         blue: "border-blue-200",
-        green: "border-green-200",
-        yellow: "border-yellow-200",
+        green: "border-blue-100",
+        yellow: "border-amber-200",
         red: "border-red-200",
-        purple: "border-purple-200",
+        purple: "border-indigo-200",
     };
     return colors[color];
 };

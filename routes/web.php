@@ -12,7 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
 use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\PretestController;
-use App\Http\Controllers\Student\PostController;
+use App\Http\Controllers\Student\PosttestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,13 +33,13 @@ Route::middleware('auth')->group(function () {
 // Preview route untuk Pretest (tanpa auth) - hanya untuk pengembangan UI
 Route::get('/playground/pretest/preview', [PretestController::class, 'preview'])
     ->name('playground.pretest.preview');
-Route::get('/posttest/preview', [PostController::class, 'preview'])
+Route::get('/posttest/preview', [PosttestController::class, 'preview'])
         ->name('posttest.preview');
-Route::post('/posttest/submit', [PostController::class, 'submit'])
+Route::post('/posttest/submit', [PosttestController::class, 'submit'])
         ->name('posttest.submit');
 
 
-        
+
 // ── Route asli dengan middleware ─────────────────────────────
 Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {
     Route::get('/missions/{mission}/dragdrop', [DragDropController::class, 'show'])
@@ -50,6 +50,14 @@ Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->grou
 Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
+
+    // ── Pretest ──────────────────────────────────────────────────
+    Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])  ->name('pretest.show');
+    Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
+
+    // ── Posttest ─────────────────────────────────────────────────
+    Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])  ->name('posttest.show');
+    Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {

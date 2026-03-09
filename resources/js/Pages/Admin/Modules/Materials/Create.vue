@@ -22,40 +22,36 @@ import {
     Inbox,
     X,
     Image as ImageIcon,
+    Video as VideoIcon,
     Loader2,
 } from "lucide-vue-next";
 
-// Props — sesuai controller create()
 const props = defineProps({
-    module: { type: Object, required: true }, // { id, name }
-    mission: { type: Object, required: true }, // { id, name, order_number }
+    module: { type: Object, required: true },
+    mission: { type: Object, required: true },
     mascots: { type: Array, default: () => [] },
 });
 
-// Wizard state
 const wizardStep = ref(1);
 const successMessage = ref("");
 const showSuccess = ref(false);
 const toastType = ref("success");
 const cardVariant = ref("playful");
 
-// Form Material
-// CATATAN MIGRATION: TIDAK ada kolom thumbnail, hanya image
+// Media type toggle: 'image' | 'video'
+const mediaType = ref("image");
+
 const materialForm = ref({
     title: "",
     description: "",
     content: "",
     mascot_id: null,
-    image: null, // File object
+    image: null, // File gambar atau video (keduanya masuk kolom image)
 });
 
-// Preview image
-const imagePreview = ref(null);
-
-// List materials yang akan disimpan (multi-add sebelum submit)
+const mediaPreview = ref(null);
 const materials = ref([]);
 
-// Mascot options
 const mascotOptions = computed(() => {
     if (!props.mascots || props.mascots.length === 0) return [];
     return props.mascots.map((m) => ({ value: m.id, label: m.name_pose }));
@@ -67,22 +63,27 @@ const showToast = (message, type = "success") => {
     successMessage.value = message;
     toastType.value = type;
     showSuccess.value = true;
-    setTimeout(() => {
-        showSuccess.value = false;
-    }, 2500);
+    setTimeout(() => (showSuccess.value = false), 2500);
 };
 
-// Handle image upload (hanya 1 gambar — sesuai migration hanya kolom 'image')
-const handleImageChange = (event) => {
+// Switch media type — clear file sebelumnya
+const switchMediaType = (type) => {
+    mediaType.value = type;
+    materialForm.value.image = null;
+    mediaPreview.value = null;
+};
+
+// Handle file (gambar atau video) — keduanya ke field `image`
+const handleMediaChange = (event) => {
     const file = event.target.files[0];
     if (file) {
         materialForm.value.image = file;
-        imagePreview.value = URL.createObjectURL(file);
+        mediaPreview.value = URL.createObjectURL(file);
     }
 };
-const removeImage = () => {
+const removeMedia = () => {
     materialForm.value.image = null;
-    imagePreview.value = null;
+    mediaPreview.value = null;
 };
 
 const validateForm = () => {
@@ -107,7 +108,8 @@ const addMaterial = () => {
     materials.value.push({
         ...materialForm.value,
         id: Date.now(),
-        imagePreview: imagePreview.value,
+        mediaType: mediaType.value,
+        mediaPreview: mediaPreview.value,
     });
     materialForm.value = {
         title: "",
@@ -116,7 +118,8 @@ const addMaterial = () => {
         mascot_id: null,
         image: null,
     };
-    imagePreview.value = null;
+    mediaType.value = "image";
+    mediaPreview.value = null;
     showToast("Material ditambahkan ke list.", "success");
 };
 
@@ -127,12 +130,13 @@ const removeMaterial = (id) => {
 
 const editMaterial = (material) => {
     materialForm.value = { ...material };
-    imagePreview.value = material.imagePreview;
+    mediaType.value = material.mediaType || "image";
+    mediaPreview.value = material.mediaPreview;
     materials.value = materials.value.filter((m) => m.id !== material.id);
     wizardStep.value = 1;
 };
 
-// Final save — kirim ke controller store() via FormData (karena ada file upload)
+// Final save — kirim ke controller store()
 const finalSave = () => {
     if (materials.value.length === 0) {
         showToast("Tambahkan minimal 1 material!", "warning");
@@ -140,7 +144,6 @@ const finalSave = () => {
     }
 
     const formData = new FormData();
-
     materials.value.forEach((material, index) => {
         formData.append(`materials[${index}][title]`, material.title);
         formData.append(
@@ -176,7 +179,6 @@ const finalSave = () => {
                 }, 1500);
             },
             onError: (errors) => {
-                console.error("Validation errors:", errors);
                 showToast(
                     "Gagal menyimpan: " + Object.values(errors).join(", "),
                     "error",
@@ -199,7 +201,7 @@ const toggleCardVariant = () => {
                 :class="[
                     'rounded-3xl p-5 mb-8',
                     cardVariant === 'playful'
-                        ? 'bg-white border-4 border-green-200 shadow-playful'
+                        ? 'bg-white border-4 border-blue-200 shadow-playful'
                         : 'bg-white border border-gray-200 shadow-md',
                 ]"
             >
@@ -208,11 +210,11 @@ const toggleCardVariant = () => {
                         <div
                             :class="[
                                 cardVariant === 'playful'
-                                    ? 'bg-green-100 p-3 rounded-2xl border-2 border-green-300'
-                                    : 'bg-green-50 p-2 rounded-lg',
+                                    ? 'bg-blue-100 p-3 rounded-2xl border-2 border-blue-300'
+                                    : 'bg-blue-50 p-2 rounded-lg',
                             ]"
                         >
-                            <FileEdit class="text-green-600 w-6 h-6" />
+                            <FileEdit class="text-blue-600 w-6 h-6" />
                         </div>
                         <div>
                             <h1
@@ -227,7 +229,7 @@ const toggleCardVariant = () => {
                     </div>
                     <Button
                         :variant="
-                            cardVariant === 'playful' ? 'warning' : 'light'
+                            cardVariant === 'playful' ? 'secondary' : 'light'
                         "
                         size="md"
                         :icon="Star"
@@ -246,7 +248,7 @@ const toggleCardVariant = () => {
                             :class="[
                                 'w-10 h-10 rounded-full flex items-center justify-center font-bold',
                                 wizardStep === 1
-                                    ? 'bg-green-500 text-white'
+                                    ? 'bg-blue-500 text-white'
                                     : 'bg-gray-300 text-gray-600',
                             ]"
                         >
@@ -262,7 +264,7 @@ const toggleCardVariant = () => {
                             :class="[
                                 'w-10 h-10 rounded-full flex items-center justify-center font-bold',
                                 wizardStep === 2
-                                    ? 'bg-green-500 text-white'
+                                    ? 'bg-blue-500 text-white'
                                     : 'bg-gray-300 text-gray-600',
                             ]"
                         >
@@ -282,8 +284,8 @@ const toggleCardVariant = () => {
                     title="Form Material"
                     subtitle="Isi informasi material pembelajaran"
                     :icon="FileEdit"
-                    icon-color="green"
-                    border-color="green"
+                    icon-color="blue"
+                    border-color="blue"
                     :hoverable="false"
                 >
                     <div class="space-y-5">
@@ -307,54 +309,113 @@ const toggleCardVariant = () => {
                             required
                         />
 
-                        <!-- Image Upload — sesuai migration hanya kolom 'image' (tidak ada thumbnail) -->
+                        <!-- ===== MEDIA UPLOAD ===== -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 mb-2"
-                                >Gambar</label
+                                class="block text-sm font-bold text-gray-700 mb-3"
+                                >Media Pembelajaran</label
                             >
-                            <div class="space-y-3">
+                            <!-- Tab Toggle Gambar / Video -->
+                            <div class="flex gap-2 mb-4">
+                                <button
+                                    type="button"
+                                    @click="switchMediaType('image')"
+                                    :class="[
+                                        'flex items-center gap-2 px-4 py-2 rounded-xl border-4 font-bold text-sm transition-all',
+                                        mediaType === 'image'
+                                            ? 'bg-blue-500 text-white border-blue-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200 hover:bg-blue-50',
+                                    ]"
+                                >
+                                    <ImageIcon class="w-4 h-4" />Gambar
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="switchMediaType('video')"
+                                    :class="[
+                                        'flex items-center gap-2 px-4 py-2 rounded-xl border-4 font-bold text-sm transition-all',
+                                        mediaType === 'video'
+                                            ? 'bg-blue-500 text-white border-blue-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200 hover:bg-blue-50',
+                                    ]"
+                                >
+                                    <VideoIcon class="w-4 h-4" />Video
+                                </button>
+                            </div>
+
+                            <!-- Upload Gambar -->
+                            <div v-if="mediaType === 'image'" class="space-y-3">
                                 <div
-                                    v-if="imagePreview"
+                                    v-if="mediaPreview"
                                     class="relative inline-block"
                                 >
                                     <img
-                                        :src="imagePreview"
+                                        :src="mediaPreview"
                                         alt="Preview"
-                                        class="h-32 w-32 object-cover rounded-lg border-2 border-gray-300"
+                                        class="h-40 w-auto object-cover rounded-xl border-4 border-blue-200"
                                     />
                                     <button
                                         type="button"
-                                        @click="removeImage"
+                                        @click="removeMedia"
                                         class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                                     >
-                                        <svg
-                                            class="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
+                                        <X class="w-4 h-4" />
                                     </button>
                                 </div>
                                 <label
-                                    class="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border-2 border-blue-200"
+                                    class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 border-4 border-blue-200 font-bold text-sm"
                                 >
-                                    <ImageIcon class="w-5 h-5 mr-2" />
-                                    Pilih Gambar
+                                    <ImageIcon class="w-5 h-5" />{{
+                                        mediaPreview
+                                            ? "Ganti Gambar"
+                                            : "Pilih Gambar"
+                                    }}
                                     <input
                                         type="file"
-                                        @change="handleImageChange"
+                                        @change="handleMediaChange"
                                         accept="image/*"
                                         class="hidden"
                                     />
                                 </label>
+                                <p class="text-xs text-gray-400">
+                                    Format: JPG, PNG, GIF. Maks 2MB.
+                                </p>
+                            </div>
+
+                            <!-- Upload Video -->
+                            <div v-if="mediaType === 'video'" class="space-y-3">
+                                <div v-if="mediaPreview" class="relative">
+                                    <video
+                                        :src="mediaPreview"
+                                        controls
+                                        class="w-full max-h-52 rounded-xl border-4 border-blue-200 bg-black"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="removeMedia"
+                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                    >
+                                        <X class="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <label
+                                    class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 border-4 border-blue-200 font-bold text-sm"
+                                >
+                                    <VideoIcon class="w-5 h-5" />{{
+                                        mediaPreview
+                                            ? "Ganti Video"
+                                            : "Pilih Video"
+                                    }}
+                                    <input
+                                        type="file"
+                                        @change="handleMediaChange"
+                                        accept="video/*"
+                                        class="hidden"
+                                    />
+                                </label>
+                                <p class="text-xs text-gray-400">
+                                    Format: MP4, MOV, AVI, WebM. Maks 50MB.
+                                </p>
                             </div>
                         </div>
 
@@ -368,7 +429,7 @@ const toggleCardVariant = () => {
                             />
                             <div
                                 v-if="materialForm.mascot_id"
-                                class="mt-3 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200"
+                                class="mt-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200"
                             >
                                 <div class="flex items-center gap-3">
                                     <img
@@ -381,22 +442,21 @@ const toggleCardVariant = () => {
                                         class="w-16 h-16 object-contain rounded-lg"
                                     />
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-yellow-800">
+                                        <h4 class="font-bold text-blue-800">
                                             {{
                                                 getSelectedMascot(
                                                     materialForm.mascot_id,
                                                 )?.name
                                             }}
                                         </h4>
-                                        <p class="text-sm text-yellow-600">
+                                        <p class="text-sm text-blue-600">
                                             Maskot ini akan muncul di Materi
                                         </p>
                                     </div>
-                                    <!-- Tombol batalkan -->
                                     <button
                                         type="button"
                                         @click="materialForm.mascot_id = null"
-                                        class="ml-auto p-1.5 rounded-full text-yellow-600 hover:bg-yellow-200 hover:text-yellow-800 transition"
+                                        class="ml-auto p-1.5 rounded-full text-blue-600 hover:bg-blue-200 hover:text-blue-800 transition"
                                         title="Batalkan pilihan maskot"
                                     >
                                         <X class="w-5 h-5" />
@@ -411,10 +471,8 @@ const toggleCardVariant = () => {
                             <p
                                 class="text-sm text-red-700 flex items-center gap-2"
                             >
-                                <AlertTriangle class="w-4 h-4" />
-                                Template modul ini belum memiliki maskot.
-                                Silakan tambahkan maskot di template terlebih
-                                dahulu.
+                                <AlertTriangle class="w-4 h-4" /> Template modul
+                                ini belum memiliki maskot.
                             </p>
                         </div>
                     </div>
@@ -432,29 +490,24 @@ const toggleCardVariant = () => {
                                         ]),
                                     )
                                 "
+                                >Batal</Button
                             >
-                                Batal
-                            </Button>
                             <div class="flex gap-3">
-                                <!-- Tombol langsung ke review jika sudah ada list -->
-
                                 <Button
-                                    variant="success"
+                                    variant="primary"
                                     size="md"
                                     :icon="Plus"
                                     @click="addMaterial"
+                                    >Tambah ke List</Button
                                 >
-                                    Tambah ke List
-                                </Button>
                                 <Button
                                     v-if="materials.length > 0"
-                                    variant="warning"
+                                    variant="secondary"
                                     size="md"
                                     :icon="List"
                                     @click="wizardStep = 2"
+                                    >Review ({{ materials.length }})</Button
                                 >
-                                    Review ({{ materials.length }})
-                                </Button>
                             </div>
                         </div>
                     </template>
@@ -474,7 +527,6 @@ const toggleCardVariant = () => {
                         :hoverable="false"
                     />
 
-                    <!-- List Materials -->
                     <TransitionGroup
                         name="card"
                         tag="div"
@@ -487,13 +539,12 @@ const toggleCardVariant = () => {
                             :title="material.title"
                             :subtitle="material.description"
                             :icon="FileText"
-                            icon-color="green"
-                            border-color="green"
+                            icon-color="blue"
+                            border-color="blue"
                         >
-                            <!-- Mascot Info -->
                             <div class="mb-3">
                                 <div
-                                    class="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200"
+                                    class="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200"
                                 >
                                     <img
                                         v-if="
@@ -505,7 +556,7 @@ const toggleCardVariant = () => {
                                         class="w-8 h-8 object-contain rounded"
                                     />
                                     <span
-                                        class="text-sm font-medium text-yellow-700"
+                                        class="text-sm font-medium text-blue-700"
                                         >{{
                                             getSelectedMascot(
                                                 material.mascot_id,
@@ -515,16 +566,38 @@ const toggleCardVariant = () => {
                                 </div>
                             </div>
 
-                            <!-- Image Preview -->
-                            <div v-if="material.imagePreview" class="mb-3">
+                            <!-- Media Preview -->
+                            <div
+                                v-if="
+                                    material.mediaPreview &&
+                                    material.mediaType === 'image'
+                                "
+                                class="mb-3"
+                            >
                                 <img
-                                    :src="material.imagePreview"
+                                    :src="material.mediaPreview"
                                     alt="Material image"
                                     class="w-full h-32 object-cover rounded-lg"
                                 />
                             </div>
+                            <div
+                                v-else-if="
+                                    material.mediaPreview &&
+                                    material.mediaType === 'video'
+                                "
+                                class="mb-3"
+                            >
+                                <div
+                                    class="flex items-center gap-2 bg-blue-50 p-3 rounded-lg border border-blue-200"
+                                >
+                                    <VideoIcon class="w-5 h-5 text-blue-500" />
+                                    <span
+                                        class="text-sm font-medium text-blue-700"
+                                        >Video terlampir</span
+                                    >
+                                </div>
+                            </div>
 
-                            <!-- Content Preview -->
                             <div class="text-sm text-gray-600 mb-3">
                                 <p class="line-clamp-2">
                                     {{ material.content }}
@@ -534,7 +607,7 @@ const toggleCardVariant = () => {
                             <template #footer>
                                 <div class="flex justify-end gap-2 mt-4">
                                     <Button
-                                        variant="warning"
+                                        variant="secondary"
                                         size="sm"
                                         :icon="Pencil"
                                         @click="editMaterial(material)"
@@ -550,7 +623,6 @@ const toggleCardVariant = () => {
                         </Card>
                     </TransitionGroup>
 
-                    <!-- Empty State -->
                     <div
                         v-if="materials.length === 0"
                         class="text-center py-12"
@@ -565,12 +637,10 @@ const toggleCardVariant = () => {
                             :icon="ArrowLeft"
                             @click="prevStep"
                             class="mt-4"
+                            >Kembali & Tambah Material</Button
                         >
-                            Kembali & Tambah Material
-                        </Button>
                     </div>
 
-                    <!-- Actions -->
                     <div
                         v-if="materials.length > 0"
                         class="flex justify-between"
@@ -583,26 +653,16 @@ const toggleCardVariant = () => {
                             >Kembali</Button
                         >
                         <Button
-                            variant="success"
+                            variant="primary"
                             size="lg"
                             :icon="Check"
                             @click="finalSave"
-                            :disabled="materialForm.processing"
                         >
-                            <span
-                                v-if="materialForm.processing"
-                                class="flex items-center gap-2"
+                            <span class="flex items-center gap-2"
+                                >Simpan Semua Material ({{
+                                    materials.length
+                                }})</span
                             >
-                                <Loader2 class="w-4 h-4 animate-spin" />
-                                Menyimpan...
-                            </span>
-                            <span v-else>
-                                <span class="flex items-center gap-2">
-                                    Simpan Semua Material ({{
-                                        materials.length
-                                    }})
-                                </span>
-                            </span>
                         </Button>
                     </div>
                 </div>

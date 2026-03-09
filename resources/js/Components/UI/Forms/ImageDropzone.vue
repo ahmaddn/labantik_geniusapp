@@ -37,12 +37,12 @@ let currentObjectUrl = null;
 
 const colorClasses = {
     blue: "border-blue-200 focus-within:ring-blue-300",
-    green: "border-green-200 focus-within:ring-green-300",
-    yellow: "border-yellow-200 focus-within:ring-yellow-300",
+    green: "border-blue-100 focus-within:ring-blue-200",
+    yellow: "border-amber-200 focus-within:ring-amber-300",
     red: "border-red-200 focus-within:ring-red-300",
-    purple: "border-purple-200 focus-within:ring-purple-300",
+    purple: "border-indigo-200 focus-within:ring-indigo-300",
     gray: "border-gray-200 focus-within:ring-gray-300",
-    orange: "border-orange-200 focus-within:ring-orange-300",
+    orange: "border-amber-300 focus-within:ring-amber-400",
 };
 
 const revokeCurrentUrl = () => {

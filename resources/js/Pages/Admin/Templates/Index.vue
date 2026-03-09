@@ -39,7 +39,7 @@ const toastType = ref("success");
 const editId = ref(null);
 
 const previewBacksound = ref(null);
-const previewBackground = ref(null); // single: { name, file, preview }
+const previewBackground = ref(null);
 const previewMascots = ref([]);
 
 const form = useForm({ name: "", backsound: null });
@@ -168,7 +168,6 @@ const saveTemplate = () => {
     fd.append("name", form.name);
     if (form.backsound) fd.append("backsound", form.backsound);
 
-    // Background single
     if (previewBackground.value) {
         fd.append("background", previewBackground.value.file);
         fd.append("background_name", previewBackground.value.name);
@@ -400,6 +399,10 @@ const deleteTemplate = () => {
                         button-color="blue"
                         @change="handleBacksoundUpload"
                     />
+                    <!-- Helper text -->
+                    <p class="mt-1.5 text-xs text-gray-400">
+                        Format: MP3, WAV, OGG, AAC &bull; Maks. 5 MB
+                    </p>
                 </div>
 
                 <!-- Background — single -->
@@ -448,6 +451,10 @@ const deleteTemplate = () => {
                         button-color="green"
                         @change="handleBackgroundUpload"
                     />
+                    <!-- Helper text -->
+                    <p class="mt-1.5 text-xs text-gray-400">
+                        Format: JPG, PNG, WEBP &bull; Maks. 5 MB
+                    </p>
                 </div>
 
                 <!-- Mascots -->
@@ -489,6 +496,11 @@ const deleteTemplate = () => {
                         button-color="yellow"
                         @change="handleMascotUpload"
                     />
+                    <!-- Helper text -->
+                    <p class="mt-1.5 text-xs text-gray-400">
+                        Format: JPG, PNG, WEBP &bull; Maks. 5 MB per maskot
+                        &bull; Hapus Background Maskot Sebelum Diupload!
+                    </p>
                 </div>
             </div>
 

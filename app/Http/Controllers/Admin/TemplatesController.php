@@ -33,7 +33,7 @@ class TemplatesController extends Controller
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:20480',
+            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:5120 ',
             'background'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'background_name' => 'nullable|string|max:255',
             'mascots.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -102,7 +102,7 @@ class TemplatesController extends Controller
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:20480',
+            'backsound'       => 'nullable|file|extensions:mp3,wav,ogg,aac|max:5120 ',
             'background'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'background_name' => 'nullable|string|max:255',
             'mascots.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',

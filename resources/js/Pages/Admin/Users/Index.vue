@@ -41,6 +41,7 @@ const props = defineProps({
 const page = usePage();
 const currentRole = page.props.auth?.user?.role || null;
 const isGuru = currentRole === "guru";
+const authUser = page.props.auth.user; // ← tambahkan ini
 
 // Role options untuk select
 const allRoleOptions = [
@@ -71,20 +72,19 @@ const columns = [
     },
 ];
 
-// Konfigurasi action buttons untuk DataTable
 const actions = [
     {
         name: "edit",
         icon: Pencil,
         class: "bg-yellow-400 border-yellow-500",
-        // show only if not guru OR the row is a student
-        showIf: (row) => !isGuru || row.role === "student",
+        showIf: (row) =>
+            (!isGuru || row.role === "siswa") && authUser.id !== row.id,
     },
     {
         name: "delete",
         icon: Trash2,
         class: "bg-red-400 border-red-500",
-        showIf: () => !isGuru,
+        showIf: (row) => !isGuru && authUser.id !== row.id,
     },
 ];
 
@@ -92,6 +92,7 @@ const editId = ref(null);
 const form = useForm({
     id: null,
     name: "",
+    username: "",
     email: "",
     role: "",
     password: "",
@@ -144,7 +145,13 @@ const getFirstError = (errors) => {
 };
 
 const saveUser = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.role) {
+    if (
+        !form.name.trim() ||
+        !form.username.trim() ||
+        !form.password.trim() ||
+        !form.email.trim() ||
+        !form.role
+    ) {
         showToast("Semua kolom wajib diisi.", "error");
         return;
     }
@@ -293,6 +300,16 @@ onUnmounted(() => {
                     type="email"
                     label="Email"
                     placeholder="Email"
+                    :icon="Mail"
+                    required
+                    border-color="blue"
+                />
+
+                <InputField
+                    v-model="form.username"
+                    type="text"
+                    label="Username"
+                    placeholder="Username"
                     :icon="Mail"
                     required
                     border-color="blue"

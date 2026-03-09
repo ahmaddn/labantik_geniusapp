@@ -71,24 +71,44 @@ const cardClasses = computed(() => {
 });
 
 const iconBgClasses = computed(() => {
+    const map = {
+        blue: "bg-blue-100 border-blue-300",
+        green: "bg-green-50 border-green-200",
+        yellow: "bg-amber-50 border-amber-200",
+        red: "bg-red-50 border-red-200",
+        purple: "bg-indigo-50 border-indigo-200",
+    };
+    const cls = map[props.iconColor] || map.blue;
     if (props.variant === "playful") {
-        return `bg-${props.iconColor}-100 p-3 rounded-2xl border-2 border-${props.iconColor}-300`;
+        return `${cls} p-3 rounded-2xl border-2`;
     }
-    return `bg-${props.iconColor}-50 p-2 rounded-lg`;
+    return `${cls.split(" ")[0]} p-2 rounded-lg`;
+});
+
+const iconTextClass = computed(() => {
+    const map = {
+        blue: "text-blue-600",
+        green: "text-green-500",
+        yellow: "text-amber-500",
+        red: "text-red-500",
+        purple: "text-indigo-500",
+    };
+    return map[props.iconColor] || map.blue;
 });
 
 const badgeClasses = computed(() => {
     const colorMap = {
-        green: "bg-green-100 text-green-700 border-green-300",
-        blue: "bg-blue-100 text-blue-700 border-blue-300",
-        yellow: "bg-yellow-100 text-yellow-700 border-yellow-300",
-        red: "bg-red-100 text-red-700 border-red-300",
-        purple: "bg-purple-100 text-purple-700 border-purple-300",
+        green: "bg-blue-50 text-blue-500 border-blue-200",
+        blue: "bg-green-100 text-green-700 border-green-300",
+        yellow: "bg-amber-50 text-amber-600 border-amber-200",
+        red: "bg-red-50 text-red-500 border-red-200",
+        purple: "bg-indigo-50 text-indigo-600 border-indigo-200",
     };
+    const cls = colorMap[props.badgeColor] || colorMap.blue;
     if (props.variant === "playful") {
-        return `inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 ${colorMap[props.badgeColor] || colorMap.green}`;
+        return `inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 ${cls}`;
     }
-    return `inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${colorMap[props.badgeColor] || colorMap.green}`;
+    return `inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${cls}`;
 });
 
 const handleClick = (e) => {
@@ -127,7 +147,7 @@ const handleAction = (action, index) => {
                 <component
                     :is="icon"
                     :class="[
-                        `text-${iconColor}-600`,
+                        iconTextClass,
                         variant === 'playful' ? 'w-6 h-6' : 'w-5 h-5',
                     ]"
                 />

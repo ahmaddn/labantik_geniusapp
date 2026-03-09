@@ -66,12 +66,12 @@ const updateValue = (event) => {
 const getBorderColorClass = computed(() => {
     const colors = {
         blue: "border-blue-200 focus:border-blue-400",
-        green: "border-green-200 focus:border-green-400",
-        yellow: "border-yellow-200 focus:border-yellow-400",
+        green: "border-blue-100 focus:border-blue-300",
+        yellow: "border-amber-200 focus:border-amber-400",
         red: "border-red-200 focus:border-red-400",
-        purple: "border-purple-200 focus:border-purple-400",
+        purple: "border-indigo-200 focus:border-indigo-400",
         gray: "border-gray-200 focus:border-gray-400",
-        orange: "border-orange-200 focus:border-orange-400",
+        orange: "border-amber-300 focus:border-amber-500",
     };
     return colors[props.borderColor];
 });
