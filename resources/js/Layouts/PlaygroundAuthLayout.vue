@@ -30,7 +30,6 @@ defineExpose({
     <!-- ░░ FULL PAGE WITH BACKGROUND IMAGE ░░ -->
     <div class="landing-page">
         <!-- Background Image -->
-        <div class="bg-image"></div>
 
         <!-- ░░ MASCOT CHARACTER IMAGE ░░ -->
         <div class="mascot" :class="{ bounce: mascotBounce }">

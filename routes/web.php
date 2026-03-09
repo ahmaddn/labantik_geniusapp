@@ -33,6 +33,11 @@ Route::middleware('auth')->group(function () {
 // Preview route untuk Pretest (tanpa auth) - hanya untuk pengembangan UI
 Route::get('/playground/pretest/preview', [PretestController::class, 'preview'])
     ->name('playground.pretest.preview');
+Route::get('/posttest/preview', [PosttestController::class, 'preview'])
+        ->name('posttest.preview');
+Route::post('/posttest/submit', [PosttestController::class, 'submit'])
+        ->name('posttest.submit');
+
 
 
 // ── Route asli dengan middleware ─────────────────────────────

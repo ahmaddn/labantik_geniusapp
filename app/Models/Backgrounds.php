@@ -30,4 +30,9 @@ class Backgrounds extends Model
             }
         });
     }
+    // Models/Templates.php
+public function backgrounds()
+{
+    return $this->hasMany(Backgrounds::class, 'template_id');
+}
 }

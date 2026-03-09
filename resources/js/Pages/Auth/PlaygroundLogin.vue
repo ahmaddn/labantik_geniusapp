@@ -1,124 +1,94 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
-import { Eye, EyeOff, Zap, LogIn, User, Lock } from "lucide-vue-next";
+import {
+    Zap, LogIn, User,
+    Rocket, Music2, VolumeX, ArrowLeft,
+    GraduationCap, Sparkles, Star, BookOpen,
+    Shield,
+} from "lucide-vue-next";
 
-const ready = ref(false);
-const shakeBtn = ref(false);
-const showPassword = ref(false);
-const musicOn = ref(false);
-const audioRef = ref(null);
-
-// ── Speech bubble ─────────────────────────────────────────────────
+const ready      = ref(false);
+const brandMoved = ref(false);
+const musicOn    = ref(false);
+const audioRef   = ref(null);
+const props      = defineProps({
+    backsound: { type: String, default: null },
+    background: { type: String, default: null },
+});
+// ── Speech bubble ──────────────────────────────────────────────────
 const BUBBLE_LINES = [
     "Hai! Aku Geni 👋",
-    "Udah siap Maki pemerintah? 😎",
+    "Udah siap belajar? 😎",
     "Kamu pasti bisa! 💪",
     "Yuk, masuk dulu~",
-    "Hidupp Jokowiii ⚡",
-    "AHH... Pria Solo itu lagi!",
-    "Ayo jadi Maniac Sawit! 🏆",
+    "Siap jadi jagoan Geniuss? 🚀",
+    "Ayo kita berkompetisi 🏆",
     "Halo, sobat Geniuss! 😊",
 ];
-const bubbleText = ref(BUBBLE_LINES[0]);
+const bubbleIdx     = ref(0);
 const bubbleVisible = ref(true);
-const bubbleIndex = ref(0);
-let bubbleTimer = null;
+let   bubbleTimer   = null;
 
-function startBubble() {
-    bubbleTimer = setInterval(() => {
-        bubbleVisible.value = false;
-        setTimeout(() => {
-            bubbleIndex.value = (bubbleIndex.value + 1) % BUBBLE_LINES.length;
-            bubbleText.value = BUBBLE_LINES[bubbleIndex.value];
-            bubbleVisible.value = true;
-        }, 380);
-    }, 2800);
-}
+const rotateBubble = () => {
+    bubbleVisible.value = false;
+    setTimeout(() => {
+        bubbleIdx.value = (bubbleIdx.value + 1) % BUBBLE_LINES.length;
+        bubbleVisible.value = true;
+    }, 300);
+};
 
-const form = useForm({ nama: "", password: "" });
-const loginUrl = route("login.admin");
-const localErrors = ref({ nama: "", password: "" });
+// ── Form ───────────────────────────────────────────────────────────
+const form        = useForm({ nama: "" });
+const loginUrl    = route("login.admin");
+const localErrors = ref({ nama: "" });
+const shakeBtn    = ref(false);
 
+const errors = {
+    get nama() { return localErrors.value.nama || form.errors.nama || ""; },
+};
+
+// ── Music ──────────────────────────────────────────────────────────
 const handleVisibility = () => {
     if (!audioRef.value) return;
     document.hidden
         ? audioRef.value.pause()
-        : musicOn.value && audioRef.value.play().catch(() => {});
+        : (musicOn.value && audioRef.value.play().catch(() => {}));
 };
-
-onMounted(() => {
-    setTimeout(() => (ready.value = true), 80);
-    setTimeout(() => startBubble(), 1200);
-    document.addEventListener("visibilitychange", handleVisibility);
-});
-
-onUnmounted(() => {
-    document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) {
-        audioRef.value.pause();
-        audioRef.value = null;
-    }
-    if (bubbleTimer) {
-        clearInterval(bubbleTimer);
-        bubbleTimer = null;
-    }
-});
 
 const toggleMusic = async () => {
     if (!audioRef.value) {
-        audioRef.value = new Audio("/backsound/backsound.mp3");
-        audioRef.value.loop = true;
+// Update toggleMusic — ganti hardcode dengan props
+audioRef.value = new Audio(props.backsound)
+        audioRef.value.loop   = true;
         audioRef.value.volume = 0.4;
-        audioRef.value.addEventListener("error", () => {
-            audioRef.value = null;
-            musicOn.value = false;
-        });
+        audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
     }
-    if (musicOn.value) {
-        audioRef.value.pause();
-        musicOn.value = false;
-    } else {
-        try {
-            await audioRef.value.play();
-            musicOn.value = true;
-        } catch {
-            musicOn.value = false;
-        }
+    if (musicOn.value) { audioRef.value.pause(); musicOn.value = false; }
+    else {
+        try { await audioRef.value.play(); musicOn.value = true; }
+        catch { musicOn.value = false; }
     }
 };
 
-function validateNama() {
-    if (!form.nama.trim()) {
-        localErrors.value.nama = "Nama siswa wajib diisi!";
-        return false;
-    }
-    
-    localErrors.value.nama = "";
-    return true;
-}
-function validatePassword() {
-    if (!form.password) {
-        localErrors.value.password = "Password wajib diisi!";
-        return false;
-    }
-    if (form.password.length < 6) {
-        localErrors.value.password = "Password minimal 6 karakter";
-        return false;
-    }
-    localErrors.value.password = "";
-    return true;
-}
-const errors = {
-    get nama() {
-        return localErrors.value.nama || form.errors.nama || "";
-    },
-    get password() {
-        return localErrors.value.password || form.errors.password || "";
-    },
+const initAutoMusic = async () => {
+    audioRef.value = new Audio(props.backsound)
+
+    audioRef.value.loop   = true;
+    audioRef.value.volume = 0.4;
+    audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
+    try { await audioRef.value.play(); musicOn.value = true; }
+    catch { musicOn.value = false; }
 };
+
+// ── Validation ─────────────────────────────────────────────────────
+function validateNama() {
+    if (!form.nama.trim()) { localErrors.value.nama = "Username wajib diisi!"; return false; }
+    localErrors.value.nama = ""; return true;
+}
+
 function handleLogin() {
-    if (!validateNama() | !validatePassword()) {
+    if (!validateNama()) {
         shakeBtn.value = true;
         setTimeout(() => (shakeBtn.value = false), 600);
         return;
@@ -131,992 +101,519 @@ function handleLogin() {
         },
     });
 }
+
+function goBack() { router.visit(loginUrl); }
+
+onMounted(() => {
+    setTimeout(() => { ready.value = true; brandMoved.value = true; }, 80);
+    setTimeout(() => { bubbleTimer = setInterval(rotateBubble, 2800); }, 1200);
+    document.addEventListener("visibilitychange", handleVisibility);
+    setTimeout(() => { initAutoMusic(); }, 500);
+});
+onUnmounted(() => {
+    clearInterval(bubbleTimer);
+    document.removeEventListener("visibilitychange", handleVisibility);
+    if (audioRef.value) { audioRef.value.pause(); audioRef.value = null; }
+});
 </script>
 
 <template>
-    <div style="display: none">
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
-            rel="stylesheet"
-        />
+    <div style="display:none">
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet"/>
     </div>
 
-    <div class="pg">
+    <div class="root">
+
+        <!-- ══ BG ══ -->
+        <div class="bg">
+            <div class="bg-img" :style="background ? `background-image: url('${background}')` : ''"></div>
+            <div class="bg-tint"></div>
+            <div class="blob b1"></div>
+            <div class="blob b2"></div>
+            <div class="blob b3"></div>
+            <div class="sh sh-circle c1"></div>
+            <div class="sh sh-circle c2"></div>
+            <div class="sh sh-ring r1"></div>
+            <div class="sh sh-ring r2"></div>
+            <div class="sh sh-ring r3"></div>
+            <div class="sh sh-dot d1"></div>
+            <div class="sh sh-dot d2"></div>
+            <div class="sh sh-dot d3"></div>
+            <div class="sh sh-dot d4"></div>
+            <div class="sh sh-dot d5"></div>
+            <div class="bg-dots"></div>
+        </div>
+
         <!-- ══ TOPBAR ══ -->
         <header class="topbar">
-            <div class="tw flex items-center justify-between">
-                <div class="brand">
-                    <div class="brand-ico">
-                        <Zap
-                            :size="14"
-                            color="#fff"
-                            fill="white"
-                            :stroke-width="2.5"
-                        />
-                    </div>
-                    <span class="brand-nm">Geniuss</span>
-                </div>
-                <div>
-                    <a :href="loginUrl" class="btn btn--secondary"
-                        >Kembali ke Login</a
-                    >
-                </div>
+            <button class="tbtn" @click="goBack">
+                <ArrowLeft :size="16" :stroke-width="2.5"/>
+                <span class="tbtn-lbl">Login Ke Admin</span>
+            </button>
+
+            <div class="brand" :class="{ 'brand--hide': brandMoved }">
+                <div class="brand-dot"><Zap :size="13" color="#fff" fill="white" :stroke-width="2"/></div>
+                <span class="brand-name">Geniuss</span>
+            </div>
+
+            <div class="brand brand--center">
+                <div class="brand-dot"><Zap :size="13" color="#fff" fill="white" :stroke-width="2"/></div>
+                <span class="brand-name">Geniuss</span>
+            </div>
+
+            <div class="topbar-r">
+                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic">
+                    <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
+                    <VolumeX v-else        :size="15" :stroke-width="2"/>
+                </button>
             </div>
         </header>
 
-        <!-- ══ HERO SCENE ══ -->
-        <div class="scene" :class="{ ready }">
-            <div class="layout">
-                <!-- ══ LEFT COL ══ -->
-                <div class="left-col" :class="{ show: ready }">
-                    <div class="tagline-row">
-                        <div class="tagline-badge">
-                            <Zap
-                                :size="11"
-                                color="#fff"
-                                fill="white"
-                                :stroke-width="2.5"
-                            />
-                            <span>Selamat Datang!</span>
+        <!-- ══ BODY ══ -->
+        <div class="body" :class="{ 'body--on': ready }">
+
+            <!-- ── SIDEBAR ── -->
+            <aside class="sidebar" :class="{ 'sidebar--on': ready }" @click="rotateBubble">
+                <div class="sb-info">
+                    <span class="sb-chip">
+                        <GraduationCap :size="11" :stroke-width="2.5"/>
+                        Playground
+                    </span>
+                    <h1 class="sb-title">Selamat Datang!</h1>
+                    <p class="sb-sub">Masuk dan mulai petualangan belajarmu bersama Geniuss hari ini.</p>
+
+                    <div class="sb-pills">
+                        <div class="sb-pill">
+                            <BookOpen :size="13" :stroke-width="2"/>
+                            <span>Mode Belajar</span>
                         </div>
-                    </div>
-
-                    <h1 class="hero-title">
-                        Belajar jadi<br />
-                        <span class="ht-accent">Lebih Seru!</span>
-                    </h1>
-                    <p class="hero-sub">
-                        Masuk dan mulai petualangan belajarmu<br />bersama
-                        Geniuss hari ini.
-                    </p>
-
-                    <!-- Mascot + Speech Bubble -->
-                    <div class="mascot-wrap">
-                        <!-- Speech Bubble -->
-                        <Transition name="bubble">
-                            <div v-if="bubbleVisible" class="speech-bubble">
-                                <span class="bubble-text">{{
-                                    bubbleText
-                                }}</span>
-                            </div>
-                        </Transition>
-
-                        <div class="mascot-glow"></div>
-                        <img
-                            src="/images/templates/pose_keren.png"
-                            alt="Maskot Geniuss"
-                            class="mascot-img"
-                        />
+                        <div class="sb-pill">
+                            <Sparkles :size="13" :stroke-width="2"/>
+                            <span>Interaktif</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- ══ RIGHT COL ══ -->
-                <div class="right-col" :class="{ show: ready }">
-                    <div class="card">
-                        <div class="card-top-bar"></div>
+                <!-- Mascot + Bubble -->
+                <div class="mascot-wrap">
+                    <Transition name="bbl">
+                        <div v-if="bubbleVisible" class="bubble bubble--intro">
+                            <span>{{ BUBBLE_LINES[bubbleIdx] }}</span>
+                            <i class="bbl-o"></i>
+                            <i class="bbl-i"></i>
+                        </div>
+                    </Transition>
+                    <div class="mascot-frame">
+                        <img src="/images/templates/pose_keren.png" alt="Maskot Geniuss" class="mascot"/>
+                        <div class="mascot-shadow"></div>
+                    </div>
+                </div>
+            </aside>
 
-                        <div class="card-inner">
-                            <div class="logo-row">
-                                <div class="logo-ico">
-                                    <Zap
-                                        :size="19"
-                                        color="#fff"
-                                        fill="white"
-                                        :stroke-width="2.4"
-                                    />
-                                </div>
-                                <div>
-                                    <div class="logo-name">
-                                        Geni<span class="la">uss</span>
-                                    </div>
-                                    <div class="logo-sub">
-                                        Web Education Platform
-                                    </div>
-                                </div>
+            <!-- ── MAIN PANEL ── -->
+            <section class="main" :class="{ 'main--on': ready }">
+
+                <!-- ══ LOGIN CARD ══ -->
+                <div class="icard">
+
+                    <!-- Blue header band -->
+                    <div class="icard-head">
+                        <div class="icard-hdeco icard-hdeco-1"></div>
+                        <div class="icard-hdeco icard-hdeco-2"></div>
+                        <div class="icard-head-inner">
+                            <div class="icard-eyebrow">
+                                <GraduationCap :size="11" :stroke-width="2.5"/>
+                                <span>Playground Geniuss</span>
                             </div>
-
-                            <div class="divider-light"></div>
-
-                            <h2 class="card-title">Masuk ke Playground</h2>
-                            <p class="card-hint">
-                                Masukkan nama &amp; password dari gurumu
+                            <h2 class="icard-title">Masuk ke Playground</h2>
+                            <p class="icard-sub">
+                                Masukkan username dari gurumu untuk memulai.
                             </p>
-
-                            <div class="form-stack">
-                                <!-- Nama -->
-                                <div class="fw">
-                                    <label class="flabel"
-                                        >Nama Siswa
-                                        <span class="req">*</span></label
-                                    >
-                                    <div class="if-wrap">
-                                        <User
-                                            :size="16"
-                                            :stroke-width="2.2"
-                                            class="if-icon"
-                                        />
-                                        <input
-                                            v-model="form.nama"
-                                            type="text"
-                                            placeholder="Tulis nama lengkapmu"
-                                            maxlength="60"
-                                            autocomplete="off"
-                                            :class="[
-                                                'if-input',
-                                                errors.nama
-                                                    ? 'if-err'
-                                                    : 'if-blue',
-                                            ]"
-                                            @focus="
-                                                localErrors.nama = '';
-                                                form.clearErrors('nama');
-                                            "
-                                            @blur="validateNama()"
-                                            @input="
-                                                localErrors.nama = '';
-                                                form.clearErrors('nama');
-                                            "
-                                            @keyup.enter="handleLogin"
-                                        />
-                                    </div>
-                                    <p v-if="errors.nama" class="errmsg">
-                                        {{ errors.nama }}
-                                    </p>
-                                </div>
-
-                                <!-- Password -->
-                                <div class="fw">
-                                    <label class="flabel"
-                                        >Password
-                                        <span class="req">*</span></label
-                                    >
-                                    <div class="if-wrap">
-                                        <Lock
-                                            :size="16"
-                                            :stroke-width="2.2"
-                                            class="if-icon"
-                                        />
-                                        <input
-                                            v-model="form.password"
-                                            :type="
-                                                showPassword
-                                                    ? 'text'
-                                                    : 'password'
-                                            "
-                                            placeholder="Masukkan password"
-                                            maxlength="60"
-                                            autocomplete="off"
-                                            :class="[
-                                                'if-input',
-                                                'if-input--pr',
-                                                errors.password
-                                                    ? 'if-err'
-                                                    : 'if-blue',
-                                            ]"
-                                            @focus="
-                                                localErrors.password = '';
-                                                form.clearErrors('password');
-                                            "
-                                            @blur="validatePassword()"
-                                            @input="
-                                                localErrors.password = '';
-                                                form.clearErrors('password');
-                                            "
-                                            @keyup.enter="handleLogin"
-                                        />
-                                        <button
-                                            type="button"
-                                            class="if-eye"
-                                            @click="
-                                                showPassword = !showPassword
-                                            "
-                                        >
-                                            <Eye
-                                                v-if="showPassword"
-                                                :size="18"
-                                                :stroke-width="2.2"
-                                            />
-                                            <EyeOff
-                                                v-else
-                                                :size="18"
-                                                :stroke-width="2.2"
-                                            />
-                                        </button>
-                                    </div>
-                                    <p v-if="errors.password" class="errmsg">
-                                        {{ errors.password }}
-                                    </p>
-                                </div>
-
-                                <!-- Submit -->
-                                <button
-                                    class="btn"
-                                    :class="{
-                                        active: form.nama && form.password,
-                                        loading: form.processing,
-                                        shake: shakeBtn,
-                                    }"
-                                    :disabled="form.processing"
-                                    @click="handleLogin"
-                                >
-                                    <template v-if="!form.processing">
-                                        <LogIn :size="17" :stroke-width="2.5" />
-                                        Masuk Sekarang
-                                    </template>
-                                    <template v-else>
-                                        <span class="spinner"></span>
-                                        Memproses...
-                                    </template>
-                                </button>
-                            </div>
                         </div>
                     </div>
+
+                    <!-- 3 stat tiles -->
+                    <div class="icard-stats">
+                        <div class="istat istat--red">
+                            <div class="istat-icon"><Rocket :size="19" :stroke-width="1.8"/></div>
+                            <span class="istat-val">Fun</span>
+                            <span class="istat-lbl">Belajar</span>
+                        </div>
+                        <div class="istat istat--yellow">
+                            <div class="istat-icon"><Star :size="19" :stroke-width="1.8" fill="currentColor"/></div>
+                            <span class="istat-val">XP</span>
+                            <span class="istat-lbl">Reward</span>
+                        </div>
+                        <div class="istat istat--green">
+                            <div class="istat-icon"><Shield :size="19" :stroke-width="1.8"/></div>
+                            <span class="istat-val">Aman</span>
+                            <span class="istat-lbl">Terjaga</span>
+                        </div>
+                    </div>
+
+                    <!-- Form body -->
+                    <div class="icard-body">
+
+                        <!-- Field: Username saja -->
+                        <div class="fw">
+                            <label class="flabel">Username <span class="req">*</span></label>
+                            <div class="if-wrap">
+                                <User :size="16" :stroke-width="2.2" class="if-icon"/>
+                                <input
+                                    v-model="form.nama"
+                                    type="text"
+                                    placeholder="Tulis username"
+                                    maxlength="60"
+                                    autocomplete="off"
+                                    :class="['if-input', errors.nama ? 'if-err' : 'if-blue']"
+                                    @focus="localErrors.nama = ''; form.clearErrors('nama')"
+                                    @blur="validateNama()"
+                                    @input="localErrors.nama = ''; form.clearErrors('nama')"
+                                    @keyup.enter="handleLogin"
+                                />
+                            </div>
+                            <p v-if="errors.nama" class="errmsg">{{ errors.nama }}</p>
+                        </div>
+
+                    </div>
                 </div>
-            </div>
+
+            </section>
         </div>
 
-        <!-- ══ MUSIC FAB ══ -->
-        <button
-            class="music-fab"
-            :class="{ on: musicOn }"
-            @click="toggleMusic"
-            :title="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
-        >
-            <svg
-                v-if="musicOn"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-            </svg>
-            <svg
-                v-else
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-            >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-            <span v-if="musicOn" class="fab-pulse"></span>
-        </button>
+        <!-- ══ FOOTER ══ -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="f-space"></div>
+                <button
+                    class="fbtn fbtn--yellow"
+                    :class="{ shake: shakeBtn, loading: form.processing }"
+                    :disabled="form.processing"
+                    @click="handleLogin">
+                    <template v-if="!form.processing">
+                        <LogIn :size="14" :stroke-width="2.5"/>
+                        <span>Masuk Sekarang</span>
+                    </template>
+                    <template v-else>
+                        <span class="spinner"></span>
+                        <span>Memproses…</span>
+                    </template>
+                </button>
+            </div>
+        </footer>
+
     </div>
 </template>
 
 <style scoped>
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Nunito', sans-serif;
+    position: relative;
+    overflow-x: hidden;
 }
 
 /* ════════════════════════════════
-   PAGE
+   BG
 ════════════════════════════════ */
-.pg {
-    height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
-    font-family: "Nunito", sans-serif;
-    background: url("/images/templates/background.png") top center / cover
-        no-repeat;
-    display: flex;
-    flex-direction: column;
-}
+.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.bg-img  { position: absolute; inset: 0; background: url('/images/templates/background.png') center/cover no-repeat; }
+.bg-tint { position: absolute; inset: 0; background: #2563EB; opacity: .52; }
+
+.blob { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
+.b1 { width:480px;height:480px;top:-140px;left:-100px;background:#1d4ed8;opacity:.35;animation:bDrift 20s ease-in-out infinite alternate; }
+.b2 { width:380px;height:380px;bottom:-100px;right:-80px;background:#34D399;opacity:.22;animation:bDrift2 24s ease-in-out infinite alternate; }
+.b3 { width:260px;height:260px;top:38%;left:52%;background:#BFDBFE;opacity:.18;animation:bDrift 28s ease-in-out 6s infinite alternate; }
+@keyframes bDrift  { 0%{transform:translate(0,0)} 50%{transform:translate(30px,20px) scale(1.05)} 100%{transform:translate(-15px,35px)} }
+@keyframes bDrift2 { 0%{transform:translate(0,0)} 50%{transform:translate(-28px,-18px) scale(1.06)} 100%{transform:translate(22px,-40px)} }
+
+.sh { position: absolute; pointer-events: none; }
+.sh-circle { border-radius:50%; background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1); animation:sDrift ease-in-out infinite alternate; }
+.c1{width:150px;height:150px;top:-30px;left:-25px;animation-duration:22s;}
+.c2{width:90px;height:90px;bottom:70px;right:50px;animation-duration:28s;animation-delay:4s;}
+.sh-ring { border-radius:50%; background:transparent; border:1.5px solid rgba(191,219,254,.2); animation:rPulse ease-out infinite; }
+.r1{width:300px;height:300px;top:-60px;left:-60px;animation-duration:9s;}
+.r2{width:240px;height:240px;bottom:-50px;right:-50px;animation-duration:12s;animation-delay:2s;}
+.r3{width:180px;height:180px;top:38%;left:58%;animation-duration:10s;animation-delay:5s;}
+.sh-dot { border-radius:50%; background:rgba(255,255,255,.45); animation:dFloat linear infinite; }
+.d1{width:5px;height:5px;top:12%;left:9%;animation-duration:14s;}
+.d2{width:3px;height:3px;top:32%;left:22%;animation-duration:18s;animation-delay:2s;}
+.d3{width:6px;height:6px;top:58%;left:7%;animation-duration:12s;animation-delay:5s;}
+.d4{width:4px;height:4px;top:18%;right:11%;animation-duration:16s;animation-delay:1s;}
+.d5{width:5px;height:5px;top:72%;right:16%;animation-duration:20s;animation-delay:3.5s;}
+@keyframes sDrift { 0%{transform:translate(0,0) rotate(0)} 50%{transform:translate(14px,-10px) rotate(6deg)} 100%{transform:translate(-10px,18px) rotate(-4deg)} }
+@keyframes rPulse { 0%{transform:scale(1);opacity:.38} 70%{transform:scale(1.38);opacity:.06} 100%{transform:scale(1.65);opacity:0} }
+@keyframes dFloat { 0%{transform:translateY(0);opacity:0} 10%{opacity:.55} 90%{opacity:.25} 100%{transform:translateY(-150px);opacity:0} }
+.bg-dots { position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(255,255,255,.09) 1px,transparent 1px);background-size:34px 34px; }
 
 /* ════════════════════════════════
    TOPBAR
 ════════════════════════════════ */
 .topbar {
-    flex-shrink: 0;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
-    padding: 0 32px;
-    z-index: 20;
+    position: relative; z-index: 50; height: 56px; flex-shrink: 0;
+    display: flex; align-items: center; padding: 0 18px;
+    background: rgba(255,255,255,.10); backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,.16);
 }
-.tw {
-    width: 100%;
+.tbtn {
+    display: flex; align-items: center; gap: 6px; padding: 7px 13px;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+    border-radius: 10px; font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800; color: #fff; cursor: pointer;
+    transition: background .18s, transform .15s; flex-shrink: 0;
+    text-decoration: none;
 }
+.tbtn:hover { background: rgba(255,255,255,.22); transform: translateY(-1px); }
+.tbtn-sq  { padding: 7px 10px; }
+.tbtn--on { background: #2563EB; border-color: #BFDBFE; }
+
 .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 8px;
+    pointer-events: none; z-index: 2;
+    transition: opacity .34s, transform .34s;
+    opacity: 0;
 }
-.brand-ico {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(140deg, #60a5fa, #1d4ed8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.4);
+.brand--hide { opacity: 0; transform: translateX(-50%) scale(.88); }
+
+.brand--center {
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
 }
-.brand-nm {
-    font-family: "Righteous", cursive;
-    font-size: 18px;
-    color: #fff;
-    letter-spacing: -0.1px;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
-}
+
+.brand-dot  { width:28px;height:28px;border-radius:8px;background:#2563EB;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(37,99,235,.5); }
+.brand-name { font-family:'Righteous',cursive;font-size:18px;color:#fff;white-space:nowrap; }
+.topbar-r   { display:flex;align-items:center;gap:8px;margin-left:auto;z-index:3; }
 
 /* ════════════════════════════════
-   SCENE + LAYOUT
+   BODY GRID
 ════════════════════════════════ */
-.scene {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 40px;
-    overflow: hidden;
+.body {
+    position: relative; z-index: 10; flex: 1;
+    display: grid; grid-template-columns: 264px 1fr; gap: 20px;
+    max-width: 1080px; width: 100%; margin: 0 auto;
+    padding: 22px 18px 18px; align-items: start;
+    opacity: 0; transition: opacity .45s;
 }
-.layout {
-    width: 100%;
-    max-width: 960px;
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    align-items: center;
-    gap: 48px;
-}
+.body--on { opacity: 1; }
 
 /* ════════════════════════════════
-   LEFT COL
+   SIDEBAR
 ════════════════════════════════ */
-.left-col {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    opacity: 0;
-    transform: translateX(-32px);
-    transition:
-        opacity 0.65s ease,
-        transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+.sidebar {
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(-16px);
+    transition: opacity .5s, transform .5s cubic-bezier(.34,1.56,.64,1);
+    user-select: none; cursor: pointer;
 }
-.left-col.show {
-    opacity: 1;
-    transform: none;
-}
+.sidebar--on { opacity: 1; transform: none; }
+.sb-info { margin-bottom: 18px; }
 
-.tagline-row {
-    margin-bottom: 14px;
+.sb-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.38);
+    border-radius: 999px; padding: 4px 13px;
+    font-size: 11px; font-weight: 900; color: #fff;
+    backdrop-filter: blur(6px); margin-bottom: 10px;
 }
-.tagline-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(29, 78, 216, 0.28);
-    border: 1.5px solid #aeb6e6(29, 78, 216, 0.28);
-    border-radius: 50px;
-    padding: 5px 14px;
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.3px;
-    backdrop-filter: blur(8px);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
+.sb-title { font-family:'Righteous',cursive;font-size:clamp(16px,2vw,22px);color:#fff;line-height:1.25;margin-bottom:5px;text-shadow:0 1px 10px rgba(0,0,0,.35); }
+.sb-sub   { font-size:12.5px;font-weight:800;color:rgba(255,255,255,.9);line-height:1.55;margin-bottom:16px;text-shadow:0 1px 6px rgba(0,0,0,.28); }
 
-.hero-title {
-    font-family: "Righteous", cursive;
-    font-size: clamp(28px, 3.6vw, 42px);
-    line-height: 1.18;
-    color: #fff;
-    text-shadow:
-        0 2px 16px rgba(0, 0, 0, 0.2),
-        0 1px 0 rgba(0, 0, 0, 0.08);
-    margin-bottom: 12px;
-}
-.ht-accent {
-    color: #4570e6;
-    text-shadow:
-        0 2px 20px rgba(191, 219, 254, 0.5),
-        0 1px 0 rgba(0, 0, 0, 0.1);
-}
-.hero-sub {
-    font-size: clamp(12.5px, 1.5vw, 14.5px);
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.88);
-    line-height: 1.65;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-    margin-bottom: 20px;
-}
+.sb-pills { display: flex; flex-direction: column; gap: 8px; }
+.sb-pill  { display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:800;color:#fff;backdrop-filter:blur(6px); }
 
-/* ════════════════════════════════
-   MASCOT + SPEECH BUBBLE
-════════════════════════════════ */
-.mascot-wrap {
-    position: relative;
-    align-self: flex-start;
-    margin-left: 20px;
-}
+.mascot-wrap { position:relative; padding-left:4px; }
 
-/* ── Speech Bubble ── */
-.speech-bubble {
-    position: absolute;
-    /* naik ke atas gambar maskot */
-    bottom: calc(100% - 24px);
-    left: 68%;
-    /* border biru muda, sudut bulat khas balon kata */
-    background: #fff;
-    border: 2.5px solid #93c5fd;
-    border-radius: 20px;
-    padding: 10px 16px;
-    min-width: 148px;
-    max-width: 220px;
-    white-space: nowrap;
-    box-shadow:
-        0 8px 28px rgba(29, 78, 216, 0.16),
-        0 2px 0 rgba(29, 78, 216, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    z-index: 10;
-    /* sedikit melayang */
-    animation: bubble-float 3.5s ease-in-out infinite;
+.bubble {
+    position: relative; background: #fff;
+    border: 2px solid #BFDBFE; border-radius: 16px;
+    padding: 9px 14px; min-width: 146px; max-width: 210px;
+    box-shadow: 0 5px 18px rgba(37,99,235,.13); margin-bottom: 6px;
+    animation: bblFloat 3.5s ease-in-out infinite;
 }
+.bubble span { font-size: 12.5px; font-weight: 800; color: #1e3a8a; display: block; }
+.bubble--intro { border-color: #FCD34D; box-shadow: 0 5px 18px rgba(245,158,11,.18); }
+.bubble--intro span { color: #92400e; }
 
-/* Ekor balon — mengarah ke kiri bawah (ke arah kepala maskot) */
-.speech-bubble::before,
-.speech-bubble::after {
-    content: "";
-    position: absolute;
-    bottom: -14px;
-    left: 18px;
-    width: 0;
-    height: 0;
-}
-.speech-bubble::before {
-    border-left: 11px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 14px solid #93c5fd;
-    bottom: -16px;
-    left: 17px;
-}
-.speech-bubble::after {
-    border-left: 9px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 13px solid #fff;
-    bottom: -13px;
-    left: 18px;
-}
+.bbl-o,.bbl-i { position:absolute;width:0;height:0;font-style:normal; }
+.bbl-o { bottom:-14px;left:15px;border-left:10px solid transparent;border-right:6px solid transparent;border-top:13px solid #FCD34D; }
+.bbl-i { bottom:-10px;left:16px;border-left:8px solid transparent;border-right:5px solid transparent;border-top:11px solid #fff; }
+@keyframes bblFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 
-.bubble-text {
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    color: #1e3a8a;
-    display: block;
-}
+.bbl-enter-active { transition: opacity .26s, transform .3s cubic-bezier(.34,1.56,.64,1); }
+.bbl-leave-active { transition: opacity .16s; }
+.bbl-enter-from   { opacity: 0; transform: translateY(8px) scale(.92); }
+.bbl-leave-to     { opacity: 0; }
 
-/* Balon mengambang naik-turun perlahan */
-@keyframes bubble-float {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-5px);
-    }
-}
-
-/* ── Bubble Vue Transition ── */
-.bubble-enter-active {
-    transition:
-        opacity 0.35s ease,
-        transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.bubble-leave-active {
-    transition:
-        opacity 0.26s ease,
-        transform 0.22s ease;
-}
-.bubble-enter-from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.88);
-}
-.bubble-leave-to {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.94);
-}
-
-/* Mascot */
-.mascot-glow {
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 180px;
-    height: 40px;
-    background: radial-gradient(
-        ellipse,
-        rgba(0, 0, 0, 0.18) 0%,
-        transparent 70%
-    );
-    border-radius: 50%;
-    pointer-events: none;
-}
-.mascot-img {
-    position: relative;
-    z-index: 2;
-    width: clamp(180px, 22vw, 260px);
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.22));
-    animation: mascot-bob 3.5s ease-in-out infinite;
+.mascot-frame { position:relative; display:inline-block; }
+.mascot {
+    position: relative; z-index: 2;
+    width: clamp(138px,14vw,192px); height: auto; display: block;
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,.22));
+    animation: mBob 3.5s ease-in-out infinite;
     transform-origin: bottom center;
 }
-@keyframes mascot-bob {
-    0%,
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-    45% {
-        transform: translateY(-10px) rotate(0.6deg);
-    }
-    70% {
-        transform: translateY(-6px) rotate(-0.4deg);
-    }
+.mascot-shadow {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 65%; height: 13px;
+    background: radial-gradient(ellipse at center,rgba(0,0,0,.28) 0%,transparent 70%);
+    border-radius: 50%; z-index: 1;
 }
+@keyframes mBob { 0%,100%{transform:translateY(0) rotate(0deg)} 45%{transform:translateY(-8px) rotate(.5deg)} 70%{transform:translateY(-4px) rotate(-.3deg)} }
 
 /* ════════════════════════════════
-   RIGHT COL — CARD
+   MAIN PANEL
 ════════════════════════════════ */
-.right-col {
-    opacity: 0;
-    transform: translateY(28px);
-    transition:
-        opacity 0.6s 0.15s ease,
-        transform 0.6s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+.main {
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .5s .1s, transform .5s .1s cubic-bezier(.34,1.56,.64,1);
 }
-.right-col.show {
-    opacity: 1;
-    transform: none;
+.main--on { opacity: 1; transform: none; }
+
+/* ════════════════════════════════
+   LOGIN CARD
+════════════════════════════════ */
+.icard {
+    background: #FDFCFB; border-radius: 20px; overflow: hidden;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 4px 0 #BFDBFE, 0 10px 32px rgba(59,130,246,.10);
 }
 
-.card {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border-radius: 24px;
-    overflow: hidden;
-    border: 1.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow:
-        0 24px 64px rgba(0, 0, 0, 0.15),
-        0 4px 0 rgba(29, 78, 216, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 1);
+.icard-head {
+    background: linear-gradient(135deg,#3B82F6 0%,#2563EB 100%);
+    position: relative; overflow: hidden;
 }
-.card-top-bar {
-    height: 5px;
-    background: linear-gradient(90deg, #1d4ed8 0%, #1d4ed8 40%, #1d4ed8 100%);
+.icard-hdeco { position:absolute;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none; }
+.icard-hdeco-1 { width:200px;height:200px;top:-70px;right:-40px; }
+.icard-hdeco-2 { width:100px;height:100px;bottom:-42px;left:18px; }
+.icard-head-inner { position:relative;z-index:1;padding:22px 22px 24px; }
+.icard-eyebrow {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,.20); border: 1px solid rgba(255,255,255,.30);
+    border-radius: 999px; padding: 4px 12px;
+    font-size: 11px; font-weight: 900; color: #fff; margin-bottom: 11px;
 }
-.card-inner {
-    padding: 32px 36px 36px;
-}
+.icard-title { font-family:'Righteous',cursive;font-size:clamp(18px,2.5vw,25px);color:#fff;line-height:1.2;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,.15); }
+.icard-sub   { font-size:13px;font-weight:700;color:rgba(255,255,255,.88);line-height:1.6;max-width:460px; }
 
-.logo-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.logo-ico {
-    width: 44px;
-    height: 44px;
-    border-radius: 13px;
-    flex-shrink: 0;
-    background: linear-gradient(140deg, #60a5fa, #1d4ed8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4);
-}
-.logo-name {
-    font-family: "Righteous", cursive;
-    font-size: 22px;
-    color: #1e3a8a;
-    letter-spacing: -0.2px;
-    line-height: 1.1;
-}
-.la {
-    color: #1d4ed8;
-}
-.logo-sub {
-    font-size: 10px;
-    font-weight: 800;
-    color: #6b7280;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-top: 2px;
-}
+.icard-stats { display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1.5px solid #e2e8f0; }
+.istat { display:flex;flex-direction:column;align-items:center;gap:5px;padding:20px 12px 18px;border-right:1.5px solid #e2e8f0; }
+.istat:last-child { border-right:none; }
 
-.divider-light {
-    height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(29, 78, 216, 0.15),
-        transparent
-    );
-    margin-bottom: 20px;
-}
-.card-title {
-    font-family: "Righteous", cursive;
-    font-size: 20px;
-    color: #1e3a8a;
-    margin-bottom: 4px;
-}
-.card-hint {
-    font-size: 12px;
-    font-weight: 700;
-    color: #6b7280;
-    margin-bottom: 22px;
-    line-height: 1.6;
-}
+.istat--red    { background:#FFF7F7; }
+.istat--red    .istat-icon { background:#F87171;box-shadow:0 4px 14px rgba(248,113,113,.30); }
+.istat--red    .istat-val  { color:#C53030; }
+.istat--red    .istat-lbl  { color:#E53E3E; }
 
-/* ── Form ── */
-.form-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.fw {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 14px;
-}
-.flabel {
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #374151;
-    letter-spacing: 0.2px;
-    padding-left: 2px;
-}
-.req {
-    color: #ef4444;
-}
+.istat--yellow { background:#FFFDF0; }
+.istat--yellow .istat-icon { background:#FBBF24;box-shadow:0 4px 14px rgba(251,191,36,.30); }
+.istat--yellow .istat-val  { color:#92400E; }
+.istat--yellow .istat-lbl  { color:#D97706; }
 
-.if-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.if-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-    flex-shrink: 0;
-    transition: color 0.15s;
-}
+.istat--green  { background:#F0FDF9; }
+.istat--green  .istat-icon { background:#34D399;box-shadow:0 4px 14px rgba(52,211,153,.30); }
+.istat--green  .istat-val  { color:#065F46; }
+.istat--green  .istat-lbl  { color:#059669; }
+
+.istat-icon { width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:2px; }
+.istat-val  { font-family:'Righteous',cursive;font-size:24px;line-height:1; }
+.istat-lbl  { font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px; }
+
+.icard-body { padding: 20px 22px 26px; }
+
+.fw { display:flex;flex-direction:column;gap:5px;margin-bottom:14px; }
+.fw:last-child { margin-bottom: 0; }
+.flabel { font-size:11.5px;font-weight:800;color:#374151;letter-spacing:.2px;padding-left:2px; }
+.req    { color: #ef4444; }
+
+.if-wrap  { position:relative;display:flex;align-items:center; }
+.if-icon  { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9ca3af;pointer-events:none;flex-shrink:0;transition:color .15s; }
 .if-input {
-    width: 100%;
-    padding: 12px 16px 12px 42px;
-    border-width: 4px;
-    border-style: solid;
-    border-radius: 16px;
-    outline: none;
-    font-family: "Nunito", sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: #111827;
-    background: #fff;
-    transition:
-        border-color 0.2s,
-        background 0.2s,
-        box-shadow 0.2s;
+    width:100%; padding:12px 16px 12px 42px;
+    border-width:2px; border-style:solid; border-radius:13px;
+    outline:none; font-family:'Nunito',sans-serif; font-size:14px;
+    font-weight:700; color:#111827; background:#fff;
+    transition:border-color .2s, background .2s, box-shadow .2s;
 }
-.if-input--pr {
-    padding-right: 46px;
-}
-.if-input::placeholder {
-    color: #9ca3af;
-    font-weight: 600;
-}
+.if-input::placeholder { color:#9ca3af;font-weight:600; }
+.if-blue { border-color:#BFDBFE; }
+.if-blue:hover { border-color:#93c5fd; }
+.if-blue:focus { border-color:#3b82f6;background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+.if-wrap:focus-within .if-icon { color:#3b82f6; }
+.if-err { border-color:#fca5a5;background:#fef2f2; }
+.if-err:focus { border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.1); }
 
-.if-blue {
-    border-color: #bfdbfe;
-}
-.if-blue:hover {
-    border-color: #93c5fd;
-}
-.if-blue:focus {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-.if-wrap:focus-within .if-icon {
-    color: #3b82f6;
-}
-
-.if-err {
-    border-color: #fca5a5;
-    background: #fef2f2;
-}
-.if-err:focus {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.if-eye {
-    position: absolute;
-    right: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    color: #9ca3af;
-    transition: color 0.15s;
-}
-.if-eye:hover {
-    color: #3b82f6;
-}
-
-.errmsg {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #ef4444;
-    padding-left: 2px;
-    animation: errin 0.18s ease;
-}
-@keyframes errin {
-    from {
-        opacity: 0;
-        transform: translateY(-3px);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
-
-/* ── Submit Button ── */
-.btn {
-    width: 100%;
-    height: 50px;
-    border: none;
-    border-radius: 12px;
-    font-family: "Righteous", cursive;
-    font-size: 15.5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #1d4ed8, #1d4ed8);
-    color: #fff;
-    box-shadow:
-        0 4px 16px rgba(29, 78, 216, 0.35),
-        0 2px 0 rgba(14, 57, 165, 0.2);
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
-    margin-top: 4px;
-}
-.btn::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.2) 0%,
-        transparent 50%
-    );
-    pointer-events: none;
-}
-.btn:hover:not(:disabled):not(.loading) {
-    transform: translateY(-2px) scale(1.015);
-    box-shadow:
-        0 8px 22px rgba(29, 78, 216, 0.45),
-        0 2px 0 rgba(14, 57, 165, 0.2);
-}
-.btn:active:not(:disabled) {
-    transform: scale(0.98);
-}
-.btn.active {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    animation: pulse-blue 2.5s ease-in-out infinite;
-}
-.btn.loading {
-    opacity: 0.8;
-    cursor: wait;
-}
-.btn.shake {
-    animation: shake 0.5s ease;
-}
-.btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-/* Secondary/alternate button for topbar back link */
-.btn--secondary {
-    height: auto;
-    padding: 8px 12px;
-    min-height: 36px;
-    background: linear-gradient(135deg, #6b7280, #374151);
-    color: #fff;
-    box-shadow: 0 6px 18px rgba(55, 65, 81, 0.25);
-    font-size: 13px;
-    border-radius: 10px;
-}
-.btn--secondary:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 10px 28px rgba(55, 65, 81, 0.35);
-}
-.btn--secondary:active:not(:disabled) {
-    transform: scale(0.98);
-}
-@keyframes pulse-blue {
-    0%,
-    100% {
-        box-shadow: 0 4px 16px rgba(29, 78, 216, 0.35);
-    }
-    50% {
-        box-shadow:
-            0 6px 24px rgba(29, 78, 216, 0.6),
-            0 0 0 7px rgba(29, 78, 216, 0.1);
-    }
-}
-@keyframes shake {
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-    20% {
-        transform: translateX(-8px);
-    }
-    40% {
-        transform: translateX(8px);
-    }
-    60% {
-        transform: translateX(-5px);
-    }
-    80% {
-        transform: translateX(5px);
-    }
-}
-.spinner {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border: 2.5px solid rgba(255, 255, 255, 0.4);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.75s linear infinite;
-}
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+.errmsg { font-size:11.5px;font-weight:700;color:#ef4444;padding-left:2px;animation:errin .18s ease; }
+@keyframes errin { from{opacity:0;transform:translateY(-3px)} to{opacity:1;transform:none} }
 
 /* ════════════════════════════════
-   MUSIC FAB
+   FOOTER
 ════════════════════════════════ */
-.music-fab {
-    position: fixed;
-    bottom: 22px;
-    left: 22px;
-    z-index: 301;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(10px);
-    color: #1d4ed8;
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+.footer {
+    position:relative;z-index:50;
+    background:rgba(255,255,255,.10);backdrop-filter:blur(18px);
+    border-top:1px solid rgba(255,255,255,.16);
+    padding:11px 0 8px;flex-shrink:0;
 }
-.music-fab:hover {
-    transform: scale(1.1);
-    background: #fff;
+.footer-inner { display:flex;align-items:center;gap:10px;max-width:1080px;margin:0 auto;padding:0 20px; }
+.f-space { flex:1; }
+
+.fbtn {
+    display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 18px;
+    border:none;border-radius:10px;font-family:'Nunito',sans-serif;
+    font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap;
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;
 }
-.music-fab.on {
-    background: linear-gradient(135deg, #60a5fa, #1d4ed8);
-    color: #fff;
-    box-shadow: 0 5px 18px rgba(29, 78, 216, 0.45);
-}
-.music-fab svg {
-    width: 19px;
-    height: 19px;
-}
-.fab-pulse {
-    position: absolute;
-    inset: -5px;
-    border-radius: 50%;
-    border: 2px solid rgba(29, 78, 216, 0.4);
-    animation: fab-ring 2s ease-out infinite;
-    pointer-events: none;
-}
-@keyframes fab-ring {
-    0% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    100% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
-}
+.fbtn--yellow { background:#2563EB;color:#fff;box-shadow:0 3px 12px rgba(37,99,235,.4); }
+.fbtn--yellow:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 5px 16px rgba(37,99,235,.5); }
+.fbtn--yellow:disabled { opacity:.5;cursor:not-allowed; }
+.fbtn.shake { animation: shake .5s ease; }
+.fbtn.loading { opacity:.8; cursor:wait; }
+
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+
+.spinner { display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
 
 /* ════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE ≤ 820px
 ════════════════════════════════ */
-@media (max-width: 860px) {
-    .pg {
-        height: auto;
-        min-height: 100vh;
-        overflow: auto;
+@media (max-width: 820px) {
+    .b1{width:300px;height:300px;} .b2{width:240px;height:240px;} .b3{width:180px;height:180px;}
+    .c1{width:100px;height:100px;} .c2{display:none;} .r1{width:200px;height:200px;}
+    .topbar { height:52px;padding:0 13px; }
+    .brand-name{font-size:16px;} .brand-dot{width:25px;height:25px;}
+    .body { grid-template-columns:1fr;gap:0;padding:0;max-width:100%; }
+    .sidebar {
+        opacity:1 !important;transform:none !important;
+        flex-direction:column;gap:0;cursor:default;
+        padding:13px 15px 12px;
+        background:rgba(29,78,216,.76);backdrop-filter:blur(18px);
+        border-bottom:1px solid rgba(191,219,254,.22);
     }
-    .scene {
-        padding: 32px 20px 40px;
-        align-items: flex-start;
-    }
-    .layout {
-        grid-template-columns: 1fr;
-        gap: 0;
-        max-width: 440px;
-    }
-    .left-col {
-        display: none;
-    }
+    .sb-info { margin-bottom:0; }
+    .sb-chip{margin-bottom:6px;font-size:10px;} .sb-title{font-size:15px;margin-bottom:3px;} .sb-sub{font-size:11.5px;margin-bottom:10px;}
+    .sb-pills{flex-direction:row;flex-wrap:wrap;gap:7px;} .sb-pill{padding:6px 10px;font-size:11.5px;border-radius:8px;}
+    .mascot-wrap{display:none;}
+    .main{transform:none;opacity:1;}
+    .icard{border-radius:0;border-left:none;border-right:none;}
+    .icard-head-inner{padding:16px 15px 18px;} .icard-title{font-size:18px;}
+    .icard-stats{grid-template-columns:repeat(3,1fr);}
+    .istat{padding:15px 8px 13px;} .istat-icon{width:38px;height:38px;border-radius:10px;} .istat-val{font-size:20px;}
+    .icard-body{padding:16px 15px 20px;}
+    .footer-inner{padding:0 15px;} .fbtn{height:40px;}
 }
 @media (max-width: 480px) {
-    .card-inner {
-        padding: 26px 22px 30px;
-    }
-    .card {
-        border-radius: 20px;
-    }
-    .hero-title {
-        font-size: 26px;
-    }
+    .topbar{height:48px;padding:0 11px;} .tbtn-lbl{display:none;} .tbtn{padding:7px 9px;}
+    .icard-head-inner{padding:14px 13px 16px;}
+    .istat{padding:12px 6px 10px;} .istat-icon{width:34px;height:34px;border-radius:9px;} .istat-val{font-size:18px;}
+    .icard-body{padding:14px 13px 18px;}
+    .footer-inner{padding:0 12px;gap:7px;} .fbtn{height:38px;padding:0 13px;font-size:12px;}
 }
 </style>

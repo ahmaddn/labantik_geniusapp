@@ -27,6 +27,7 @@ const COMPONENT_MAP = {
   case_study:       Case_study,
   materials:        Materials,
   drag_drop:        Drag_drop,
+
 }
 const TYPE_META = {
   multiple_choices: { label: 'Pilihan Ganda',           color: '#3b82f6', bg: '#dbeafe' },
@@ -42,6 +43,8 @@ const props = defineProps({
   mission: { type: Object, required: true },
   user:    { type: Object, default: () => ({ name: 'Siswa' }) },
   module:  { type: Object, default: () => ({ id: null, name: 'Module', description: '' }) },
+   backsound: { type: String, default: null },
+   background: { type: String, default: null },
 })
 
 // ── Steps — 1 question per page ───────────────────────────────
@@ -192,7 +195,8 @@ const handleVisibility = () => {
 
 const toggleMusic = async () => {
   if (!audioRef.value) {
-    audioRef.value = new Audio('/backsound/backsound.mp3')
+
+    audioRef.value = new Audio(props.backsound ?? '/backsound/backsound.mp3')
     audioRef.value.loop    = true
     audioRef.value.volume  = 0.4
     audioRef.value.preload = 'auto'
@@ -297,9 +301,24 @@ const submit = async () => {
 }
 
 onMounted(() => {
-  setTimeout(() => (ready.value = true), 80)
-  bubbleTimer = setInterval(rotateBubble, 3500)
-  document.addEventListener('visibilitychange', handleVisibility)
+    setTimeout(() => (ready.value = true), 80)
+    bubbleTimer = setInterval(rotateBubble, 3500)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    if (props.backsound) {
+        audioRef.value = new Audio(props.backsound)
+        audioRef.value.loop = true
+        audioRef.value.volume = 0.4
+        audioRef.value.preload = 'auto'
+        audioRef.value.addEventListener('error', () => { audioRef.value = null; musicOn.value = false })
+        audioRef.value.play()
+            .then(() => { musicOn.value = true })
+            .catch(() => {
+                document.addEventListener('click', () => {
+                    audioRef.value?.play().then(() => { musicOn.value = true }).catch(() => {})
+                }, { once: true })
+            })
+    }
 })
 onUnmounted(() => {
   clearInterval(bubbleTimer)
@@ -328,7 +347,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
 
     <!-- ══ BG ══ -->
     <div class="bg">
-      <div class="bg-img"></div>
+      <div class="bg-img" :style="{ backgroundImage: `url(${props.background})` }"></div>
       <div class="bg-tint"></div>
       <div class="blob b1"></div>
       <div class="blob b2"></div>
