@@ -1,10 +1,12 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { ref, computed, watch } from "vue";
-import { router, usePage } from "@inertiajs/vue3";
+import { router, usePage, useForm } from "@inertiajs/vue3";
 import Button from "@/Components/UI/Button.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
+import Modal from "@/Components/UI/Modal.vue";
+import FileDropzone from "@/Components/UI/Forms/FileDropzone.vue";
 import {
     ArrowLeft,
     ChevronRight,
@@ -106,6 +108,105 @@ const goToAddQuiz = () => {
             props.mission.id,
         ]),
     );
+};
+
+// Import forms (CSV/XLSX)
+const materialImport = useForm({ file: null });
+const quizImport = useForm({ file: null });
+
+const showMaterialImportModal = ref(false);
+const showQuizImportModal = ref(false);
+const materialPreview = ref(null);
+const quizPreview = ref(null);
+
+const setMaterialFile = (file) => {
+    materialImport.file = file;
+    materialPreview.value = file ? file.name : null;
+};
+
+const setQuizFile = (file) => {
+    quizImport.file = file;
+    quizPreview.value = file ? file.name : null;
+};
+
+// FIX: onSuccess juga perlu cek flash.error karena Inertia menganggap
+// semua redirect (termasuk back()->with('error',...)) sebagai "success".
+const submitMaterialImport = () => {
+    if (!materialImport.file) {
+        triggerToast("Pilih file CSV/XLSX terlebih dahulu.", "error");
+        return;
+    }
+    const url = route("admin.modules.missions.materials.import", [
+        props.module.id,
+        props.mission.id,
+    ]);
+    materialImport.post(url, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const flashError = page.props?.flash?.error;
+            const flashSuccess = page.props?.flash?.success;
+            if (flashError) {
+                triggerToast(flashError, "error");
+            } else {
+                triggerToast(
+                    flashSuccess || "Import materi berhasil.",
+                    "success",
+                );
+                materialImport.reset();
+                materialPreview.value = null;
+                showMaterialImportModal.value = false;
+            }
+        },
+        onError: (errs) => {
+            const msg =
+                errs?.error ||
+                errs?.file ||
+                Object.values(errs)?.[0] ||
+                "Gagal import materi.";
+            triggerToast(msg, "error");
+        },
+    });
+};
+
+const submitQuizImport = () => {
+    if (!quizImport.file) {
+        triggerToast("Pilih file CSV/XLSX terlebih dahulu.", "error");
+        return;
+    }
+    const url = route("admin.modules.missions.quizzes.import", [
+        props.module.id,
+        props.mission.id,
+    ]);
+    quizImport.post(url, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const flashError = page.props?.flash?.error;
+            const flashSuccess = page.props?.flash?.success;
+            if (flashError) {
+                // Import gagal — tampilkan error, jangan tutup modal
+                triggerToast(flashError, "error");
+            } else {
+                triggerToast(
+                    flashSuccess || "Import quiz berhasil.",
+                    "success",
+                );
+                quizImport.reset();
+                quizPreview.value = null;
+                showQuizImportModal.value = false;
+            }
+        },
+        onError: (errs) => {
+            // Laravel validation errors (422) masuk sini
+            const msg =
+                errs?.error ||
+                errs?.file ||
+                Object.values(errs)?.[0] ||
+                "Gagal import quiz.";
+            triggerToast(msg, "error");
+        },
+    });
 };
 
 const goToEditMaterial = (materialId) => {
@@ -273,6 +374,26 @@ const formatDate = (dateString) => {
                     >
                         Tambah Kuis
                     </Button>
+                    <!-- Import: Materi (modal) -->
+                    <div class="flex items-center gap-2">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            @click="showMaterialImportModal = true"
+                        >
+                            Import Materi
+                        </Button>
+                    </div>
+                    <!-- Import: Quiz (modal) -->
+                    <div class="flex items-center gap-2">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            @click="showQuizImportModal = true"
+                        >
+                            Import Kuis
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -555,7 +676,102 @@ const formatDate = (dateString) => {
             </div>
         </div>
 
-        <!-- Delete Confirmation Dialog -->
+        <!-- Import Materi Modal -->
+        <Modal
+            :show="showMaterialImportModal"
+            title="Import Materi (CSV / XLSX)"
+            @close="showMaterialImportModal = false"
+            maxWidth="md"
+        >
+            <div class="py-4 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Unggah file CSV atau XLSX dengan header:
+                    <strong>title,description,content</strong>. File maksimal 10
+                    MB. Tipe file yang diterima:
+                    <strong>.csv, .xlsx, .xls</strong>.
+                </p>
+                <FileDropzone
+                    v-model:modelValue="materialImport.file"
+                    accept=".csv,.xlsx,.xls"
+                    label="Pilih atau seret file CSV/XLSX"
+                    borderColor="gray"
+                    :allowClear="false"
+                    @update:modelValue="setMaterialFile"
+                />
+                <p v-if="materialPreview" class="text-sm text-gray-500">
+                    File terpilih: {{ materialPreview }}
+                </p>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        @click="showMaterialImportModal = false"
+                        >Batal</Button
+                    >
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="submitMaterialImport"
+                        >Import</Button
+                    >
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Import Quiz Modal -->
+        <Modal
+            :show="showQuizImportModal"
+            title="Import Kuis (CSV / XLSX)"
+            @close="showQuizImportModal = false"
+            maxWidth="lg"
+        >
+            <div class="py-4 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Unggah file CSV atau XLSX yang berisi data multiple-choice.
+                    Kolom minimal pada setiap baris:
+                    <strong
+                        >quiz_title, question_text, option_1,
+                        option_1_is_correct, option_2, option_2_is_correct,
+                        option_3, option_3_is_correct, option_4,
+                        option_4_is_correct, dan seterusnya</strong
+                    >. Untuk menandai jawaban benar, gunakan nilai
+                    <strong>1</strong>, <strong>true</strong>, atau
+                    <strong>yes</strong> pada kolom *_is_correct. File maksimal
+                    10 MB. Tipe file yang diterima:
+                    <strong>.csv, .xlsx, .xls</strong>.
+                </p>
+                <FileDropzone
+                    v-model:modelValue="quizImport.file"
+                    accept=".csv,.xlsx,.xls"
+                    label="Pilih atau seret file CSV/XLSX"
+                    borderColor="gray"
+                    :allowClear="false"
+                    @update:modelValue="setQuizFile"
+                />
+                <p v-if="quizPreview" class="text-sm text-gray-500">
+                    File terpilih: {{ quizPreview }}
+                </p>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        @click="showQuizImportModal = false"
+                        >Batal</Button
+                    >
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="submitQuizImport"
+                        >Import</Button
+                    >
+                </div>
+            </template>
+        </Modal>
+
         <ConfirmDialog
             :show="showDeleteDialog"
             :title="
