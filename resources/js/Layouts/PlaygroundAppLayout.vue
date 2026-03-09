@@ -1,20 +1,74 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 
-const musicOn = ref(false);
-
-function toggleMusic() {
-    musicOn.value = !musicOn.value;
-}
-
-defineProps({
+const props = defineProps({
     siswa: {
         type: Object,
         default: () => ({ nama: "Siswa", kelas: "" }),
     },
+    backsound: {
+        type: String,
+        default: null,
+    },
+});
+
+const musicOn = ref(false);
+const audioRef = ref(null);
+
+const handleVisibility = () => {
+    if (!audioRef.value) return;
+    document.hidden
+        ? audioRef.value.pause()
+        : (musicOn.value && audioRef.value.play().catch(() => {}));
+};
+
+const toggleMusic = async () => {
+    if (!audioRef.value) return;
+    if (musicOn.value) {
+        audioRef.value.pause();
+        musicOn.value = false;
+    } else {
+        try {
+            await audioRef.value.play();
+            musicOn.value = true;
+        } catch {
+            musicOn.value = false;
+        }
+    }
+};
+
+onMounted(() => {
+    if (props.backsound) {
+        audioRef.value = new Audio(props.backsound);
+        audioRef.value.loop = true;
+        audioRef.value.volume = 0.4;
+        audioRef.value.addEventListener("error", () => {
+            audioRef.value = null;
+            musicOn.value = false;
+        });
+
+        audioRef.value.play()
+            .then(() => { musicOn.value = true; })
+            .catch(() => {
+                document.addEventListener("click", () => {
+                    audioRef.value?.play()
+                        .then(() => { musicOn.value = true; })
+                        .catch(() => {});
+                }, { once: true });
+            });
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("visibilitychange", handleVisibility);
+    if (audioRef.value) {
+        audioRef.value.pause();
+        audioRef.value = null;
+    }
 });
 </script>
-
 <template>
     <div class="app-layout">
         <!-- ░░ BACKGROUND ░░ -->
@@ -101,7 +155,7 @@ defineProps({
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    
+
 }
 
 .sky {

@@ -34,6 +34,11 @@ class PosttestController extends Controller
                 'questions.dragDropGroups.items',
             ])
             ->first();
+        $module->load('template');
+$backsound = null;
+if (!empty($module->template?->backsound)) {
+    $backsound = asset('storage/' . $module->template->backsound);
+}
 
         // Kalau tidak ada posttest → kembali ke beranda
         if (! $quiz) {
@@ -98,6 +103,7 @@ class PosttestController extends Controller
                 'name'  => $player['nama'] ?? 'Siswa',
                 'class' => $player['nama_kelas'] ?? '-',
             ],
+            'backsound' => $backsound,
         ]);
     }
 
