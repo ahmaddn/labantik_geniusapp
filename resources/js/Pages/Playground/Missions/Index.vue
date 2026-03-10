@@ -9,8 +9,12 @@ import {
   Trophy,
   Zap,
   ChevronRight,
-} from 'lucide-vue-next'
-import { router } from '@inertiajs/vue3'
+} from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { useMusic } from '@/Composable/useMusic'
+
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
+
 
 // ── Props ─────────────────────────────────────────────────────────
 const props = defineProps({
@@ -36,73 +40,20 @@ const props = defineProps({
 
 // ── State ─────────────────────────────────────────────────────────
 const ready = ref(false);
-const musicOn = ref(false);
 const audioRef = ref(null);
 
-// ── Music ─────────────────────────────────────────────────────────
-const handleVisibility = () => {
-  if (!audioRef.value) return
-  document.hidden
-    ? audioRef.value.pause()
-    : musicOn.value && audioRef.value.play().catch(() => {})
-}
-const toggleMusic = async () => {
-    if (!audioRef.value) {
-        const src = props.backsound ?? "/backsound/backsound.mp3";
-        audioRef.value = new Audio(src);
-        audioRef.value.loop = true;
-        audioRef.value.volume = 0.4;
-        audioRef.value.preload = "auto";
-        audioRef.value.addEventListener("error", () => {
-            audioRef.value = null;
-            musicOn.value = false;
-        });
-    }
-    if (musicOn.value) {
-        audioRef.value.pause();
-        musicOn.value = false;
-    } else {
-        try {
-            await audioRef.value.play();
-            musicOn.value = true;
-        } catch {
-            musicOn.value = false;
-        }
-    }
-};
+
 
 // ── Lifecycle ─────────────────────────────────────────────────────
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     document.addEventListener("visibilitychange", handleVisibility);
+    setTimeout(() => initAutoMusic(props.backsound), 100);
 
-    if (props.backsound) {
-        audioRef.value = new Audio(props.backsound);
-        audioRef.value.loop = true;
-        audioRef.value.volume = 0.4;
-        audioRef.value.preload = "auto";
-        audioRef.value.addEventListener("error", () => {
-            audioRef.value = null;
-            musicOn.value = false;
-        });
-
-        audioRef.value.play()
-            .then(() => { musicOn.value = true; })
-            .catch(() => {
-                document.addEventListener("click", () => {
-                    audioRef.value?.play()
-                        .then(() => { musicOn.value = true; })
-                        .catch(() => {});
-                }, { once: true });
-            });
-    }
 });
 onUnmounted(() => {
     document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) {
-        audioRef.value.pause();
-        audioRef.value = null;
-    }
+    destroyAudio();
 });
 
 // ── Navigation ────────────────────────────────────────────────────
@@ -326,7 +277,7 @@ const notStartedMissions = computed(
     <button
       class="music-fab"
       :class="{ on: musicOn }"
-      @click="toggleMusic"
+      @click="toggleMusic(props.backsound)"
       :title="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
     >
       <svg v-if="musicOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">

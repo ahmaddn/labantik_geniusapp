@@ -8,6 +8,7 @@ import {
   Timer, ChevronRight, CheckCircle2, MousePointerClick,
 } from 'lucide-vue-next'
 
+import { useMusic } from '@/Composable/useMusic'
 import Multiple_choice from '@/Components/Quiz/Multiple_choice.vue'
 import True_false      from '@/Components/Quiz/True_false.vue'
 import Case_study      from '@/Components/Quiz/Case_study.vue'
@@ -24,6 +25,7 @@ const props = defineProps({
     background: { type: String, default: null },
 })
 
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
 // ─── Component map (same as Template.vue) ───────────────────────────────────
 const COMPONENT_MAP = {
   multiple_choices: Multiple_choice,
@@ -91,35 +93,7 @@ function startTimer() {
 }
 
 // ─── Music ───────────────────────────────────────────────────────────────────
-const musicOn  = ref(false)
 const audioRef = ref(null)
-const handleVisibility = () => {
-  if (!audioRef.value) return
-  document.hidden ? audioRef.value.pause() : (musicOn.value && audioRef.value.play().catch(() => {}))
-}
-const toggleMusic = async () => {
-  if (!audioRef.value) {
-    const src = props.backsound ?? "/backsound/backsound.mp3";
-    audioRef.value = new Audio(src);
-    audioRef.value.loop = true;
-    audioRef.value.volume = 0.4;
-    audioRef.value.preload = "auto";
-    audioRef.value.addEventListener("error", () => {
-      audioRef.value = null;
-      musicOn.value = false;
-    });
-  }
-  if (musicOn.value) {
-    audioRef.value.pause();
-    musicOn.value = false;
-  } else {
-    try {
-      await audioRef.value.play();
-      musicOn.value = true;
-    } catch {
-      musicOn.value = false;
-    }
-}}
 
 // ─── Questions & answers ─────────────────────────────────────────────────────
 const questions   = computed(() => props.quiz?.questions ?? [])
@@ -209,14 +183,15 @@ const INSTR_ITEMS = [
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
 onMounted(() => {
-  setTimeout(() => { ready.value = true }, 80)
+
   bubbleTimer = setInterval(rotateBubble, 3500)
   document.addEventListener('visibilitychange', handleVisibility)
+  setTimeout(() => initAutoMusic(props.backsound), 100)
 })
 onUnmounted(() => {
   clearInterval(timerInt); clearInterval(bubbleTimer)
   document.removeEventListener('visibilitychange', handleVisibility)
-  if (audioRef.value) { audioRef.value.pause(); audioRef.value = null }
+  destroyAudio()
 })
 </script>
 
@@ -265,7 +240,7 @@ onUnmounted(() => {
       </Transition>
 
       <div class="topbar-r">
-        <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic">
+        <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
           <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
           <VolumeX v-else        :size="15" :stroke-width="2"/>
         </button>

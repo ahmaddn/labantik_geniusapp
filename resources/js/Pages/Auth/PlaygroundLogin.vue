@@ -7,10 +7,12 @@ import {
     GraduationCap, Sparkles, Star, BookOpen,
     Shield,
 } from "lucide-vue-next";
+import { useMusic } from '@/Composable/useMusic'
 
+
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
 const ready      = ref(false);
 const brandMoved = ref(false);
-const musicOn    = ref(false);
 const audioRef   = ref(null);
 const props      = defineProps({
     backsound: { type: String, default: null },
@@ -48,38 +50,9 @@ const errors = {
     get nama() { return localErrors.value.nama || form.errors.nama || ""; },
 };
 
-// ── Music ──────────────────────────────────────────────────────────
-const handleVisibility = () => {
-    if (!audioRef.value) return;
-    document.hidden
-        ? audioRef.value.pause()
-        : (musicOn.value && audioRef.value.play().catch(() => {}));
-};
 
-const toggleMusic = async () => {
-    if (!audioRef.value) {
-// Update toggleMusic — ganti hardcode dengan props
-audioRef.value = new Audio(props.backsound)
-        audioRef.value.loop   = true;
-        audioRef.value.volume = 0.4;
-        audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
-    }
-    if (musicOn.value) { audioRef.value.pause(); musicOn.value = false; }
-    else {
-        try { await audioRef.value.play(); musicOn.value = true; }
-        catch { musicOn.value = false; }
-    }
-};
 
-const initAutoMusic = async () => {
-    audioRef.value = new Audio(props.backsound)
 
-    audioRef.value.loop   = true;
-    audioRef.value.volume = 0.4;
-    audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
-    try { await audioRef.value.play(); musicOn.value = true; }
-    catch { musicOn.value = false; }
-};
 
 // ── Validation ─────────────────────────────────────────────────────
 function validateNama() {
@@ -113,7 +86,7 @@ onMounted(() => {
 onUnmounted(() => {
     clearInterval(bubbleTimer);
     document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) { audioRef.value.pause(); audioRef.value = null; }
+    destroyAudio();
 });
 </script>
 
@@ -164,7 +137,7 @@ onUnmounted(() => {
             </div>
 
             <div class="topbar-r">
-                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic">
+                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
                     <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
                     <VolumeX v-else        :size="15" :stroke-width="2"/>
                 </button>

@@ -19,7 +19,7 @@ import Multiple_choice from '@/Components/Quiz/Multiple_choice.vue'
 import Case_study      from '@/Components/Quiz/Case_study.vue'
 import Materials       from '@/Components/Quiz/Materials.vue'
 import Drag_drop       from '@/Components/Quiz/Drag_drop.vue'
-
+import { useMusic } from '@/Composable/useMusic'
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
   multiple_choices: Multiple_choice,
@@ -29,6 +29,7 @@ const COMPONENT_MAP = {
   drag_drop:        Drag_drop,
 
 }
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
 const TYPE_META = {
   multiple_choices: { label: 'Pilihan Ganda',           color: '#3b82f6', bg: '#dbeafe' },
   true_false:       { label: 'Pilih Gambar Yang Benar',  color: '#8b5cf6', bg: '#ede9fe' },
@@ -105,7 +106,7 @@ const ready        = ref(false)
 const shakeActive  = ref(false)
 
 // Music
-const musicOn  = ref(false)
+
 const audioRef = ref(null)
 
 const step    = computed(() => steps.value[currentStep.value])
@@ -186,37 +187,6 @@ const rotateBubble = () => {
 }
 
 // ── Music ─────────────────────────────────────────────────────
-const handleVisibility = () => {
-  if (!audioRef.value) return
-  document.hidden
-    ? audioRef.value.pause()
-    : musicOn.value && audioRef.value.play().catch(() => {})
-}
-
-const toggleMusic = async () => {
-  if (!audioRef.value) {
-
-    audioRef.value = new Audio(props.backsound ?? '/backsound/backsound.mp3')
-    audioRef.value.loop    = true
-    audioRef.value.volume  = 0.4
-    audioRef.value.preload = 'auto'
-    audioRef.value.addEventListener('error', () => {
-      audioRef.value = null
-      musicOn.value  = false
-    })
-  }
-  if (musicOn.value) {
-    audioRef.value.pause()
-    musicOn.value = false
-  } else {
-    try {
-      await audioRef.value.play()
-      musicOn.value = true
-    } catch {
-      musicOn.value = false
-    }
-  }
-}
 
 // ── Navigation ─────────────────────────────────────────────────
 const updateAnswer = (payload) => {
@@ -305,25 +275,12 @@ onMounted(() => {
     bubbleTimer = setInterval(rotateBubble, 3500)
     document.addEventListener('visibilitychange', handleVisibility)
 
-    if (props.backsound) {
-        audioRef.value = new Audio(props.backsound)
-        audioRef.value.loop = true
-        audioRef.value.volume = 0.4
-        audioRef.value.preload = 'auto'
-        audioRef.value.addEventListener('error', () => { audioRef.value = null; musicOn.value = false })
-        audioRef.value.play()
-            .then(() => { musicOn.value = true })
-            .catch(() => {
-                document.addEventListener('click', () => {
-                    audioRef.value?.play().then(() => { musicOn.value = true }).catch(() => {})
-                }, { once: true })
-            })
-    }
+    setTimeout(() => initAutoMusic(props.backsound), 100)
 })
 onUnmounted(() => {
   clearInterval(bubbleTimer)
   document.removeEventListener('visibilitychange', handleVisibility)
-  if (audioRef.value) { audioRef.value.pause(); audioRef.value = null }
+  destroyAudio()
 })
 
 const TYPE_ICON_MAP = {
@@ -378,7 +335,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
       </div>
 
       <div class="topbar-r">
-        <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic">
+        <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
           <Music2 v-if="musicOn"  :size="15" :stroke-width="2"/>
           <VolumeX v-else         :size="15" :stroke-width="2"/>
         </button>
