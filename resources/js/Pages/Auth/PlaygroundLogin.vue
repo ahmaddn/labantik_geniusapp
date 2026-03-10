@@ -81,7 +81,7 @@ onMounted(() => {
     setTimeout(() => { ready.value = true; brandMoved.value = true; }, 80);
     setTimeout(() => { bubbleTimer = setInterval(rotateBubble, 2800); }, 1200);
     document.addEventListener("visibilitychange", handleVisibility);
-    setTimeout(() => { initAutoMusic(); }, 500);
+    setTimeout(() =>  initAutoMusic(null), 500);
 });
 onUnmounted(() => {
     clearInterval(bubbleTimer);
@@ -137,7 +137,7 @@ onUnmounted(() => {
             </div>
 
             <div class="topbar-r">
-                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
+                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(null)">
                     <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
                     <VolumeX v-else        :size="15" :stroke-width="2"/>
                 </button>

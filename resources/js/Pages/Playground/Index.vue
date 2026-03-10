@@ -42,7 +42,7 @@ onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("visibilitychange", handleVisibility);
-    setTimeout(() => initAutoMusic(props.backsound), 500); // ← ganti block music lama
+    setTimeout(() => initAutoMusic(null), 100) // ← ganti block music lama
 
 });
 onUnmounted(() => {
@@ -111,7 +111,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 
             <div class="topbar-r">
                 <!-- Music toggle -->
-                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
+                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(null)">
                     <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
                     <VolumeX v-else        :size="15" :stroke-width="2"/>
                 </button>

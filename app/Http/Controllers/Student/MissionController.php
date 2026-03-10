@@ -20,64 +20,67 @@ class MissionController extends Controller
     // ─────────────────────────────────────────────────────────────
 
     public function missionsList(Request $request, Learning_modules $module)
-{
-    $player = session('player');
-    if (! $player) {
-        return redirect()->route('playground.login');
-    }
-
-    $module->load(['missions.quizzes', 'template.backgrounds']); // ← tambah 'template'
-
-    $missions = $module->missions->map(function ($mission) use ($player) {
-        $totalQuestions = $mission->quizzes->sum(fn ($q) => count($q->questions ?? []));
-        $totalQuizzes = $mission->quizzes->count();
-
-        $completedQuizzes = $mission->quizzes->filter(fn ($q) => Quiz_attempts::where('quiz_id', $q->id)
-            ->where('student_id', $player['id'] ?? null)
-            ->exists()
-        )->count();
-
-        $status = 'not_started';
-        if ($completedQuizzes > 0) {
-            $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
+    {
+        $player = session('player');
+        if (! $player) {
+            return redirect()->route('playground.login');
         }
 
-        $bestScore = Quiz_attempts::whereIn('quiz_id', $mission->quizzes->pluck('id'))
-            ->where('student_id', $player['id'] ?? null)
-            ->max('score') ?? 0;
+        $module->load([
+            'missions' => fn ($q) => $q->orderBy('order_number', 'asc'),
+            'missions.quizzes',
+            'template.backgrounds',
+        ]);
 
-        return [
-            'id' => $mission->id,
-            'name' => $mission->name,
-            'description' => $mission->hint ?? '',
-            'status' => $status,
-            'total_questions' => $totalQuestions,
-            'completed_quizzes' => $completedQuizzes,
-            'total_quizzes' => $totalQuizzes,
-            'best_score' => $bestScore,
-        ];
-    });
+        $missions = $module->missions->map(function ($mission) use ($player) {
+            $totalQuestions = $mission->quizzes->sum(fn ($q) => count($q->questions ?? []));
+            $totalQuizzes   = $mission->quizzes->count();
 
-    $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn ($m) => $m['status'] === 'completed');
+            $completedQuizzes = $mission->quizzes->filter(fn ($q) => Quiz_attempts::where('quiz_id', $q->id)
+                ->where('student_id', $player['id'] ?? null)
+                ->exists()
+            )->count();
 
-    // Ambil backsound dari template module
-    $backsound  = $module->template?->backsound
-              ? asset('storage/' . $module->template->backsound)
-              : null;
-$background = $module->template?->backgrounds->first()?->image
-              ? asset('storage/' . $module->template->backgrounds->first()->image)
-              : null;
+            $status = 'not_started';
+            if ($completedQuizzes > 0) {
+                $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
+            }
 
+            $bestScore = Quiz_attempts::whereIn('quiz_id', $mission->quizzes->pluck('id'))
+                ->where('student_id', $player['id'] ?? null)
+                ->max('score') ?? 0;
 
-    return Inertia::render('Playground/Missions/Index', [
-        'module'            => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
-        'missions'          => $missions,
-        'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-        'all_missions_done' => $allMissionsDone,
-        'backsound'         => $backsound, // ← tambah ini
-        'background'        => $background, // ← tambah ini
-    ]);
-}
+            return [
+                'id'               => $mission->id,
+                'name'             => $mission->name,
+                'description'      => $mission->hint ?? '',
+                'status'           => $status,
+                'total_questions'  => $totalQuestions,
+                'completed_quizzes'=> $completedQuizzes,
+                'total_quizzes'    => $totalQuizzes,
+                'best_score'       => $bestScore,
+            ];
+        });
+
+        $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn ($m) => $m['status'] === 'completed');
+
+        $backsound  = $module->template?->backsound
+            ? asset('storage/' . $module->template->backsound)
+            : null;
+        $background = $module->template?->backgrounds->first()?->image
+            ? asset('storage/' . $module->template->backgrounds->first()->image)
+            : null;
+
+        return Inertia::render('Playground/Missions/Index', [
+            'module'            => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
+            'missions'          => $missions,
+            'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'all_missions_done' => $allMissionsDone,
+            'backsound'         => $backsound,
+            'background'        => $background,
+        ]);
+    }
+
     public function showMission(Request $request, Missions $mission)
     {
         $player = session('player');
@@ -87,14 +90,14 @@ $background = $module->template?->backgrounds->first()?->image
 
         $mission->load([
             'module',
-            'materials'                    => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'materials'                        => fn ($q) => $q->orderBy('created_at', 'asc'),
             'materials.mascot',
-            'quizzes'                      => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'quizzes'                          => fn ($q) => $q->orderBy('created_at', 'asc'),
             'quizzes.questions.mascot',
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
             'module.template',
-            'module.template.backgrounds', // ← tambah ini
+            'module.template.backgrounds',
         ]);
 
         // Format quizzes
@@ -137,7 +140,6 @@ $background = $module->template?->backgrounds->first()?->image
                                 'correct_group_id' => $group->id,
                             ];
                         }
-
                         return ['id' => $group->id, 'group_name' => $group->group_name];
                     })->toArray();
                 }
@@ -146,7 +148,7 @@ $background = $module->template?->backgrounds->first()?->image
             })->toArray(),
         ])->toArray();
 
-        // Format materials as quiz items with type 'materials'
+        // Format materials
         $materials = $mission->materials->map(fn ($material) => [
             'id'         => $material->id,
             'type'       => 'materials',
@@ -170,16 +172,17 @@ $background = $module->template?->backgrounds->first()?->image
                 ],
             ],
         ])->toArray();
-        $backsound = null;
-if (!empty($mission->module?->template?->backsound)) {
-    $backsound = asset('storage/' . $mission->module->template->backsound);
-}
-$background = null;
-if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
-    $background = asset('storage/' . $mission->module->template->backgrounds->first()->image);
-}
 
-        // Merge materials and quizzes, sorted by created_at ascending (oldest first)
+        $backsound  = null;
+        $background = null;
+        if (! empty($mission->module?->template?->backsound)) {
+            $backsound = asset('storage/' . $mission->module->template->backsound);
+        }
+        if (! empty($mission->module?->template?->backgrounds->first()?->image)) {
+            $background = asset('storage/' . $mission->module->template->backgrounds->first()->image);
+        }
+
+        // Merge & sort by created_at
         $allItems = collect(array_merge($quizzes, $materials))
             ->sortBy(fn ($item) => $item['created_at'])
             ->values()
@@ -192,17 +195,14 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
         ];
 
         return Inertia::render('Playground/Mission/Template', [
-            'mission' => $formattedMission,
-            'user'   => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'module' => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? ''],
-            'backsound' => $backsound,
+            'mission'    => $formattedMission,
+            'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module'     => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? ''],
+            'backsound'  => $backsound,
             'background' => $background,
         ]);
     }
 
-    /**
-     * Dedicated result page — reads saved answers and builds full review data.
-     */
     public function showResult(Request $request, Missions $mission)
     {
         $player = session('player');
@@ -213,15 +213,19 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
         $mission->load([
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
-
         ]);
 
-        $studentId = $player['id'] ?? null;
-        $totalCorrect = 0;
+        $studentId      = $player['id'] ?? null;
+        $totalCorrect   = 0;
         $totalIncorrect = 0;
         $totalQuestions = 0;
-        $byType = [];
-        $questionsResult = [];
+        $byType         = [];
+        $questionsResult= [];
+
+        $nextMission = Missions::where('module_id', $mission->module_id)
+            ->where('order_number', '>', $mission->order_number)
+            ->orderBy('order_number', 'asc')
+            ->first();
 
         foreach ($mission->quizzes as $quiz) {
             if ($quiz->type === 'materials') {
@@ -241,6 +245,8 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
 
             foreach ($quiz->questions as $question) {
                 $answer = $answersByQuestion->get($question->id);
+
+                // Tidak dijawab (timer habis / skip) → skip, tidak masuk hitungan
                 if (! $answer) {
                     continue;
                 }
@@ -268,15 +274,15 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
                 }
 
                 $questionsResult[] = [
-                    'question_id'        => $question->id,
-                    'question_text'      => $question->question_text,
-                    'quiz_type'          => $quiz->type,
-                    'quiz_title'         => $quiz->title,
-                    'is_correct'         => $isCorrect,
-                    'user_answer_text'   => $userAnswerText,
-                    'correct_answer_text'=> $correctAnswerText,
-                    'user_answer_map'    => $userAnswerMap,
-                    'correct_answer_map' => $correctAnswerMap,
+                    'question_id'         => $question->id,
+                    'question_text'       => $question->question_text,
+                    'quiz_type'           => $quiz->type,
+                    'quiz_title'          => $quiz->title,
+                    'is_correct'          => $isCorrect,
+                    'user_answer_text'    => $userAnswerText,
+                    'correct_answer_text' => $correctAnswerText,
+                    'user_answer_map'     => $userAnswerMap,
+                    'correct_answer_map'  => $correctAnswerMap,
                 ];
             }
         }
@@ -296,8 +302,7 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
         $moduleId = $mission->module_id;
         $module   = $mission->module;
 
-        // Cek apakah semua misi di modul ini sudah selesai
-        $allMissionIds = Missions::where('module_id', $moduleId)->pluck('id');
+        $allMissionIds   = Missions::where('module_id', $moduleId)->pluck('id');
         $allMissionsDone = $allMissionIds->isNotEmpty() && $allMissionIds->every(function ($missionId) use ($studentId) {
             $missionQuizIds = Quizzes::where('mission_id', $missionId)
                 ->where('category', 'mission')
@@ -310,6 +315,7 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
 
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => $mission->id, 'name' => $mission->name],
+            'next_mission'      => $nextMission ? ['id' => $nextMission->id, 'name' => $nextMission->name] : null,
             'results'           => [
                 'score'            => $score,
                 'correct'          => $totalCorrect,
@@ -377,11 +383,11 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
                     'scores'     => $scores,
                 ]);
                 $attempt->update([
-                    'score'                  => $scores['overall'],
-                    'score_multiple_choice'  => $scores['multiple_choices'],
-                    'score_true_false'       => $scores['true_false'],
-                    'score_case_study'       => $scores['case_study'],
-                    'score_drag_drop'        => $scores['drag_drop'],
+                    'score'                 => $scores['overall'],
+                    'score_multiple_choice' => $scores['multiple_choices'],
+                    'score_true_false'      => $scores['true_false'],
+                    'score_case_study'      => $scores['case_study'],
+                    'score_drag_drop'       => $scores['drag_drop'],
                 ]);
             }
 
@@ -432,6 +438,7 @@ if (!empty($mission->module?->template?->backgrounds->first()?->image)) {
 
         foreach ($quiz->questions as $question) {
             $answer = $answersByQuestion->get($question->id);
+            // Skip soal yang tidak dijawab (timer habis)
             if (! $answer) {
                 continue;
             }

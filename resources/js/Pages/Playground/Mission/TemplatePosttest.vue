@@ -8,25 +8,25 @@ import {
   Timer, ChevronRight, CheckCircle2, MousePointerClick,
 } from 'lucide-vue-next'
 
-import { useMusic } from '@/Composable/useMusic'
 import Multiple_choice from '@/Components/Quiz/Multiple_choice.vue'
 import True_false      from '@/Components/Quiz/True_false.vue'
 import Case_study      from '@/Components/Quiz/Case_study.vue'
 import Materials       from '@/Components/Quiz/Materials.vue'
 import Drag_drop       from '@/Components/Quiz/Drag_drop.vue'
+import { useMusic } from '@/Composable/useMusic'
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 const props = defineProps({
-  quiz:    { type: Object, required: true },
-  // quiz.questions[] — array of question objects
-  module:  { type: Object, default: () => ({ id: null, name: 'Modul' }) },
-  user:    { type: Object, default: () => ({ name: 'Siswa' }) },
+  quiz:      { type: Object, required: true },
+  module:    { type: Object, default: () => ({ id: null, name: 'Modul' }) },
+  user:      { type: Object, default: () => ({ name: 'Siswa' }) },
   backsound: { type: String, default: null },
-    background: { type: String, default: null },
+  background:{ type: String, default: null },
 })
 
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
-// ─── Component map (same as Template.vue) ───────────────────────────────────
+
+// ─── Component map ───────────────────────────────────────────────────────────
 const COMPONENT_MAP = {
   multiple_choices: Multiple_choice,
   true_false:       True_false,
@@ -36,11 +36,11 @@ const COMPONENT_MAP = {
 }
 
 const TYPE_META = {
-  multiple_choices: { label: 'Pilihan Ganda',      color: '#3b82f6', bg: '#dbeafe' },
-  true_false:       { label: 'Benar / Salah',       color: '#8b5cf6', bg: '#ede9fe' },
-  case_study:       { label: 'Studi Kasus',         color: '#0891b2', bg: '#cffafe' },
-  drag_drop:        { label: 'Seret & Letakkan',    color: '#f59e0b', bg: '#fef3c7' },
-  material:         { label: 'Materi',              color: '#10b981', bg: '#d1fae5' },
+  multiple_choices: { label: 'Pilihan Ganda',   color: '#3b82f6', bg: '#dbeafe' },
+  true_false:       { label: 'Benar / Salah',    color: '#8b5cf6', bg: '#ede9fe' },
+  case_study:       { label: 'Studi Kasus',      color: '#0891b2', bg: '#cffafe' },
+  drag_drop:        { label: 'Seret & Letakkan', color: '#f59e0b', bg: '#fef3c7' },
+  material:         { label: 'Materi',           color: '#10b981', bg: '#d1fae5' },
 }
 const typeMeta = (t) => TYPE_META[t] || { label: t, color: '#64748b', bg: '#f1f5f9' }
 
@@ -57,7 +57,7 @@ const mascotSrc = computed(() => {
 // ─── Bubbles ────────────────────────────────────────────────────────────────
 const BUBBLES_INTRO = ['Posttest menanti, semangat!', 'Siap memulai tantangan?', 'Tunjukkan kemampuanmu!']
 const BUBBLES_QUIZ  = ['Semangat ya!', 'Baca dengan teliti!', 'Pikirkan baik-baik!', 'Hampir selesai!', 'Fokus dan tenang!']
-const BUBBLES_DONE  = ['Luar biasa! Kamu keren!', 'Pretest selesai! Hebat!', 'Jempol buat kamu!']
+const BUBBLES_DONE  = ['Luar biasa! Kamu keren!', 'Posttest selesai! Hebat!', 'Jempol buat kamu!']
 const BUBBLES = computed(() => {
   if (phase.value === 'intro') return BUBBLES_INTRO
   if (phase.value === 'done')  return BUBBLES_DONE
@@ -72,12 +72,21 @@ const rotateBubble  = () => {
 }
 watch(phase, () => { bubbleIdx.value = 0; bubbleVisible.value = false; setTimeout(() => { bubbleVisible.value = true }, 200) })
 
-// ─── Timer ───────────────────────────────────────────────────────────────────
+// ─── Timer + sessionStorage ──────────────────────────────────────────────────
 const ready      = ref(false)
 const brandMoved = ref(false)
 const timeLimit  = computed(() => (props.quiz?.time_limit ?? 10) * 60)
-const remaining  = ref(timeLimit.value)
-let   timerInt   = null
+
+const SS_KEY = `geniuss_posttest_timer_${props.quiz?.id}`
+function ssGet(key, fallback) {
+  try { const v = sessionStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback } catch { return fallback }
+}
+function ssSet(key, val) { try { sessionStorage.setItem(key, JSON.stringify(val)) } catch {} }
+function ssDel(key)      { try { sessionStorage.removeItem(key) } catch {} }
+
+const remaining = ref(ssGet(SS_KEY, timeLimit.value))
+let   timerInt  = null
+
 const timerDisplay = computed(() => {
   const m = String(Math.floor(remaining.value / 60)).padStart(2, '0')
   const s = String(remaining.value % 60).padStart(2, '0')
@@ -85,10 +94,17 @@ const timerDisplay = computed(() => {
 })
 const timerPct     = computed(() => (remaining.value / timeLimit.value) * 100)
 const timerWarning = computed(() => remaining.value <= 60)
+
 function startTimer() {
   timerInt = setInterval(() => {
-    if (remaining.value <= 0) { clearInterval(timerInt); submitQuiz(); return }
+    if (remaining.value <= 0) {
+      clearInterval(timerInt)
+      ssDel(SS_KEY)
+      submitQuiz()
+      return
+    }
     remaining.value--
+    ssSet(SS_KEY, remaining.value)
   }, 1000)
 }
 
@@ -152,6 +168,7 @@ function submitQuiz() {
   if (submitting.value) return
   submitting.value = true
   clearInterval(timerInt)
+  ssDel(SS_KEY)
   phase.value = 'done'
 
   const payload = {
@@ -183,13 +200,14 @@ const INSTR_ITEMS = [
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
 onMounted(() => {
-
+  setTimeout(() => { ready.value = true }, 80)
   bubbleTimer = setInterval(rotateBubble, 3500)
   document.addEventListener('visibilitychange', handleVisibility)
   setTimeout(() => initAutoMusic(props.backsound), 100)
 })
 onUnmounted(() => {
-  clearInterval(timerInt); clearInterval(bubbleTimer)
+  clearInterval(timerInt)
+  clearInterval(bubbleTimer)
   document.removeEventListener('visibilitychange', handleVisibility)
   destroyAudio()
 })
@@ -205,7 +223,7 @@ onUnmounted(() => {
 
     <!-- ══ BG ══ -->
     <div class="bg">
-      <div class="bg-img" :style="{ backgroundImage: `url(${props.background})` }"></div>
+      <div class="bg-img" :style="props.background ? { backgroundImage: `url(${props.background})` } : {}"></div>
       <div class="bg-tint"></div>
       <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
       <div class="sh sh-circle c1"></div><div class="sh sh-circle c2"></div>
@@ -322,7 +340,7 @@ onUnmounted(() => {
             <div class="icard-head-inner">
               <div class="icard-eyebrow">
                 <Zap :size="11" :stroke-width="2.5" fill="currentColor"/>
-                <span>Pretest</span>
+                <span>Posttest</span>
               </div>
               <h2 class="icard-title">{{ module.name }}</h2>
               <p class="icard-sub">{{ quiz.description ?? 'Jawab semua soal untuk mengukur kemampuanmu setelah menyelesaikan semua misi!' }}</p>
@@ -367,10 +385,8 @@ onUnmounted(() => {
         <!-- ══ QUIZ CARD ══ -->
         <Transition name="pg">
         <div v-if="phase === 'quiz' && currentQ" class="qcard" :class="{ 'qcard--shake': shakeActive }">
-          <!-- Colored bar -->
           <div class="qcard-bar" :style="{ background: typeMeta(quizType).color }"></div>
 
-          <!-- Header -->
           <div class="qcard-head">
             <div class="qcard-deco qcard-deco-1"></div>
             <div class="qcard-deco qcard-deco-2"></div>
@@ -388,7 +404,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Question title row -->
           <div class="qcard-title-row">
             <div class="q-num-badge">#{{ currentIdx + 1 }}</div>
             <p class="qcard-step-title">{{ currentQ.question_text }}</p>
@@ -398,7 +413,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Component -->
           <div class="question-item">
             <component
               :is="COMPONENT_MAP[quizType]"
@@ -408,7 +422,6 @@ onUnmounted(() => {
             />
           </div>
 
-          <!-- Hint -->
           <div class="qcard-hint" :class="{ 'qcard-hint--done': isQuestionAnswered(currentQ) }">
             <template v-if="isQuestionAnswered(currentQ)">
               <Sparkles :size="12" :stroke-width="2"/>

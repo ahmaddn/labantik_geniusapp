@@ -1,10 +1,11 @@
 import { ref } from 'vue'
 
 const STORAGE_KEY = 'geniuss_music_on'
+export const DEFAULT_MUSIC = '/storage/templates/backsounds/music.mp3'
 
 const musicOn    = ref(localStorage.getItem(STORAGE_KEY) !== 'false')
 const audioRef   = ref(null)
-const currentSrc = ref(null) // ← track src yang sedang diputar
+const currentSrc = ref(null)
 
 export function useMusic() {
 
@@ -18,24 +19,22 @@ export function useMusic() {
     }
 
     const initAutoMusic = async (src) => {
-        if (!src) return
+        const resolvedSrc = src ?? DEFAULT_MUSIC
 
-        // Src sama → lanjut play tanpa restart
-        if (currentSrc.value === src) {
+        if (currentSrc.value === resolvedSrc) {
             if (musicOn.value && audioRef.value?.paused) {
                 try { await audioRef.value.play() } catch {}
             }
             return
         }
 
-        // Src beda → pause lama, buat baru
         if (audioRef.value) {
             audioRef.value.pause()
             audioRef.value = null
         }
 
-        currentSrc.value   = src
-        audioRef.value     = new Audio(src)
+        currentSrc.value       = resolvedSrc
+        audioRef.value         = new Audio(resolvedSrc)
         audioRef.value.loop    = true
         audioRef.value.volume  = 0.4
         audioRef.value.preload = 'auto'
@@ -50,17 +49,30 @@ export function useMusic() {
         try {
             await audioRef.value.play()
         } catch {
-            document.addEventListener('click', async () => {
-                if (!musicOn.value) return
-                try { await audioRef.value?.play() } catch {}
+            // Autoplay blocked → set false supaya tombol bisa diklik
+            musicOn.value = false
+            document.addEventListener('click', async (e) => {
+                // Jangan trigger kalau user klik tombol toggle sendiri
+                if (e.target.closest('.tbtn-sq')) return
+                if (musicOn.value) return
+                try { await audioRef.value?.play(); musicOn.value = true } catch {}
             }, { once: true })
         }
     }
 
     const toggleMusic = async (src) => {
-        if (!audioRef.value && src) {
-            currentSrc.value   = src
-            audioRef.value     = new Audio(src)
+    console.log('toggleMusic called', src)
+    console.log('audioRef', audioRef.value)
+    console.log('musicOn', musicOn.value)
+
+
+
+        const resolvedSrc = src ?? DEFAULT_MUSIC
+            console.log('resolvedSrc', resolvedSrc)
+
+        if (!audioRef.value) {
+            currentSrc.value       = resolvedSrc
+            audioRef.value         = new Audio(resolvedSrc)
             audioRef.value.loop    = true
             audioRef.value.volume  = 0.4
             audioRef.value.preload = 'auto'
@@ -70,8 +82,6 @@ export function useMusic() {
                 musicOn.value    = false
             })
         }
-
-        if (!audioRef.value) return
 
         if (musicOn.value) {
             audioRef.value.pause()
@@ -83,10 +93,7 @@ export function useMusic() {
         savePref(musicOn.value)
     }
 
-    const destroyAudio = () => {
-        // Jangan destroy kalau src sama — biar lanjut di page berikutnya
-        // Hanya reset listener, audio tetap jalan
-    }
+    const destroyAudio = () => {}
 
     return { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio }
 }

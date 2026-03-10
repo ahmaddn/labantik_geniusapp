@@ -1,3 +1,4 @@
+<!-- ini te-->
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import {
@@ -30,6 +31,7 @@ const COMPONENT_MAP = {
 
 }
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
+const brandMoved = ref(false)
 const TYPE_META = {
   multiple_choices: { label: 'Pilihan Ganda',           color: '#3b82f6', bg: '#dbeafe' },
   true_false:       { label: 'Pilih Gambar Yang Benar',  color: '#8b5cf6', bg: '#ede9fe' },
@@ -113,6 +115,107 @@ const step    = computed(() => steps.value[currentStep.value])
 const isFirst = computed(() => currentStep.value === 0)
 const isLast  = computed(() => currentStep.value === steps.value.length - 1)
 
+// ── Timer ─────────────────────────────────────────────────────
+// sessionStorage keys — scoped per mission agar tidak tabrakan antar misi
+const SS_TIME_KEY    = `geniuss_timer_time_${props.mission.id}`
+const SS_TIMEOUT_KEY = `geniuss_timer_out_${props.mission.id}`
+
+// Helpers baca/tulis sessionStorage
+function ssGetMap(key) {
+  try { return JSON.parse(sessionStorage.getItem(key) || '{}') } catch { return {} }
+}
+function ssSetMap(key, val) {
+  try { sessionStorage.setItem(key, JSON.stringify(val)) } catch {}
+}
+
+// Load state dari sessionStorage (bertahan saat reload)
+const _savedTime    = ssGetMap(SS_TIME_KEY)    // { [quizId]: secondsRemaining }
+const _savedTimeout = ssGetMap(SS_TIMEOUT_KEY) // { [quizId]: true }
+
+const timeRemaining   = ref(0)
+const timedOutQuizzes = ref(new Set(Object.keys(_savedTimeout).filter(k => _savedTimeout[k])))
+let   timerInt        = null
+let   activeQuizId    = null
+
+const timerDisplay = computed(() => {
+  const m = String(Math.floor(timeRemaining.value / 60)).padStart(2, '0')
+  const s = String(timeRemaining.value % 60).padStart(2, '0')
+  return `${m}:${s}`
+})
+const timerWarning = computed(() => timeRemaining.value > 0 && timeRemaining.value <= 60)
+const showTimer    = computed(() => {
+  const s = step.value
+  return s && !s.isMaterial && s.quiz?.time_limit > 0
+})
+
+function saveTimerState(quizId, seconds) {
+  const map = ssGetMap(SS_TIME_KEY)
+  map[quizId] = seconds
+  ssSetMap(SS_TIME_KEY, map)
+}
+
+function markTimeout(quizId) {
+  const map = ssGetMap(SS_TIMEOUT_KEY)
+  map[quizId] = true
+  ssSetMap(SS_TIMEOUT_KEY, map)
+  timedOutQuizzes.value = new Set([...timedOutQuizzes.value, quizId])
+}
+
+function pauseActiveTimer() {
+  if (activeQuizId !== null) {
+    saveTimerState(activeQuizId, timeRemaining.value)
+  }
+  clearInterval(timerInt)
+  timerInt = null
+}
+
+function startQuizTimer(quiz) {
+  pauseActiveTimer()
+
+  if (!quiz || !quiz.time_limit || quiz.time_limit <= 0) {
+    timeRemaining.value = 0
+    activeQuizId = null
+    return
+  }
+  brandMoved.value = true
+
+  // Sudah timeout → tampilkan 0, tidak perlu interval
+  if (timedOutQuizzes.value.has(quiz.id)) {
+    timeRemaining.value = 0
+    activeQuizId = quiz.id
+    return
+  }
+
+  // Ambil sisa waktu dari sessionStorage, atau mulai dari awal
+  const saved = ssGetMap(SS_TIME_KEY)
+  timeRemaining.value = saved[quiz.id] !== undefined ? saved[quiz.id] : quiz.time_limit
+  activeQuizId = quiz.id
+
+  timerInt = setInterval(() => {
+    if (timeRemaining.value <= 0) {
+      clearInterval(timerInt)
+      timerInt = null
+      markTimeout(quiz.id)
+      saveTimerState(quiz.id, 0)
+      timeRemaining.value = 0
+      return
+    }
+    timeRemaining.value--
+    // Simpan ke sessionStorage tiap detik supaya reload tetap lanjut
+    saveTimerState(quiz.id, timeRemaining.value)
+  }, 1000)
+}
+
+// Ganti timer saat pindah ke quiz yang berbeda
+watch(
+  () => step.value?.quiz?.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      startQuizTimer(step.value?.quiz ?? null)
+    }
+  }
+)
+
 // ── Answer check ───────────────────────────────────────────────
 const isQuestionAnswered = (question, quizType) => {
   const ans = answers[question.id]
@@ -128,10 +231,12 @@ const isQuestionAnswered = (question, quizType) => {
 const isStepAnswered = (s) => {
   if (!s || s.isMaterial) return true
   if (!s.question) return true
+  // Quiz yang sudah timeout → dianggap selesai (bisa next/submit)
+  if (timedOutQuizzes.value.has(s.quiz?.id)) return true
   return isQuestionAnswered(s.question, s.quiz.type)
 }
 
-const canGoNext        = computed(() => isStepAnswered(step.value))
+const canGoNext = computed(() => isStepAnswered(step.value))
 const allStepsAnswered = computed(() =>
   steps.value.filter(s => !s.isMaterial).every(s => isStepAnswered(s))
 )
@@ -261,7 +366,14 @@ const submit = async () => {
       }),
     })
     const data = await res.json()
-    if (data.success) router.visit(route('playground.missions.result', props.mission.id))
+    if (data.success) {
+      // Bersihkan timer state supaya sesi berikutnya mulai fresh
+      try {
+        sessionStorage.removeItem(SS_TIME_KEY)
+        sessionStorage.removeItem(SS_TIMEOUT_KEY)
+      } catch {}
+      router.visit(route('playground.missions.result', props.mission.id))
+    }
     else alert('Gagal menyimpan jawaban: ' + (data.error || 'Unknown error'))
   } catch (e) {
     console.error(e); alert('Terjadi kesalahan saat menyimpan jawaban')
@@ -274,11 +386,16 @@ onMounted(() => {
     setTimeout(() => (ready.value = true), 80)
     bubbleTimer = setInterval(rotateBubble, 3500)
     document.addEventListener('visibilitychange', handleVisibility)
-
     setTimeout(() => initAutoMusic(props.backsound), 100)
+
+    // Mulai timer untuk quiz pertama
+    if (step.value?.quiz) {
+      startQuizTimer(step.value.quiz)
+    }
 })
 onUnmounted(() => {
   clearInterval(bubbleTimer)
+  clearInterval(timerInt)
   document.removeEventListener('visibilitychange', handleVisibility)
   destroyAudio()
 })
@@ -329,10 +446,23 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
         <span class="tbtn-lbl">Kembali</span>
       </button>
 
-      <div class="brand">
+      <div class="brand" :class="{ 'brand--hide': brandMoved }">
         <div class="brand-dot"><Zap :size="13" color="#fff" fill="white" :stroke-width="2"/></div>
         <span class="brand-name">Geniuss</span>
       </div>
+      <Transition name="t-timer">
+  <div v-if="showTimer" class="timer" :class="{ 'timer--warn': timerWarning, 'timer--out': timedOutQuizzes.has(step?.quiz?.id) }">
+    <div class="timer-row">
+      <Clock :size="13" :stroke-width="2"/>
+      <span class="timer-val">{{ timedOutQuizzes.has(step?.quiz?.id) ? 'Waktu Habis' : timerDisplay }}</span>
+    </div>
+    <div class="timer-track">
+      <div class="timer-fill" :class="{ 'fill--warn': timerWarning }"
+           :style="{ width: timedOutQuizzes.has(step?.quiz?.id) ? '0%' : (timeRemaining / (step.quiz.time_limit) * 100) + '%' }">
+      </div>
+    </div>
+  </div>
+</Transition>
 
       <div class="topbar-r">
         <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
@@ -412,6 +542,9 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
               <span class="qcard-mission">{{ module.name }}</span>
 
             </div>
+
+            <!-- Timer bar -->
+            
           </div>
 
           <!-- Card body -->
@@ -439,8 +572,20 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
             <div
               v-if="step.question"
               class="question-item"
-              :class="{ 'question-item--done': canGoNext && !step.isMaterial }"
+              :class="{
+                'question-item--done': canGoNext && !step.isMaterial,
+                'question-item--locked': timedOutQuizzes.has(step.quiz?.id)
+              }"
             >
+              <!-- Timeout overlay -->
+              <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
+                <div class="timeout-badge">
+                  <Timer :size="16" :stroke-width="2"/>
+                  <span>Waktu Habis</span>
+                </div>
+                <p class="timeout-sub">Soal ini tidak bisa dijawab lagi</p>
+              </div>
+
               <component
                 :is="COMPONENT_MAP[step.quiz.type]"
                 :question="step.question"
@@ -628,10 +773,23 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
 .tbtn:disabled { opacity:.4; cursor:not-allowed; }
 .tbtn-sq { padding:7px 10px; }
 .tbtn--on { background:#2563EB; border-color:#BFDBFE; }
-.brand { position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; pointer-events:none; z-index:2; }
+.brand { position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; pointer-events:none; z-index:2; transition:opacity .34s,transform .34s; }
+.brand--hide { opacity:0; transform:translateX(-50%) scale(.88); }
 .brand-dot { width:28px; height:28px; border-radius:8px; background:#2563EB; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(37,99,235,.5); }
 .brand-name { font-family:'Righteous',cursive; font-size:18px; color:#fff; white-space:nowrap; }
 .topbar-r { display:flex; align-items:center; gap:8px; margin-left:auto; z-index:3; }
+.timer { position:absolute; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; z-index:2; min-width:138px; }
+.timer-row { display:flex; align-items:center; gap:6px; color:#fff; }
+.timer-val { font-family:'Righteous',cursive; font-size:21px; letter-spacing:.5px; }
+.timer--warn .timer-val { color:#fca5a5; animation:tWarn 1s ease-in-out infinite; }
+@keyframes tWarn { 0%,100%{opacity:1} 50%{opacity:.5} }
+.timer-track { width:100%; height:4px; background:rgba(255,255,255,.2); border-radius:99px; overflow:hidden; }
+.timer-fill { height:100%; background:#BFDBFE; border-radius:99px; transition:width .9s linear; }
+.fill--warn { background:#f87171; }
+.t-timer-enter-active { transition:opacity .4s ease .25s,transform .42s cubic-bezier(.34,1.56,.64,1) .25s; }
+.t-timer-leave-active { transition:opacity .18s ease; }
+.t-timer-enter-from   { opacity:0; transform:translateX(-50%) translateY(6px) scale(.88); }
+.t-timer-leave-to     { opacity:0; }
 
 /* ─── BODY GRID ─── */
 .body { position:relative; z-index:10; flex:1; display:grid; grid-template-columns:264px 1fr; gap:20px; max-width:1080px; width:100%; margin:0 auto; padding:22px 18px 18px; align-items:start; opacity:0; transition:opacity .45s; }
@@ -866,23 +1024,62 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid
   .fbtn span { white-space:normal; text-align:center; line-height:1.3; }
 }
 
-/* ─── XS ≤ 480px ─── */
-@media (max-width: 480px) {
-  .topbar{height:48px;padding:0 11px;} .tbtn-lbl{display:none;} .tbtn{padding:7px 9px;}
-  .sidebar{padding:11px 12px 10px;} .sb-title{font-size:13px;} .sb-sub{font-size:11px;}
-  .qcard-head-inner{padding:8px 12px;}
-  .qcard-chip{font-size:9.5px; padding:3px 8px;}
-  .qcard-mission{font-size:10px;}
-  .qcard-counter-num{font-size:15px;} .qcard-counter-tot{font-size:11px;}
-  .qcard-body{padding:12px 12px 16px;}
-  .qcard-title-row{padding:12px 12px; gap:8px;}
-  .qcard-step-title{font-size:13.5px;}
-  .q-num-badge{min-width:28px; height:28px; font-size:11px;}
-  .q-answered-badge{display:none;}
-  .question-item{padding:10px;}
-  .qcard-hint{font-size:11px;}
-  .footer-inner{padding:0 12px;gap:7px;}
-  .fbtn{height:38px;padding:0 11px;font-size:12px;}
-  .f-pos{font-size:12px;}
+/* ─── TIMER BAR ─── */
+.timer-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 18px 10px;
+  background: rgba(0,0,0,.15);
+  border-top: 1px solid rgba(255,255,255,.12);
+  transition: background .3s;
+}
+.timer-bar--warn { background: rgba(239,68,68,.28); }
+.timer-bar--out  { background: rgba(100,116,139,.35); }
+
+.timer-icon {
+  display: flex; align-items: center; color: #fff; opacity: .85; flex-shrink: 0;
+}
+.timer-bar--warn .timer-icon { color: #fca5a5; animation: timerPulse .7s ease-in-out infinite alternate; }
+
+.timer-text {
+  font-family: 'Righteous', cursive; font-size: 13px; color: #fff;
+  min-width: 52px; flex-shrink: 0; letter-spacing: .5px;
+}
+.timer-bar--warn .timer-text { color: #fca5a5; }
+.timer-bar--out  .timer-text { color: rgba(255,255,255,.55); font-size: 12px; }
+
+.timer-track {
+  flex: 1; height: 6px; background: rgba(255,255,255,.2);
+  border-radius: 99px; overflow: hidden;
+}
+.timer-fill {
+  height: 100%; background: #34D399; border-radius: 99px;
+  transition: width 1s linear, background .4s;
+}
+.timer-bar--warn .timer-fill { background: #ef4444; }
+.timer-bar--out  .timer-fill { background: #94a3b8; }
+
+@keyframes timerPulse { from { opacity: .6 } to { opacity: 1 } }
+
+/* ─── TIMEOUT OVERLAY ─── */
+.question-item--locked {
+  position: relative; pointer-events: none;
+  filter: grayscale(.4); opacity: .7;
+}
+.timeout-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(248,250,252,.82); backdrop-filter: blur(3px);
+  border-radius: 13px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  pointer-events: none;
+}
+.timeout-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fee2e2; border: 1.5px solid #fca5a5;
+  border-radius: 999px; padding: 6px 16px;
+  font-size: 13px; font-weight: 900; color: #dc2626;
+}
+.timeout-sub {
+  font-size: 11.5px; font-weight: 700; color: #94a3b8;
 }
 </style>
