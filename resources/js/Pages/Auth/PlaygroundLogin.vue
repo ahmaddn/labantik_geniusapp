@@ -14,7 +14,7 @@ const musicOn    = ref(false);
 const audioRef   = ref(null);
 const props      = defineProps({
     backsound: { type: String, default: null },
-    background: { type: String, default: null },
+
 });
 // ── Speech bubble ──────────────────────────────────────────────────
 const BUBBLE_LINES = [
@@ -128,7 +128,7 @@ onUnmounted(() => {
 
         <!-- ══ BG ══ -->
         <div class="bg">
-            <div class="bg-img" :style="background ? `background-image: url('${background}')` : ''"></div>
+            <div class="bg-img"></div>
             <div class="bg-tint"></div>
             <div class="blob b1"></div>
             <div class="blob b2"></div>

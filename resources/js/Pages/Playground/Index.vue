@@ -14,7 +14,7 @@ const props = defineProps({
     },
     learningModules: { type: Array, default: () => [] },
     backsound: { type: String, default: null }, // ← tambah ini
-    background: { type: String, default: null }, // ← tambah ini
+
 });
 
 const ready       = ref(false);
@@ -120,7 +120,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 
         <!-- ══ BG — identik login ══ -->
         <div class="bg">
-            <div class="bg-img" :style="background ? `background-image: url('${background}')` : ''"></div>
+            <div class="bg-img"></div>
             <div class="bg-tint"></div>
             <div class="blob b1"></div>
             <div class="blob b2"></div>
