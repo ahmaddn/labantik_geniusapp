@@ -34,7 +34,10 @@ class PretestController extends Controller
                 'questions.dragDropGroups.items',
             ])
             ->first();
-            $module->load('template');
+            $module->load('template','template.backgrounds');
+$background = $module->template?->backgrounds->first()?->image
+    ? asset('storage/' . $module->template->backgrounds->first()->image)
+    : null;
 $backsound = null;
 if (!empty($module->template?->backsound)) {
     $backsound = asset('storage/' . $module->template->backsound);
@@ -112,6 +115,7 @@ if (!empty($module->template?->backsound)) {
                 'class' => $player['nama_kelas'] ?? '-',
             ],
             'backsound' => $backsound,
+            'background' => $background,
         ]);
     }
 

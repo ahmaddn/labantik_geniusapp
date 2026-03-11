@@ -8,10 +8,12 @@ import Modal from "@/Components/UI/Modal.vue";
 import ConfirmDialog from "@/Components/UI/ConfirmDialog.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
+import FileDropzone from "@/Components/UI/Forms/FileDropzone.vue";
 import {
     ArrowLeft,
     Flag,
     Plus,
+    FileText,
     Inbox,
     Trash2,
     Pencil,
@@ -68,6 +70,51 @@ const triggerToast = (message, type = "success") => {
     toastType.value = type;
     toastVisible.value = true;
     setTimeout(() => (toastVisible.value = false), 2800);
+};
+
+// Import module-level quizzes (pretest) - CSV/XLSX
+const moduleImport = useForm({ file: null, category: "pretest" });
+const showModuleImportModal = ref(false);
+const moduleImportPreview = ref(null);
+
+const setModuleFile = (file) => {
+    moduleImport.file = file;
+    moduleImportPreview.value = file ? file.name : null;
+};
+
+const submitModuleImport = () => {
+    if (!moduleImport.file) {
+        triggerToast("Pilih file CSV/XLSX terlebih dahulu.", "error");
+        return;
+    }
+    const url = route("admin.modules.quizzes.import", props.module.id);
+    moduleImport.post(url, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const flashError = page.props?.flash?.error;
+            const flashSuccess = page.props?.flash?.success;
+            if (flashError) {
+                triggerToast(flashError, "error");
+            } else {
+                triggerToast(
+                    flashSuccess || "Import quiz module berhasil.",
+                    "success",
+                );
+                moduleImport.reset();
+                moduleImportPreview.value = null;
+                showModuleImportModal.value = false;
+            }
+        },
+        onError: (errs) => {
+            const msg =
+                errs?.error ||
+                errs?.file ||
+                Object.values(errs)?.[0] ||
+                "Gagal import quiz.";
+            triggerToast(msg, "error");
+        },
+    });
 };
 
 // Flash messages
@@ -246,35 +293,51 @@ const deleteMission = () => {
                         </div>
                     </div>
 
-                    <!-- Actions (responsive: wrap on small screens) -->
-                    <div class="flex flex-wrap gap-2 mt-4 sm:mt-0">
-                        <Button
-                            class="w-full sm:w-auto"
-                            variant="warning"
-                            size="md"
-                            :icon="Plus"
-                            @click="openCreateQuizPretest('pretest')"
-                        >
-                            Tambah Tes Awal
-                        </Button>
-                        <Button
-                            class="w-full sm:w-auto"
-                            variant="primary"
-                            size="lg"
-                            :icon="Plus"
-                            @click="openAddMissionModal"
-                        >
-                            Tambah Misi
-                        </Button>
-                        <Button
-                            class="w-full sm:w-auto"
-                            variant="light"
-                            size="md"
-                            :icon="Plus"
-                            @click="openCreateQuizPretest('posttest')"
-                        >
-                            Tambah Tes Akhir
-                        </Button>
+                    <!-- Actions: primary buttons with import button in a second row -->
+                    <div
+                        class="flex flex-col items-start sm:items-end gap-2 mt-4 sm:mt-0"
+                    >
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                class="w-full sm:w-auto"
+                                variant="warning"
+                                size="md"
+                                :icon="Plus"
+                                @click="openCreateQuizPretest('pretest')"
+                            >
+                                Tambah Tes Awal
+                            </Button>
+                            <Button
+                                class="w-full sm:w-auto"
+                                variant="primary"
+                                size="lg"
+                                :icon="Plus"
+                                @click="openAddMissionModal"
+                            >
+                                Tambah Misi
+                            </Button>
+                            <Button
+                                class="w-full sm:w-auto"
+                                variant="light"
+                                size="md"
+                                :icon="Plus"
+                                @click="openCreateQuizPretest('posttest')"
+                            >
+                                Tambah Tes Akhir
+                            </Button>
+                        </div>
+
+                        <div class="w-full sm:w-auto">
+                            <Button
+                                class="w-full sm:w-auto"
+                                variant="ghost"
+                                size="md"
+                                :icon="FileText"
+                                @click="showModuleImportModal = true"
+                            >
+                                Import Tes Awal (Pretest)
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -611,6 +674,54 @@ const deleteMission = () => {
             @confirm="deleteMission"
             @cancel="showDeleteDialog = false"
         />
+
+        <!-- Import Module-level Pretest Modal -->
+        <Modal
+            :show="showModuleImportModal"
+            title="Import Tes Awal (CSV / XLSX)"
+            @close="showModuleImportModal = false"
+            max-width="lg"
+        >
+            <div class="py-4 space-y-4">
+                <p class="text-sm text-gray-600">
+                    Unggah file CSV atau XLSX yang berisi quiz untuk kategori
+                    <strong>pretest</strong>. Kolom minimal pada setiap baris:
+                    <strong
+                        >quiz_title, question_text, option_1,
+                        option_1_is_correct, option_2, option_2_is_correct,
+                        ...</strong
+                    >. File maksimal 10 MB. Tipe file yang diterima:
+                    <strong>.csv, .xlsx, .xls</strong>.
+                </p>
+                <FileDropzone
+                    v-model:modelValue="moduleImport.file"
+                    accept=".csv,.xlsx,.xls"
+                    label="Pilih atau seret file CSV/XLSX"
+                    borderColor="gray"
+                    :allowClear="false"
+                    @update:modelValue="setModuleFile"
+                />
+                <p v-if="moduleImportPreview" class="text-sm text-gray-500">
+                    File terpilih: {{ moduleImportPreview }}
+                </p>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        @click="showModuleImportModal = false"
+                        >Batal</Button
+                    >
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="submitModuleImport"
+                        >Import</Button
+                    >
+                </div>
+            </template>
+        </Modal>
 
         <!-- Toast Notification -->
         <Toast :show="toastVisible" :message="toastMessage" :type="toastType" />

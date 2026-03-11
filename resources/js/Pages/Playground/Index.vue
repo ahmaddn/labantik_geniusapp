@@ -9,6 +9,10 @@ import {
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 
+import { useMusic } from '@/Composable/useMusic';
+
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } = useMusic()
+
 const props = defineProps({
     user: {
         type: Object,
@@ -20,31 +24,11 @@ const props = defineProps({
 
 const ready        = ref(false);
 const dropdownOpen = ref(false);
-const menuRef      = ref(null);
-const musicOn      = ref(false);
-const audioRef     = ref(null);
+const menuRef     = ref(null);
+const audioRef    = ref(null);
 
-const handleVisibility = () => {
-    if (!audioRef.value) return;
-    document.hidden
-        ? audioRef.value.pause()
-        : musicOn.value && audioRef.value.play().catch(() => {});
-};
 
-const toggleMusic = async () => {
-    if (!audioRef.value) {
-        const src = props.backsound ?? "/backsound/backsound.mp3";
-        audioRef.value = new Audio(src);
-        audioRef.value.loop = true;
-        audioRef.value.volume = 0.4;
-        audioRef.value.addEventListener("error", () => { audioRef.value = null; musicOn.value = false; });
-    }
-    if (musicOn.value) { audioRef.value.pause(); musicOn.value = false; }
-    else {
-        try { await audioRef.value.play(); musicOn.value = true; }
-        catch { musicOn.value = false; }
-    }
-};
+
 
 const handleClickOutside = (e) => {
     if (menuRef.value && !menuRef.value.contains(e.target))
@@ -60,32 +44,14 @@ onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("visibilitychange", handleVisibility);
+    setTimeout(() => initAutoMusic(null), 100) // ← ganti block music lama
 
-    if (props.backsound) {
-        audioRef.value = new Audio(props.backsound);
-        audioRef.value.loop = true;
-        audioRef.value.volume = 0.4;
-        audioRef.value.preload = "auto";
-        audioRef.value.addEventListener("error", () => {
-            audioRef.value = null;
-            musicOn.value = false;
-        });
-        audioRef.value.play()
-            .then(() => { musicOn.value = true; })
-            .catch(() => {
-                document.addEventListener("click", () => {
-                    audioRef.value?.play()
-                        .then(() => { musicOn.value = true; })
-                        .catch(() => {});
-                }, { once: true });
-            });
-    }
 });
 
 onUnmounted(() => {
     document.removeEventListener("mousedown", handleClickOutside);
     document.removeEventListener("visibilitychange", handleVisibility);
-    if (audioRef.value) { audioRef.value.pause(); audioRef.value = null; }
+    destroyAudio();
 });
 
 const totalFinished = computed(
@@ -135,7 +101,8 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             </div>
 
             <div class="topbar-r">
-                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic">
+                <!-- Music toggle -->
+                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(null)">
                     <Music2 v-if="musicOn" :size="15" :stroke-width="2"/>
                     <VolumeX v-else        :size="15" :stroke-width="2"/>
                 </button>
