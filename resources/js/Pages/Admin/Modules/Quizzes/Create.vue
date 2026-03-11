@@ -516,10 +516,6 @@ const finalSave = () => {
         );
     }
 };
-
-const toggleCardVariant = () => {
-    cardVariant.value = cardVariant.value === "playful" ? "normal" : "playful";
-};
 </script>
 
 <template>
@@ -568,16 +564,6 @@ const toggleCardVariant = () => {
                             </p>
                         </div>
                     </div>
-                    <Button
-                        :variant="
-                            cardVariant === 'playful' ? 'warning' : 'light'
-                        "
-                        size="md"
-                        :icon="Star"
-                        @click="toggleCardVariant"
-                    >
-                        {{ cardVariant === "playful" ? "Playful" : "Normal" }}
-                    </Button>
                 </div>
             </div>
 
