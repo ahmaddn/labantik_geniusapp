@@ -14,6 +14,7 @@ const props = defineProps({
   module:            { type: Object,  default: () => ({ id: null, name: 'Modul' }) },
   all_missions_done: { type: Boolean, default: false },
   next_mission:      { type: Object,  default: null },
+  posttest_done:     { type: Boolean, default: false },
 })
 
 const TYPE_META = {
@@ -200,8 +201,8 @@ const goToNextMission = () => router.visit(route('playground.missions.show', pro
           <ArrowLeft :size="15" :stroke-width="2.5" />
           Kembali ke Daftar Misi
         </button>
-        <!-- Semua misi selesai → posttest -->
-        <button v-if="all_missions_done" class="btn-posttest" @click="goToPosttest">
+        <!-- Semua misi selesai dan posttest belum dikerjakan → posttest -->
+        <button v-if="all_missions_done && !posttest_done" class="btn-posttest" @click="goToPosttest">
           <Rocket :size="15" :stroke-width="2.5" />
           Lanjut ke Posttest
         </button>

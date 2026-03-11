@@ -48,6 +48,15 @@ class PosttestController extends Controller
             return redirect()->route('playground.index');
         }
 
+        // Kalau posttest sudah pernah dikerjakan → kembali ke beranda
+        $alreadyDone = Quiz_attempts::where('quiz_id', $quiz->id)
+            ->where('student_id', $player['id'] ?? null)
+            ->exists();
+
+        if ($alreadyDone) {
+            return redirect()->route('playground.index');
+        }
+
         // Format sama persis dengan MissionController
         $formattedQuiz = [
             'id'         => $quiz->id,

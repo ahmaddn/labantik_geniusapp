@@ -76,6 +76,21 @@ class MissionController extends Controller
 
         $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn($m) => $m['status'] === 'completed');
 
+        // Jika posttest sudah pernah dikerjakan, sembunyikan tombol posttest
+        // (supaya tidak muncul lagi saat admin tambah misi baru)
+        $posttestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
+            ->where('category', 'posttest')
+            ->first();
+        $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+            ->where('student_id', $player['id'] ?? null)
+            ->exists();
+
+        // Kalau posttest sudah selesai, paksa all_missions_done = false
+        // agar tombol "Mulai Posttest" tidak muncul lagi
+        if ($posttestDone) {
+            $allMissionsDone = false;
+        }
+
         $backsound  = $module->template?->backsound
             ? asset('storage/' . $module->template->backsound)
             : null;
@@ -326,6 +341,13 @@ class MissionController extends Controller
             );
         });
 
+        $posttestQuiz = Quizzes::where('module_id', $moduleId)
+            ->where('category', 'posttest')
+            ->first();
+        $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+            ->where('student_id', $studentId)
+            ->exists();
+
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => $mission->id, 'name' => $mission->name],
             'next_mission'      => $nextMission ? ['id' => $nextMission->id, 'name' => $nextMission->name] : null,
@@ -340,6 +362,7 @@ class MissionController extends Controller
             'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'module'            => ['id' => $moduleId, 'name' => $module?->name ?? 'Modul'],
             'all_missions_done' => $allMissionsDone,
+            'posttest_done'     => $posttestDone,
         ]);
     }
 
