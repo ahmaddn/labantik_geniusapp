@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 const STORAGE_KEY = 'geniuss_music_on'
-export const DEFAULT_MUSIC = '/storage/templates/backsounds/music.mp3'
+export const DEFAULT_MUSIC = '/backsound/intro-song.mp3'
 
 const musicOn    = ref(localStorage.getItem(STORAGE_KEY) !== 'false')
 const audioRef   = ref(null)

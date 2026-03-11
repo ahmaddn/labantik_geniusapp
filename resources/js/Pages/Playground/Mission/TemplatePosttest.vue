@@ -47,11 +47,28 @@ const typeMeta = (t) => TYPE_META[t] || { label: t, color: '#64748b', bg: '#f1f5
 // ─── Phase ──────────────────────────────────────────────────────────────────
 const phase = ref('intro')   // 'intro' | 'quiz' | 'done'
 
-// ─── Mascot ─────────────────────────────────────────────────────────────────
+// ─── Mascot (per soal dari DB, fallback ke asset statis) ─────────────────────
+const MASCOT_FALLBACK = {
+  intro: '/images/templates/pose_nunjuk.png',
+  quiz:  '/images/templates/pose_pikir.png',
+  done:  '/images/templates/pose_jempol.png',
+}
+
 const mascotSrc = computed(() => {
-  if (phase.value === 'intro') return '/images/templates/pose_nunjuk.png'
-  if (phase.value === 'done')  return '/images/templates/pose_jempol.png'
-  return '/images/templates/pose_pikir.png'
+  // Phase done / intro → selalu pakai asset statis
+  if (phase.value === 'intro') return MASCOT_FALLBACK.intro
+  if (phase.value === 'done')  return MASCOT_FALLBACK.done
+
+  // Phase quiz → cek apakah soal aktif punya mascot dari DB
+  const dbMascot = currentQ.value?.mascot?.image
+  if (dbMascot) {
+    // Jika sudah berupa URL penuh (http/https), pakai langsung
+    // Jika path relatif (storage/...), tambahkan /
+    return dbMascot.startsWith('http') ? dbMascot : `/${dbMascot}`
+  }
+
+  // Fallback ke asset statis
+  return MASCOT_FALLBACK.quiz
 })
 
 // ─── Bubbles ────────────────────────────────────────────────────────────────
