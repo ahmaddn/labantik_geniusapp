@@ -387,7 +387,7 @@ const formatDate = (dateString) => {
                     <!-- Import: Quiz (modal) -->
                     <div class="flex items-center gap-2">
                         <Button
-                            variant="primary"
+                            variant="warning"
                             size="sm"
                             @click="showQuizImportModal = true"
                         >
@@ -451,7 +451,7 @@ const formatDate = (dateString) => {
                         :key="`${item.itemType}-${item.id}`"
                         class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
                         :class="{
-                            'border-green-200': item.itemType === 'material',
+                            'border-blue-200': item.itemType === 'material',
                             'border-orange-200': item.itemType === 'quiz',
                         }"
                     >
@@ -464,14 +464,14 @@ const formatDate = (dateString) => {
                                 class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1"
                             >
                                 <div
-                                    class="bg-green-100 p-3 rounded-2xl border-2 border-green-300"
+                                    class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
                                 >
-                                    <FileText class="text-green-600 w-8 h-8" />
+                                    <FileText class="text-blue-600 w-8 h-8" />
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-2">
                                         <span
-                                            class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-300 font-medium"
+                                            class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium"
                                         >
                                             MATERI
                                         </span>
@@ -578,7 +578,7 @@ const formatDate = (dateString) => {
                                                       ? 'bg-purple-100 text-purple-700 border-purple-300'
                                                       : item.type ===
                                                           'true_false'
-                                                        ? 'bg-green-100 text-green-700 border-green-300'
+                                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
                                                         : item.type ===
                                                             'case_study'
                                                           ? 'bg-pink-100 text-pink-700 border-pink-300'
@@ -587,7 +587,7 @@ const formatDate = (dateString) => {
                                         >
                                             {{
                                                 item.type === "multiple_choices"
-                                                    ? "MULTIPLE CHOICE"
+                                                    ? "PILIHAN GANDA"
                                                     : item.type === "drag_drop"
                                                       ? "DRAG & DROP"
                                                       : item.type ===

@@ -70,7 +70,7 @@ const removeQuizImage = () => {
     removeExistingImage.value = true;
 };
 
-// --- Multiple Choice / Case Study State ---
+// --- PILIHAN GANDA / Case Study State ---
 const quizQuestions = ref(
     (props.quiz.questions || []).map((q) => ({
         id: q.id || Date.now() + Math.random(),
@@ -190,7 +190,7 @@ const isDragDrop = computed(() => quizForm.value.type === "drag_drop");
 const isTrueFalse = computed(() => quizForm.value.type === "true_false");
 
 const quizTypeOptions = [
-    { value: "multiple_choices", label: "Multiple Choice" },
+    { value: "multiple_choices", label: "PILIHAN GANDA" },
     { value: "drag_drop", label: "Drag & Drop" },
     { value: "true_false", label: "True / False (Pilih Gambar)" },
     { value: "case_study", label: "Studi Kasus" },
@@ -270,7 +270,7 @@ const prevStep = () => {
     wizardStep.value--;
 };
 
-// --- Multiple Choice Methods ---
+// --- PILIHAN GANDA Methods ---
 const addOption = () => {
     if (!currentOption.value.option_text.trim()) {
         showToast("Teks opsi harus diisi!", "warning");
@@ -695,6 +695,7 @@ const toggleCardVariant = () => {
                             label="Batas Waktu (menit)"
                             placeholder="30"
                             border-color="orange"
+                            min="1"
                         />
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <SelectField
