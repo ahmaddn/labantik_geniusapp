@@ -34,14 +34,14 @@ class PretestController extends Controller
                 'questions.dragDropGroups.items',
             ])
             ->first();
-            $module->load('template','template.backgrounds');
-$background = $module->template?->backgrounds->first()?->image
-    ? asset('storage/' . $module->template->backgrounds->first()->image)
-    : null;
-$backsound = null;
-if (!empty($module->template?->backsound)) {
-    $backsound = asset('storage/' . $module->template->backsound);
-}
+        $module->load('template', 'template.backgrounds');
+        $background = $module->template?->backgrounds->first()?->image
+            ? asset('storage/' . $module->template->backgrounds->first()->image)
+            : null;
+        $backsound = null;
+        if (!empty($module->template?->backsound)) {
+            $backsound = asset('storage/' . $module->template->backsound);
+        }
 
         // Kalau tidak ada pretest → langsung ke daftar misi
         if (! $quiz) {
@@ -74,7 +74,7 @@ if (!empty($module->template?->backsound)) {
                 ];
 
                 if ($question->options->count() > 0) {
-                    $formatted['options'] = $question->options->map(fn ($opt) => [
+                    $formatted['options'] = $question->options->map(fn($opt) => [
                         'id'           => $opt->id,
                         'text'         => $opt->option_text,
                         'option_text'  => $opt->option_text,
@@ -160,7 +160,7 @@ if (!empty($module->template?->backsound)) {
         // Simpan tiap jawaban — format sama dengan MissionController
         $quizQuestionIds = Questions::where('quiz_id', $quizId)
             ->pluck('id')
-            ->map(fn ($id) => (string) $id)
+            ->map(fn($id) => (string) $id)
             ->toArray();
 
         foreach ($request->answers as $ans) {
@@ -254,17 +254,17 @@ if (!empty($module->template?->backsound)) {
         if ($question->options && $question->options->count() > 0) {
             $allOptions  = $question->options->keyBy('id');
             $correctOpts = $question->options->where('is_correct', true);
-            $correctIds  = $correctOpts->pluck('id')->map(fn ($id) => (string) $id)->sort()->values()->toArray();
+            $correctIds  = $correctOpts->pluck('id')->map(fn($id) => (string) $id)->sort()->values()->toArray();
             $correctText = $correctOpts->pluck('option_text')->implode(', ');
 
             $responseStr = trim($answer->response ?? '');
 
             if (str_starts_with($responseStr, '[')) {
                 $selectedIds = collect(json_decode($responseStr, true) ?? [])
-                    ->map(fn ($id) => (string) $id)->sort()->values()->toArray();
+                    ->map(fn($id) => (string) $id)->sort()->values()->toArray();
 
                 $userText = collect($selectedIds)
-                    ->map(fn ($id) => $allOptions->get($id)?->option_text ?? $id)
+                    ->map(fn($id) => $allOptions->get($id)?->option_text ?? $id)
                     ->implode(', ');
 
                 return [$selectedIds === $correctIds, $userText, $correctText, [], []];
