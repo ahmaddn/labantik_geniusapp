@@ -399,22 +399,6 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                                         />
                                     </div>
                                 </template>
-
-                                <div
-                                    v-if="mod.fully_completed"
-                                    class="fin-stamp"
-                                    :style="{
-                                        color: '#22c55e',
-                                        borderColor: '#22c55e55',
-                                        background: '#22c55e15',
-                                    }"
-                                >
-                                    <CheckCircle2
-                                        :size="11"
-                                        :stroke-width="2.5"
-                                    />
-                                    Selesai
-                                </div>
                             </div>
 
                             <div class="card-body">
