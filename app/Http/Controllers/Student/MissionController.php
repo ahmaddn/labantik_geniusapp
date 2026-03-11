@@ -27,42 +27,69 @@ class MissionController extends Controller
         }
 
         $module->load([
-            'missions' => fn ($q) => $q->orderBy('order_number', 'asc'),
+            'missions'                  => fn($q) => $q->orderBy('order_number', 'asc'),
             'missions.quizzes',
+            'missions.quizzes.questions',
+            'missions.materials',
             'template.backgrounds',
         ]);
 
-        $missions = $module->missions->map(function ($mission) use ($player) {
-            $totalQuestions = $mission->quizzes->sum(fn ($q) => count($q->questions ?? []));
-            $totalQuizzes   = $mission->quizzes->count();
+        $missions = $module->missions
+            ->filter(function ($mission) {
+                // Tampilkan misi hanya jika ada minimal 1 soal ATAU minimal 1 materi
+                $hasQuestions = $mission->quizzes->sum(fn($q) => $q->questions->count()) > 0;
+                $hasMaterials = $mission->materials->count() > 0;
 
-            $completedQuizzes = $mission->quizzes->filter(fn ($q) => Quiz_attempts::where('quiz_id', $q->id)
-                ->where('student_id', $player['id'] ?? null)
-                ->exists()
-            )->count();
+                return $hasQuestions || $hasMaterials;
+            })
+            ->map(function ($mission) use ($player) {
+                $totalQuestions = $mission->quizzes->sum(fn($q) => $q->questions->count());
+                $totalQuizzes   = $mission->quizzes->count();
 
-            $status = 'not_started';
-            if ($completedQuizzes > 0) {
-                $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
-            }
+                $completedQuizzes = $mission->quizzes->filter(
+                    fn($q) => Quiz_attempts::where('quiz_id', $q->id)
+                        ->where('student_id', $player['id'] ?? null)
+                        ->exists()
+                )->count();
 
-            $bestScore = Quiz_attempts::whereIn('quiz_id', $mission->quizzes->pluck('id'))
-                ->where('student_id', $player['id'] ?? null)
-                ->max('score') ?? 0;
+                $status = 'not_started';
+                if ($completedQuizzes > 0) {
+                    $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
+                }
 
-            return [
-                'id'               => $mission->id,
-                'name'             => $mission->name,
-                'description'      => $mission->hint ?? '',
-                'status'           => $status,
-                'total_questions'  => $totalQuestions,
-                'completed_quizzes'=> $completedQuizzes,
-                'total_quizzes'    => $totalQuizzes,
-                'best_score'       => $bestScore,
-            ];
-        });
+                $bestScore = Quiz_attempts::whereIn('quiz_id', $mission->quizzes->pluck('id'))
+                    ->where('student_id', $player['id'] ?? null)
+                    ->max('score') ?? 0;
 
-        $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn ($m) => $m['status'] === 'completed');
+                return [
+                    'id'                => $mission->id,
+                    'name'              => $mission->name,
+                    'description'       => $mission->hint ?? '',
+                    'status'            => $status,
+                    'total_questions'   => $totalQuestions,
+                    'completed_quizzes' => $completedQuizzes,
+                    'total_quizzes'     => $totalQuizzes,
+                    'best_score'        => $bestScore,
+                ];
+            })
+            ->values(); // reset index array
+
+        $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn($m) => $m['status'] === 'completed');
+
+        // Jika posttest sudah pernah dikerjakan, sembunyikan tombol posttest
+        // (supaya tidak muncul lagi saat admin tambah misi baru)
+        $posttestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
+            ->where('category', 'posttest')
+            ->first();
+        $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+            ->where('student_id', $player['id'] ?? null)
+            ->exists();
+
+        // Kalau posttest sudah selesai, paksa all_missions_done = false
+        // agar tombol "Mulai Posttest" tidak muncul lagi
+        if ($posttestDone) {
+            $allMissionsDone = false;
+        }
 
         $backsound  = $module->template?->backsound
             ? asset('storage/' . $module->template->backsound)
@@ -90,9 +117,9 @@ class MissionController extends Controller
 
         $mission->load([
             'module',
-            'materials'                        => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'materials'                        => fn($q) => $q->orderBy('created_at', 'asc'),
             'materials.mascot',
-            'quizzes'                          => fn ($q) => $q->orderBy('created_at', 'asc'),
+            'quizzes'                          => fn($q) => $q->orderBy('created_at', 'asc'),
             'quizzes.questions.mascot',
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
@@ -101,7 +128,7 @@ class MissionController extends Controller
         ]);
 
         // Format quizzes
-        $quizzes = $mission->quizzes->map(fn ($quiz) => [
+        $quizzes = $mission->quizzes->map(fn($quiz) => [
             'id'         => $quiz->id,
             'type'       => $quiz->type,
             'title'      => $quiz->title,
@@ -120,7 +147,7 @@ class MissionController extends Controller
                 ];
 
                 if ($question->options->count() > 0) {
-                    $formatted['options'] = $question->options->map(fn ($opt) => [
+                    $formatted['options'] = $question->options->map(fn($opt) => [
                         'id'           => $opt->id,
                         'text'         => $opt->option_text,
                         'option_text'  => $opt->option_text,
@@ -149,7 +176,7 @@ class MissionController extends Controller
         ])->toArray();
 
         // Format materials
-        $materials = $mission->materials->map(fn ($material) => [
+        $materials = $mission->materials->map(fn($material) => [
             'id'         => $material->id,
             'type'       => 'materials',
             'image'      => $material->image,
@@ -184,7 +211,7 @@ class MissionController extends Controller
 
         // Merge & sort by created_at
         $allItems = collect(array_merge($quizzes, $materials))
-            ->sortBy(fn ($item) => $item['created_at'])
+            ->sortBy(fn($item) => $item['created_at'])
             ->values()
             ->toArray();
 
@@ -220,7 +247,7 @@ class MissionController extends Controller
         $totalIncorrect = 0;
         $totalQuestions = 0;
         $byType         = [];
-        $questionsResult= [];
+        $questionsResult = [];
 
         $nextMission = Missions::where('module_id', $mission->module_id)
             ->where('order_number', '>', $mission->order_number)
@@ -291,7 +318,7 @@ class MissionController extends Controller
             ? (int) round(($totalCorrect / $totalQuestions) * 100)
             : 0;
 
-        $breakdown = collect($byType)->map(fn ($d, $type) => [
+        $breakdown = collect($byType)->map(fn($d, $type) => [
             'type'      => $type,
             'correct'   => $d['correct'],
             'incorrect' => $d['incorrect'],
@@ -308,10 +335,18 @@ class MissionController extends Controller
                 ->where('category', 'mission')
                 ->pluck('id');
             if ($missionQuizIds->isEmpty()) return false;
-            return $missionQuizIds->every(fn ($qid) => Quiz_attempts::where('quiz_id', $qid)
-                ->where('student_id', $studentId)->exists()
+            return $missionQuizIds->every(
+                fn($qid) => Quiz_attempts::where('quiz_id', $qid)
+                    ->where('student_id', $studentId)->exists()
             );
         });
+
+        $posttestQuiz = Quizzes::where('module_id', $moduleId)
+            ->where('category', 'posttest')
+            ->first();
+        $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+            ->where('student_id', $studentId)
+            ->exists();
 
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => $mission->id, 'name' => $mission->name],
@@ -327,6 +362,7 @@ class MissionController extends Controller
             'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'module'            => ['id' => $moduleId, 'name' => $module?->name ?? 'Modul'],
             'all_missions_done' => $allMissionsDone,
+            'posttest_done'     => $posttestDone,
         ]);
     }
 
@@ -350,7 +386,7 @@ class MissionController extends Controller
             foreach ($quizIds as $quizId) {
                 $quizQuestionIds = Questions::where('quiz_id', $quizId)
                     ->pluck('id')
-                    ->map(fn ($id) => (string) $id)
+                    ->map(fn($id) => (string) $id)
                     ->toArray();
 
                 $attempt = Quiz_attempts::updateOrCreate(
@@ -392,7 +428,6 @@ class MissionController extends Controller
             }
 
             return response()->json(['success' => true]);
-
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
@@ -488,17 +523,17 @@ class MissionController extends Controller
         if ($question->options && $question->options->count() > 0) {
             $allOptions  = $question->options->keyBy('id');
             $correctOpts = $question->options->where('is_correct', true);
-            $correctIds  = $correctOpts->pluck('id')->map(fn ($id) => (string) $id)->sort()->values()->toArray();
+            $correctIds  = $correctOpts->pluck('id')->map(fn($id) => (string) $id)->sort()->values()->toArray();
             $correctText = $correctOpts->pluck('option_text')->implode(', ');
 
             $responseStr = trim($answer->response ?? '');
 
             if (str_starts_with($responseStr, '[')) {
                 $selectedIds = collect(json_decode($responseStr, true) ?? [])
-                    ->map(fn ($id) => (string) $id)->sort()->values()->toArray();
+                    ->map(fn($id) => (string) $id)->sort()->values()->toArray();
 
                 $userText = collect($selectedIds)
-                    ->map(fn ($id) => $allOptions->get($id)?->option_text ?? $id)
+                    ->map(fn($id) => $allOptions->get($id)?->option_text ?? $id)
                     ->implode(', ');
 
                 return [$selectedIds === $correctIds, $userText, $correctText, [], []];

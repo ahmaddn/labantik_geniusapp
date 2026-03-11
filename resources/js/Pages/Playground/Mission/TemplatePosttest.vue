@@ -73,7 +73,13 @@ const typeMeta = (t) =>
 // ─── Phase ──────────────────────────────────────────────────────────────────
 const phase = ref("intro"); // 'intro' | 'quiz' | 'done'
 
-// ─── Mascot ─────────────────────────────────────────────────────────────────
+// ─── Mascot (per soal dari DB, fallback ke asset statis) ─────────────────────
+const MASCOT_FALLBACK = {
+  intro: '/images/templates/pose_nunjuk.png',
+  quiz:  '/images/templates/pose_pikir.png',
+  done:  '/images/templates/pose_jempol.png',
+}
+
 const mascotSrc = computed(() => {
     if (phase.value === "intro") return "/images/templates/pose_nunjuk.png";
     if (phase.value === "done") return "/images/templates/pose_jempol.png";

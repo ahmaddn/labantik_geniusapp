@@ -360,6 +360,9 @@ const goToNextMission = () =>
     padding: 0;
 }
 
+/* ══════════════════════════════════
+   BASE
+══════════════════════════════════ */
 .result-page {
     min-height: 100vh;
     font-family: "Nunito", sans-serif;
@@ -392,7 +395,9 @@ const goToNextMission = () =>
     background: #6ee7b7;
 }
 
-/* ── TOPBAR ── */
+/* ══════════════════════════════════
+   TOPBAR
+══════════════════════════════════ */
 .topbar {
     position: sticky;
     top: 0;
@@ -406,6 +411,7 @@ const goToNextMission = () =>
     border-bottom: 1px solid rgba(29, 78, 216, 0.1);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
+
 .back-btn {
     display: inline-flex;
     align-items: center;
@@ -433,7 +439,9 @@ const goToNextMission = () =>
     width: 80px;
 }
 
-/* ── MAIN ── */
+/* ══════════════════════════════════
+   MAIN
+══════════════════════════════════ */
 .main {
     position: relative;
     z-index: 1;
