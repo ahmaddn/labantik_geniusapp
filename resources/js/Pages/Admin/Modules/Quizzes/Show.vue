@@ -25,7 +25,7 @@ const props = defineProps({
 
 const quizTypeLabel = (type) => {
     const map = {
-        multiple_choices: "Multiple Choice",
+        multiple_choices: "PILIHAN GANDA",
         drag_drop: "Drag & Drop",
         true_false: "True / False",
         case_study: "Case Study",

@@ -294,12 +294,10 @@ const deleteMission = () => {
                     </div>
 
                     <!-- Actions: primary buttons with import button in a second row -->
-                    <div
-                        class="flex flex-col items-start sm:items-end gap-2 mt-4 sm:mt-0"
-                    >
-                        <div class="flex flex-wrap gap-2">
+                    <div class="w-full sm:w-auto mt-4 sm:mt-0 sm:self-end">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <Button
-                                class="w-full sm:w-auto"
+                                class="w-full"
                                 variant="warning"
                                 size="md"
                                 :icon="Plus"
@@ -308,16 +306,16 @@ const deleteMission = () => {
                                 Tambah Tes Awal
                             </Button>
                             <Button
-                                class="w-full sm:w-auto"
+                                class="w-full"
                                 variant="primary"
-                                size="lg"
+                                size="md"
                                 :icon="Plus"
                                 @click="openAddMissionModal"
                             >
                                 Tambah Misi
                             </Button>
                             <Button
-                                class="w-full sm:w-auto"
+                                class="w-full"
                                 variant="light"
                                 size="md"
                                 :icon="Plus"
@@ -325,11 +323,8 @@ const deleteMission = () => {
                             >
                                 Tambah Tes Akhir
                             </Button>
-                        </div>
-
-                        <div class="w-full sm:w-auto">
                             <Button
-                                class="w-full sm:w-auto"
+                                class="w-full"
                                 variant="ghost"
                                 size="md"
                                 :icon="FileText"

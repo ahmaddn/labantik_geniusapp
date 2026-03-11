@@ -67,7 +67,7 @@ const removeQuizImage = () => {
     quizImagePreview.value = null;
 };
 
-// --- Multiple Choice / Case Study State ---
+// --- PILIHAN GANDA / Case Study State ---
 const quizQuestions = ref([]);
 const currentQuestion = ref({
     question_text: "",
@@ -149,7 +149,7 @@ const groupSelectOptions = computed(() =>
 );
 
 const quizTypeOptions = [
-    { value: "multiple_choices", label: "Multiple Choice" },
+    { value: "multiple_choices", label: "PILIHAN GANDA" },
     { value: "drag_drop", label: "Drag & Drop" },
     { value: "true_false", label: "True / False (Pilih Gambar)" },
     { value: "case_study", label: "Studo Kasus" },
@@ -171,6 +171,12 @@ const getCategoryLabel = (value) => {
 
 const isDragDrop = computed(() => quizForm.value.type === "drag_drop");
 const isTrueFalse = computed(() => quizForm.value.type === "true_false");
+// timer unit label depends on where the user opened the create flow
+const timeUnitLabel = computed(() =>
+    props.presetCategory === "pretest" || props.presetCategory === "posttest"
+        ? "menit"
+        : "detik",
+);
 
 const showToast = (message, type = "success") => {
     successMessage.value = message;
@@ -239,7 +245,7 @@ const reviewStep = computed(() => {
     return 3;
 });
 
-// --- Multiple Choice Methods ---
+// --- PILIHAN GANDA Methods ---
 const addOption = () => {
     if (!currentOption.value.option_text.trim()) {
         showToast("Teks opsi harus diisi!", "warning");
@@ -751,9 +757,10 @@ const finalSave = () => {
                         <InputField
                             v-model.number="quizForm.time_limit"
                             type="number"
-                            label="Batas Waktu (menit)"
+                            :label="`Batas Waktu (${timeUnitLabel})`"
                             placeholder="30"
                             border-color="orange"
+                            min="1"
                         />
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <SelectField
@@ -1481,7 +1488,7 @@ const finalSave = () => {
                                 <span class="flex items-center gap-1"
                                     ><Clock class="w-4 h-4" />{{
                                         quizForm.time_limit
-                                    }}s</span
+                                    }} {{ timeUnitLabel }}</span
                                 >
                                 <span class="flex items-center gap-1"
                                     ><Tag class="w-4 h-4" />{{

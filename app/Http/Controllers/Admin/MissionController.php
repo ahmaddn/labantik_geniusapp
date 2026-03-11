@@ -28,9 +28,10 @@ class MissionController extends Controller
             ->max('order_number') ?? 0;
 
         for ($i = 1; $i <= $count; $i++) {
+            $missionNumber = $lastOrder + $i;
             Missions::create([
                 'module_id' => $modules->id,
-                'name' => "Misi {$i}",
+                'name' => "Misi {$missionNumber}",
                 'order_number' => $lastOrder + $i,
             ]);
         }
