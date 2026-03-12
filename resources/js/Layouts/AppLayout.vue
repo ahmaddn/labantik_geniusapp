@@ -61,7 +61,7 @@ onUnmounted(() => {
         >
             <Topbar @toggle-sidebar="toggleSidebar" />
 
-            <main class="p-6">
+            <main class="p-2 md:p-4 lg:p-6">
                 <slot />
             </main>
         </div>
