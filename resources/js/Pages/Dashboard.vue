@@ -181,13 +181,13 @@ const greeting =
                     </div>
                     <div class="flex gap-2 shrink-0">
                         <button
-                            @click="go('admin.modules.create')"
+                            @click="go('admin.modules.index')"
                             class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-50 transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                         >
                             <Plus class="w-4 h-4" /> Buat Modul
                         </button>
                         <button
-                            @click="go('admin.students.create')"
+                            @click="go('admin.users.create')"
                             class="bg-white/15 border border-white/30 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-white/25 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                         >
                             <UserPlus class="w-4 h-4" /> Tambah Siswa
@@ -231,9 +231,7 @@ const greeting =
                         <span
                             class="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-1 rounded-full font-medium leading-none"
                         >
-                            <XCircle class="w-3 h-3" />{{
-                                s.inactive_modules
-                            }}
+                            <XCircle class="w-3 h-3" />{{ s.inactive_modules }}
                             draft
                         </span>
                     </div>
@@ -241,7 +239,7 @@ const greeting =
 
                 <!-- Siswa -->
                 <div
-                    @click="go('admin.students.index')"
+                    @click="go('admin.users.index')"
                     class="group bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-sm p-5 cursor-pointer transition-all flex flex-col min-h-[160px]"
                 >
                     <div class="flex items-start justify-between mb-4">
@@ -272,9 +270,7 @@ const greeting =
                         <span
                             class="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 px-2 py-1 rounded-full font-medium leading-none"
                         >
-                            <Layers class="w-3 h-3" />{{
-                                s.total_classes
-                            }}
+                            <Layers class="w-3 h-3" />{{ s.total_classes }}
                             kelas
                         </span>
                     </div>
@@ -501,7 +497,7 @@ const greeting =
                                     {{ m.is_active ? "Aktif" : "Draft" }}
                                 </span>
                                 <button
-                                    @click.stop="go('admin.modules.edit', m.id)"
+                                    @click.stop="go('admin.modules.index')"
                                     class="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 opacity-0 group-hover:opacity-100 transition-all"
                                 >
                                     <Pencil class="w-3 h-3" />
@@ -519,7 +515,7 @@ const greeting =
                             Belum ada modul. Yuk buat yang pertama!
                         </p>
                         <button
-                            @click="go('admin.modules.create')"
+                            @click="go('admin.modules.index')"
                             class="bg-blue-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
                         >
                             + Buat Modul
@@ -622,7 +618,7 @@ const greeting =
                                 Siswa Terbaru
                             </h2>
                             <button
-                                @click="go('admin.students.index')"
+                                @click="go('admin.users.index')"
                                 class="text-xs text-blue-500 font-medium flex items-center gap-0.5 hover:text-blue-700"
                             >
                                 Semua <ChevronRight class="w-3.5 h-3.5" />
