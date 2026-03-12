@@ -18,7 +18,6 @@ const initializeSidebar = () => {
 const handleResize = () => {
     const wasMobile = isMobile.value;
     checkMobile();
-
     if (isMobile.value && !wasMobile) {
         sidebarOpen.value = false;
     }
@@ -56,10 +55,13 @@ onUnmounted(() => {
             class="transition-all duration-300"
             :class="[
                 !isMobile && sidebarOpen ? 'lg:ml-[280px]' : '',
-                !isMobile && !sidebarOpen ? 'lg:ml-[90px]' : '',
+                !isMobile && !sidebarOpen ? 'lg:ml-[72px]' : '',
             ]"
         >
-            <Topbar @toggle-sidebar="toggleSidebar" />
+            <Topbar
+                :sidebarOpen="sidebarOpen"
+                @toggle-sidebar="toggleSidebar"
+            />
 
             <main class="p-2 md:p-4 lg:p-6">
                 <slot />

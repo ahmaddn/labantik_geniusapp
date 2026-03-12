@@ -1,14 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
-import {
-    Menu,
-    ChevronUp,
-    ChevronDown,
-    User,
-    Settings,
-    LogOut,
-} from "lucide-vue-next";
+import { Menu, ChevronUp, ChevronDown, User, LogOut } from "lucide-vue-next";
 
 defineProps({
     sidebarOpen: Boolean,
@@ -19,7 +12,6 @@ defineEmits(["toggle-sidebar"]);
 const page = usePage();
 
 const showProfileMenu = ref(false);
-const showNotifications = ref(false);
 
 const userInitials = computed(() => {
     const name = page.props.auth.user.name || "";
@@ -31,7 +23,6 @@ const userInitials = computed(() => {
         .slice(0, 2);
 });
 
-// Click away directive
 const vClickAway = {
     mounted(el, binding) {
         el.clickAwayEvent = (event) => {
@@ -51,45 +42,41 @@ const vClickAway = {
 const toggleProfileMenu = (event) => {
     event.stopPropagation();
     showProfileMenu.value = !showProfileMenu.value;
-    showNotifications.value = false;
 };
 </script>
 
 <template>
+    <!-- Topbar: sticky, z lebih rendah dari sidebar (z-20 < z-40) -->
     <header
         class="sticky top-0 z-20 bg-white border-b-4 border-blue-200 shadow-md transition-all duration-300"
     >
         <div class="flex items-center justify-between px-4 sm:px-6 py-3">
-            <!-- Left Side: Hamburger Menu & Search -->
+            <!-- Left: Hamburger -->
             <div class="flex items-center gap-4 flex-1">
-                <!-- Hamburger Menu -->
                 <button
                     @click.stop="$emit('toggle-sidebar')"
-                    class="w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-all hover:scale-110 border-2 border-blue-300"
+                    class="w-11 h-11 flex items-center justify-center rounded-2xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-all border-2 border-blue-300"
                     type="button"
                 >
                     <Menu :size="20" />
                 </button>
             </div>
 
-            <!-- Right Side: Actions & Profile -->
+            <!-- Right: Profile -->
             <div class="flex items-center gap-3">
-                <!-- Profile Dropdown -->
                 <div class="relative">
                     <button
                         @click.stop="toggleProfileMenu"
                         type="button"
-                        class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-2xl bg-blue-100 hover:bg-blue-200 transition-all hover:scale-105 border-2 border-blue-300"
+                        class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-2xl bg-blue-100 hover:bg-blue-200 transition-all border-2 border-blue-300"
                     >
                         <div
-                            class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-playful border-4 border-blue-200"
+                            class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm border-4 border-blue-200"
                         >
                             {{ userInitials }}
                         </div>
                         <div class="hidden lg:block text-left">
-                            <p
-                                class="text-sm font-bold text-gray-800 font-heading"
-                            >
+                            <p class="text-sm font-bold text-gray-800">
                                 {{ $page.props.auth.user.name }}
                             </p>
                             <p class="text-xs text-gray-600 font-medium">
@@ -103,7 +90,7 @@ const toggleProfileMenu = (event) => {
                         />
                     </button>
 
-                    <!-- Profile Dropdown Menu -->
+                    <!-- Dropdown -->
                     <Transition
                         enter-active-class="transition-all duration-200 ease-out"
                         enter-from-class="opacity-0 scale-95 -translate-y-2"
@@ -116,15 +103,12 @@ const toggleProfileMenu = (event) => {
                             v-if="showProfileMenu"
                             v-click-away="() => (showProfileMenu = false)"
                             @click.stop
-                            class="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-playful-lg border-4 border-blue-200 overflow-hidden"
+                            class="absolute right-0 mt-3 w-64 bg-white rounded-3xl shadow-xl border-4 border-blue-200 overflow-hidden"
                         >
-                            <!-- User Info -->
                             <div
                                 class="px-5 py-4 border-b-4 border-blue-100 bg-blue-50"
                             >
-                                <p
-                                    class="text-sm font-bold text-gray-900 font-heading"
-                                >
+                                <p class="text-sm font-bold text-gray-900">
                                     {{ $page.props.auth.user.name }}
                                 </p>
                                 <p class="text-xs text-gray-600 mt-1">
@@ -132,7 +116,6 @@ const toggleProfileMenu = (event) => {
                                 </p>
                             </div>
 
-                            <!-- Menu Items -->
                             <div class="py-2">
                                 <Link
                                     :href="route('profile.edit')"
@@ -140,20 +123,19 @@ const toggleProfileMenu = (event) => {
                                     @click="showProfileMenu = false"
                                 >
                                     <div
-                                        class="w-10 h-10 rounded-2xl bg-blue-100 border-2 border-blue-300 flex items-center justify-center"
+                                        class="w-9 h-9 rounded-2xl bg-blue-100 border-2 border-blue-300 flex items-center justify-center"
                                     >
                                         <User
                                             class="text-blue-600"
                                             :size="16"
                                         />
                                     </div>
-                                    <span class="text-sm font-bold font-heading"
+                                    <span class="text-sm font-bold"
                                         >My Profile</span
                                     >
                                 </Link>
                             </div>
 
-                            <!-- Logout -->
                             <div class="border-t-4 border-blue-100">
                                 <Link
                                     :href="route('logout')"
@@ -163,11 +145,11 @@ const toggleProfileMenu = (event) => {
                                     @click="showProfileMenu = false"
                                 >
                                     <div
-                                        class="w-10 h-10 rounded-2xl bg-red-100 border-2 border-red-300 flex items-center justify-center"
+                                        class="w-9 h-9 rounded-2xl bg-red-100 border-2 border-red-300 flex items-center justify-center"
                                     >
                                         <LogOut :size="16" />
                                     </div>
-                                    <span class="text-sm font-bold font-heading"
+                                    <span class="text-sm font-bold"
                                         >Logout</span
                                     >
                                 </Link>

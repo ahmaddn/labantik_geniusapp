@@ -95,7 +95,7 @@ const menuItems = [
 
 <template>
     <aside
-        class="fixed top-0 left-0 h-screen bg-white border-r-4 border-blue-200 z-40 transition-all duration-300 shadow-xl"
+        class="fixed top-0 left-0 h-screen bg-white border-r-4 border-blue-200 z-40 transition-all duration-300 shadow-xl overflow-hidden"
         :class="[
             isMobile
                 ? open
@@ -103,28 +103,32 @@ const menuItems = [
                     : '-translate-x-full w-[280px]'
                 : open
                   ? 'w-[280px]'
-                  : 'w-[90px]',
+                  : 'w-[72px]',
         ]"
     >
         <div class="flex flex-col h-full">
             <!-- Logo -->
             <div
-                class="flex items-center h-20 px-6 border-b-4 border-blue-100 bg-blue-50"
-                :class="open || isMobile ? 'justify-between' : 'justify-center'"
+                class="flex items-center h-20 border-b-4 border-blue-100 bg-blue-50 overflow-hidden"
+                :class="
+                    open || isMobile
+                        ? 'px-6 justify-between'
+                        : 'px-0 justify-center'
+                "
             >
                 <Link
                     :href="route('dashboard')"
-                    class="flex items-center gap-3"
+                    class="flex items-center gap-3 min-w-0"
                 >
                     <div
-                        class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center"
+                        class="w-10 h-10 shrink-0 bg-blue-500 rounded-2xl flex items-center justify-center"
                     >
-                        <BookOpen class="text-white" :size="20" />
+                        <BookOpen class="text-white" :size="18" />
                     </div>
 
                     <span
                         v-if="open || isMobile"
-                        class="text-xl font-bold text-blue-600"
+                        class="text-xl font-bold text-blue-600 truncate"
                     >
                         {{ appName }}
                     </span>
@@ -134,29 +138,32 @@ const menuItems = [
                 <button
                     v-if="isMobile"
                     @click="$emit('close')"
-                    class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-600"
+                    class="lg:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-600"
                 >
                     <X :size="18" />
                 </button>
             </div>
 
             <!-- Menu -->
-            <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-3">
+            <nav
+                class="flex-1 overflow-y-auto py-4 space-y-3"
+                :class="open || isMobile ? 'px-4' : 'px-2'"
+            >
                 <Link
                     v-for="item in menuItems"
                     :key="item.route"
                     :href="route(item.route)"
-                    class="flex items-center gap-4 py-3 rounded-2xl transition-all border-2"
+                    class="flex items-center gap-3 py-2.5 rounded-2xl transition-all border-2"
                     :class="[
                         isActive(item.route)
                             ? item.activeColor +
                               ' text-white border-transparent'
                             : 'bg-white hover:bg-gray-50 border-gray-200',
-                        open || isMobile ? 'px-4' : 'justify-center',
+                        open || isMobile ? 'px-3' : 'px-0 justify-center',
                     ]"
                 >
                     <div
-                        class="w-11 h-11 flex items-center justify-center rounded-xl border-2"
+                        class="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border-2"
                         :class="
                             isActive(item.route)
                                 ? 'bg-white/20 border-white/30'
@@ -165,18 +172,18 @@ const menuItems = [
                     >
                         <component
                             :is="item.icon"
-                            :size="20"
-                            :class="[
+                            :size="18"
+                            :class="
                                 isActive(item.route)
                                     ? 'text-white'
-                                    : item.iconColor,
-                            ]"
+                                    : item.iconColor
+                            "
                         />
                     </div>
 
                     <span
                         v-if="open || isMobile"
-                        class="font-bold text-base"
+                        class="font-bold text-sm truncate"
                         :class="
                             isActive(item.route)
                                 ? 'text-white'
