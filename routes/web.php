@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\ClassesController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\Admin\MissionController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
@@ -15,14 +17,13 @@ use App\Http\Controllers\Student\PretestController;
 use App\Http\Controllers\Student\PosttestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -34,9 +35,9 @@ Route::middleware('auth')->group(function () {
 Route::get('/playground/pretest/preview', [PretestController::class, 'preview'])
     ->name('playground.pretest.preview');
 Route::get('/posttest/preview', [PosttestController::class, 'preview'])
-        ->name('posttest.preview');
+    ->name('posttest.preview');
 Route::post('/posttest/submit', [PosttestController::class, 'submit'])
-        ->name('posttest.submit');
+    ->name('posttest.submit');
 
 
 
@@ -100,7 +101,12 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::delete('/mascots/{mascot}', [TemplatesController::class, 'destroyMascot'])->name('mascots.destroy');
     });
 
-
+    // Reports & History
+    Route::name('reports.')->group(function () {
+        Route::get('/reports', [ReportsController::class, 'index'])->name('index');
+        Route::get('/reports/modules/{modules}/history', [ReportsController::class, 'moduleHistory'])->name('history');
+        Route::get('/reports/modules/{modules}/students/{student}', [ReportsController::class, 'studentReport'])->name('student');
+    });
 
     // Pengguna
     Route::name('users.')->group(function () {

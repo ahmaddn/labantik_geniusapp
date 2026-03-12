@@ -7,6 +7,7 @@ import {
     GraduationCap,
     BookOpen,
     Users,
+    BarChart,
     X,
 } from "lucide-vue-next";
 
@@ -75,6 +76,15 @@ const menuItems = [
         name: "Pengguna",
         route: "admin.users.index",
         icon: Users,
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
+        borderColor: "border-blue-300",
+        activeColor: "bg-blue-500",
+    },
+    {
+        name: "Laporan & Riwayat",
+        route: "admin.reports.index",
+        icon: BarChart,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
