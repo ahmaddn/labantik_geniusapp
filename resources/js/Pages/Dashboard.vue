@@ -187,7 +187,7 @@ const greeting =
                             <Plus class="w-4 h-4" /> Buat Modul
                         </button>
                         <button
-                            @click="go('admin.users.create')"
+                            @click="go('admin.users.index')"
                             class="bg-white/15 border border-white/30 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-white/25 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                         >
                             <UserPlus class="w-4 h-4" /> Tambah Siswa
