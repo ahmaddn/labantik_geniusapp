@@ -1,0 +1,154 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* ===============================
+   DATATABLE WRAPPER
+=================================*/
+.p-datatable {
+    @apply w-full bg-white rounded-3xl border-4 border-blue-200 overflow-hidden shadow-lg;
+}
+
+.p-datatable-wrapper {
+    @apply overflow-auto;
+}
+
+.p-datatable-table {
+    @apply w-full border-collapse;
+}
+
+/* ===============================
+   DATATABLE HEADER
+=================================*/
+.p-datatable-thead > tr {
+    @apply bg-blue-100;
+}
+
+.p-datatable-thead > tr > th {
+    @apply bg-blue-100 text-gray-800 font-bold p-4 text-left border-b-2 border-blue-200 transition-colors;
+}
+
+.p-datatable-thead > tr > th.p-sortable-column {
+    @apply cursor-pointer hover:bg-blue-200;
+}
+
+.p-datatable-thead > tr > th.p-sortable-column.p-highlight {
+    @apply bg-blue-200 text-blue-900;
+}
+
+/* Sort icon container */
+.p-sortable-column-icon {
+    @apply ml-2 inline-block text-blue-600 w-4 h-4;
+}
+
+/* ===============================
+   DATATABLE BODY
+=================================*/
+.p-datatable-tbody > tr {
+    @apply border-b border-gray-200 transition-colors;
+}
+
+.p-datatable-tbody > tr:last-child {
+    @apply border-b-0;
+}
+
+.p-datatable-tbody > tr:hover {
+    @apply bg-blue-50;
+}
+
+.p-datatable-tbody > tr > td {
+    @apply p-4 text-gray-700 align-middle;
+}
+
+/* Empty state */
+.p-datatable-emptymessage > td {
+    @apply text-center py-8 text-gray-500 font-medium;
+}
+
+/* ===============================
+   PAGINATOR
+=================================*/
+.p-paginator {
+    @apply flex justify-between items-center gap-2 px-4 py-4 bg-white border-t-4 border-blue-200;
+}
+
+/* Paginator elements wrapper */
+.p-paginator-left,
+.p-paginator-right {
+    @apply flex items-center gap-2;
+}
+
+/* First, Prev, Next, Last buttons */
+.p-paginator-first,
+.p-paginator-prev,
+.p-paginator-next,
+.p-paginator-last {
+    @apply w-10 h-10 flex items-center justify-center rounded-xl border-2 border-blue-300 font-bold transition-all cursor-pointer bg-white text-gray-700;
+}
+
+.p-paginator-first:not(.p-disabled):hover,
+.p-paginator-prev:not(.p-disabled):hover,
+.p-paginator-next:not(.p-disabled):hover,
+.p-paginator-last:not(.p-disabled):hover {
+    @apply bg-blue-100 scale-105;
+}
+
+/* Page number buttons */
+.p-paginator-pages {
+    @apply flex gap-2 items-center;
+}
+
+.p-paginator-page {
+    @apply w-10 h-10 flex items-center justify-center rounded-xl border-2 border-blue-300 font-bold transition-all cursor-pointer bg-white text-gray-700;
+}
+
+.p-paginator-page:hover:not(.p-highlight) {
+    @apply bg-blue-100 scale-105;
+}
+
+/* Active page */
+.p-paginator-page.p-highlight {
+    @apply bg-blue-500 text-white border-blue-600;
+}
+
+/* Disabled state */
+.p-disabled {
+    @apply opacity-40 cursor-not-allowed pointer-events-none;
+}
+
+/* Current page info */
+.p-paginator-current {
+    @apply px-4 py-2 text-gray-700 text-sm font-medium;
+}
+
+/* Rows per page dropdown */
+.p-paginator-rpp-options {
+    @apply ml-2 border-2 border-blue-300 rounded-lg px-3 py-1 text-gray-700 cursor-pointer bg-white;
+}
+
+/* ===============================
+   BUTTON COMPONENT
+=================================*/
+.p-button {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-bold transition-all cursor-pointer border-4;
+}
+
+.p-button:not(.p-button-secondary):not(.p-button-danger) {
+    @apply bg-blue-400 text-white border-blue-500 hover:scale-105 hover:bg-blue-500;
+}
+
+.p-button-secondary {
+    @apply bg-gray-300 text-gray-800 border-gray-400 hover:bg-gray-400;
+}
+
+.p-button-danger {
+    @apply bg-red-400 text-white border-red-500 hover:scale-105 hover:bg-red-500;
+}
+
+.p-button-icon {
+    @apply mr-2;
+}
+
+.p-button-label {
+    @apply font-bold;
+}
