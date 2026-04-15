@@ -192,7 +192,7 @@ onUnmounted(() => {
                                 Daftar Kelas
                             </h1>
                             <p class="text-sm text-gray-500">
-                                Kelola dan atur data kelas dengan mudah
+                                Kelola dan atur data kelas.
                             </p>
                         </div>
                     </div>
