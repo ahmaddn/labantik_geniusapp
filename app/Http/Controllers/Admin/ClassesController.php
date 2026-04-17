@@ -65,6 +65,10 @@ class ClassesController extends Controller
 
     public function destroy(Classes $class)
     {
+        if ($class->users()->exists()) {
+            return redirect()->back()->with('error', 'Tidak dapat menghapus kelas karena masih ada siswa terdaftar');
+        }
+
         $class->delete();
         return redirect()->back()->with('success', 'Kelas berhasil dihapus');
     }
