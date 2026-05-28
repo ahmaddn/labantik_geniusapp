@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class UsersController extends Controller
 {
@@ -104,5 +107,107 @@ class UsersController extends Controller
 
         $user->delete();
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus');
+    }
+
+    public function downloadTemplate()
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Header
+        $sheet->setCellValue('A1', 'Nama Lengkap');
+        $sheet->setCellValue('B1', 'Email (Opsional)');
+
+        // Lebar kolom
+        $sheet->getColumnDimension('A')->setWidth(30);
+        $sheet->getColumnDimension('B')->setWidth(30);
+        
+        // Style Header
+        $sheet->getStyle('A1:B1')->getFont()->setBold(true);
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Template_Import_Siswa.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="'. urlencode($fileName).'"');
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        $current = Auth::user();
+        if ($current && $current->role === 'guru') {
+            // Guru is allowed to import, they only create "siswa" anyway
+        }
+
+        try {
+            $spreadsheet = IOFactory::load($request->file('file')->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+            
+            // Remove header row
+            array_shift($rows);
+
+            $successCount = 0;
+
+            foreach ($rows as $row) {
+                $name = trim($row[0] ?? '');
+                $email = trim($row[1] ?? '');
+
+                if (empty($name)) {
+                    continue;
+                }
+
+                if (empty($email)) {
+                    // Generate a fake email if not provided
+                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(100,999) . '@siswa.com';
+                }
+
+                // Generate simple username: First word of name (letters only) + 3 random letters
+                $firstName = strtolower(preg_replace('/[^a-zA-Z]/', '', explode(' ', $name)[0]));
+                if (empty($firstName)) {
+                    $firstName = 'siswa';
+                }
+                
+                $username = $firstName . strtolower(Str::random(3));
+                
+                // Ensure unique username
+                while (User::where('username', $username)->exists()) {
+                    $username = $firstName . strtolower(Str::random(3));
+                }
+
+                // Ensure unique email
+                while (User::where('email', $email)->exists()) {
+                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(1000,9999) . '@siswa.com';
+                }
+
+                User::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'username' => $username,
+                    'password' => Hash::make('11223344'), // Default password
+                    'role' => 'siswa',
+                    'class_id' => $request->class_id,
+                    'created_by' => Auth::id()
+                ]);
+
+                $successCount++;
+            }
+
+            if ($successCount > 0) {
+                return redirect()->back()->with('success', $successCount . ' Siswa berhasil diimport.');
+            } else {
+                return redirect()->back()->with('error', 'Tidak ada data valid yang dapat diimport dari file tersebut.');
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat membaca file: ' . $e->getMessage());
+        }
     }
 }

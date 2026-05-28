@@ -17,6 +17,8 @@ class Questions extends Model
         'question_text',
         'image',
         'order_number',
+        'type',
+        'expected_keywords',
     ];
 
     protected static function booted(): void

@@ -11,6 +11,7 @@ import {
     Star,
     CheckCircle,
     AlertTriangle,
+    Download
 } from "lucide-vue-next";
 import { h } from "vue";
 
@@ -79,26 +80,31 @@ const handleAction = ({ action, data }) => {
                 class="bg-white rounded-3xl border-4 border-blue-200 shadow-playful p-6"
             >
                 <div
-                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
-                    <button
-                        @click="goBack"
-                        class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 hover:bg-blue-200 transition-all"
-                    >
-                        <ArrowLeft class="text-blue-600 w-5 h-5" />
-                    </button>
-                    <div>
-                        <p
-                            class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5"
+                    <div class="flex items-center gap-4">
+                        <button
+                            @click="goBack"
+                            class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 hover:bg-blue-200 transition-all"
                         >
-                            Laporan Modul
-                        </p>
-                        <h1
-                            class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
-                        >
-                            {{ module.name }}
-                        </h1>
+                            <ArrowLeft class="text-blue-600 w-5 h-5" />
+                        </button>
+                        <div>
+                            <p
+                                class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5"
+                            >
+                                Laporan Modul
+                            </p>
+                            <h1
+                                class="text-2xl md:text-3xl font-heading font-bold text-gray-800"
+                            >
+                                {{ module.name }}
+                            </h1>
+                        </div>
                     </div>
+                    <a :href="route('admin.reports.export', { modules: module.id, include_all: 1 })" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all shadow-sm">
+                        <Download class="w-5 h-5" /> Export Excel
+                    </a>
                 </div>
             </div>
 

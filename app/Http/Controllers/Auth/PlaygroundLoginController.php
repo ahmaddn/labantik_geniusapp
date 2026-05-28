@@ -28,9 +28,12 @@ $background = $template?->backgrounds->first()?->image
               ? asset('storage/' . $template->backgrounds->first()->image)
               : null;
 
+    $classes = \App\Models\Classes::select('id', 'name')->orderBy('name')->get();
+
     return Inertia::render('Auth/PlaygroundLogin', [
         'backsound' => $backsound,
         'background' => $background,
+        'classes' => $classes,
     ]);
 }
 

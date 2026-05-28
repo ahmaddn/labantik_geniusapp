@@ -9,6 +9,7 @@ import {
     Users,
     BarChart,
     X,
+    HelpCircle,
 } from "lucide-vue-next";
 
 defineProps({
@@ -85,6 +86,15 @@ const menuItems = [
         name: "Laporan & Riwayat",
         route: "admin.reports.index",
         icon: BarChart,
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
+        borderColor: "border-blue-300",
+        activeColor: "bg-blue-500",
+    },
+    {
+        name: "Petunjuk Penggunaan",
+        route: "admin.guide",
+        icon: HelpCircle,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",

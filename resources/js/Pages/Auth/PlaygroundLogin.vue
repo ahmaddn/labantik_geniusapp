@@ -21,6 +21,8 @@ const brandMoved = ref(false);
 const audioRef = ref(null);
 const props = defineProps({
     backsound: { type: String, default: null },
+    background: { type: String, default: null },
+    classes: { type: Array, default: () => [] },
 });
 
 /* ── Speech bubble ─────────────────────────────── */
@@ -56,21 +58,25 @@ const inputFocused = ref(false);
 const errors = {
     get nama() {
         return localErrors.value.nama || form.errors.nama || "";
-    },
+    }
 };
 
 /* ── Validation ────────────────────────────────── */
-function validateNama() {
+function validateForm() {
+    let isValid = true;
+    
     if (!form.nama.trim()) {
         localErrors.value.nama = "Username wajib diisi!";
-        return false;
+        isValid = false;
+    } else {
+        localErrors.value.nama = "";
     }
-    localErrors.value.nama = "";
-    return true;
+    
+    return isValid;
 }
 
 function handleLogin() {
-    if (!validateNama()) {
+    if (!validateForm()) {
         shakeBtn.value = true;
         setTimeout(() => (shakeBtn.value = false), 600);
         return;
@@ -235,7 +241,7 @@ onUnmounted(() => {
                     </p>
 
                     <!-- Username field -->
-                    <div class="field-block">
+                    <div class="field-block" style="margin-top: 16px;">
                         <label class="f-label" for="pg-user">Username</label>
                         <div
                             class="f-row"
@@ -264,7 +270,7 @@ onUnmounted(() => {
                                 "
                                 @blur="
                                     inputFocused = false;
-                                    validateNama();
+                                    validateForm();
                                 "
                                 @input="
                                     localErrors.nama = '';

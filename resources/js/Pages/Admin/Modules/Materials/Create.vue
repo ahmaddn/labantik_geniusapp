@@ -8,6 +8,8 @@ import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import Card from "@/Components/UI/Card.vue";
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import {
     FileEdit,
     Star,
@@ -45,6 +47,7 @@ const materialForm = ref({
     title: "",
     description: "",
     content: "",
+    youtube_link: "",
     mascot_id: null,
     image: null, // File gambar atau video (keduanya masuk kolom image)
 });
@@ -115,6 +118,7 @@ const addMaterial = () => {
         title: "",
         description: "",
         content: "",
+        youtube_link: "",
         mascot_id: null,
         image: null,
     };
@@ -151,6 +155,9 @@ const finalSave = () => {
             material.description || "",
         );
         formData.append(`materials[${index}][content]`, material.content);
+        if (material.youtube_link) {
+            formData.append(`materials[${index}][youtube_link]`, material.youtube_link);
+        }
         formData.append(
             `materials[${index}][mascot_id]`,
             material.mascot_id || "",
@@ -301,12 +308,23 @@ const toggleCardVariant = () => {
                             placeholder="Deskripsi singkat tentang material ini..."
                             :rows="3"
                         />
-                        <TextareaField
-                            label="Konten Material"
-                            v-model="materialForm.content"
-                            placeholder="Tulis konten pembelajaran di sini..."
-                            :rows="8"
-                            required
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Konten Material</label>
+                            <div class="border rounded-md bg-white">
+                                <QuillEditor
+                                    v-model:content="materialForm.content"
+                                    contentType="html"
+                                    theme="snow"
+                                    placeholder="Tulis konten pembelajaran di sini..."
+                                    class="h-64"
+                                />
+                            </div>
+                        </div>
+                        <InputField
+                            label="Link YouTube (Opsional)"
+                            v-model="materialForm.youtube_link"
+                            placeholder="Contoh: https://www.youtube.com/watch?v=..."
+                            type="url"
                         />
 
                         <!-- ===== MEDIA UPLOAD ===== -->
@@ -598,10 +616,11 @@ const toggleCardVariant = () => {
                                 </div>
                             </div>
 
-                            <div class="text-sm text-gray-600 mb-3">
-                                <p class="line-clamp-2">
-                                    {{ material.content }}
-                                </p>
+                            <div class="text-sm text-gray-600 mb-3 quill-content">
+                                <div class="line-clamp-2" v-html="materialForm.content || material.content"></div>
+                            </div>
+                            <div v-if="material.youtube_link" class="text-sm text-blue-600 mb-3 truncate flex items-center gap-1">
+                                <VideoIcon class="w-4 h-4" /> {{ material.youtube_link }}
                             </div>
 
                             <template #footer>

@@ -16,6 +16,7 @@ class Materials extends Model
         'description',
         'content',
         'image',
+        'youtube_link',
         'thumbnail',
         'created_by',
         'mascot_id',

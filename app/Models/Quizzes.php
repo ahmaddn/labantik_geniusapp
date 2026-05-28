@@ -12,15 +12,16 @@ class Quizzes extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'module_id',
+        'mission_id', // Nullable jika ini kuis tingkat modul
         'title',
         'description',
-        'time_limit',
-        'type',
-        'category',
         'image',
+        'type', // 'pretest' atau 'posttest' atau 'general'
+        'duration_minutes',
         'created_by',
-        'module_id',
-        'mission_id',
+        'time_limit',
+        'category',
     ];
 
     protected static function booted(): void

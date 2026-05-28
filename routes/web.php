@@ -78,6 +78,9 @@ Route::name('playground.')->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
+    
+    // Panduan
+    Route::get('/guide', [DashboardController::class, 'guide'])->name('guide');
 
     // Kelas
     Route::name('classes.')->group(function () {
@@ -105,6 +108,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
     Route::name('reports.')->group(function () {
         Route::get('/reports', [ReportsController::class, 'index'])->name('index');
         Route::get('/reports/modules/{modules}/history', [ReportsController::class, 'moduleHistory'])->name('history');
+        Route::get('/reports/modules/{modules}/export', [ReportsController::class, 'exportModuleXlsx'])->name('export');
         Route::get('/reports/modules/{modules}/students/{student}', [ReportsController::class, 'studentReport'])->name('student');
     });
 
@@ -112,6 +116,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
     Route::name('users.')->group(function () {
         Route::get('/users', [UsersController::class, 'index'])->name('index');
         Route::post('/users', [UsersController::class, 'store'])->name('store');
+        Route::get('/users/template', [UsersController::class, 'downloadTemplate'])->name('template');
+        Route::post('/users/import', [UsersController::class, 'importExcel'])->name('import');
         Route::put('/users/{user}', [UsersController::class, 'update'])->name('update');
         Route::delete('/users/{user}', [UsersController::class, 'destroy'])->name('destroy');
     });
@@ -163,6 +169,12 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
                 Route::get('/{quizzes}/edit', [QuizController::class, 'edit'])->name('edit');
                 Route::put('/{quizzes}', [QuizController::class, 'update'])->name('update');
                 Route::delete('/{quizzes}', [QuizController::class, 'destroy'])->name('destroy');
+            });
+
+            // Simulation Config Routes (nested under missions)
+            Route::prefix('{missions}/simulation')->name('simulation.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\SimulationConfigController::class, 'edit'])->name('edit');
+                Route::put('/', [\App\Http\Controllers\Admin\SimulationConfigController::class, 'update'])->name('update');
             });
         });
     });

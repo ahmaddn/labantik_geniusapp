@@ -394,6 +394,16 @@ const formatDate = (dateString) => {
                             Import Kuis
                         </Button>
                     </div>
+                    <!-- Konfigurasi Simulasi -->
+                    <div class="flex items-center gap-2">
+                        <Button
+                            variant="info"
+                            size="sm"
+                            @click="router.visit(route('admin.modules.missions.simulation.edit', [module.id, mission.id]))"
+                        >
+                            Konfigurasi Simulasi
+                        </Button>
+                    </div>
                 </div>
             </div>
 

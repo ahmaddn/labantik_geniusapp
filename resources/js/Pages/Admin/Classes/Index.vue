@@ -20,6 +20,7 @@ import {
     UserKey,
     PackageOpen,
     Loader2,
+    UserRound,
 } from "lucide-vue-next";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 
@@ -221,7 +222,7 @@ onUnmounted(() => {
                 <Card
                     v-for="classItem in props.classes.data"
                     :key="classItem.id"
-                    :variant="cardVariant"
+                    variant="primary"
                     :title="classItem.name"
                     :subtitle="classItem.description"
                     :icon="BookOpen"

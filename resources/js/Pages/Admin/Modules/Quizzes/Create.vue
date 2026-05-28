@@ -73,6 +73,7 @@ const currentQuestion = ref({
     question_text: "",
     mascot_id: null,
     image: null,
+    expected_keywords: "",
 });
 const questionOptions = ref([]);
 const currentOption = ref({ option_text: "", is_correct: false, feedback: "" });
@@ -152,7 +153,8 @@ const quizTypeOptions = [
     { value: "multiple_choices", label: "PILIHAN GANDA" },
     { value: "drag_drop", label: "Drag & Drop" },
     { value: "true_false", label: "True / False (Pilih Gambar)" },
-    { value: "case_study", label: "Studo Kasus" },
+    { value: "case_study", label: "Studi Kasus" },
+    { value: "short_answer", label: "Isian Singkat (Uji Pemahaman)" },
 ];
 const categoryOptions = [
     { value: "pretest", label: "Tes Awal" },
@@ -171,6 +173,7 @@ const getCategoryLabel = (value) => {
 
 const isDragDrop = computed(() => quizForm.value.type === "drag_drop");
 const isTrueFalse = computed(() => quizForm.value.type === "true_false");
+const isShortAnswer = computed(() => quizForm.value.type === "short_answer");
 // timer unit label depends on where the user opened the create flow
 const timeUnitLabel = computed(() =>
     props.presetCategory === "pretest" || props.presetCategory === "posttest"
@@ -214,6 +217,11 @@ const nextStep = () => {
     // true_false: step 3 → 5(review)
     if (wizardStep.value === 3 && isTrueFalse.value) {
         wizardStep.value = 5;
+        return;
+    }
+    // short_answer: step 2 → 3(review)
+    if (wizardStep.value === 2 && isShortAnswer.value) {
+        wizardStep.value = 3;
         return;
     }
     wizardStep.value++;
@@ -265,23 +273,30 @@ const addQuestion = () => {
         showToast("Teks pertanyaan harus diisi!", "warning");
         return;
     }
-    if (questionOptions.value.length < 2) {
-        showToast("Minimal 2 opsi jawaban diperlukan!", "warning");
-        return;
-    }
-    if (!questionOptions.value.some((o) => o.is_correct)) {
-        showToast(
-            "Minimal 1 opsi harus ditandai sebagai jawaban benar!",
-            "warning",
-        );
-        return;
+    if (!isShortAnswer.value) {
+        if (questionOptions.value.length < 2) {
+            showToast("Minimal 2 opsi jawaban diperlukan!", "warning");
+            return;
+        }
+        if (!questionOptions.value.some((o) => o.is_correct)) {
+            showToast(
+                "Minimal 1 opsi harus ditandai sebagai jawaban benar!",
+                "warning",
+            );
+            return;
+        }
+    } else {
+        if (!currentQuestion.value.expected_keywords.trim()) {
+            showToast("Kata kunci jawaban yang diharapkan harus diisi!", "warning");
+            return;
+        }
     }
     quizQuestions.value.push({
         ...currentQuestion.value,
         id: Date.now(),
-        options: [...questionOptions.value],
+        options: isShortAnswer.value ? [] : [...questionOptions.value],
     });
-    currentQuestion.value = { question_text: "", mascot_id: null, image: null };
+    currentQuestion.value = { question_text: "", mascot_id: null, image: null, expected_keywords: "" };
     questionOptions.value = [];
     showToast("Pertanyaan ditambahkan!", "success");
 };
@@ -439,7 +454,8 @@ const finalSave = () => {
             questions = quizQuestions.value.map((q, index) => ({
                 question_text: q.question_text,
                 mascot_id: q.mascot_id,
-                image: null,
+                image: q.image || null,
+                expected_keywords: q.expected_keywords || null,
                 order_number: index + 1,
                 options: q.options.map((o) => ({
                     option_text: o.option_text,
@@ -909,7 +925,22 @@ const finalSave = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div class="border-t pt-4">
+                            
+                            <div v-if="isShortAnswer" class="border-t pt-4">
+                                <h4 class="font-bold text-sm mb-3">
+                                    Kunci Jawaban Singkat
+                                </h4>
+                                <TextareaField
+                                    v-model="currentQuestion.expected_keywords"
+                                    label="Kata Kunci yang Diharapkan"
+                                    placeholder="Contoh: Fotosintesis, Matahari (Pisahkan dengan koma jika ada beberapa kemungkinan)"
+                                    :rows="2"
+                                    border-color="green"
+                                />
+                                <p class="text-xs text-gray-500 mt-1">Siswa akan dianggap benar jika jawaban mereka mengandung kata kunci di atas.</p>
+                            </div>
+                            
+                            <div v-else class="border-t pt-4">
                                 <h4 class="font-bold text-sm mb-3">
                                     Tambah Opsi Jawaban
                                 </h4>
@@ -1029,6 +1060,9 @@ const finalSave = () => {
                                 </p>
                                 <div class="text-xs text-blue-600">
                                     {{ question.options.length }} opsi
+                                </div>
+                                <div v-if="isShortAnswer" class="text-xs text-green-600 mt-1">
+                                    Kunci: {{ question.expected_keywords }}
                                 </div>
                             </div>
                         </div>

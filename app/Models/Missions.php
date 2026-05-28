@@ -17,6 +17,11 @@ class Missions extends Model
         'description',
         'hint',
         'order_number',
+        'objective',
+        'content',
+        'image',
+        'youtube_link',
+        'is_active',
     ];
 
     protected static function booted(): void
@@ -52,5 +57,30 @@ class Missions extends Model
     public function quizzes()
     {
         return $this->hasMany(Quizzes::class, 'mission_id');
+    }
+
+    public function simulation_sliders()
+    {
+        return $this->hasMany(Simulation_sliders::class, 'mission_id');
+    }
+
+    public function simulation_comparisons()
+    {
+        return $this->hasMany(Simulation_comparisons::class, 'mission_id');
+    }
+
+    public function simulation_clickable_objects()
+    {
+        return $this->hasMany(Simulation_clickable_objects::class, 'mission_id');
+    }
+
+    public function simulation_solutions()
+    {
+        return $this->hasMany(Simulation_solutions::class, 'mission_id');
+    }
+
+    public function simulation_scenarios()
+    {
+        return $this->hasMany(Simulation_scenarios::class, 'mission_id');
     }
 }

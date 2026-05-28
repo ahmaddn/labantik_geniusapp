@@ -8,6 +8,8 @@ import SelectField from "@/Components/UI/Forms/SelectField.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import Card from "@/Components/UI/Card.vue";
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import {
     FileEdit,
     Star,
@@ -48,6 +50,7 @@ const materialForm = ref({
     title: props.material.title || "",
     description: props.material.description || "",
     content: props.material.content || "",
+    youtube_link: props.material.youtube_link || "",
     mascot_id: props.material.mascot_id || null,
     image: null, // File baru (gambar atau video)
     remove_image: false,
@@ -118,6 +121,7 @@ const handleSubmit = () => {
     formData.append("title", materialForm.value.title);
     formData.append("description", materialForm.value.description || "");
     formData.append("content", materialForm.value.content);
+    formData.append("youtube_link", materialForm.value.youtube_link || "");
     formData.append("mascot_id", materialForm.value.mascot_id || "");
     formData.append(
         "remove_image",
@@ -233,12 +237,23 @@ const toggleCardVariant = () => {
                         placeholder="Deskripsi singkat tentang material ini..."
                         :rows="3"
                     />
-                    <TextareaField
-                        label="Konten Material"
-                        v-model="materialForm.content"
-                        placeholder="Tulis konten pembelajaran di sini..."
-                        :rows="10"
-                        required
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Konten Material</label>
+                        <div class="border rounded-md bg-white">
+                            <QuillEditor
+                                v-model:content="materialForm.content"
+                                contentType="html"
+                                theme="snow"
+                                placeholder="Tulis konten pembelajaran di sini..."
+                                class="h-64"
+                            />
+                        </div>
+                    </div>
+                    <InputField
+                        label="Link YouTube (Opsional)"
+                        v-model="materialForm.youtube_link"
+                        placeholder="Contoh: https://www.youtube.com/watch?v=..."
+                        type="url"
                     />
 
                     <!-- ===== MEDIA UPLOAD ===== -->

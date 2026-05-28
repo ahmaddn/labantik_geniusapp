@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
-import { FileSpreadsheet } from "lucide-vue-next";
+import { UploadCloud } from "lucide-vue-next";
 
 const props = defineProps({
     modelValue: { type: [File, String, Object, null], default: null },
@@ -84,15 +84,15 @@ const clear = (e) => {
             />
 
             <div class="flex flex-col items-center text-center text-gray-500">
-                <FileSpreadsheet class="w-12 h-12 mb-2 text-green-600" />
-                <p class="font-medium text-gray-800 truncate max-w-xs">
+                <UploadCloud class="w-12 h-12 mb-3 text-blue-500" />
+                <p class="font-bold text-gray-800 truncate max-w-xs mb-1">
                     {{
                         (modelValue && modelValue.name) ||
                         "Klik atau seret file ke sini"
                     }}
                 </p>
-                <p class="text-sm text-gray-500">
-                    Tipe yang diterima: {{ accept }}
+                <p class="text-xs text-gray-400 font-medium">
+                    {{ accept === '*/*' ? 'Semua tipe file diterima' : 'Format: ' + accept }}
                 </p>
             </div>
 

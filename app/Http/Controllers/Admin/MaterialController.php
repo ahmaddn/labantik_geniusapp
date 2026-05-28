@@ -40,6 +40,7 @@ class MaterialController extends Controller
             'materials.*.description' => 'nullable|string',
             'materials.*.content'     => 'required|string',
             'materials.*.mascot_id'   => 'nullable|exists:mascots,id',
+            'materials.*.youtube_link'=> 'nullable|url|max:255',
             'materials.*.image'       => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
         ], [
             'materials.*.title.required'   => 'Judul material wajib diisi.',
@@ -55,6 +56,7 @@ class MaterialController extends Controller
                 'title'       => $material['title'],
                 'description' => $material['description'] ?? null,
                 'content'     => $material['content'],
+                'youtube_link'=> $material['youtube_link'] ?? null,
                 'mascot_id'   => $material['mascot_id'] ?? null,
                 'created_by'  => Auth::id(),
             ];
@@ -238,6 +240,7 @@ class MaterialController extends Controller
             'description'  => 'nullable|string',
             'content'      => 'required|string',
             'mascot_id'    => 'nullable|exists:mascots,id',
+            'youtube_link' => 'nullable|url|max:255',
             'image'        => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
             'remove_image' => 'nullable|boolean',
         ], [
@@ -251,6 +254,7 @@ class MaterialController extends Controller
             'title'       => $validated['title'],
             'description' => $validated['description'],
             'content'     => $validated['content'],
+            'youtube_link'=> $validated['youtube_link'],
             'mascot_id'   => $validated['mascot_id'],
         ];
 

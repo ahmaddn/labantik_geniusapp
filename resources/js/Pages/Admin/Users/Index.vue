@@ -21,6 +21,9 @@ import {
     LockIcon,
     Loader2,
     User2,
+    Download,
+    Upload,
+    FileSpreadsheet
 } from "lucide-vue-next";
 import { useForm, usePage } from "@inertiajs/vue3";
 
@@ -32,6 +35,12 @@ const selectedUser = ref(null);
 const successMessage = ref("");
 const showSuccess = ref(false);
 const selectedId = ref(null);
+
+const showImportDialog = ref(false);
+const importForm = useForm({
+    class_id: "",
+    file: null,
+});
 
 const props = defineProps({
     users: {
@@ -181,6 +190,29 @@ const deleteUser = () => {
     });
 };
 
+const downloadTemplate = () => {
+    window.location.href = route("admin.users.template");
+};
+
+const saveImport = () => {
+    if (!importForm.class_id) {
+        showToast("Silakan pilih kelas terlebih dahulu.", "error");
+        return;
+    }
+    if (!importForm.file) {
+        showToast("Silakan pilih file Excel terlebih dahulu.", "error");
+        return;
+    }
+
+    importForm.post(route("admin.users.import"), {
+        onError: (errors) => showToast(getFirstError(errors), "error"),
+        onSuccess: () => {
+            showImportDialog.value = false;
+            importForm.reset();
+        },
+    });
+};
+
 // Handler untuk action dari DataTable
 const handleTableAction = ({ action, data }) => {
     if (action === "edit") {
@@ -213,6 +245,7 @@ const handleEsc = (e) => {
     if (e.key === "Escape") {
         showDialog.value = false;
         showDeleteDialog.value = false;
+        showImportDialog.value = false;
     }
 };
 onMounted(() => {
@@ -255,14 +288,26 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Kanan -->
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        :icon="Plus"
-                        @click="openCreate"
-                    >
-                        Tambah Pengguna
-                    </Button>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <Button
+                            variant="light"
+                            size="lg"
+                            :icon="FileSpreadsheet"
+                            @click="showImportDialog = true"
+                            class="flex-1 md:flex-none border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
+                        >
+                            Import Excel
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            :icon="Plus"
+                            @click="openCreate"
+                            class="flex-1 md:flex-none"
+                        >
+                            Tambah Pengguna
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -396,6 +441,96 @@ onUnmounted(() => {
             @confirm="deleteUser"
             @cancel="showDeleteDialog = false"
         />
+
+        <!-- Import Excel Modal -->
+        <Modal
+            :show="showImportDialog"
+            title="Import Data Siswa dari Excel"
+            @close="showImportDialog = false"
+        >
+            <div class="space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-800 text-sm space-y-2">
+                    <p class="font-bold flex items-center gap-2">
+                        <FileSpreadsheet class="w-4 h-4" /> Aturan Import Excel:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1 text-blue-700">
+                        <li>Gunakan template Excel yang disediakan.</li>
+                        <li>Isi kolom <strong>Nama Lengkap</strong> (wajib).</li>
+                        <li>Kolom <strong>Email</strong> bersifat opsional. Jika kosong, akan dibuatkan otomatis.</li>
+                        <li><strong>Username</strong> akan digenerate otomatis berdasarkan nama siswa.</li>
+                        <li><strong>Password</strong> awal bawaan untuk semua siswa adalah <code>11223344</code>.</li>
+                    </ul>
+                    <Button 
+                        variant="light" 
+                        size="sm" 
+                        class="mt-3 bg-white text-blue-700 border-blue-300 w-full hover:bg-blue-100"
+                        :icon="Download"
+                        @click="downloadTemplate"
+                    >
+                        Unduh Template Excel
+                    </Button>
+                </div>
+
+                <SelectField
+                    v-model="importForm.class_id"
+                    :options="
+                        page.props.classes.map((cls) => ({
+                            value: cls.id,
+                            label: cls.name,
+                        }))
+                    "
+                    label="Pilih Kelas Tujuan"
+                    placeholder="Pilih Kelas"
+                    :icon="BookOpen"
+                    required
+                    border-color="blue"
+                />
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Upload File Excel (.xlsx)</label>
+                    <input 
+                        type="file" 
+                        accept=".xlsx, .xls"
+                        @change="e => importForm.file = e.target.files[0]"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 rounded-xl p-1"
+                    />
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button
+                        variant="light"
+                        size="md"
+                        @click="showImportDialog = false"
+                    >
+                        Batal
+                    </Button>
+
+                    <Button
+                        variant="primary"
+                        size="md"
+                        :icon="Upload"
+                        @click="saveImport"
+                        :disabled="importForm.processing"
+                        class="bg-green-500 border-green-600 hover:bg-green-600 focus:ring-green-300"
+                    >
+                        <span
+                            v-if="importForm.processing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Memproses...
+                        </span>
+                        <span v-else>
+                            <span class="flex items-center gap-2">
+                                Mulai Import
+                            </span>
+                        </span>
+                    </Button>
+                </div>
+            </template>
+        </Modal>
 
         <!-- Toast Notification -->
         <Toast
