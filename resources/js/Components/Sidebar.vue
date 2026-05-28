@@ -130,17 +130,13 @@ const menuItems = [
                     :href="route('dashboard')"
                     class="flex items-center gap-3 min-w-0"
                 >
-                    <div
-                        class="w-10 h-10 shrink-0 bg-blue-500 rounded-2xl flex items-center justify-center"
-                    >
-                        <BookOpen class="text-white" :size="18" />
-                    </div>
+                    <img src="/images/geniuss-logo.png" alt="Geniuss" class="h-10 w-auto object-contain shrink-0" />
 
                     <span
                         v-if="open || isMobile"
                         class="text-xl font-bold text-blue-600 truncate"
                     >
-                        {{ appName }}
+                        Geniuss
                     </span>
                 </Link>
 

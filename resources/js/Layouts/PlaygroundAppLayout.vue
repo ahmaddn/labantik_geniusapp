@@ -81,8 +81,7 @@ onUnmounted(() => {
             <div class="nav-inner">
                 <!-- Logo -->
                 <div class="nav-logo">
-                    <span class="logo-g">Geni</span
-                    ><span class="logo-u">uss</span>
+                    <img src="/images/geniuss-logo.png" alt="Geniuss" class="h-10 w-auto object-contain" />
                     <span class="logo-dot">·</span>
                     <span class="logo-edu">Playground</span>
                 </div>

@@ -12,7 +12,7 @@
     <title inertia>{{ config('app.name', 'Genius') }} - Web Media Pembelajaran Interaktif untuk Anak</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="/images/geniuss-logo.png">
 
     <!-- Google Fonts - Roboto untuk Bootstrap Template -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

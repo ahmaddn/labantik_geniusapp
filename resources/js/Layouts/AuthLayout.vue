@@ -1,5 +1,5 @@
 <script setup>
-const appName = import.meta.env.VITE_APP_NAME || "Genius";
+const appName = import.meta.env.VITE_APP_NAME || "Geniuss";
 import { Book, School } from "lucide-vue-next";
 </script>
 

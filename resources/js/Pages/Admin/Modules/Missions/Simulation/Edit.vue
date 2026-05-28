@@ -497,7 +497,12 @@ const saveScenario = () => {
                                     </div>
                                 </div>
                                 <div class="mt-4">
-                                    <InputField label="Label Opsi yang Benar" v-model="scn.correct_option" placeholder="Contoh: A" />
+                                    <SelectField 
+                                        label="Label Opsi yang Benar" 
+                                        v-model="scn.correct_option" 
+                                        :options="scn.options.filter(o => o.label).map(o => ({ value: o.label, label: `Opsi ${o.label}` }))" 
+                                        placeholder="Pilih Opsi yang Benar" 
+                                    />
                                 </div>
                             </div>
                         </div>

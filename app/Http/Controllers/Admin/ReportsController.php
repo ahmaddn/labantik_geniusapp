@@ -225,6 +225,14 @@ class ReportsController extends Controller
             ->filter(fn($a) => $a->student !== null)
             ->groupBy('student_id');
 
+        // Extract all unique quiz titles to make column headers
+        $allQuizTitles = [];
+        foreach ($attempts as $att) {
+            if ($att->quiz) {
+                $allQuizTitles[$att->quiz_id] = $att->quiz->title;
+            }
+        }
+
         $students = [];
         foreach ($grouped as $studentId => $studentAttempts) {
             $student = $studentAttempts->first()->student;
@@ -279,13 +287,30 @@ class ReportsController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Laporan Nilai');
 
-        // Headers
-        $sheet->setCellValue('A1', 'Nama Siswa');
-        $sheet->setCellValue('B1', 'Kelas / Sekolah');
-        $sheet->setCellValue('C1', "Kuis Selesai (dari {$totalQuizzes})");
-        $sheet->setCellValue('D1', 'Skor Rata-rata');
-        $sheet->setCellValue('E1', 'Progres (%)');
-        $sheet->setCellValue('F1', 'Detail Nilai per Kuis (Terbaik)');
+        // Report Title Header
+        $sheet->setCellValue('A1', 'Laporan Nilai Modul: ' . $modules->name);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        
+        // Merge title cell across dynamic columns
+        $lastColIndex = 5 + count($allQuizTitles); // A=1, B=2, C=3, D=4, E=5, then quizzes
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max($lastColIndex, 5));
+        $sheet->mergeCells('A1:' . $lastColLetter . '1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Table Headers at Row 3
+        $sheet->setCellValue('A3', 'Nama Siswa');
+        $sheet->setCellValue('B3', 'Kelas / Sekolah');
+        $sheet->setCellValue('C3', "Kuis Selesai (dari {$totalQuizzes})");
+        $sheet->setCellValue('D3', 'Skor Rata-rata');
+        $sheet->setCellValue('E3', 'Progres (%)');
+        
+        $colIdx = 6;
+        foreach ($allQuizTitles as $qId => $qTitle) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->setCellValue($colLetter . '3', 'Nilai: ' . $qTitle);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            $colIdx++;
+        }
 
         // Styling headers
         $headerStyle = [
@@ -293,15 +318,14 @@ class ReportsController extends Controller
             'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
             'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
         ];
-        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A3:' . $lastColLetter . '3')->applyFromArray($headerStyle);
         $sheet->getColumnDimension('A')->setAutoSize(true);
         $sheet->getColumnDimension('B')->setAutoSize(true);
         $sheet->getColumnDimension('C')->setAutoSize(true);
         $sheet->getColumnDimension('D')->setAutoSize(true);
         $sheet->getColumnDimension('E')->setAutoSize(true);
-        $sheet->getColumnDimension('F')->setWidth(60);
 
-        $rowNum = 2;
+        $rowNum = 4;
         foreach ($students as $row) {
             $sheet->setCellValue('A' . $rowNum, $row['name']);
             $sheet->setCellValue('B' . $rowNum, $row['class']);
@@ -309,13 +333,17 @@ class ReportsController extends Controller
             $sheet->setCellValue('D' . $rowNum, $row['overall_score']);
             $sheet->setCellValue('E' . $rowNum, $row['completion_percent']);
             
-            // Format rincian kuis
-            $detailString = [];
-            foreach ($row['details'] as $detail) {
-                $detailString[] = "- {$detail['title']}: {$detail['score']} ({$detail['finished_at']})";
+            $colIdx = 6;
+            foreach ($allQuizTitles as $qId => $qTitle) {
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+                if (isset($row['details'][$qId])) {
+                    $sheet->setCellValue($colLetter . $rowNum, $row['details'][$qId]['score']);
+                } else {
+                    $sheet->setCellValue($colLetter . $rowNum, '-');
+                }
+                $sheet->getStyle($colLetter . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $colIdx++;
             }
-            $sheet->setCellValue('F' . $rowNum, implode("\n", $detailString));
-            $sheet->getStyle('F' . $rowNum)->getAlignment()->setWrapText(true);
 
             $rowNum++;
         }
