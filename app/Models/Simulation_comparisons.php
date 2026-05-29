@@ -11,6 +11,7 @@ class Simulation_comparisons extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'left_label',
         'right_label',

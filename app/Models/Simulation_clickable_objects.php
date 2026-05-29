@@ -11,6 +11,7 @@ class Simulation_clickable_objects extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'name',
         'image',

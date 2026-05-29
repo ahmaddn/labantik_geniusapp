@@ -11,6 +11,7 @@ class Simulation_solution_options extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'simulation_solution_id',
         'label',
         'image',

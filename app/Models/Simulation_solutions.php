@@ -11,6 +11,7 @@ class Simulation_solutions extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'instruction',
         'result_6_months_correct',

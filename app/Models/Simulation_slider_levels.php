@@ -11,6 +11,7 @@ class Simulation_slider_levels extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'simulation_slider_id',
         'level_name',
         'narration',

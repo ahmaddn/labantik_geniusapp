@@ -11,6 +11,7 @@ class Simulation_sliders extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'x_axis_label',
         'conclusion_text',

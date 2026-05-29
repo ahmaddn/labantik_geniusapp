@@ -11,6 +11,7 @@ class Simulation_scenario_options extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'simulation_scenario_id',
         'label',
         'text',

@@ -11,6 +11,7 @@ class Simulation_scenarios extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'context',
         'image',
