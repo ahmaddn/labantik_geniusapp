@@ -1,59 +1,55 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Labantik Genius - Web Education
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Labantik Genius is an interactive and gamified educational web application designed to make learning engaging and effective. The platform provides structured learning pathways through modules and missions, featuring interactive simulations, quizzes, and multimedia materials.
 
-## About Laravel
+## 🚀 Key Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 1. Interactive Modules & Missions
+- **Structured Learning**: Curriculum is organized into dynamic modules and progressive missions.
+- **Mission Checkpoints**: Students navigate through specific tasks and objectives within each module to unlock the next level.
+- **Multimedia Integration**: Supports YouTube links, custom images, and rich-text explanations to deliver interactive materials.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 2. Gamified Simulations
+The platform provides a highly interactive "Playground" with four unique simulation modes:
+- **Slider Simulation**: Students interact with an interactive slider (e.g., adjusting water levels or temperature) to see how different parameters change the environment visually.
+- **Comparison Simulation**: Side-by-side interactive views showing before/after effects or contrasting scenarios (e.g., healthy vs. polluted environment).
+- **Clickable Object Exploration**: Interactive hidden-object styled tasks where students must click on positive or negative objects scattered across a scene to earn points and read their impact.
+- **Case Studies (Scenarios)**: Real-world problems where students must choose the correct solution from multiple options and receive immediate, context-aware feedback.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 3. Drag & Drop Interactions
+- Engaging hands-on interactions where students categorize, organize, or sort elements properly to test their understanding dynamically.
 
-## Learning Laravel
+### 4. Assessments & Quizzes
+- **Pretest & Posttest System**: Dedicated tests before and after modules to measure knowledge growth and learning effectiveness.
+- **Mission-level Quizzes**: Mini-assessments tied to specific missions to validate a student's grasp of the current topic.
+- **Detailed Feedback**: Students receive immediate guidance and scoring based on their answers.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 5. Custom Module Design & Templates
+- Administrators can customize the visual theme of the modules (mascots, backgrounds, color schemes) using built-in design templates to keep the learning environment fresh and attractive.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 6. Admin & Teacher Dashboard (GeniAdmin)
+- **Class & Student Management**: Import users via Excel (CSV) or add them manually. Group students into designated classes.
+- **Content Management**: Create, edit, and organize all modules, missions, simulation configurations, and study materials easily via a user-friendly CMS interface.
+- **Feature Toggles**: Easily activate or deactivate certain modules depending on the curriculum schedule.
 
-## Laravel Sponsors
+### 7. Progress Tracking & Reporting
+- **Student History**: Track exact login times, completion status of missions, and individual quiz scores.
+- **Exportable Reports**: Generate and export detailed reports in Excel (XLSX) format for easy grading and administrative review.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 👥 User Roles
 
-### Premium Partners
+- **Admin/Guru (GeniAdmin)**: Has full access to manage the curriculum, configure all gamified simulations, customize UI templates, manage user data, and view/export analytical reports.
+- **Student (Player)**: Focuses on the learning experience. Can access the interactive playground, take pretests/posttests, complete gamified missions, and explore educational simulations.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🛠️ Tech Stack
 
-## Contributing
+- **Backend**: [Laravel 12](https://laravel.com/) (PHP)
+- **Frontend**: [Vue 3](https://vuejs.org/) (Composition API) with [Inertia.js](https://inertiajs.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide Vue Next](https://lucide.dev/)
+- **Charts**: [Chart.js](https://www.chartjs.org/)
+- **Text Editor**: Vue Quill
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 📄 License
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is proprietary and built specifically for the Labantik Genius educational platform.

@@ -131,7 +131,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::delete('/modules/{modules}', [ModulesController::class, 'destroy'])->name('destroy');
         Route::patch('/modules/{modules}/toggle-active', [ModulesController::class, 'toggleActive'])->name('toggle-active');
         // Module-level Quiz Routes (for quizzes without a mission_id)
-        Route::prefix('{modules}/quizzes')->name('quizzes.')->group(function () {
+        Route::prefix('modules/{modules}/quizzes')->name('quizzes.')->group(function () {
             Route::get('/create/{category}', [QuizController::class, 'createModule'])->name('create');
             Route::post('/', [QuizController::class, 'storeModule'])->name('store');
             // Import module-level quizzes (CSV)
@@ -141,7 +141,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         });
 
         // Mission Routes (nested under modules)
-        Route::prefix('{modules}/missions')->name('missions.')->group(function () {
+        Route::prefix('modules/{modules}/missions')->name('missions.')->group(function () {
             Route::post('/', [MissionController::class, 'store'])->name('store');
             Route::get('/{missions}', [MissionController::class, 'show'])->name('show');
             Route::put('/{missions}', [MissionController::class, 'update'])->name('update');
