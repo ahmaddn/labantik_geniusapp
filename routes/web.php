@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
@@ -112,6 +113,18 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::get('/reports/modules/{modules}/students/{student}', [ReportsController::class, 'studentReport'])->name('student');
     });
 
+    // Pengaturan
+    Route::name('settings.')->prefix('settings')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::put('/', [SettingsController::class, 'update'])->name('update');
+        Route::delete('/logo', [SettingsController::class, 'deleteLogo'])->name('logo.delete');
+        Route::delete('/mascot', [SettingsController::class, 'deleteMascot'])->name('mascot.delete');
+        Route::post('/bgm', [SettingsController::class, 'uploadBgm'])->name('bgm.upload');
+        Route::delete('/bgm/{bgm}', [SettingsController::class, 'deleteBgm'])->name('bgm.delete');
+        Route::post('/bgm/{bgm}/active', [SettingsController::class, 'setActiveBgm'])->name('bgm.active');
+        Route::post('/bgm/clear', [SettingsController::class, 'clearActiveBgm'])->name('bgm.clear');
+    });
+
     // Pengguna
     Route::name('users.')->group(function () {
         Route::get('/users', [UsersController::class, 'index'])->name('index');
@@ -146,6 +159,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::get('/{missions}', [MissionController::class, 'show'])->name('show');
             Route::put('/{missions}', [MissionController::class, 'update'])->name('update');
             Route::delete('/{missions}', [MissionController::class, 'destroy'])->name('destroy');
+            Route::post('/{missions}/reorder', [MissionController::class, 'reorderSteps'])->name('reorder');
 
             // Material Routes (nested under missions)
             Route::prefix('{missions}/materials')->name('materials.')->group(function () {

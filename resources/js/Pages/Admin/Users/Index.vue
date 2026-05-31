@@ -38,6 +38,7 @@ const selectedId = ref(null);
 
 const showImportDialog = ref(false);
 const importForm = useForm({
+    role: "siswa",
     class_id: "",
     file: null,
 });
@@ -191,11 +192,11 @@ const deleteUser = () => {
 };
 
 const downloadTemplate = () => {
-    window.location.href = route("admin.users.template");
+    window.location.href = route("admin.users.template", { role: importForm.role });
 };
 
 const saveImport = () => {
-    if (!importForm.class_id) {
+    if (importForm.role === 'siswa' && !importForm.class_id) {
         showToast("Silakan pilih kelas terlebih dahulu.", "error");
         return;
     }
@@ -472,6 +473,25 @@ onUnmounted(() => {
                 </div>
 
                 <SelectField
+                    v-model="importForm.role"
+                    :options="
+                        isGuru 
+                            ? [{ value: 'siswa', label: 'Siswa' }] 
+                            : [
+                                  { value: 'siswa', label: 'Siswa' },
+                                  { value: 'guru', label: 'Guru' }
+                              ]
+                    "
+                    label="Pilih Role yang Diimport"
+                    placeholder="Pilih Role"
+                    :icon="Shield"
+                    required
+                    border-color="blue"
+                    :disabled="isGuru"
+                />
+
+                <SelectField
+                    v-if="importForm.role === 'siswa'"
                     v-model="importForm.class_id"
                     :options="
                         page.props.classes.map((cls) => ({

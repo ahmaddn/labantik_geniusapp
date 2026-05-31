@@ -22,7 +22,13 @@ import {
     Trash2,
     Pencil,
     Eye,
+    GripVertical,
+    SlidersHorizontal,
+    GitCompare,
+    MousePointerClick,
+    AlignLeft
 } from "lucide-vue-next";
+import draggable from "vuedraggable";
 
 const page = usePage();
 
@@ -32,6 +38,7 @@ const props = defineProps({
     mission: { type: Object, required: true },
     materials: { type: Array, default: () => [] },
     quizzes: { type: Array, default: () => [] },
+    simulations: { type: Array, default: () => [] },
 });
 
 // State management
@@ -65,28 +72,47 @@ watch(
     },
 );
 
-// Combine materials and quizzes, sorted by creation date
-const sortedItems = computed(() => {
-    const materials = props.materials.map((item) => ({
-        ...item,
-        itemType: "material",
-    }));
-    const quizzes = props.quizzes.map((item) => ({
-        ...item,
-        itemType: "quiz",
-    }));
+// Combine materials, quizzes, simulations, sorted by order_number or created date
+const sortedItems = ref([]);
 
-    const combined = [...materials, ...quizzes];
+watch(
+    () => [props.materials, props.quizzes, props.simulations],
+    () => {
+        const materials = props.materials.map((item) => ({ ...item, itemType: "material" }));
+        const quizzes = props.quizzes.map((item) => ({ ...item, itemType: "quiz" }));
+        const simulations = props.simulations.map((item) => ({ ...item, itemType: item.type }));
 
-    // Sort by created_at in descending order (newest first)
-    return combined.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
-    );
-});
+        const combined = [...materials, ...quizzes, ...simulations];
+        sortedItems.value = combined.sort((a, b) => {
+            if (a.order_number !== undefined && b.order_number !== undefined && (a.order_number !== 0 || b.order_number !== 0)) {
+                 return a.order_number - b.order_number;
+            }
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+    },
+    { immediate: true, deep: true }
+);
 
 const totalItems = computed(
-    () => props.materials.length + props.quizzes.length,
+    () => props.materials.length + props.quizzes.length + props.simulations.length,
 );
+
+const handleDragEnd = () => {
+    // Update order numbers sequentially
+    const updatedSteps = sortedItems.value.map((item, index) => ({
+        id: item.id,
+        itemType: item.itemType,
+        order_number: index + 1
+    }));
+    
+    router.post(route('admin.modules.missions.reorder', [props.module.id, props.mission.id]), {
+        steps: updatedSteps
+    }, {
+        preserveScroll: true,
+        onSuccess: () => triggerToast("Urutan berhasil disimpan!", "success"),
+        onError: () => triggerToast("Gagal menyimpan urutan.", "error")
+    });
+};
 
 const goBack = () => {
     router.visit(route("admin.modules.show", props.module.id));
@@ -455,234 +481,125 @@ const formatDate = (dateString) => {
                 </div>
 
                 <!-- Items List -->
-                <TransitionGroup v-else name="card" tag="div" class="space-y-4">
-                    <div
-                        v-for="item in sortedItems"
-                        :key="`${item.itemType}-${item.id}`"
-                        class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
-                        :class="{
-                            'border-blue-200': item.itemType === 'material',
-                            'border-orange-200': item.itemType === 'quiz',
-                        }"
-                    >
-                        <!-- Material Item -->
+                <draggable 
+                    v-else 
+                    v-model="sortedItems" 
+                    item-key="id"
+                    handle=".drag-handle"
+                    @end="handleDragEnd"
+                    class="space-y-4"
+                >
+                    <template #item="{ element: item }">
                         <div
-                            v-if="item.itemType === 'material'"
-                            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                            class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
+                            :class="{
+                                'border-blue-200': item.itemType === 'material',
+                                'border-orange-200': item.itemType === 'quiz',
+                                'border-purple-200': item.itemType.startsWith('simulation_'),
+                            }"
                         >
-                            <div
-                                class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1"
-                            >
-                                <div
-                                    class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300"
-                                >
-                                    <FileText class="text-blue-600 w-8 h-8" />
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span
-                                            class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium"
-                                        >
-                                            MATERI
-                                        </span>
-                                        <h3
-                                            class="text-xl font-bold text-gray-800"
-                                        >
-                                            {{ item.title }}
-                                        </h3>
+                            <!-- Flex Container with Drag Handle -->
+                            <div class="flex items-center gap-4">
+                                <!-- Drag Handle -->
+                                <button class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-2 shrink-0">
+                                    <GripVertical class="w-6 h-6" />
+                                </button>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <!-- Material Item -->
+                                    <div v-if="item.itemType === 'material'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+                                            <div class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 shrink-0">
+                                                <FileText class="text-blue-600 w-8 h-8" />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium">MATERI</span>
+                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
+                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
+                                                    <span v-if="item.mascot" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.mascot.name }}</span>
+                                                </div>
+                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowMaterial(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditMaterial(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteMaterial(item.id)" />
+                                        </div>
                                     </div>
 
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <span
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <Clock class="w-3 h-3" />
-                                            {{ formatDate(item.created_at) }}
-                                        </span>
-                                        <span
-                                            v-if="item.created_by"
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <User class="w-3 h-3" />
-                                            {{ item.created_by }}
-                                        </span>
-                                        <span
-                                            v-if="item.mascot"
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <Tag class="w-3 h-3" />
-                                            {{ item.mascot.name }}
-                                        </span>
+                                    <!-- Quiz Item -->
+                                    <div v-else-if="item.itemType === 'quiz'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+                                            <div class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 shrink-0">
+                                                <HelpCircle class="text-orange-600 w-8 h-8" />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <span class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium">QUIZ</span>
+                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                                    <span :class="['text-xs px-3 py-1 rounded-full border font-medium', item.type === 'multiple_choices' ? 'bg-blue-100 text-blue-700 border-blue-300' : item.type === 'drag_drop' ? 'bg-purple-100 text-purple-700 border-purple-300' : item.type === 'true_false' ? 'bg-blue-100 text-blue-700 border-blue-300' : item.type === 'case_study' ? 'bg-pink-100 text-pink-700 border-pink-300' : 'bg-gray-100 text-gray-700 border-gray-300']">
+                                                        {{ item.type === "multiple_choices" ? "PILIHAN GANDA" : item.type === "drag_drop" ? "DRAG & DROP" : item.type === "true_false" ? "TRUE / FALSE" : item.type === "case_study" ? "CASE STUDY" : item.type?.toUpperCase() }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ item.time_limit }} menit</span>
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
+                                                </div>
+                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+                                                <div class="flex flex-wrap gap-4 mt-3">
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><List class="w-3 h-3" /> {{ item.questions_count || 0 }} Pertanyaan</span>
+                                                    <span v-if="item.category" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.category }}</span>
+                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowQuiz(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditQuiz(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteQuiz(item.id)" />
+                                        </div>
                                     </div>
-
-                                    <p
-                                        v-if="item.description"
-                                        class="text-sm text-gray-600 line-clamp-2"
-                                    >
-                                        {{ item.description }}
-                                    </p>
+                                    
+                                    <!-- Simulation Item -->
+                                    <div v-else class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+                                            <div class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 shrink-0">
+                                                <SlidersHorizontal v-if="item.itemType === 'simulation_slider'" class="text-purple-600 w-8 h-8" />
+                                                <GitCompare v-else-if="item.itemType === 'simulation_comparison'" class="text-purple-600 w-8 h-8" />
+                                                <MousePointerClick v-else-if="item.itemType === 'simulation_clickable_object'" class="text-purple-600 w-8 h-8" />
+                                                <AlignLeft v-else-if="item.itemType === 'simulation_scenario'" class="text-purple-600 w-8 h-8" />
+                                                <HelpCircle v-else class="text-purple-600 w-8 h-8" />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-300 font-medium">SIMULASI</span>
+                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
+                                                </div>
+                                                <div class="flex items-center gap-3 mb-3">
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="warning"
+                                                size="md"
+                                                :icon="Pencil"
+                                                @click="router.visit(route('admin.modules.missions.simulation.edit', [module.id, mission.id]))"
+                                            >Edit Konfigurasi</Button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="info"
-                                    size="md"
-                                    :icon="Eye"
-                                    @click="goToShowMaterial(item.id)"
-                                />
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="warning"
-                                    size="md"
-                                    :icon="Pencil"
-                                    @click="goToEditMaterial(item.id)"
-                                />
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="danger"
-                                    size="md"
-                                    :icon="Trash2"
-                                    @click="confirmDeleteMaterial(item.id)"
-                                />
                             </div>
                         </div>
-
-                        <!-- Quiz Item -->
-                        <div
-                            v-else
-                            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                        >
-                            <div
-                                class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1"
-                            >
-                                <div
-                                    class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300"
-                                >
-                                    <HelpCircle
-                                        class="text-orange-600 w-8 h-8"
-                                    />
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span
-                                            class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium"
-                                        >
-                                            QUIZ
-                                        </span>
-                                        <h3
-                                            class="text-xl font-bold text-gray-800"
-                                        >
-                                            {{ item.title }}
-                                        </h3>
-                                    </div>
-
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <span
-                                            :class="[
-                                                'text-xs px-3 py-1 rounded-full border font-medium',
-                                                item.type === 'multiple_choices'
-                                                    ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                                    : item.type === 'drag_drop'
-                                                      ? 'bg-purple-100 text-purple-700 border-purple-300'
-                                                      : item.type ===
-                                                          'true_false'
-                                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                                        : item.type ===
-                                                            'case_study'
-                                                          ? 'bg-pink-100 text-pink-700 border-pink-300'
-                                                          : 'bg-gray-100 text-gray-700 border-gray-300',
-                                            ]"
-                                        >
-                                            {{
-                                                item.type === "multiple_choices"
-                                                    ? "PILIHAN GANDA"
-                                                    : item.type === "drag_drop"
-                                                      ? "DRAG & DROP"
-                                                      : item.type ===
-                                                          "true_false"
-                                                        ? "TRUE / FALSE"
-                                                        : item.type ===
-                                                            "case_study"
-                                                          ? "CASE STUDY"
-                                                          : item.type?.toUpperCase()
-                                            }}
-                                        </span>
-                                        <span
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <Clock class="w-3 h-3" />
-                                            {{ item.time_limit }} menit
-                                        </span>
-                                        <span
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <Calendar class="w-3 h-3" />
-                                            {{ formatDate(item.created_at) }}
-                                        </span>
-                                    </div>
-
-                                    <p
-                                        v-if="item.description"
-                                        class="text-sm text-gray-600 line-clamp-2"
-                                    >
-                                        {{ item.description }}
-                                    </p>
-
-                                    <!-- Quiz Stats -->
-                                    <div class="flex gap-4 mt-3">
-                                        <span
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <List class="w-3 h-3" />
-                                            {{ item.questions_count || 0 }}
-                                            Pertanyaan
-                                        </span>
-                                        <span
-                                            v-if="item.category"
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <Tag class="w-3 h-3" />
-                                            {{ item.category }}
-                                        </span>
-                                        <span
-                                            v-if="item.created_by"
-                                            class="text-xs text-gray-500 flex items-center gap-1"
-                                        >
-                                            <User class="w-3 h-3" />
-                                            {{ item.created_by }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="info"
-                                    size="md"
-                                    :icon="Eye"
-                                    @click="goToShowQuiz(item.id)"
-                                />
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="warning"
-                                    size="md"
-                                    :icon="Pencil"
-                                    @click="goToEditQuiz(item.id)"
-                                />
-                                <Button
-                                    class="w-full sm:w-auto"
-                                    variant="danger"
-                                    size="md"
-                                    :icon="Trash2"
-                                    @click="confirmDeleteQuiz(item.id)"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </TransitionGroup>
+                    </template>
+                </draggable>
             </div>
         </div>
 

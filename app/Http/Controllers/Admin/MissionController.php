@@ -93,6 +93,22 @@ class MissionController extends Controller
                 ];
             });
 
+        // Load simulations
+        $sliders = $missions->simulation_sliders()->get()->map(function ($s) { 
+            return ['id' => $s->id, 'type' => 'simulation_slider', 'title' => 'Simulasi Slider', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
+        });
+        $comparisons = $missions->simulation_comparisons()->get()->map(function ($s) { 
+            return ['id' => $s->id, 'type' => 'simulation_comparison', 'title' => 'Simulasi Perbandingan', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
+        });
+        $clickables = $missions->simulation_clickable_objects()->get()->map(function ($s) { 
+            return ['id' => $s->id, 'type' => 'simulation_clickable_object', 'title' => 'Simulasi Objek Klik (' . $s->name . ')', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
+        });
+        $scenarios = $missions->simulation_scenarios()->get()->map(function ($s) { 
+            return ['id' => $s->id, 'type' => 'simulation_scenario', 'title' => 'Studi Kasus', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
+        });
+
+        $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->concat($scenarios)->values();
+
         return Inertia::render('Admin/Modules/Missions/Show', [
             'module' => [
                 'id' => $modules->id,
@@ -108,6 +124,7 @@ class MissionController extends Controller
             ],
             'materials' => $materials,
             'quizzes' => $quizzes,
+            'simulations' => $simulations,
         ]);
     }
 
@@ -153,5 +170,52 @@ class MissionController extends Controller
         return redirect()
             ->route('admin.modules.show', $modules->id)
             ->with('success', 'Mission berhasil dihapus.');
+    }
+
+    /**
+     * Reorder steps
+     */
+    public function reorderSteps(Learning_modules $modules, Missions $missions, Request $request)
+    {
+        if ($missions->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'steps' => 'required|array',
+            'steps.*.id' => 'required|string',
+            'steps.*.itemType' => 'required|string',
+            'steps.*.order_number' => 'required|integer',
+        ]);
+
+        foreach ($validated['steps'] as $step) {
+            $model = null;
+            switch ($step['itemType']) {
+                case 'material':
+                    $model = \App\Models\Materials::find($step['id']);
+                    break;
+                case 'quiz':
+                    $model = \App\Models\Quizzes::find($step['id']);
+                    break;
+                case 'simulation_slider':
+                    $model = \App\Models\Simulation_sliders::find($step['id']);
+                    break;
+                case 'simulation_comparison':
+                    $model = \App\Models\Simulation_comparisons::find($step['id']);
+                    break;
+                case 'simulation_clickable_object':
+                    $model = \App\Models\Simulation_clickable_objects::find($step['id']);
+                    break;
+                case 'simulation_scenario':
+                    $model = \App\Models\Simulation_scenarios::find($step['id']);
+                    break;
+            }
+
+            if ($model) {
+                $model->update(['order_number' => $step['order_number']]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Urutan berhasil disimpan.');
     }
 }

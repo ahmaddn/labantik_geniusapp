@@ -109,8 +109,10 @@ class UsersController extends Controller
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus');
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
+        $role = $request->query('role', 'siswa');
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         
@@ -126,7 +128,7 @@ class UsersController extends Controller
         $sheet->getStyle('A1:B1')->getFont()->setBold(true);
 
         $writer = new Xlsx($spreadsheet);
-        $fileName = 'Template_Import_Siswa.xlsx';
+        $fileName = $role === 'guru' ? 'Template_Import_Guru.xlsx' : 'Template_Import_Siswa.xlsx';
         
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="'. urlencode($fileName).'"');
@@ -137,14 +139,19 @@ class UsersController extends Controller
     public function importExcel(Request $request)
     {
         $request->validate([
-            'class_id' => 'required|exists:classes,id',
+            'role' => 'required|in:guru,siswa',
+            'class_id' => 'required_if:role,siswa',
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
         $current = Auth::user();
         if ($current && $current->role === 'guru') {
-            // Guru is allowed to import, they only create "siswa" anyway
+            if ($request->role !== 'siswa') {
+                return redirect()->back()->with('error', 'Guru hanya dapat mengimport akun siswa.');
+            }
         }
+
+        $role = $request->role;
 
         try {
             $spreadsheet = IOFactory::load($request->file('file')->getPathname());
@@ -166,13 +173,13 @@ class UsersController extends Controller
 
                 if (empty($email)) {
                     // Generate a fake email if not provided
-                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(100,999) . '@siswa.com';
+                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(100,999) . '@' . $role . '.com';
                 }
 
                 // Generate simple username: First word of name (letters only) + 3 random letters
                 $firstName = strtolower(preg_replace('/[^a-zA-Z]/', '', explode(' ', $name)[0]));
                 if (empty($firstName)) {
-                    $firstName = 'siswa';
+                    $firstName = $role;
                 }
                 
                 $username = $firstName . strtolower(Str::random(3));
@@ -184,7 +191,7 @@ class UsersController extends Controller
 
                 // Ensure unique email
                 while (User::where('email', $email)->exists()) {
-                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(1000,9999) . '@siswa.com';
+                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(1000,9999) . '@' . $role . '.com';
                 }
 
                 User::create([
@@ -192,8 +199,8 @@ class UsersController extends Controller
                     'email' => $email,
                     'username' => $username,
                     'password' => Hash::make('11223344'), // Default password
-                    'role' => 'siswa',
-                    'class_id' => $request->class_id,
+                    'role' => $role,
+                    'class_id' => $role === 'siswa' ? $request->class_id : null,
                     'created_by' => Auth::id()
                 ]);
 
@@ -201,7 +208,7 @@ class UsersController extends Controller
             }
 
             if ($successCount > 0) {
-                return redirect()->back()->with('success', $successCount . ' Siswa berhasil diimport.');
+                return redirect()->back()->with('success', $successCount . ' ' . ucfirst($role) . ' berhasil diimport.');
             } else {
                 return redirect()->back()->with('error', 'Tidak ada data valid yang dapat diimport dari file tersebut.');
             }

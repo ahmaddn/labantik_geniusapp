@@ -10,6 +10,7 @@ import {
     BarChart,
     X,
     HelpCircle,
+    Settings,
 } from "lucide-vue-next";
 
 defineProps({
@@ -86,6 +87,15 @@ const menuItems = [
         name: "Laporan & Riwayat",
         route: "admin.reports.index",
         icon: BarChart,
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
+        borderColor: "border-blue-300",
+        activeColor: "bg-blue-500",
+    },
+    {
+        name: "Pengaturan Platform",
+        route: "admin.settings.index",
+        icon: Settings,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",
