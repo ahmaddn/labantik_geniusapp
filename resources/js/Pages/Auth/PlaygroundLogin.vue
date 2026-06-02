@@ -140,7 +140,7 @@ onUnmounted(() => {
                         :stroke-width="2"
                     />
                 </div>
-                <span class="brand-name">Geniuss</span>
+                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
             </div>
 
             <div class="topbar-r">
@@ -218,7 +218,7 @@ onUnmounted(() => {
                     </Transition>
                     <div class="mascot-glow"></div>
                     <img
-                        src="/images/templates/pose_keren.png"
+                        :src="$page.props.global_settings?.platform_mascot || '/images/templates/pose_keren.png'"
                         alt="Maskot Geni"
                         class="mascot"
                         draggable="false"

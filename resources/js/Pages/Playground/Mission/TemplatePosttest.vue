@@ -252,7 +252,7 @@ onUnmounted(() => {
                 <div class="brand-dot">
                     <Zap :size="13" color="#fff" fill="white" :stroke-width="2" />
                 </div>
-                <span class="brand-name">Geniuss</span>
+                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
             </div>
 
             <Transition name="t-timer">

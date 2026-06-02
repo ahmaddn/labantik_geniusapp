@@ -82,4 +82,9 @@ class Learning_modules extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function simulation_scenarios()
+    {
+        return $this->hasMany(\App\Models\Simulation_scenarios::class, 'module_id');
+    }
 }

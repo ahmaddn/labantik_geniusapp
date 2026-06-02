@@ -133,7 +133,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                         :stroke-width="2"
                     />
                 </div>
-                <span class="brand-name">Geniuss</span>
+                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
             </div>
 
             <div class="topbar-r">

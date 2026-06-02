@@ -128,7 +128,7 @@ class UsersController extends Controller
         $sheet->getStyle('A1:B1')->getFont()->setBold(true);
 
         $writer = new Xlsx($spreadsheet);
-        $fileName = $role === 'guru' ? 'Template_Import_Guru.xlsx' : 'Template_Import_Siswa.xlsx';
+        $fileName = $role === 'guru' ? 'Template_Import_Guru.xlsx' : 'Template__Siswa.xlsx';
         
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="'. urlencode($fileName).'"');

@@ -144,6 +144,10 @@ const openCreateQuizPretest = (category) => {
     );
 };
 
+const goToSimulation = () => {
+    router.visit(route("admin.modules.simulation.edit", props.module.id));
+};
+
 const openAddMissionModal = () => {
     form.reset();
     form.clearErrors();
@@ -331,6 +335,15 @@ const deleteMission = () => {
                                 @click="showModuleImportModal = true"
                             >
                                 Import Tes Awal (Pretest)
+                            </Button>
+                            <Button
+                                class="w-full"
+                                variant="secondary"
+                                size="md"
+                                :icon="FileText"
+                                @click="goToSimulation"
+                            >
+                                Studi Kasus
                             </Button>
                         </div>
                     </div>

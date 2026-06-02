@@ -36,6 +36,7 @@ import {
     GripHorizontal,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
+import axios from "axios";
 
 import True_false from "@/Components/Quiz/True_false.vue";
 import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
@@ -419,25 +420,16 @@ const submit = async () => {
     closeConfirm();
     isSubmitting.value = true;
     try {
-        const res = await fetch(
+        const res = await axios.post(
             route("playground.missions.submit", props.mission.id),
             {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                },
-                body: JSON.stringify({
-                    answers,
-                    quiz_ids: props.mission.quizzes
-                        .filter((q) => q.type !== "materials")
-                        .map((q) => q.id),
-                }),
-            },
+                answers,
+                quiz_ids: props.mission.quizzes
+                    .filter((q) => q.type !== "materials")
+                    .map((q) => q.id),
+            }
         );
-        const data = await res.json();
+        const data = res.data;
         if (data.success) {
             // Bersihkan timer state supaya sesi berikutnya mulai fresh
             try {
@@ -503,6 +495,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                 :style="{ backgroundImage: `url(${props.background})` }"
             ></div>
             <div class="bg-tint"></div>
+            <!-- Blobs -->
             <div class="blob b1"></div>
             <div class="blob b2"></div>
             <div class="blob b3"></div>
@@ -519,24 +512,29 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
             <div class="bg-dots"></div>
         </div>
 
-        <!-- ══ TOPBAR ══ -->
+        <!-- ══ TOP NAV (Minimal) ══ -->
         <header class="topbar">
-            <button class="tbtn" @click="tryGoBack" :disabled="isSubmitting">
-                <ArrowLeft :size="16" :stroke-width="2.5" />
-                <span class="tbtn-lbl">Kembali</span>
-            </button>
-
-            <div class="brand" :class="{ 'brand--hide': brandMoved }">
-                <div class="brand-dot">
-                    <Zap
-                        :size="13"
-                        color="#fff"
-                        fill="white"
-                        :stroke-width="2"
-                    />
+            <!-- Brand -->
+            <div class="brand" style="position: absolute; left: 18px; display: flex; align-items: center; gap: 8px; z-index: 2;">
+                <div style="width: 28px; height: 28px; border-radius: 8px; background: #2563eb; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="white" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 </div>
-                <span class="brand-name">Geniuss</span>
+                <span style="font-family: 'Righteous', cursive; font-size: 18px; color: #fff;">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
             </div>
+
+            <!-- Progress Bar inside Topbar -->
+            <div class="prog-wrapper">
+                <div class="prog-text">
+                    {{ answeredQuizSteps }} / {{ totalQuizSteps }} Terjawab
+                </div>
+                <div class="prog-track">
+                    <div class="prog-fill" :style="{ width: progressPct + '%' }">
+                        <span class="prog-shine"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer (if any) -->
             <Transition name="t-timer">
                 <div
                     v-if="showTimer"
@@ -547,297 +545,101 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                     }"
                 >
                     <div class="timer-row">
-                        <Clock :size="13" :stroke-width="2" />
+                        <Clock :size="14" :stroke-width="2.5" />
                         <span class="timer-val">{{
                             timedOutQuizzes.has(step?.quiz?.id)
                                 ? "Waktu Habis"
                                 : timerDisplay
                         }}</span>
                     </div>
-                    <div class="timer-track">
-                        <div
-                            class="timer-fill"
-                            :class="{ 'fill--warn': timerWarning }"
-                            :style="{
-                                width: timedOutQuizzes.has(step?.quiz?.id)
-                                    ? '0%'
-                                    : (timeRemaining / step.quiz.time_limit) *
-                                          100 +
-                                      '%',
-                            }"
-                        ></div>
-                    </div>
                 </div>
             </Transition>
-
-            <div class="topbar-r">
-                <button
-                    class="tbtn tbtn-sq"
-                    :class="{ 'tbtn--on': musicOn }"
-                    @click="toggleMusic(props.backsound)"
-                >
-                    <Music2 v-if="musicOn" :size="15" :stroke-width="2" />
-                    <VolumeX v-else :size="15" :stroke-width="2" />
-                </button>
-                <button class="tbtn tbtn-sq" @click="goHome">
-                    <Home :size="15" :stroke-width="2" />
-                </button>
-            </div>
+            <div class="topbar-r"></div>
         </header>
 
-        <!-- ══ BODY ══ -->
-        <div class="body" :class="{ 'body--on': ready }">
-            <!-- ── SIDEBAR ── -->
-            <aside
-                class="sidebar"
-                :class="{ 'sidebar--on': ready }"
-                @click="rotateBubble"
-            >
-                <div class="sb-info">
-                    <span class="sb-chip">
-                        <component
-                            :is="typeIcon(step?.quiz?.type)"
-                            :size="11"
-                            :stroke-width="2.5"
-                        />
-                        {{ typeMeta(step?.quiz?.type).label }}
-                    </span>
-                    <h1 class="sb-title">{{ mission.name }}</h1>
-                    <p class="sb-sub">{{ step?.quiz?.title }}</p>
-                    <p
-                        v-if="!step?.isMaterial && step?.totalInQuiz > 1"
-                        class="sb-soal"
-                    >
-                        Soal {{ (step?.questionIndex ?? 0) + 1 }} /
-                        {{ step?.totalInQuiz }}
-                    </p>
-
-                    <div class="prog">
-                        <div class="prog-meta">
-                            <span class="prog-lbl">Progress</span>
-                            <span class="prog-count">
-                                <b>{{ answeredQuizSteps }}</b> /
-                                {{ totalQuizSteps }}
-                            </span>
-                        </div>
-                        <div class="prog-track">
-                            <div
-                                class="prog-fill"
-                                :style="{ width: progressPct + '%' }"
-                            >
-                                <span class="prog-shine"></span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- ══ MAIN CENTRIC CONTENT ══ -->
+        <main class="main-wrapper" :class="{ 'main--on': ready }">
+            <div class="mission-container">
+                <!-- Title Pill -->
+                <div class="title-pill">
+                    {{ module.name.toUpperCase() }}
                 </div>
 
-                <!-- Mascot -->
-                <div class="mascot-wrap">
-                    <Transition name="bbl">
-                        <div v-if="bubbleVisible" class="bubble">
-                            <span>{{ BUBBLES[bubbleIdx] }}</span>
-                            <i class="bbl-o"></i>
-                            <i class="bbl-i"></i>
-                        </div>
-                    </Transition>
-                    <div class="mascot-frame">
-                        <img :src="mascotUrl" alt="Maskot" class="mascot" />
-                        <div class="mascot-shadow"></div>
-                    </div>
+                <!-- Question Bubble -->
+                <div class="question-bubble" v-if="step?.question && !step.isMaterial">
+                    {{ step.question.question_text }}
                 </div>
-            </aside>
-
-            <!-- ── MAIN PANEL ── -->
-            <section class="main" :class="{ 'main--on': ready }">
-                <div
-                    class="qcard"
-                    v-if="step"
-                    :class="{ 'opts--shake': shakeActive }"
-                >
-                    <!-- Colored top bar per type -->
-                    <div
-                        class="qcard-bar"
-                        :style="{ background: typeMeta(step.quiz.type).color }"
-                    ></div>
-
-                    <!-- Blue header band -->
-                    <div class="qcard-head">
-                        <div class="qcard-deco qcard-deco-1"></div>
-                        <div class="qcard-deco qcard-deco-2"></div>
-                        <div class="qcard-head-inner">
-                            <div
-                                class="qcard-chip"
-                                :style="{
-                                    background: typeMeta(step.quiz.type).bg,
-                                    color: typeMeta(step.quiz.type).color,
-                                }"
-                            >
-                                <component
-                                    :is="typeIcon(step.quiz.type)"
-                                    :size="11"
-                                    :stroke-width="2.5"
-                                />
-                                <span>{{
-                                    typeMeta(step.quiz.type).label
-                                }}</span>
-                            </div>
-                            <span class="qcard-mission">{{ module.name }}</span>
-                        </div>
-
-                        <!-- Timer bar -->
-                    </div>
-
-                    <!-- Card body -->
-                    <div class="qcard-body">
-                        <!-- Question header: nomor soal + teks pertanyaan -->
-                        <div
-                            class="qcard-title-row"
-                            v-if="step.question && !step.isMaterial"
-                        >
-                            <p class="qcard-step-title">
-                                {{ step.question.question_text }}
-                            </p>
-                            <div v-if="canGoNext" class="q-answered-badge">
-                                <CheckCircle2 :size="13" :stroke-width="2.5" />
-                                <span>Terjawab</span>
-                            </div>
-                        </div>
-
-                        <!-- Material title row -->
-                        <div
-                            class="qcard-title-row qcard-title-row--mat"
-                            v-else-if="step.isMaterial"
-                        >
-                            <div class="q-num-badge q-num-badge--mat">
-                                <BookOpen :size="13" :stroke-width="2.5" />
-                            </div>
-                            <p class="qcard-step-title">
-                                {{ step.quiz.title }}
-                            </p>
-                        </div>
-
-                        <!-- Single question component -->
-                        <div
-                            v-if="step.question"
-                            class="question-item"
-                            :class="{
-                                'question-item--done':
-                                    canGoNext && !step.isMaterial,
-                                'question-item--locked': timedOutQuizzes.has(
-                                    step.quiz?.id,
-                                ),
-                            }"
-                        >
-                            <!-- Timeout overlay -->
-                            <div
-                                v-if="timedOutQuizzes.has(step.quiz?.id)"
-                                class="timeout-overlay"
-                            >
-                                <div class="timeout-badge">
-                                    <Timer :size="16" :stroke-width="2" />
-                                    <span>Waktu Habis</span>
-                                </div>
-                                <p class="timeout-sub">
-                                    Soal ini tidak bisa dijawab lagi
-                                </p>
-                            </div>
-
-                            <component
-                                :is="COMPONENT_MAP[step.quiz.type]"
-                                :question="step.question"
-                                :modelValue="answers[step.question.id]"
-                                @update-answer="updateAnswer"
-                            />
-                        </div>
-
-                        <!-- Empty state -->
-                        <div v-else-if="!step.isMaterial" class="empty-qs">
-                            <Zap
-                                :size="26"
-                                color="#94a3b8"
-                                :stroke-width="1.4"
-                            />
-                            <p>Tidak ada soal</p>
-                        </div>
-
-                        <!-- Hint bawah -->
-                        <div
-                            v-if="!canGoNext && !step.isMaterial"
-                            class="qcard-hint"
-                        >
-                            <MousePointerClick :size="12" :stroke-width="2" />
-                            <span>Pilih jawaban untuk melanjutkan</span>
-                        </div>
-                        <div
-                            v-else-if="!step.isMaterial"
-                            class="qcard-hint qcard-hint--done"
-                        >
-                            <Sparkles :size="12" :stroke-width="2" />
-                            <span>Terjawab! Klik Selanjutnya</span>
-                        </div>
-                    </div>
+                <div class="question-bubble" v-else-if="step?.isMaterial">
+                    {{ step.quiz.title }}
                 </div>
-            </section>
+                <div class="question-bubble empty-qs" v-else>
+                    Tidak ada soal
+                </div>
+
+                <!-- Component Container -->
+                <div class="component-box" v-if="step" :class="{ 'opts--shake': shakeActive, 'box-locked': timedOutQuizzes.has(step.quiz?.id) }">
+                    <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
+                        <Timer :size="28" :stroke-width="2" />
+                        <span>Waktu Habis</span>
+                    </div>
+                    
+                    <component
+                        v-if="step.question || step.isMaterial"
+                        :is="COMPONENT_MAP[step.quiz.type]"
+                        :question="step.question"
+                        :modelValue="answers[step.question?.id]"
+                        @update-answer="updateAnswer"
+                    />
+                </div>
+            </div>
+        </main>
+
+        <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
+        <div class="mascot-absolute" @click="rotateBubble">
+            <Transition name="bbl">
+                <div v-if="bubbleVisible" class="mascot-speech">
+                    <span>{{ BUBBLES[bubbleIdx] }}</span>
+                    <i class="bbl-arrow-out"></i>
+                    <i class="bbl-arrow-in"></i>
+                </div>
+            </Transition>
+            <img :src="mascotUrl" alt="Maskot" class="mascot-img" />
+            <div class="mascot-shadow"></div>
         </div>
 
-        <!-- ══ FOOTER ══ -->
-        <footer class="footer">
-            <div class="footer-inner">
+        <div class="action-btn-absolute">
+            <template v-if="isLast">
                 <button
-                    class="fbtn fbtn--ghost"
-                    @click="goPrev"
-                    :disabled="isFirst || isSubmitting"
+                    class="pill-btn pill-btn-finish"
+                    @click="openConfirm"
+                    :disabled="isSubmitting || (!canGoNext && !step?.isMaterial)"
                 >
-                    <ArrowLeft :size="14" :stroke-width="2.5" />
-                    <span>Sebelumnya</span>
+                    <span v-if="!isSubmitting">Selesaikan Misi</span>
+                    <Loader2 v-else :size="20" class="spin" />
+                    <CheckCircle2 v-if="!isSubmitting" :size="20" :stroke-width="2.5" />
                 </button>
-
-                <span class="f-pos"
-                    >{{ currentStep + 1 }} / {{ steps.length }}</span
+            </template>
+            <template v-else>
+                <button
+                    class="pill-btn pill-btn-next"
+                    @click="goNext"
+                    :disabled="(!canGoNext && !step?.isMaterial) || isSubmitting"
                 >
+                    <span>Selanjutnya</span>
+                    <ArrowRight :size="20" :stroke-width="2.5" />
+                </button>
+            </template>
+        </div>
 
-                <template v-if="isLast">
-                    <button
-                        class="fbtn fbtn--mint"
-                        :class="{
-                            'fbtn--locked': !canGoNext && !step?.isMaterial,
-                        }"
-                        @click="openConfirm"
-                        :disabled="
-                            isSubmitting || (!canGoNext && !step?.isMaterial)
-                        "
-                    >
-                        <template v-if="!isSubmitting">
-                            <Flag :size="13" :stroke-width="2" />
-                            <span>Selesaikan Misi</span>
-                        </template>
-                        <template v-else>
-                            <Loader2 :size="13" class="spin" />
-                            <span>Menyimpan…</span>
-                        </template>
-                    </button>
-                </template>
-                <template v-else>
-                    <button
-                        class="fbtn fbtn--blue"
-                        :class="{
-                            'fbtn--locked': !canGoNext && !step?.isMaterial,
-                        }"
-                        @click="goNext"
-                        :disabled="
-                            (!canGoNext && !step?.isMaterial) || isSubmitting
-                        "
-                    >
-                        <span>Selanjutnya</span>
-                        <ArrowRight :size="14" :stroke-width="2.5" />
-                    </button>
-                </template>
-            </div>
-
-            <p v-if="!canGoNext && !step?.isMaterial" class="footer-hint">
-                ⚠️ Jawab semua soal terlebih dahulu untuk melanjutkan
-            </p>
-        </footer>
+        <div class="utils-absolute">
+            <button class="util-btn" @click="toggleMusic(props.backsound)">
+                <Music2 v-if="musicOn" :size="16" :stroke-width="2" />
+                <VolumeX v-else :size="16" :stroke-width="2" />
+            </button>
+            <button class="util-btn util-btn-back" @click="tryGoBack" :disabled="isSubmitting">
+                <span>Back</span>
+            </button>
+        </div>
 
         <!-- ══ CONFIRM SUBMIT MODAL ══ -->
         <Transition name="overlay-fade">
@@ -926,7 +728,6 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 </template>
 
 <style scoped>
-/* ─── PALETTE ─── */
 :root {
     --blue: #2563eb;
     --blue-mid: #1d4ed8;
@@ -946,9 +747,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
     --text-mid: #475569;
 }
 
-*,
-*::before,
-*::after {
+*, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -964,231 +763,35 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 }
 
 /* ─── BG ─── */
-.bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-}
-.bg-img {
-    position: absolute;
-    inset: 0;
-    background: url("/images/templates/background_misi.png") center/cover
-        no-repeat;
-}
-.bg-tint {
-    position: absolute;
-    inset: 0;
-    background: #2563eb;
-    opacity: 0.52;
-}
-.blob {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-}
-.b1 {
-    width: 480px;
-    height: 480px;
-    top: -140px;
-    left: -100px;
-    background: #1d4ed8;
-    opacity: 0.35;
-    animation: bDrift 20s ease-in-out infinite alternate;
-}
-.b2 {
-    width: 380px;
-    height: 380px;
-    bottom: -100px;
-    right: -80px;
-    background: #34d399;
-    opacity: 0.22;
-    animation: bDrift2 24s ease-in-out infinite alternate;
-}
-.b3 {
-    width: 260px;
-    height: 260px;
-    top: 38%;
-    left: 52%;
-    background: #bfdbfe;
-    opacity: 0.18;
-    animation: bDrift 28s ease-in-out 6s infinite alternate;
-}
-@keyframes bDrift {
-    0% {
-        transform: translate(0, 0);
-    }
-    50% {
-        transform: translate(30px, 20px) scale(1.05);
-    }
-    100% {
-        transform: translate(-15px, 35px);
-    }
-}
-@keyframes bDrift2 {
-    0% {
-        transform: translate(0, 0);
-    }
-    50% {
-        transform: translate(-28px, -18px) scale(1.06);
-    }
-    100% {
-        transform: translate(22px, -40px);
-    }
-}
-.sh {
-    position: absolute;
-    pointer-events: none;
-}
-.sh-circle {
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    animation: sDrift ease-in-out infinite alternate;
-}
-.c1 {
-    width: 150px;
-    height: 150px;
-    top: -30px;
-    left: -25px;
-    animation-duration: 22s;
-}
-.c2 {
-    width: 90px;
-    height: 90px;
-    bottom: 70px;
-    right: 50px;
-    animation-duration: 28s;
-    animation-delay: 4s;
-}
-.sh-ring {
-    border-radius: 50%;
-    background: transparent;
-    border: 1.5px solid rgba(191, 219, 254, 0.2);
-    animation: rPulse ease-out infinite;
-}
-.r1 {
-    width: 300px;
-    height: 300px;
-    top: -60px;
-    left: -60px;
-    animation-duration: 9s;
-}
-.r2 {
-    width: 240px;
-    height: 240px;
-    bottom: -50px;
-    right: -50px;
-    animation-duration: 12s;
-    animation-delay: 2s;
-}
-.r3 {
-    width: 180px;
-    height: 180px;
-    top: 38%;
-    left: 58%;
-    animation-duration: 10s;
-    animation-delay: 5s;
-}
-.sh-dot {
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.45);
-    animation: dFloat linear infinite;
-}
-.d1 {
-    width: 5px;
-    height: 5px;
-    top: 12%;
-    left: 9%;
-    animation-duration: 14s;
-}
-.d2 {
-    width: 3px;
-    height: 3px;
-    top: 32%;
-    left: 22%;
-    animation-duration: 18s;
-    animation-delay: 2s;
-}
-.d3 {
-    width: 6px;
-    height: 6px;
-    top: 58%;
-    left: 7%;
-    animation-duration: 12s;
-    animation-delay: 5s;
-}
-.d4 {
-    width: 4px;
-    height: 4px;
-    top: 18%;
-    right: 11%;
-    animation-duration: 16s;
-    animation-delay: 1s;
-}
-.d5 {
-    width: 5px;
-    height: 5px;
-    top: 72%;
-    right: 16%;
-    animation-duration: 20s;
-    animation-delay: 3.5s;
-}
-@keyframes sDrift {
-    0% {
-        transform: translate(0, 0) rotate(0);
-    }
-    50% {
-        transform: translate(14px, -10px) rotate(6deg);
-    }
-    100% {
-        transform: translate(-10px, 18px) rotate(-4deg);
-    }
-}
-@keyframes rPulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.38;
-    }
-    70% {
-        transform: scale(1.38);
-        opacity: 0.06;
-    }
-    100% {
-        transform: scale(1.65);
-        opacity: 0;
-    }
-}
-@keyframes dFloat {
-    0% {
-        transform: translateY(0);
-        opacity: 0;
-    }
-    10% {
-        opacity: 0.55;
-    }
-    90% {
-        opacity: 0.25;
-    }
-    100% {
-        transform: translateY(-150px);
-        opacity: 0;
-    }
-}
-.bg-dots {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: radial-gradient(
-        circle,
-        rgba(255, 255, 255, 0.09) 1px,
-        transparent 1px
-    );
-    background-size: 34px 34px;
-}
+.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.bg-img { position: absolute; inset: 0; background: url("/images/templates/background_misi.png") center/cover no-repeat; }
+.bg-tint { position: absolute; inset: 0; background: #90cdf4; opacity: 0.5; }
+.blob { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
+.b1 { width: 480px; height: 480px; top: -140px; left: -100px; background: #63b3ed; opacity: 0.35; animation: bDrift 20s ease-in-out infinite alternate; }
+.b2 { width: 380px; height: 380px; bottom: -100px; right: -80px; background: #90cdf4; opacity: 0.22; animation: bDrift2 24s ease-in-out infinite alternate; }
+.b3 { width: 260px; height: 260px; top: 38%; left: 52%; background: #bee3f8; opacity: 0.18; animation: bDrift 28s ease-in-out 6s infinite alternate; }
+@keyframes bDrift { 0% { transform: translate(0, 0); } 50% { transform: translate(30px, 20px) scale(1.05); } 100% { transform: translate(-15px, 35px); } }
+@keyframes bDrift2 { 0% { transform: translate(0, 0); } 50% { transform: translate(-28px, -18px) scale(1.06); } 100% { transform: translate(22px, -40px); } }
+.sh { position: absolute; pointer-events: none; }
+.sh-circle { border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.1); animation: sDrift ease-in-out infinite alternate; }
+.c1 { width: 150px; height: 150px; top: -30px; left: -25px; animation-duration: 22s; }
+.c2 { width: 90px; height: 90px; bottom: 70px; right: 50px; animation-duration: 28s; animation-delay: 4s; }
+.sh-ring { border-radius: 50%; background: transparent; border: 1.5px solid rgba(255,255,255, 0.2); animation: rPulse ease-out infinite; }
+.r1 { width: 300px; height: 300px; top: -60px; left: -60px; animation-duration: 9s; }
+.r2 { width: 240px; height: 240px; bottom: -50px; right: -50px; animation-duration: 12s; animation-delay: 2s; }
+.r3 { width: 180px; height: 180px; top: 38%; left: 58%; animation-duration: 10s; animation-delay: 5s; }
+.sh-dot { border-radius: 50%; background: rgba(255, 255, 255, 0.45); animation: dFloat linear infinite; }
+.d1 { width: 5px; height: 5px; top: 12%; left: 9%; animation-duration: 14s; }
+.d2 { width: 3px; height: 3px; top: 32%; left: 22%; animation-duration: 18s; animation-delay: 2s; }
+.d3 { width: 6px; height: 6px; top: 58%; left: 7%; animation-duration: 12s; animation-delay: 5s; }
+.d4 { width: 4px; height: 4px; top: 18%; right: 11%; animation-duration: 16s; animation-delay: 1s; }
+.d5 { width: 5px; height: 5px; top: 72%; right: 16%; animation-duration: 20s; animation-delay: 3.5s; }
+@keyframes sDrift { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -10px) rotate(6deg); } 100% { transform: translate(-10px, 18px) rotate(-4deg); } }
+@keyframes rPulse { 0% { transform: scale(1); opacity: 0.38; } 70% { transform: scale(1.38); opacity: 0.06; } 100% { transform: scale(1.65); opacity: 0; } }
+@keyframes dFloat { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 0.55; } 90% { opacity: 0.25; } 100% { transform: translateY(-150px); opacity: 0; } }
+.bg-dots { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px); background-size: 34px 34px; }
 
-/* ─── TOPBAR ─── */
+/* ─── TOP NAV (Minimal) ─── */
 .topbar {
     position: relative;
     z-index: 50;
@@ -1197,759 +800,286 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
     display: flex;
     align-items: center;
     padding: 0 18px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    justify-content: center; /* Center the progress bar */
 }
-.tbtn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    color: #fff;
-    cursor: pointer;
-    transition:
-        background 0.18s,
-        transform 0.15s;
-    flex-shrink: 0;
-}
-.tbtn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateY(-1px);
-}
-.tbtn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-.tbtn-sq {
-    padding: 7px 10px;
-}
-.tbtn--on {
-    background: #2563eb;
-    border-color: #bfdbfe;
-}
-.brand {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-    z-index: 2;
-    transition:
-        opacity 0.34s,
-        transform 0.34s;
-}
-.brand--hide {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.88);
-}
-.brand-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
-}
-.brand-name {
-    font-family: "Righteous", cursive;
-    font-size: 18px;
-    color: #fff;
-    white-space: nowrap;
-}
-.topbar-r {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-    z-index: 3;
-}
-.timer {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+.prog-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    pointer-events: none;
-    z-index: 2;
-    min-width: 138px;
+    min-width: 150px;
+    background: rgba(255, 255, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+}
+.prog-text {
+    font-size: 11px;
+    font-weight: 800;
+    color: #1e3a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.prog-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.prog-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 99px;
+    position: relative;
+    transition: width 0.5s ease;
+}
+.prog-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shine 2.2s infinite;
+}
+@keyframes shine { 0%, 100% { transform: translateX(-100%); } 60% { transform: translateX(200%); } }
+
+.timer {
+    position: absolute;
+    right: 20px; /* Instead of center */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.8);
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: #ef4444;
 }
 .timer-row {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #fff;
 }
 .timer-val {
     font-family: "Righteous", cursive;
-    font-size: 21px;
-    letter-spacing: 0.5px;
-}
-.timer--warn .timer-val {
-    color: #fca5a5;
-    animation: tWarn 1s ease-in-out infinite;
-}
-@keyframes tWarn {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-.timer-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 99px;
-    overflow: hidden;
-}
-.timer-fill {
-    height: 100%;
-    background: #bfdbfe;
-    border-radius: 99px;
-    transition: width 0.9s linear;
-}
-.fill--warn {
-    background: #f87171;
-}
-.t-timer-enter-active {
-    transition:
-        opacity 0.4s ease 0.25s,
-        transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s;
-}
-.t-timer-leave-active {
-    transition: opacity 0.18s ease;
-}
-.t-timer-enter-from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(6px) scale(0.88);
-}
-.t-timer-leave-to {
-    opacity: 0;
+    font-size: 16px;
 }
 
-/* ─── BODY GRID ─── */
-.body {
+/* ─── MAIN CENTRIC CONTENT ─── */
+.main-wrapper {
     position: relative;
     z-index: 10;
     flex: 1;
-    display: grid;
-    grid-template-columns: 264px 1fr;
-    gap: 20px;
-    max-width: 1080px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 22px 18px 18px;
-    align-items: start;
+    display: flex;
+    align-items: flex-start; /* start instead of center to allow scrolling if tall */
+    justify-content: center;
+    padding: 10px 20px 140px; /* padding bottom for mascot & buttons */
     opacity: 0;
     transition: opacity 0.45s;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
-.body--on {
-    opacity: 1;
-}
+.main--on { opacity: 1; }
 
-/* ─── SIDEBAR ─── */
-.sidebar {
+.mission-container {
+    width: 100%;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
-    opacity: 0;
-    transform: translateX(-16px);
-    transition:
-        opacity 0.5s,
-        transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    user-select: none;
-    cursor: pointer;
-    min-width: 0;
-}
-.sidebar--on {
-    opacity: 1;
-    transform: none;
-}
-.sb-info {
-    margin-bottom: 18px;
-    min-width: 0;
-    overflow: hidden;
-}
-.sb-chip {
-    display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.38);
-    border-radius: 999px;
-    padding: 4px 13px;
-    font-size: 11px;
-    font-weight: 900;
+    margin-top: 10px;
+}
+
+.title-pill {
+    background: #1e62d0;
     color: #fff;
-    backdrop-filter: blur(6px);
-    margin-bottom: 10px;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.sb-title {
-    font-family: "Righteous", cursive;
-    font-size: clamp(16px, 2vw, 22px);
-    color: #fff;
-    line-height: 1.25;
-    margin-bottom: 5px;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    min-width: 0;
-}
-.sb-sub {
-    font-size: 12.5px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.55;
-    margin-bottom: 6px;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    min-width: 0;
-}
-.sb-soal {
-    font-size: 11px;
+    font-family: "Nunito", sans-serif;
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.65);
-    letter-spacing: 0.3px;
-    margin-bottom: 16px;
-}
-.prog {
-    margin-bottom: 2px;
-    min-width: 0;
-}
-.prog-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 7px;
-    gap: 8px;
-    min-width: 0;
-}
-.prog-lbl {
-    font-size: 10px;
-    font-weight: 900;
-    color: rgba(255, 255, 255, 0.85);
+    font-size: 18px;
+    padding: 8px 32px;
+    border-radius: 30px;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    white-space: nowrap;
-    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(30, 98, 208, 0.4);
+    margin-bottom: -16px; /* overlap with bubble */
+    z-index: 2;
+    border: 3px solid #6cb2f9;
 }
-.prog-count {
-    font-family: "Righteous", cursive;
-    font-size: 14px;
+
+.question-bubble {
+    background: #a3d9f9;
     color: #fff;
-    white-space: nowrap;
-    flex-shrink: 0;
+    font-family: "Nunito", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 24px 40px 16px;
+    border-radius: 30px;
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 15px rgba(163, 217, 249, 0.4);
 }
-.prog-count b {
-    font-size: 16px;
-}
-.prog-track {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 99px;
-    overflow: hidden;
-    min-width: 0;
-}
-.prog-fill {
-    height: 100%;
-    background: #34d399;
-    border-radius: 99px;
+
+.component-box {
+    width: 100%;
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
     position: relative;
     overflow: hidden;
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.prog-shine {
+.box-locked {
+    filter: grayscale(0.4);
+    pointer-events: none;
+    opacity: 0.8;
+}
+.timeout-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.38),
-        transparent
-    );
-    animation: shine 2.2s ease-in-out infinite;
-}
-@keyframes shine {
-    0%,
-    100% {
-        transform: translateX(-100%);
-    }
-    60% {
-        transform: translateX(200%);
-    }
+    z-index: 20;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-family: "Righteous", cursive;
+    font-size: 24px;
 }
 
-/* Mascot */
-.mascot-wrap {
-    position: relative;
-    padding-left: 4px;
-}
-.bubble {
-    position: relative;
-    background: #fff;
-    border: 2px solid #bfdbfe;
-    border-radius: 16px;
-    padding: 9px 14px;
-    min-width: 146px;
-    max-width: 210px;
-    box-shadow: 0 5px 18px rgba(37, 99, 235, 0.13);
-    margin-bottom: 6px;
-    animation: bblFloat 3.5s ease-in-out infinite;
-}
-.bubble span {
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #1e3a8a;
-    display: block;
-}
-.bbl-o,
-.bbl-i {
-    position: absolute;
-    width: 0;
-    height: 0;
-    font-style: normal;
-}
-.bbl-o {
-    bottom: -14px;
-    left: 15px;
-    border-left: 10px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 13px solid #bfdbfe;
-}
-.bbl-i {
-    bottom: -10px;
-    left: 16px;
-    border-left: 8px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 11px solid #fff;
-}
-@keyframes bblFloat {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-5px);
-    }
-}
-.bbl-enter-active {
-    transition:
-        opacity 0.26s,
-        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.bbl-leave-active {
-    transition: opacity 0.16s;
-}
-.bbl-enter-from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.92);
-}
-.bbl-leave-to {
-    opacity: 0;
+.empty-qs {
+    color: #fff;
+    font-size: 14px;
 }
 
-.mascot-frame {
-    position: relative;
-    display: inline-block;
+/* ─── ABSOLUTE ELEMENTS ─── */
+.mascot-absolute {
+    position: fixed;
+    bottom: 20px;
+    left: 40px;
+    z-index: 60;
+    display: flex;
+    align-items: flex-end;
+    cursor: pointer;
 }
-.mascot {
-    position: relative;
-    z-index: 2;
-    width: clamp(138px, 14vw, 192px);
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.22));
+.mascot-img {
+    height: 200px;
+    width: auto;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
     animation: mBob 3.5s ease-in-out infinite;
     transform-origin: bottom center;
 }
-.mascot-shadow {
+@keyframes mBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-8px) rotate(1deg); } }
+
+.mascot-speech {
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 65%;
-    height: 13px;
-    background: radial-gradient(
-        ellipse at center,
-        rgba(0, 0, 0, 0.28) 0%,
-        transparent 70%
-    );
-    border-radius: 50%;
-    z-index: 1;
+    bottom: 90px;
+    left: 120px;
+    background: #fff;
+    border: 4px solid #fff;
+    border-radius: 30px;
+    padding: 16px 24px;
+    min-width: 160px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    animation: bblFloat 3.5s ease-in-out infinite;
+    z-index: 61;
 }
-@keyframes mBob {
-    0%,
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-    45% {
-        transform: translateY(-8px) rotate(0.5deg);
-    }
-    70% {
-        transform: translateY(-4px) rotate(-0.3deg);
-    }
+.mascot-speech span {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1e3a8a;
 }
-
-/* ─── MAIN PANEL ─── */
-.main {
-    opacity: 0;
-    transform: translateY(16px);
-    transition:
-        opacity 0.5s 0.1s,
-        transform 0.5s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.main--on {
-    opacity: 1;
-    transform: none;
-}
-
-/* ── QUIZ CARD ── */
-.qcard {
-    background: #fdfcfb;
-    border-radius: 20px;
-    border: 1.5px solid var(--gray-2);
-    overflow: hidden;
-    box-shadow:
-        0 4px 0 #bfdbfe,
-        0 10px 32px rgba(37, 99, 235, 0.1);
-}
-
-.qcard-bar {
-    height: 4px;
-}
-
-.qcard-head {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    position: relative;
-    overflow: hidden;
-}
-.qcard-deco {
+.bbl-arrow-out, .bbl-arrow-in {
     position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    pointer-events: none;
+    width: 0;
+    height: 0;
+    bottom: -15px;
+    left: 20px;
 }
-.qcard-deco-1 {
-    width: 160px;
-    height: 160px;
-    top: -55px;
-    right: -35px;
-}
-.qcard-deco-2 {
-    width: 80px;
-    height: 80px;
-    bottom: -30px;
-    left: 18px;
-}
+.bbl-arrow-out { border-left: 15px solid transparent; border-right: 5px solid transparent; border-top: 15px solid rgba(0,0,0,0.05); }
+.bbl-arrow-in { border-left: 13px solid transparent; border-right: 3px solid transparent; border-top: 13px solid #fff; bottom: -12px; left: 21px; }
 
-.qcard-head-inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 12px 18px;
-    flex-wrap: wrap;
-}
+@keyframes bblFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.bbl-enter-active { transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bbl-leave-active { transition: opacity 0.2s; }
+.bbl-enter-from { opacity: 0; transform: translateY(10px) scale(0.9); }
+.bbl-leave-to { opacity: 0; }
 
-.qcard-chip {
+.action-btn-absolute {
+    position: fixed;
+    bottom: 50px;
+    right: 40px;
+    z-index: 60;
+}
+.pill-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 10.5px;
-    font-weight: 900;
-    white-space: nowrap;
-    flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.qcard-mission {
-    flex: 1;
-    text-align: center;
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.85);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 8px;
-    white-space: nowrap;
-}
-
-.qcard-counter {
-    display: flex;
-    align-items: baseline;
-    gap: 2px;
-    flex-shrink: 0;
-}
-.qcard-counter-num {
-    font-family: "Righteous", cursive;
-    font-size: 20px;
+    gap: 12px;
+    background: #1e62d0;
     color: #fff;
-    line-height: 1;
-}
-.qcard-counter-sep {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 1px;
-}
-.qcard-counter-tot {
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.qcard-body {
-    padding: 20px 20px 24px;
-}
-
-.qcard-title-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 11px;
-    background: #eff6ff;
-    padding: 16px 16px 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-}
-.qcard-title-row--mat {
-    background: #f0fdf9;
-}
-
-.q-num-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    min-width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    color: #fff;
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(59, 130, 246, 0.28);
-    margin-top: 1px;
-}
-.q-num-badge--mat {
-    background: #10b981;
-    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.28);
-}
-
-.qcard-step-title {
-    flex: 1;
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e293b;
-    line-height: 1.65;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-
-.q-answered-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #ecfdf5;
-    border: 1.5px solid #6ee7b7;
-    border-radius: 999px;
-    padding: 3px 9px;
-    font-size: 10px;
-    font-weight: 900;
-    color: #059669;
-    flex-shrink: 0;
-    margin-top: 3px;
-    white-space: nowrap;
-}
-
-/* Questions area */
-.question-item {
-    border: 1.5px solid rgba(29, 78, 216, 0.07);
-    border-radius: 14px;
-    padding: 13px;
-    background: #fafbfc;
-    transition:
-        border-color 0.2s,
-        background 0.2s;
-}
-.question-item--done {
-    border-color: rgba(16, 185, 129, 0.22);
-    background: rgba(240, 253, 244, 0.55);
-}
-.empty-qs {
-    text-align: center;
-    padding: 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.qcard-hint {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 0 4px;
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #94a3b8;
-}
-.qcard-hint--done {
-    color: #059669;
-}
-
-/* Shake */
-.opts--shake {
-    animation: optShake 0.5s ease;
-}
-@keyframes optShake {
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-    20% {
-        transform: translateX(-5px);
-    }
-    40% {
-        transform: translateX(5px);
-    }
-    60% {
-        transform: translateX(-3px);
-    }
-    80% {
-        transform: translateX(3px);
-    }
-}
-
-/* ─── FOOTER ─── */
-.footer {
-    position: relative;
-    z-index: 50;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(18px);
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-    padding: 11px 0 8px;
-    flex-shrink: 0;
-}
-.footer-inner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-.f-pos {
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    color: #fff;
-    flex: 1;
-    text-align: center;
-}
-.footer-hint {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 800;
-    color: #fde68a;
-    padding: 5px 16px 2px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    word-break: break-word;
-    line-height: 1.5;
-}
-
-.fbtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 18px;
-    border: none;
-    border-radius: 10px;
     font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 18px;
+    font-weight: 900;
+    padding: 12px 32px;
+    border-radius: 99px;
+    border: 3px solid #6cb2f9;
     cursor: pointer;
-    flex-shrink: 0;
-    white-space: nowrap;
-    transition:
-        transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.15s;
+    box-shadow: 0 8px 25px rgba(30, 98, 208, 0.4);
+    transition: all 0.2s;
 }
-.fbtn--ghost {
-    background: rgba(255, 255, 255, 0.14);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+.pill-btn:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(30, 98, 208, 0.5);
 }
-.fbtn--ghost:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateY(-1px);
-}
-.fbtn--ghost:disabled {
-    opacity: 0.4;
+.pill-btn:disabled {
+    background: #94a3b8;
+    border-color: #cbd5e1;
+    box-shadow: none;
     cursor: not-allowed;
+    opacity: 0.8;
 }
-.fbtn--blue {
-    background: #2563eb;
-    color: #fff;
-    box-shadow: 0 3px 12px rgba(37, 99, 235, 0.4);
+.pill-btn-finish {
+    background: #059669;
+    border-color: #6ee7b7;
+    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
 }
-.fbtn--blue:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 16px rgba(37, 99, 235, 0.5);
+.pill-btn-finish:hover:not(:disabled) {
+    box-shadow: 0 12px 30px rgba(5, 150, 105, 0.5);
 }
-.fbtn--blue:disabled,
-.fbtn--locked {
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: rgba(255, 255, 255, 0.4) !important;
-    box-shadow: none !important;
-    cursor: not-allowed;
-}
-.fbtn--mint {
-    background: #00c54cd7;
-    color: #fff;
-    box-shadow: 0 3px 12px rgba(52, 211, 153, 0.4);
-}
-.fbtn--mint:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 16px rgba(52, 211, 153, 0.5);
-}
-.fbtn--mint:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.opts--shake { animation: optShake 0.5s ease; }
+@keyframes optShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.utils-absolute {
+    position: fixed;
+    bottom: 12px;
+    right: 40px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.spin {
-    animation: spin 0.8s linear infinite;
+.util-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    color: #1e3a8a;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.util-btn:hover { background: rgba(255,255,255,0.8); }
+.util-btn-back {
+    width: auto;
+    border-radius: 12px;
+    padding: 0 12px;
+    font-weight: 800;
+    font-size: 12px;
 }
 
 /* ── MODALS ── */
@@ -1970,368 +1100,46 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
     padding: 28px 24px 22px;
     width: 100%;
     max-width: 360px;
-    box-shadow:
-        0 24px 60px rgba(0, 0, 0, 0.22),
-        0 4px 0 rgba(29, 78, 216, 0.08);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.22);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     text-align: center;
 }
-.modal-icon {
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    background: #d1fae5;
-    border: 2.5px solid #6ee7b7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 5px 18px rgba(52, 211, 153, 0.22);
-}
-.modal-icon--warn {
-    background: #fef3c7;
-    border-color: #fcd34d;
-}
-.modal-title {
-    font-family: "Righteous", cursive;
-    font-size: 20px;
-    color: #1e3a8a;
-    margin: 0;
-}
-.modal-desc {
-    font-size: 13px;
-    font-weight: 600;
-    color: #475569;
-    line-height: 1.65;
-    margin: 0;
-}
-.modal-desc strong {
-    color: #dc2626;
-}
-.modal-actions {
-    display: flex;
-    gap: 9px;
-    width: 100%;
-    margin-top: 4px;
-}
-.modal-btn {
-    flex: 1;
-    height: 42px;
-    border: none;
-    border-radius: 12px;
-    font-family: "Righteous", cursive;
-    font-size: 13.5px;
-    cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.modal-btn--cancel {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1.5px solid #e2e8f0;
-}
-.modal-btn--cancel:hover:not(:disabled) {
-    background: #e2e8f0;
-    transform: translateY(-1px);
-}
-.modal-btn--confirm {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
-}
-.modal-btn--confirm:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
-}
-.modal-btn--leave {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
-}
-.modal-btn--leave:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
-}
-.modal-btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
+.modal-icon { width: 68px; height: 68px; border-radius: 50%; background: #d1fae5; border: 2.5px solid #6ee7b7; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 18px rgba(52,211,153,0.22); }
+.modal-icon--warn { background: #fef3c7; border-color: #fcd34d; }
+.modal-title { font-family: "Righteous", cursive; font-size: 20px; color: #1e3a8a; margin: 0; }
+.modal-desc { font-size: 13px; font-weight: 600; color: #475569; line-height: 1.65; margin: 0; }
+.modal-desc strong { color: #dc2626; }
+.modal-actions { display: flex; gap: 9px; width: 100%; margin-top: 4px; }
+.modal-btn { flex: 1; height: 42px; border: none; border-radius: 12px; font-family: "Righteous", cursive; font-size: 13.5px; cursor: pointer; transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-btn--cancel { background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
+.modal-btn--cancel:hover { background: #e2e8f0; transform: translateY(-1px); }
+.modal-btn--confirm { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+.modal-btn--confirm:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,185,129,0.45); }
+.modal-btn--leave { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,0.3); }
+.modal-btn--leave:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(220,38,38,0.4); }
 
-.overlay-fade-enter-active {
-    transition: opacity 0.25s ease;
-}
-.overlay-fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-.overlay-fade-enter-from,
-.overlay-fade-leave-to {
-    opacity: 0;
-}
-.modal-pop-enter-active {
-    transition:
-        opacity 0.3s ease,
-        transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.modal-pop-leave-active {
-    transition:
-        opacity 0.18s ease,
-        transform 0.18s ease;
-}
-.modal-pop-enter-from {
-    opacity: 0;
-    transform: scale(0.82) translateY(24px);
-}
-.modal-pop-leave-to {
-    opacity: 0;
-    transform: scale(0.94);
-}
+.overlay-fade-enter-active { transition: opacity 0.25s ease; }
+.overlay-fade-leave-active { transition: opacity 0.2s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+.modal-pop-enter-active { transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-pop-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.modal-pop-enter-from { opacity: 0; transform: scale(0.82) translateY(24px); }
+.modal-pop-leave-to { opacity: 0; transform: scale(0.94); }
 
-/* ─── MOBILE ≤ 820px ─── */
+/* MOBILE RESPONSIVE */
 @media (max-width: 820px) {
-    .b1 {
-        width: 300px;
-        height: 300px;
-    }
-    .b2 {
-        width: 240px;
-        height: 240px;
-    }
-    .b3 {
-        width: 180px;
-        height: 180px;
-    }
-    .c1 {
-        width: 100px;
-        height: 100px;
-    }
-    .c2 {
-        display: none;
-    }
-    .r1 {
-        width: 200px;
-        height: 200px;
-    }
-    .topbar {
-        height: 52px;
-        padding: 0 13px;
-    }
-    .brand-name {
-        font-size: 16px;
-    }
-    .brand-dot {
-        width: 25px;
-        height: 25px;
-    }
-    .body {
-        grid-template-columns: 1fr;
-        gap: 0;
-        padding: 0;
-        max-width: 100%;
-    }
-
-    /* Sidebar jadi horizontal strip di mobile */
-    .sidebar {
-        opacity: 1 !important;
-        transform: none !important;
-        flex-direction: column;
-        gap: 0;
-        cursor: default;
-        padding: 13px 15px 12px;
-        background: rgba(29, 78, 216, 0.76);
-        backdrop-filter: blur(18px);
-        border-bottom: 1px solid rgba(191, 219, 254, 0.22);
-        overflow: hidden; /* cegah konten sidebar overflow keluar */
-    }
-    .sb-info {
-        margin-bottom: 0;
-        min-width: 0;
-        width: 100%; /* pastikan sb-info tidak melebihi sidebar */
-        overflow: hidden;
-    }
-    .sb-chip {
-        margin-bottom: 6px;
-        font-size: 10px;
-        max-width: 100%;
-    }
-    .sb-title {
-        font-size: 15px;
-        margin-bottom: 3px;
-    }
-    .sb-sub {
-        font-size: 11.5px;
-        margin-bottom: 10px;
-        white-space: normal;
-    }
-    .prog {
-        margin-bottom: 0;
-        width: 100%;
-    }
-    .prog-meta {
-        margin-bottom: 4px;
-    }
-    .mascot-wrap {
-        display: none;
-    }
-    .main {
-        transform: none;
-        opacity: 1;
-    }
-    .qcard {
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-    }
-    .qcard-head-inner {
-        padding: 10px 14px;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .qcard-mission {
-        flex: 1;
-        min-width: 0;
-        font-size: 11.5px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .qcard-counter-num {
-        font-size: 17px;
-    }
-    .qcard-body {
-        padding: 14px 14px 18px;
-    }
-    .qcard-title-row {
-        padding: 14px 14px;
-    }
-    .qcard-step-title {
-        font-size: 14px;
-    }
-    .footer-inner {
-        padding: 0 15px;
-    }
-    .fbtn {
-        height: 40px;
-    }
-    .fbtn span {
-        white-space: normal;
-        text-align: center;
-        line-height: 1.3;
-    }
-}
-
-/* ─── TIMER BAR ─── */
-.timer-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 18px 10px;
-    background: rgba(0, 0, 0, 0.15);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    transition: background 0.3s;
-}
-.timer-bar--warn {
-    background: rgba(239, 68, 68, 0.28);
-}
-.timer-bar--out {
-    background: rgba(100, 116, 139, 0.35);
-}
-
-.timer-icon {
-    display: flex;
-    align-items: center;
-    color: #fff;
-    opacity: 0.85;
-    flex-shrink: 0;
-}
-.timer-bar--warn .timer-icon {
-    color: #fca5a5;
-    animation: timerPulse 0.7s ease-in-out infinite alternate;
-}
-
-.timer-text {
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    color: #fff;
-    min-width: 52px;
-    flex-shrink: 0;
-    letter-spacing: 0.5px;
-}
-.timer-bar--warn .timer-text {
-    color: #fca5a5;
-}
-.timer-bar--out .timer-text {
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 12px;
-}
-
-.timer-track {
-    flex: 1;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 99px;
-    overflow: hidden;
-}
-.timer-fill {
-    height: 100%;
-    background: #34d399;
-    border-radius: 99px;
-    transition:
-        width 1s linear,
-        background 0.4s;
-}
-.timer-bar--warn .timer-fill {
-    background: #ef4444;
-}
-.timer-bar--out .timer-fill {
-    background: #94a3b8;
-}
-
-@keyframes timerPulse {
-    from {
-        opacity: 0.6;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* ─── TIMEOUT OVERLAY ─── */
-.question-item--locked {
-    position: relative;
-    pointer-events: none;
-    filter: grayscale(0.4);
-    opacity: 0.7;
-}
-.timeout-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    background: rgba(248, 250, 252, 0.82);
-    backdrop-filter: blur(3px);
-    border-radius: 13px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    pointer-events: none;
-}
-.timeout-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #fee2e2;
-    border: 1.5px solid #fca5a5;
-    border-radius: 999px;
-    padding: 6px 16px;
-    font-size: 13px;
-    font-weight: 900;
-    color: #dc2626;
-}
-.timeout-sub {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #94a3b8;
+    .main-wrapper { padding: 0 12px 100px; }
+    .title-pill { font-size: 14px; padding: 6px 20px; }
+    .question-bubble { font-size: 14px; padding: 20px 20px 12px; }
+    .component-box { padding: 16px; border-radius: 16px; }
+    .mascot-img { height: 120px; }
+    .mascot-speech { bottom: 60px; left: 80px; padding: 10px 16px; font-size: 12px; min-width: 120px; }
+    .mascot-absolute { bottom: 10px; left: 10px; }
+    .action-btn-absolute { bottom: 40px; right: 20px; }
+    .pill-btn { padding: 8px 20px; font-size: 14px; }
+    .utils-absolute { bottom: 10px; right: 20px; }
 }
 </style>

@@ -12,6 +12,7 @@ class Simulation_scenarios extends Model
 
     protected $fillable = [
         'id',
+        'module_id',
         'mission_id',
         'context',
         'image',
@@ -39,5 +40,10 @@ class Simulation_scenarios extends Model
     public function options()
     {
         return $this->hasMany(Simulation_scenario_options::class, 'simulation_scenario_id');
+    }
+
+    public function module()
+    {
+        return $this->belongsTo(Learning_modules::class, 'module_id');
     }
 }

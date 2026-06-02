@@ -143,6 +143,13 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::put('/modules/{modules}', [ModulesController::class, 'update'])->name('update');
         Route::delete('/modules/{modules}', [ModulesController::class, 'destroy'])->name('destroy');
         Route::patch('/modules/{modules}/toggle-active', [ModulesController::class, 'toggleActive'])->name('toggle-active');
+
+        // Simulation Config Routes (nested under modules)
+        Route::prefix('modules/{modules}/simulation')->name('simulation.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ModuleSimulationController::class, 'edit'])->name('edit');
+            Route::put('/', [\App\Http\Controllers\Admin\ModuleSimulationController::class, 'update'])->name('update');
+        });
+
         // Module-level Quiz Routes (for quizzes without a mission_id)
         Route::prefix('modules/{modules}/quizzes')->name('quizzes.')->group(function () {
             Route::get('/create/{category}', [QuizController::class, 'createModule'])->name('create');

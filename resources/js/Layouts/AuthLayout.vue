@@ -15,13 +15,14 @@ import { Book, School } from "lucide-vue-next";
             <!-- Content -->
             <div class="relative z-10 text-center text-white px-12">
                 <div class="flex items-center justify-center gap-4 mb-6">
-                    <div
-                        class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg"
-                    >
+                    <div v-if="$page.props.global_settings?.platform_logo" class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg p-2">
+                        <img :src="$page.props.global_settings.platform_logo" alt="Logo" class="w-full h-full object-contain" />
+                    </div>
+                    <div v-else class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg">
                         <School class="text-blue-600 w-8 h-8" />
                     </div>
                     <h1 class="text-4xl font-bold">
-                        {{ appName }}
+                        {{ $page.props.global_settings?.platform_name || appName }}
                     </h1>
                 </div>
 
@@ -39,13 +40,14 @@ import { Book, School } from "lucide-vue-next";
             <div class="w-full max-w-md">
                 <!-- Mobile Logo -->
                 <div class="lg:hidden flex items-center gap-3 mb-8">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center"
-                    >
+                    <div v-if="$page.props.global_settings?.platform_logo" class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm p-1 border border-gray-100">
+                        <img :src="$page.props.global_settings.platform_logo" alt="Logo" class="w-full h-full object-contain" />
+                    </div>
+                    <div v-else class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center">
                         <Book class="text-white w-6 h-6" />
                     </div>
                     <span class="text-blue-600 text-2xl font-bold">
-                        {{ appName }}
+                        {{ $page.props.global_settings?.platform_name || appName }}
                     </span>
                 </div>
 

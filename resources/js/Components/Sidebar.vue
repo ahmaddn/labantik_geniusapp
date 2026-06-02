@@ -140,13 +140,13 @@ const menuItems = [
                     :href="route('dashboard')"
                     class="flex items-center gap-3 min-w-0"
                 >
-                    <img src="/images/geniuss-logo.png" alt="Geniuss" class="h-10 w-auto object-contain shrink-0" />
+                    <img :src="$page.props.global_settings?.platform_logo || '/images/geniuss-logo.png'" alt="Logo" class="h-10 w-auto object-contain shrink-0" />
 
                     <span
                         v-if="open || isMobile"
                         class="text-xl font-bold text-blue-600 truncate"
                     >
-                        Geniuss
+                        {{ $page.props.global_settings?.platform_name || 'Geniuss' }}
                     </span>
                 </Link>
 
