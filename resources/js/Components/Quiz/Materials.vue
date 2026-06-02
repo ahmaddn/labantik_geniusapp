@@ -194,7 +194,7 @@ onUnmounted(() => {
 
       <!-- Text -->
       <div v-if="!props.question?.material_type || props.question?.material_type === 'text'" class="mat-text">
-        <p>{{ props.question?.content || 'Konten tidak tersedia' }}</p>
+        <div v-html="props.question?.content || 'Konten tidak tersedia'"></div>
       </div>
 
       <!-- Video -->

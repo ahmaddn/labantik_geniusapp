@@ -566,12 +566,8 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                 </div>
 
                 <!-- Question Bubble -->
-                <div class="question-bubble" v-if="step?.question && !step.isMaterial">
-                    {{ step.question.question_text }}
-                </div>
-                <div class="question-bubble" v-else-if="step?.isMaterial">
-                    {{ step.quiz.title }}
-                </div>
+                <div class="question-bubble" v-if="step?.question && !step.isMaterial" v-html="step.question.question_text"></div>
+                <div class="question-bubble" v-else-if="step?.isMaterial" v-html="step.quiz.title"></div>
                 <div class="question-bubble empty-qs" v-else>
                     Tidak ada soal
                 </div>
@@ -973,31 +969,36 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 
 .mascot-speech {
     position: absolute;
-    bottom: 90px;
-    left: 120px;
+    bottom: 50%;
+    left: 85%;
+    margin-bottom: -10px;
     background: #fff;
     border: 4px solid #fff;
-    border-radius: 30px;
-    padding: 16px 24px;
-    min-width: 160px;
+    border-radius: 24px;
+    padding: 12px 20px;
+    min-width: 140px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     animation: bblFloat 3.5s ease-in-out infinite;
     z-index: 61;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .mascot-speech span {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     color: #1e3a8a;
+    text-align: center;
 }
 .bbl-arrow-out, .bbl-arrow-in {
     position: absolute;
     width: 0;
     height: 0;
-    bottom: -15px;
-    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
 }
-.bbl-arrow-out { border-left: 15px solid transparent; border-right: 5px solid transparent; border-top: 15px solid rgba(0,0,0,0.05); }
-.bbl-arrow-in { border-left: 13px solid transparent; border-right: 3px solid transparent; border-top: 13px solid #fff; bottom: -12px; left: 21px; }
+.bbl-arrow-out { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid rgba(0,0,0,0.05); left: -14px; }
+.bbl-arrow-in { border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #fff; left: -12px; }
 
 @keyframes bblFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .bbl-enter-active { transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -1136,7 +1137,8 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
     .question-bubble { font-size: 14px; padding: 20px 20px 12px; }
     .component-box { padding: 16px; border-radius: 16px; }
     .mascot-img { height: 120px; }
-    .mascot-speech { bottom: 60px; left: 80px; padding: 10px 16px; font-size: 12px; min-width: 120px; }
+    .mascot-speech { padding: 10px 16px; min-width: 120px; margin-bottom: -5px; }
+    .mascot-speech span { font-size: 13px; }
     .mascot-absolute { bottom: 10px; left: 10px; }
     .action-btn-absolute { bottom: 40px; right: 20px; }
     .pill-btn { padding: 8px 20px; font-size: 14px; }
