@@ -77,6 +77,14 @@ const moduleImport = useForm({ file: null, category: "pretest" });
 const showModuleImportModal = ref(false);
 const moduleImportPreview = ref(null);
 
+const openImportModal = (category) => {
+    moduleImport.category = category;
+    moduleImport.file = null;
+    moduleImportPreview.value = null;
+    moduleImport.clearErrors();
+    showModuleImportModal.value = true;
+};
+
 const setModuleFile = (file) => {
     moduleImport.file = file;
     moduleImportPreview.value = file ? file.name : null;
@@ -332,9 +340,18 @@ const deleteMission = () => {
                                 variant="ghost"
                                 size="md"
                                 :icon="FileText"
-                                @click="showModuleImportModal = true"
+                                @click="openImportModal('pretest')"
                             >
                                 Import Tes Awal (Pretest)
+                            </Button>
+                            <Button
+                                class="w-full"
+                                variant="ghost"
+                                size="md"
+                                :icon="FileText"
+                                @click="openImportModal('posttest')"
+                            >
+                                Import Tes Akhir (Posttest)
                             </Button>
                             <Button
                                 class="w-full"
@@ -683,17 +700,17 @@ const deleteMission = () => {
             @cancel="showDeleteDialog = false"
         />
 
-        <!-- Import Module-level Pretest Modal -->
+        <!-- Import Module-level Pretest/Posttest Modal -->
         <Modal
             :show="showModuleImportModal"
-            title="Import Tes Awal (CSV / XLSX)"
+            :title="`Import ${moduleImport.category === 'pretest' ? 'Tes Awal' : 'Tes Akhir'} (CSV / XLSX)`"
             @close="showModuleImportModal = false"
             max-width="lg"
         >
             <div class="py-4 space-y-4">
                 <p class="text-sm text-gray-600">
                     Unggah file CSV atau XLSX yang berisi quiz untuk kategori
-                    <strong>pretest</strong>. Kolom minimal pada setiap baris:
+                    <strong>{{ moduleImport.category }}</strong>. Kolom minimal pada setiap baris:
                     <strong
                         >quiz_title, question_text, option_1,
                         option_1_is_correct, option_2, option_2_is_correct,

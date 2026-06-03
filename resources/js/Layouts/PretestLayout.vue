@@ -1,109 +1,228 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { usePage } from "@inertiajs/vue3";
 
 // ── Props ──
 const props = defineProps({
-    totalSeconds: {
-        type: Number,
-        default: 600,
+    timerDisplay: {
+        type: String,
+        default: "00:00",
+    },
+    isWarning: {
+        type: Boolean,
+        default: false,
     },
     progressPercent: {
         type: Number,
-        default: 55,
+        default: 0,
+    },
+    showProgress: {
+        type: Boolean,
+        default: true,
+    },
+    backsound: {
+        type: String,
+        default: null,
+    },
+    platformName: {
+        type: String,
+        default: null,
+    },
+    siswa: {
+        type: Object,
+        default: null, // Will try to get from page props if null
     },
 });
 
+const emit = defineEmits(["timeout"]);
+
 // ── State ──
-const remainingSeconds = ref(props.totalSeconds);
 const musicOn = ref(false);
-const mascotBounce = ref(false);
-let interval = null;
+const audioRef = ref(null);
 
-// ── Computed ──
-const formattedTime = computed(() => {
-    const m = Math.floor(remainingSeconds.value / 60)
-        .toString()
-        .padStart(2, "0");
-    const s = (remainingSeconds.value % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-});
+// Get user from Inertia if not provided
+const page = usePage();
+const currentUser = computed(() => props.siswa || page.props.auth?.user || { name: "Siswa", kelas: "" });
 
-const isWarning = computed(() => remainingSeconds.value <= 60);
+// ── Music Methods ──
+const handleVisibility = () => {
+    if (!audioRef.value) return;
+    document.hidden
+        ? audioRef.value.pause()
+        : (musicOn.value && audioRef.value.play().catch(() => {}));
+};
+
+const toggleMusic = async () => {
+    if (!audioRef.value) return;
+    if (musicOn.value) {
+        audioRef.value.pause();
+        musicOn.value = false;
+    } else {
+        try {
+            await audioRef.value.play();
+            musicOn.value = true;
+        } catch {
+            musicOn.value = false;
+        }
+    }
+};
 
 // ── Lifecycle ──
 onMounted(() => {
-    interval = setInterval(() => {
-        if (remainingSeconds.value > 0) {
-            remainingSeconds.value--;
-        } else {
-            clearInterval(interval);
-        }
-    }, 1000);
+    // Music
+    if (props.backsound) {
+        audioRef.value = new Audio(props.backsound);
+        audioRef.value.loop = true;
+        audioRef.value.volume = 0.4;
+        audioRef.value.addEventListener("error", () => {
+            audioRef.value = null;
+            musicOn.value = false;
+        });
 
-    setTimeout(() => {
-        mascotBounce.value = true;
-        setTimeout(() => {
-            mascotBounce.value = false;
-        }, 1200);
-    }, 800);
+        audioRef.value.play()
+            .then(() => { musicOn.value = true; })
+            .catch(() => {
+                document.addEventListener("click", () => {
+                    audioRef.value?.play()
+                        .then(() => { musicOn.value = true; })
+                        .catch(() => {});
+                }, { once: true });
+            });
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
 });
 
 onBeforeUnmount(() => {
-    clearInterval(interval);
+    document.removeEventListener("visibilitychange", handleVisibility);
+    if (audioRef.value) {
+        audioRef.value.pause();
+        audioRef.value = null;
+    }
 });
 
-// ── Methods ──
-function toggleMusic() {
-    musicOn.value = !musicOn.value;
-}
-
 // ── Expose untuk parent ──
-defineExpose({ mascotBounce });
+defineExpose({ musicOn });
 </script>
 
 <template>
-    <!-- ░░ FULL PAGE WRAPPER ░░ -->
-    <div class="layout-page">
-        <!-- Background Image -->
-        <div class="bg-image"></div>
+    <div class="app-layout">
+        <!-- ░░ BACKGROUND ░░ -->
+        <div class="bg-scene">
+            <div class="sky"></div>
+            <div class="sun">
+                <div class="sun-ray" style="transform: rotate(0deg)"></div>
+                <div class="sun-ray" style="transform: rotate(45deg)"></div>
+                <div class="sun-ray" style="transform: rotate(90deg)"></div>
+                <div class="sun-ray" style="transform: rotate(135deg)"></div>
+                <div class="sun-ray" style="transform: rotate(180deg)"></div>
+                <div class="sun-ray" style="transform: rotate(225deg)"></div>
+                <div class="sun-ray" style="transform: rotate(270deg)"></div>
+                <div class="sun-ray" style="transform: rotate(315deg)"></div>
+            </div>
 
-        <!-- ░░ PROGRESS BAR ░░ -->
-        <div class="progress-bar-track">
-            <div
-                class="progress-bar-fill"
-                :style="{ width: progressPercent + '%' }"
-            ></div>
+            <div class="cloud cloud-1">
+                <div class="cp p1"></div>
+                <div class="cp p2"></div>
+                <div class="cp p3"></div>
+            </div>
+            <div class="cloud cloud-2" style="transform: scale(0.75)">
+                <div class="cp p1"></div>
+                <div class="cp p2"></div>
+                <div class="cp p3"></div>
+            </div>
+            <div class="cloud cloud-3" style="transform: scale(0.9)">
+                <div class="cp p1"></div>
+                <div class="cp p2"></div>
+                <div class="cp p3"></div>
+            </div>
+
+            <div class="hills">
+                <div class="hill h1"></div>
+                <div class="hill h2"></div>
+                <div class="hill h3"></div>
+            </div>
+
+            <div class="tree-strip tree-left">
+                <div class="tree tl">
+                    <div class="canopy c-dk"></div>
+                    <div class="canopy c-md"></div>
+                    <div class="trunk"></div>
+                </div>
+                <div class="tree tm" style="margin-left: -20px; z-index: -1;">
+                    <div class="canopy c-dk"></div>
+                    <div class="canopy c-md"></div>
+                    <div class="trunk"></div>
+                </div>
+            </div>
+
+            <div class="tree-strip tree-right">
+                <div class="tree tm" style="margin-right: -15px; z-index: -1;">
+                    <div class="canopy c-dk"></div>
+                    <div class="canopy c-md"></div>
+                    <div class="trunk"></div>
+                </div>
+                <div class="tree tl">
+                    <div class="canopy c-dk"></div>
+                    <div class="canopy c-md"></div>
+                    <div class="trunk"></div>
+                </div>
+            </div>
+
+            <div class="ground-strip"></div>
+            <div class="grass-tuft gt1"></div>
+            <div class="grass-tuft gt2"></div>
+            <div class="grass-tuft gt3"></div>
+            <div class="grass-tuft gt4"></div>
         </div>
 
-        <!-- ░░ TIMER BADGE ░░ -->
-        <div class="timer-badge" :class="{ 'timer-warning': isWarning }">
-            <svg
-                class="timer-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span class="timer-text">{{ formattedTime }}</span>
-        </div>
+        <!-- ░░ TOP NAV ░░ -->
+        <header class="top-nav">
+            <div class="nav-inner">
+                <!-- Logo -->
+                <div class="nav-logo">
+                    <img src="/images/geniuss-logo.png" alt="Geniuss" class="h-10 w-auto object-contain" style="height: 40px;" />
+                    <span class="logo-dot">·</span>
+                    <span class="logo-edu">Pretest</span>
+                </div>
 
-        <!-- ░░ MASCOT CHARACTER ░░ -->
-        
+                <!-- Center items (Timer & Progress) -->
+                <div class="nav-center" v-if="showProgress">
+                    <div class="timer-badge" :class="{ 'timer-warning': isWarning }">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span class="timer-val">{{ timerDisplay }}</span>
+                    </div>
 
-        <!-- ░░ SLOT FOR PAGE CONTENT ░░ -->
-        <main class="layout-content">
+                    <div class="prog-wrapper">
+                        <div class="prog-track">
+                            <div class="prog-fill" :style="{ width: progressPercent + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Siswa info -->
+                <div class="nav-siswa">
+                    <div class="siswa-avatar">
+                        {{ currentUser?.name?.charAt(0).toUpperCase() || 'S' }}
+                    </div>
+                    <div class="siswa-info">
+                        <span class="siswa-nama">{{ currentUser?.name || 'Siswa' }}</span>
+                        <span class="siswa-kelas">{{ currentUser?.kelas || '' }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ░░ SCROLL CONTENT ░░ -->
+        <main class="main-scroll">
             <slot />
         </main>
 
-        <!-- ░░ MUSIC BUTTON ░░ -->
+        <!-- ░░ MUSIC FAB ░░ -->
         <button
             class="music-fab"
             @click="toggleMusic"
             :class="{ 'music-on': musicOn }"
-            :title="musicOn ? 'Matikan Musik' : 'Nyalakan Musik'"
         >
             <svg
                 v-if="musicOn"
@@ -129,250 +248,320 @@ defineExpose({ mascotBounce });
                 <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
         </button>
-
-        <!-- ░░ DECORATIVE SPARKLES ░░ -->
-        <span class="sparkle sp-1">✦</span>
-        <span class="sparkle sp-2">✦</span>
-        <span class="sparkle sp-3">✦</span>
     </div>
 </template>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800;900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=Righteous&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* ─── PAGE WRAPPER ─── */
-.layout-page {
+/* ─── BASE ─── */
+.app-layout {
     position: relative;
     width: 100vw;
     min-height: 100vh;
-    overflow-x: hidden;
     font-family: "Nunito", "Baloo 2", sans-serif;
+    overflow-x: hidden;
 }
 
-/* ─── BACKGROUND ─── */
-.bg-image {
+/* ─── BG SCENE ─── */
+.bg-scene {
+    background-image: url("/images/templates/background.png");
     position: fixed;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("/images/templates/background-pretest.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #cce8f5;
+    pointer-events: none;
     z-index: 0;
 }
 
-/* ─── PROGRESS BAR ─── */
-.progress-bar-track {
+.sky {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        #7ec8e3 0%,
+        #b8e4f0 38%,
+        #d6f0fa 52%,
+        #b5da7e 52%,
+        #8fc94a 62%,
+        #6aaf2e 72%,
+        #5a9e24 100%
+    );
+}
+
+/* SUN */
+.sun {
+    position: absolute;
+    top: 5%;
+    right: 10%;
+    width: 52px;
+    height: 52px;
+    background: radial-gradient(circle, #ffe066 60%, #ffb700 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 28px 8px rgba(255, 220, 50, 0.3);
+    animation: sun-pulse 4s ease-in-out infinite;
+}
+.sun-ray {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 62px;
+    height: 2.5px;
+    margin-top: -1.25px;
+    transform-origin: left center;
+    background: linear-gradient(
+        to right,
+        rgba(255, 220, 50, 0.45),
+        transparent
+    );
+}
+@keyframes sun-pulse {
+    0%,
+    100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.82; transform: scale(1.07); }
+}
+
+/* CLOUDS */
+.cloud {
+    position: absolute;
+    display: flex;
+    align-items: flex-end;
+}
+.cp {
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.cloud .p1 { width: 44px; height: 32px; }
+.cloud .p2 { width: 62px; height: 44px; margin-left: -13px; }
+.cloud .p3 { width: 40px; height: 28px; margin-left: -10px; }
+
+.cloud-1 { top: 6%; left: 5%; opacity: 0.9; animation: cloud-drift 30s linear infinite; }
+.cloud-2 { top: 12%; left: 32%; opacity: 0.82; animation: cloud-drift 42s linear infinite -18s; }
+.cloud-3 { top: 4%; left: 60%; opacity: 0.88; animation: cloud-drift 36s linear infinite -9s; }
+
+@keyframes cloud-drift {
+    from { transform: translateX(-180px); }
+    to { transform: translateX(105vw); }
+}
+
+/* HILLS */
+.hills {
+    position: absolute;
+    bottom: 40%;
+    left: 0;
+    right: 0;
+    height: 140px;
+}
+.hill { position: absolute; border-radius: 50%; }
+.h1 { width: 340px; height: 160px; background: #5aaa30; bottom: 0; left: -50px; }
+.h2 { width: 400px; height: 180px; background: #4e9e28; bottom: 0; left: 26%; }
+.h3 { width: 310px; height: 145px; background: #57a82e; bottom: 0; right: -35px; }
+
+/* TREES */
+.tree-strip {
+    position: absolute;
+    bottom: 32%;
+    display: flex;
+    align-items: flex-end;
+    z-index: 1;
+}
+.tree-left { left: 0; }
+.tree-right { right: 0; }
+.tree { display: flex; flex-direction: column; align-items: center; }
+.canopy { border-radius: 50% 50% 45% 45%; margin-bottom: -7px; }
+.c-dk { background: #2d7a2f; }
+.c-md { background: #3d9e40; }
+.trunk { background: linear-gradient(to right, #7c4d1e, #a0621a); border-radius: 3px; }
+
+.tl .c-dk { width: 90px; height: 80px; }
+.tl .c-md { width: 76px; height: 66px; }
+.tl .trunk { width: 18px; height: 44px; }
+.tm .c-dk { width: 70px; height: 64px; }
+.tm .c-md { width: 58px; height: 52px; }
+.tm .trunk { width: 14px; height: 36px; }
+
+/* GROUND STRIP */
+.ground-strip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 34%;
+    background: linear-gradient(180deg, #7ec94a 0%, #4fa822 100%);
+}
+
+/* GRASS TUFTS */
+.grass-tuft { position: absolute; bottom: 34%; }
+.grass-tuft::before, .grass-tuft::after {
+    content: ""; position: absolute; width: 5px; height: 12px;
+    background: #4fa822; border-radius: 50% 50% 0 0;
+}
+.grass-tuft::before { transform: rotate(-15deg); left: 0; }
+.grass-tuft::after { transform: rotate(15deg); left: 5px; }
+.gt1 { left: 7%; } .gt2 { left: 20%; } .gt3 { right: 20%; } .gt4 { right: 7%; }
+
+/* ─── TOP NAV ─── */
+.top-nav {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 10px;
-    background: rgba(168, 216, 240, 0.5);
-    z-index: 200;
-    border-radius: 0 0 8px 8px;
+    z-index: 50;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 20px rgba(0, 80, 150, 0.1);
 }
-.progress-bar-fill {
+.nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
     height: 100%;
-    background: linear-gradient(90deg, #3aabeb, #5bc4f5);
-    border-radius: 0 8px 8px 0;
-    transition: width 0.6s ease;
-    box-shadow: 0 2px 8px rgba(58, 171, 235, 0.4);
-}
-
-/* ─── TIMER BADGE ─── */
-.timer-badge {
-    position: fixed;
-    top: 18px;
-    right: 24px;
-    z-index: 201;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 50px;
-    padding: 8px 20px 8px 14px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 20px rgba(0, 100, 180, 0.14);
-    transition: background 0.3s;
+    justify-content: space-between;
 }
-.timer-badge.timer-warning {
-    background: rgba(254, 226, 226, 0.95);
-    animation: pulse-warn 1s ease-in-out infinite;
-}
-.timer-icon {
-    width: 20px;
-    height: 20px;
-    color: #3aabeb;
-    flex-shrink: 0;
-}
-.timer-warning .timer-icon {
-    color: #ef4444;
-}
-.timer-text {
+.nav-logo {
     font-family: "Baloo 2", cursive;
-    font-size: 1.15rem;
+    font-size: 22px;
     font-weight: 900;
-    color: #1a3a5c;
-    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    letter-spacing: -0.3px;
 }
-.timer-warning .timer-text {
-    color: #b91c1c;
+.logo-g { color: #1a1a2e; }
+.logo-u { color: #e8470a; }
+.logo-dot { color: #9ca3af; font-size: 18px; margin: 0 4px; }
+.logo-edu { color: #5a9e24; font-size: 16px; font-weight: 700; }
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    justify-content: center;
+    padding: 0 20px;
 }
-@keyframes pulse-warn {
-    0%,
-    100% {
-        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
-    }
-    50% {
-        box-shadow: 0 4px 28px rgba(239, 68, 68, 0.45);
-    }
+.timer-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(90, 170, 46, 0.1);
+    color: #4e9e28;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(90, 170, 46, 0.2);
+    font-family: "Righteous", cursive;
+    font-size: 15px;
+}
+.timer-warning {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* ─── MASCOT ─── */
-.mascot {
-    position: fixed;
-    right: 70%;
-    bottom: 5%;
-    width: 460px;
-    height: auto;
-    z-index: 100;
-    filter: drop-shadow(0 12px 24px rgba(0, 80, 140, 0.18));
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none;
-}
-.mascot-img {
+.prog-wrapper {
     width: 100%;
-    height: auto;
-    display: block;
+    max-width: 200px;
 }
-.mascot.bounce {
-    animation: mascot-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+.prog-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 99px;
+    overflow: hidden;
 }
-@keyframes mascot-bounce {
-    0% {
-        transform: translateY(0) rotate(0deg);
-    }
-    25% {
-        transform: translateY(-28px) rotate(-3deg);
-    }
-    55% {
-        transform: translateY(-14px) rotate(2deg);
-    }
-    75% {
-        transform: translateY(-6px) rotate(-1deg);
-    }
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-}
-@media (max-width: 1200px) {
-    .mascot {
-        right: 4%;
-        width: 200px;
-    }
-}
-@media (max-width: 768px) {
-    .mascot {
-        right: 8px;
-        width: 130px;
-        bottom: 8%;
-        opacity: 0.8;
-    }
+.prog-fill {
+    height: 100%;
+    background: #5a9e24;
+    border-radius: 99px;
+    transition: width 0.5s ease;
 }
 
-/* ─── MAIN CONTENT ─── */
-.layout-content {
+.nav-siswa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(90, 170, 46, 0.08);
+    border: 1.5px solid rgba(90, 170, 46, 0.2);
+    border-radius: 50px;
+    padding: 6px 16px 6px 8px;
+}
+.siswa-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5aaa2e, #3d8c1e);
+    color: white;
+    font-family: "Baloo 2", cursive;
+    font-size: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.siswa-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.siswa-nama {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.siswa-kelas {
+    font-size: 11px;
+    font-weight: 600;
+    color: #5a9e24;
+}
+
+/* ─── MAIN SCROLL ─── */
+.main-scroll {
     position: relative;
     z-index: 10;
-    padding: 30px 40px 60px;
+    padding-top: 64px;
     min-height: 100vh;
-}
-@media (max-width: 768px) {
-    .layout-content {
-        padding: 24px 16px 60px;
-    }
 }
 
 /* ─── MUSIC FAB ─── */
 .music-fab {
     position: fixed;
-    bottom: 28px;
-    left: 28px;
-    z-index: 201;
-    width: 52px;
-    height: 52px;
+    bottom: 24px;
+    left: 24px;
+    z-index: 100;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(8px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #4fc3f7;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #5a9e24;
+    transition: all 0.25s;
+    pointer-events: all;
 }
 .music-fab:hover {
-    transform: scale(1.12);
+    transform: scale(1.1);
     background: white;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 .music-fab.music-on {
-    background: linear-gradient(135deg, #4fc3f7, #0288d1);
+    background: #5aaa2e;
     color: white;
-    box-shadow: 0 4px 20px rgba(79, 195, 247, 0.4);
 }
-.music-fab svg {
-    width: 22px;
-    height: 22px;
-}
+.music-fab svg { width: 20px; height: 20px; }
 
-/* ─── SPARKLES ─── */
-.sparkle {
-    position: fixed;
-    color: white;
-    z-index: 5;
-    pointer-events: none;
-    animation: sparkle-pulse 3s ease-in-out infinite;
-    font-style: normal;
-}
-.sp-1 {
-    bottom: 32px;
-    right: 32px;
-    font-size: 2rem;
-}
-.sp-2 {
-    top: 130px;
-    left: 22px;
-    font-size: 1.2rem;
-    animation-delay: 1.5s;
-}
-.sp-3 {
-    bottom: 120px;
-    right: 18%;
-    font-size: 0.9rem;
-    animation-delay: 0.8s;
-}
-@keyframes sparkle-pulse {
-    0%,
-    100% {
-        opacity: 0.3;
-        transform: scale(1) rotate(0deg);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.3) rotate(20deg);
-    }
+/* Responsive */
+@media (max-width: 600px) {
+    .nav-siswa { display: none; }
+    .nav-logo { font-size: 18px; }
+    .nav-inner { padding: 0 12px; }
+    .timer-badge { font-size: 14px; padding: 4px 10px; }
+    .prog-wrapper { max-width: 140px; }
 }
 </style>

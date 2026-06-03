@@ -199,8 +199,56 @@ class PosttestController extends Controller
         $score = $this->calcScore($quizId, $studentId);
         $attempt->update(['score' => $score]);
 
-        // Setelah posttest → kembali ke beranda
-        return redirect()->route('playground.index');
+        // Setelah posttest → ke halaman result keseluruhan
+        return redirect()->route('playground.posttest.result', $request->module_id);
+    }
+
+    /**
+     * Tampilkan halaman result keseluruhan (Pretest + Misi + Posttest).
+     */
+    public function overallResult(Learning_modules $module)
+    {
+        $player = session('player');
+        if (! $player) {
+            return redirect()->route('playground.login');
+        }
+
+        // Skor Pretest
+        $pretestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'pretest')->first();
+        $pretestScore = $pretestQuiz ? Quiz_attempts::where('quiz_id', $pretestQuiz->id)
+            ->where('student_id', $player['id'])->value('score') : 0;
+        
+        // Skor Misi (Rata-rata)
+        $missionQuizzes = Quizzes::where('module_id', $module->id)->where('category', 'mission')->pluck('id');
+        $missionScore = 0;
+        if($missionQuizzes->count() > 0) {
+            $missionScore = Quiz_attempts::whereIn('quiz_id', $missionQuizzes)
+                ->where('student_id', $player['id'])
+                ->avg('score') ?? 0;
+            $missionScore = round($missionScore);
+        }
+
+        // Skor Posttest
+        $posttestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
+        $posttestScore = $posttestQuiz ? Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+            ->where('student_id', $player['id'])->value('score') : 0;
+
+        // Skor Akhir
+        $finalScore = round(($pretestScore + $missionScore + $posttestScore) / 3);
+
+        return Inertia::render('Playground/Mission/Result', [
+            'is_overall' => true,
+            'module' => ['id' => $module->id, 'name' => $module->name],
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'mission' => ['name' => 'Hasil Akhir Modul'],
+            'results' => [
+                'score' => $finalScore,
+                'pretest' => $pretestScore,
+                'missions' => $missionScore,
+                'posttest' => $posttestScore
+            ],
+            'all_missions_done' => true,
+        ]);
     }
 
     // ── Helpers ────────────────────────────────────────────────────

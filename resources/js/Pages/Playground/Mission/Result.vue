@@ -16,6 +16,7 @@ const props = defineProps({
     module: { type: Object, default: () => ({ id: null, name: "Modul" }) },
     all_missions_done: { type: Boolean, default: false },
     next_mission: { type: Object, default: null },
+    is_overall: { type: Boolean, default: false },
 });
 
 const TYPE_META = {
@@ -106,7 +107,8 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
             </button>
             <div class="topbar-center">
                 <Target :size="15" color="#2563eb" :stroke-width="2.5" />
-                <span>Hasil Misi</span>
+                <span v-if="!is_overall">Hasil Misi</span>
+                <span v-else>Hasil Keseluruhan</span>
             </div>
             <div style="width: 90px"></div>
         </header>
@@ -150,14 +152,15 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
                             <Zap :size="11" fill="currentColor" :stroke-width="2" />
                             <span>{{ module.name }}</span>
                         </div>
-                        <h1 class="hero-mission">{{ mission.name }}</h1>
+                        <h1 class="hero-mission" v-if="!is_overall">{{ mission.name }}</h1>
+                        <h1 class="hero-mission" v-else>Hasil Akhir Pembelajaran</h1>
                         <div class="hero-verdict" :class="`verdict--${scoreTier(results.score)}`">
                             <span class="verdict-emoji">{{ scoreEmoji(results.score) }}</span>
                             <span class="verdict-text">{{ scoreLabel(results.score) }}</span>
                         </div>
 
                         <!-- stat pills -->
-                        <div class="hero-stats">
+                        <div class="hero-stats" v-if="!is_overall">
                             <div class="hstat hstat--green">
                                 <CheckCircle2 :size="14" :stroke-width="2.3" />
                                 <span class="hstat-val">{{ results.correct }}</span>
@@ -175,8 +178,27 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
                             </div>
                         </div>
 
+                        <!-- overall stat pills -->
+                        <div class="hero-stats" v-if="is_overall">
+                            <div class="hstat hstat--blue">
+                                <Target :size="14" :stroke-width="2.3" />
+                                <span class="hstat-val">{{ results.pretest }}</span>
+                                <span class="hstat-lbl">Pretest</span>
+                            </div>
+                            <div class="hstat hstat--green">
+                                <CheckCircle2 :size="14" :stroke-width="2.3" />
+                                <span class="hstat-val">{{ results.missions }}</span>
+                                <span class="hstat-lbl">Misi (Rata-rata)</span>
+                            </div>
+                            <div class="hstat hstat--red">
+                                <Medal :size="14" :stroke-width="2.3" />
+                                <span class="hstat-val">{{ results.posttest }}</span>
+                                <span class="hstat-lbl">Posttest</span>
+                            </div>
+                        </div>
+
                         <!-- accuracy bar -->
-                        <div class="acc-bar-wrap">
+                        <div class="acc-bar-wrap" v-if="!is_overall">
                             <div class="acc-bar-label">
                                 <span>Akurasi</span>
                                 <span class="acc-pct" :style="{ color: scoreColor(results.score) }">{{ correctPct }}%</span>
@@ -191,6 +213,21 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
                     </div>
                 </div>
             </section>
+
+            <!-- ══ OVERALL MESSAGE ══ -->
+            <div v-if="is_overall" class="card section-card">
+                 <div class="card-head">
+                    <div class="card-head-left">
+                        <div class="card-icon card-icon--green">
+                            <CheckCircle2 :size="15" :stroke-width="2.3" />
+                        </div>
+                        <h2 class="card-title">Selamat! Pembelajaran Selesai</h2>
+                    </div>
+                </div>
+                <div style="padding: 20px; text-align: center; color: #475569; font-size: 15px; line-height: 1.6;">
+                    <p>Kamu telah menyelesaikan seluruh rangkaian kegiatan pada modul <strong>{{ module.name }}</strong> dari tahap Pretest, Misi Belajar, hingga Posttest. Nilai akhir di atas dihitung berdasarkan rata-rata keseluruhan performamu.</p>
+                </div>
+            </div>
 
             <!-- ══ BREAKDOWN ══ -->
             <section class="card section-card" v-if="results.breakdown?.length">
@@ -321,7 +358,7 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
             </section>
 
             <!-- ══ ALL CORRECT ══ -->
-            <section class="all-correct" v-else>
+            <section class="all-correct" v-else-if="!is_overall">
                 <div class="ac-glow"></div>
                 <div class="ac-icon-wrap">
                     <Trophy :size="42" color="#f59e0b" :stroke-width="1.5" />
@@ -334,12 +371,12 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
             </section>
 
             <!-- ══ FOOTER ACTIONS ══ -->
-            <div class="actions">
+            <div class="actions" v-if="!is_overall">
                 <button class="act-btn act-btn--ghost" @click="goToMissions">
                     <ArrowLeft :size="15" :stroke-width="2.5" />
                     <span>Daftar Misi</span>
                 </button>
-                <button v-if="all_missions_done" class="act-btn act-btn--mint" @click="goToPosttest">
+                <button v-if="all_missions_done && !results.posttest" class="act-btn act-btn--mint" @click="goToPosttest">
                     <Rocket :size="15" :stroke-width="2.3" />
                     <span>Lanjut Posttest</span>
                     <ChevronRight :size="14" :stroke-width="2.5" />
@@ -348,6 +385,13 @@ const goToNextMission = () => router.visit(route("playground.missions.show", pro
                     <Flame :size="15" :stroke-width="2.3" />
                     <span>Misi Selanjutnya</span>
                     <ChevronRight :size="14" :stroke-width="2.5" />
+                </button>
+            </div>
+
+            <div class="actions" v-if="is_overall" style="justify-content: center;">
+                <button class="act-btn act-btn--ghost" @click="router.visit(route('playground.index'))">
+                    <ArrowLeft :size="15" :stroke-width="2.5" />
+                    <span>Kembali ke Beranda</span>
                 </button>
             </div>
 

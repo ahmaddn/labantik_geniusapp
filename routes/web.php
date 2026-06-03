@@ -60,6 +60,7 @@ Route::prefix('player')->name('playground.')->group(function () {
     // ── Posttest ─────────────────────────────────────────────────
     Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])->name('posttest.show');
     Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
+    Route::get('/modules/{module}/posttest/result', [PosttestController::class, 'overallResult'])->name('posttest.result');
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {
@@ -79,7 +80,7 @@ Route::name('playground.')->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
-    
+
     // Panduan
     Route::get('/guide', [DashboardController::class, 'guide'])->name('guide');
 

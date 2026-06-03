@@ -7,8 +7,6 @@ import {
     Home,
     Zap,
     Clock,
-    Music2,
-    VolumeX,
     Target,
     Trophy,
     Rocket,
@@ -33,7 +31,7 @@ import True_false from "@/Components/Quiz/True_false.vue";
 import Case_study from "@/Components/Quiz/Case_study.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
-import { useMusic } from "@/Composable/useMusic";
+import PretestLayout from "@/Layouts/PretestLayout.vue";
 
 const props = defineProps({
     quiz: { type: Object, required: true },
@@ -43,9 +41,6 @@ const props = defineProps({
     background: { type: String, default: null },
 });
 
-const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
-    useMusic();
-
 const COMPONENT_MAP = {
     multiple_choices: Multiple_choice,
     true_false: True_false,
@@ -54,34 +49,29 @@ const COMPONENT_MAP = {
     material: Materials,
 };
 
-const TYPE_META = {
-    multiple_choices: { label: "PILIHAN GANDA", color: "#3b82f6", bg: "#dbeafe" },
-    true_false: { label: "Benar / Salah", color: "#8b5cf6", bg: "#ede9fe" },
-    case_study: { label: "Studi Kasus", color: "#0891b2", bg: "#cffafe" },
-    drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7" },
-    material: { label: "Materi", color: "#10b981", bg: "#d1fae5" },
-};
-const typeMeta = (t) => TYPE_META[t] || { label: t, color: "#64748b", bg: "#f1f5f9" };
-
 const phase = ref("intro");
+const ready = ref(false);
+const brandMoved = ref(false);
 
-const mascotSrc = computed(() => {
+const mascotUrl = computed(() => {
     if (phase.value === "intro") return "/images/templates/pose_nunjuk.png";
-    if (phase.value === "done") return "/images/templates/pose_jempol.png";
+    if (phase.value === "done" || phase.value === "celebration") return "/images/templates/pose_jempol.png";
     return "/images/templates/pose_pikir.png";
 });
 
 const BUBBLES_INTRO = ["Yuk, baca petunjuknya dulu!", "Siap memulai tantangan?", "Tunjukkan kemampuanmu!"];
 const BUBBLES_QUIZ = ["Semangat ya!", "Baca dengan teliti!", "Pikirkan baik-baik!", "Hampir selesai!", "Fokus dan tenang!"];
 const BUBBLES_DONE = ["Luar biasa! Kamu keren!", "Pretest selesai! Hebat!", "Jempol buat kamu!"];
+const BUBBLES_CELEBRATION = ["Woohooo! Skor kamu keren!", "Kamu luar biasa!", "Semangat mengerjakan misi!"];
 const BUBBLES = computed(() => {
     if (phase.value === "intro") return BUBBLES_INTRO;
-    if (phase.value === "done") return BUBBLES_DONE;
+    if (phase.value === "done" || phase.value === "celebration") return BUBBLES_CELEBRATION;
     return BUBBLES_QUIZ;
 });
 const bubbleIdx = ref(0);
 const bubbleVisible = ref(true);
 let bubbleTimer = null;
+
 const rotateBubble = () => {
     bubbleVisible.value = false;
     setTimeout(() => {
@@ -89,14 +79,13 @@ const rotateBubble = () => {
         bubbleVisible.value = true;
     }, 300);
 };
+
 watch(phase, () => {
     bubbleIdx.value = 0;
     bubbleVisible.value = false;
     setTimeout(() => { bubbleVisible.value = true; }, 200);
 });
 
-const ready = ref(false);
-const brandMoved = ref(false);
 const timeLimit = computed(() => (props.quiz?.time_limit ?? 10) * 60);
 
 const SS_KEY = `geniuss_pretest_timer_${props.quiz?.id}`;
@@ -125,8 +114,6 @@ function startTimer() {
     }, 1000);
 }
 
-const audioRef = ref(null);
-
 const questions = computed(() => props.quiz?.questions ?? []);
 const totalQ = computed(() => questions.value.length);
 const currentIdx = ref(0);
@@ -134,6 +121,7 @@ const currentQ = computed(() => questions.value[currentIdx.value] ?? null);
 const answers = ref({});
 const shakeActive = ref(false);
 const submitting = ref(false);
+const celebScore = ref(0); // score ditampilkan di celebration
 
 const isFirst = computed(() => currentIdx.value === 0);
 const isLast = computed(() => currentIdx.value === totalQ.value - 1);
@@ -171,25 +159,32 @@ function startQuiz() {
 
 function submitQuiz() {
     if (submitting.value) return;
-    submitting.value = true;
     clearInterval(timerInt);
     ssDel(SS_KEY);
-    phase.value = "done";
-    const payload = {
-        quiz_id: props.quiz?.id,
-        module_id: props.module?.id,
-        time_taken: timeLimit.value - remaining.value,
-        answers: Object.entries(answers.value).map(([question_id, value]) => ({ question_id, value })),
-    };
-    router.post(route("playground.pretest.submit"), payload, {
-        preserveState: true,
-        onError: () => { submitting.value = false; },
-    });
+    // Hitung estimasi skor lokal untuk celebration (sekedar estimasi, skor final dari server)
+    const total = questions.value.filter(q => q.quiz_type !== 'material').length || questions.value.length;
+    const correct = questions.value.filter(q => isQuestionAnswered(q)).length;
+    celebScore.value = total > 0 ? Math.round((correct / total) * 100) : 0;
+    phase.value = "celebration";
+
+    // Setelah 3 detik baru submit ke backend
+    setTimeout(() => {
+        submitting.value = true;
+        const payload = {
+            quiz_id: props.quiz?.id,
+            module_id: props.module?.id,
+            time_taken: timeLimit.value - remaining.value,
+            answers: Object.entries(answers.value).map(([question_id, value]) => ({ question_id, value })),
+        };
+        router.post(route("playground.pretest.submit"), payload, {
+            preserveState: false,
+            onError: () => { submitting.value = false; phase.value = "quiz"; },
+        });
+    }, 3200);
 }
 
 function goToMissions() { router.visit(route("playground.missions.index", props.module?.id)); }
 function goBack() { router.visit(route("playground.index")); }
-function goHome() { router.visit(route("playground.index")); }
 
 const INSTR_ITEMS = [
     { color: "red", icon: Eye, text: "Baca setiap soal dengan teliti." },
@@ -201,179 +196,32 @@ const INSTR_ITEMS = [
 onMounted(() => {
     setTimeout(() => { ready.value = true; }, 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
-    document.addEventListener("visibilitychange", handleVisibility);
-    setTimeout(() => initAutoMusic(props.backsound), 100);
 });
 onUnmounted(() => {
     clearInterval(timerInt);
     clearInterval(bubbleTimer);
-    document.removeEventListener("visibilitychange", handleVisibility);
-    destroyAudio();
 });
 </script>
 
 <template>
-    <div class="root">
-        <div style="display: none">
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-            <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet" />
-        </div>
-
-        <!-- ══ BG ══ -->
-        <div class="bg">
-            <div class="bg-img" :style="props.background ? { backgroundImage: `url(${props.background})` } : {}"></div>
-            <div class="bg-tint"></div>
-            <div class="blob b1"></div>
-            <div class="blob b2"></div>
-            <div class="blob b3"></div>
-            <div class="sh sh-circle c1"></div>
-            <div class="sh sh-circle c2"></div>
-            <div class="sh sh-ring r1"></div>
-            <div class="sh sh-ring r2"></div>
-            <div class="sh sh-ring r3"></div>
-            <div class="sh sh-dot d1"></div>
-            <div class="sh sh-dot d2"></div>
-            <div class="sh sh-dot d3"></div>
-            <div class="sh sh-dot d4"></div>
-            <div class="sh sh-dot d5"></div>
-            <div class="bg-dots"></div>
-        </div>
-
-        <!-- ══ TOPBAR ══ -->
-        <header class="topbar">
-            <button class="tbtn" @click="goBack" :disabled="submitting">
-                <ArrowLeft :size="16" :stroke-width="2.5" />
-                <span class="tbtn-lbl">Kembali</span>
-            </button>
-
-            <div class="brand" :class="{ 'brand--hide': brandMoved }">
-                <div class="brand-dot">
-                    <Zap :size="13" color="#fff" fill="white" :stroke-width="2" />
-                </div>
-                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
-            </div>
-
-            <Transition name="t-timer">
-                <div v-if="phase === 'quiz'" class="timer" :class="{ 'timer--warn': timerWarning }">
-                    <div class="timer-row">
-                        <Clock :size="13" :stroke-width="2" />
-                        <span class="timer-val">{{ timerDisplay }}</span>
+    <PretestLayout
+        :timerDisplay="timerDisplay"
+        :isWarning="timerWarning"
+        :progressPercent="progressPct"
+        :showProgress="phase === 'quiz'"
+        :backsound="props.backsound"
+    >
+        <div class="main-wrapper" :class="{ 'main--on': ready }">
+            <div class="mission-container">
+                <!-- ══ PHASE: INTRO ══ -->
+                <template v-if="phase === 'intro'">
+                    <div class="title-pill" style="background: #eab308; border-color: #fde047; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);">
+                        PRETEST: {{ module.name.toUpperCase() }}
                     </div>
-                    <div class="timer-track">
-                        <div class="timer-fill" :class="{ 'fill--warn': timerWarning }" :style="{ width: timerPct + '%' }"></div>
+                    <div class="question-bubble" style="background: #fef08a;">
+                        <span style="color: #854d0e;">{{ quiz.description ?? "Jawab semua soal dengan sebaik-baiknya untuk mengukur pemahamanmu sebelum memulai misi!" }}</span>
                     </div>
-                </div>
-            </Transition>
-
-            <div class="topbar-r">
-                <button class="tbtn tbtn-sq" :class="{ 'tbtn--on': musicOn }" @click="toggleMusic(props.backsound)">
-                    <Music2 v-if="musicOn" :size="15" :stroke-width="2" />
-                    <VolumeX v-else :size="15" :stroke-width="2" />
-                </button>
-                <button class="tbtn tbtn-sq" @click="goHome">
-                    <Home :size="15" :stroke-width="2" />
-                </button>
-            </div>
-        </header>
-
-        <!-- ══ BODY ══ -->
-        <div class="body" :class="{ 'body--on': ready }">
-
-            <!-- ── SIDEBAR ── -->
-            <aside class="sidebar" :class="{ 'sidebar--on': ready, 'sidebar--quiz-mobile': phase === 'quiz' }" @click="rotateBubble">
-                <div class="sb-info">
-                    <span class="sb-chip">
-                        <Target v-if="phase === 'intro'" :size="11" :stroke-width="2.5" />
-                        <Clock v-else-if="phase === 'quiz'" :size="11" :stroke-width="2.5" />
-                        <Trophy v-else :size="11" :stroke-width="2.5" />
-                        {{ phase === "intro" ? "Pretest" : phase === "quiz" ? "Mengerjakan" : "Selesai" }}
-                    </span>
-                    <h1 class="sb-title">{{ module.name }}</h1>
-                    <p class="sb-sub">{{ quiz.title }}</p>
-
-                    <!-- Info ringkas: hanya tampil di mobile saat intro/done -->
-                    <div v-if="phase !== 'quiz'" class="sb-meta-mobile">
-                        <span class="sb-meta-item">
-                            <BookOpen :size="11" :stroke-width="2.5" />
-                            {{ totalQ }} Soal
-                        </span>
-                        <span class="sb-meta-sep">·</span>
-                        <span class="sb-meta-item">
-                            <Clock :size="11" :stroke-width="2.5" />
-                            {{ quiz.time_limit ?? 10 }} Menit
-                        </span>
-                    </div>
-
-                    <!-- Soal counter: hanya desktop saat quiz -->
-                    <p v-if="phase === 'quiz'" class="sb-soal sb-soal--desktop">
-                        Soal {{ currentIdx + 1 }} / {{ totalQ }}
-                    </p>
-
-                    <!-- Progress bar saat quiz -->
-                    <div class="prog" v-if="phase === 'quiz'">
-                        <div class="prog-meta">
-                            <span class="prog-lbl">Progress</span>
-                            <span class="prog-count"><b>{{ answeredCnt }}</b> / {{ totalQ }}</span>
-                        </div>
-                        <div class="prog-track">
-                            <div class="prog-fill" :style="{ width: progressPct + '%' }">
-                                <span class="prog-shine"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pills: hanya desktop saat intro/done -->
-                    <div v-if="phase !== 'quiz'" class="sb-pills sb-pills--desktop">
-                        <div class="sb-pill">
-                            <BookOpen :size="13" :stroke-width="2" />
-                            <span>{{ totalQ }} Soal</span>
-                        </div>
-                        <div class="sb-pill">
-                            <Clock :size="13" :stroke-width="2" />
-                            <span>{{ quiz.time_limit ?? 10 }} Menit</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mascot -->
-                <div class="mascot-wrap">
-                    <Transition name="bbl">
-                        <div v-if="bubbleVisible" class="bubble" :class="{ 'bubble--intro': phase === 'intro', 'bubble--done': phase === 'done' }">
-                            <span>{{ BUBBLES[bubbleIdx] }}</span>
-                            <i class="bbl-o"></i><i class="bbl-i"></i>
-                        </div>
-                    </Transition>
-                    <Transition name="pose-swap">
-                        <div class="mascot-frame" :key="phase">
-                            <img :src="mascotSrc" alt="Maskot" class="mascot" />
-                            <div class="mascot-shadow"></div>
-                        </div>
-                    </Transition>
-                </div>
-            </aside>
-
-            <!-- ── MAIN ── -->
-            <section class="main" :class="{ 'main--on': ready }">
-
-                <!-- ══ INTRO CARD ══ -->
-                <Transition name="pg">
-                    <div v-if="phase === 'intro'" class="icard">
-                        <div class="icard-head">
-                            <div class="icard-hdeco icard-hdeco-1"></div>
-                            <div class="icard-hdeco icard-hdeco-2"></div>
-                            <div class="icard-head-inner">
-                                <div class="icard-eyebrow">
-                                    <Zap :size="11" :stroke-width="2.5" fill="currentColor" />
-                                    <span>Pretest</span>
-                                </div>
-                                <h2 class="icard-title">{{ module.name }}</h2>
-                                <p class="icard-sub">
-                                    {{ quiz.description ?? "Jawab semua soal dengan sebaik-baiknya untuk mengukur pemahamanmu sebelum memulai misi!" }}
-                                </p>
-                            </div>
-                        </div>
-
+                    <div class="component-box" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
                         <div class="icard-stats">
                             <div class="istat istat--red">
                                 <div class="istat-icon"><BookOpen :size="19" :stroke-width="1.8" /></div>
@@ -392,387 +240,232 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <div class="icard-body">
-                            <div class="icard-instr-hd">
-                                <ListChecks :size="14" :stroke-width="2.5" />
-                                <span>Petunjuk Pengerjaan</span>
-                            </div>
-                            <div class="icard-instr-grid">
-                                <div v-for="(item, i) in INSTR_ITEMS" :key="i" class="instr-row" :class="`instr-row--${item.color}`">
-                                    <span class="instr-num">{{ String(i + 1).padStart(2, "0") }}</span>
-                                    <component :is="item.icon" :size="13" :stroke-width="2.5" class="instr-ico" />
-                                    <span class="instr-txt">{{ item.text }}</span>
-                                </div>
+                        <div class="icard-instr-grid">
+                            <div v-for="(item, i) in INSTR_ITEMS" :key="i" class="instr-row" :class="`instr-row--${item.color}`">
+                                <span class="instr-num">{{ String(i + 1).padStart(2, "0") }}</span>
+                                <component :is="item.icon" :size="13" :stroke-width="2.5" class="instr-ico" />
+                                <span class="instr-txt">{{ item.text }}</span>
                             </div>
                         </div>
                     </div>
-                </Transition>
-
-                <!-- ══ QUIZ CARD ══ -->
-                <Transition name="pg">
-                    <div v-if="phase === 'quiz' && currentQ" class="qcard" :class="{ 'qcard--shake': shakeActive }">
-                        <div class="qcard-bar" :style="{ background: typeMeta(quizType).color }"></div>
-
-                        <div class="qcard-head">
-                            <div class="qcard-deco qcard-deco-1"></div>
-                            <div class="qcard-deco qcard-deco-2"></div>
-                            <div class="qcard-head-inner">
-                                <div class="qcard-chip" :style="{ background: 'rgba(255,255,255,.18)', border: '1px solid rgba(255,255,255,.28)' }">
-                                    <BookOpen :size="11" :stroke-width="2.5" />
-                                    <span>{{ typeMeta(quizType).label }}</span>
-                                </div>
-                                <span class="qcard-mission">{{ module.name }}</span>
-                                <div class="qcard-counter">
-                                    <span class="qcard-counter-num">{{ currentIdx + 1 }}</span>
-                                    <span class="qcard-counter-sep">/</span>
-                                    <span class="qcard-counter-tot">{{ totalQ }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="qcard-title-row">
-                            <div class="q-num-badge">#{{ currentIdx + 1 }}</div>
-                            <p class="qcard-step-title">{{ currentQ.question_text }}</p>
-                            <div v-if="isQuestionAnswered(currentQ)" class="q-answered-badge">
-                                <CheckCircle2 :size="12" :stroke-width="2.5" />
-                                <span>Terjawab</span>
-                            </div>
-                        </div>
-
-                        <div class="question-item">
-                            <component
-                                :is="COMPONENT_MAP[quizType]"
-                                :question="currentQ"
-                                :model-value="answers[currentQ.id]"
-                                @update-answer="updateAnswer"
-                            />
-                        </div>
-
-                        <div class="qcard-hint" :class="{ 'qcard-hint--done': isQuestionAnswered(currentQ) }">
-                            <template v-if="isQuestionAnswered(currentQ)">
-                                <Sparkles :size="12" :stroke-width="2" />
-                                <span>Jawaban dipilih! Klik Berikutnya</span>
-                            </template>
-                            <template v-else-if="quizType !== 'material'">
-                                <MousePointerClick :size="12" :stroke-width="2" />
-                                <span>Pilih jawaban untuk melanjutkan</span>
-                            </template>
-                        </div>
-                    </div>
-                </Transition>
-
-                <!-- ══ DONE CARD ══ -->
-                <Transition name="pg">
-                    <div v-if="phase === 'done'" class="dcard">
-                        <div class="dcard-confetti" aria-hidden="true">
-                            <span v-for="n in 8" :key="n" :class="`conf conf-${n}`"></span>
-                        </div>
-                        <div class="dcard-inner">
-                            <div class="trophy-wrap">
-                                <div class="trophy-ring">
-                                    <Trophy :size="48" color="#34D399" :stroke-width="1.5" />
-                                </div>
-                                <span class="sp sp1"><Sparkles :size="13" color="#2563EB" /></span>
-                                <span class="sp sp2"><Star :size="11" color="#F59E0B" fill="#F59E0B" /></span>
-                                <span class="sp sp3"><Sparkles :size="10" color="#BFDBFE" /></span>
-                            </div>
-                            <h2 class="done-ttl">Pretest Selesai!</h2>
-                            <div class="done-party">
-                                <PartyPopper :size="22" color="#F59E0B" :stroke-width="1.8" />
-                            </div>
-                            <p class="done-sub">
-                                Kamu telah menyelesaikan pretest dengan luar biasa.<br />
-                                Sekarang saatnya memulai petualangan misi belajar!
-                            </p>
-                        </div>
-                    </div>
-                </Transition>
-            </section>
-        </div>
-
-        <!-- ══ FOOTER ══ -->
-        <footer class="footer">
-            <div class="footer-inner">
-                <template v-if="phase === 'intro'">
-                    <div class="f-space"></div>
-                    <button class="fbtn fbtn--yellow" @click="startQuiz">
-                        <Rocket :size="14" :stroke-width="2" />
-                        <span>Mulai Pretest</span>
-                        <ArrowRight :size="14" :stroke-width="2.5" />
-                    </button>
                 </template>
 
-                <template v-if="phase === 'quiz' && currentQ">
-                    <button class="fbtn fbtn--ghost" @click="goPrev" :disabled="isFirst || submitting">
-                        <ArrowLeft :size="14" :stroke-width="2.5" />
-                        <span>Sebelumnya</span>
-                    </button>
-                    <span class="f-pos">{{ currentIdx + 1 }} / {{ totalQ }}</span>
-                    <button class="fbtn" :class="isLast ? 'fbtn--mint' : 'fbtn--blue'" :disabled="submitting" @click="goNext">
-                        <template v-if="!isLast">
-                            <span>Berikutnya</span>
-                            <ArrowRight :size="14" :stroke-width="2.5" />
-                        </template>
-                        <template v-else-if="!submitting">
-                            <Flag :size="13" :stroke-width="2" />
-                            <span>Selesaikan Pretest</span>
-                        </template>
-                        <template v-else>
-                            <Loader2 :size="13" class="spin" />
-                            <span>Menyimpan…</span>
-                        </template>
-                    </button>
+                <!-- ══ PHASE: QUIZ ══ -->
+                <template v-else-if="phase === 'quiz'">
+                    <div class="title-pill">
+                        SOAL {{ currentIdx + 1 }}
+                    </div>
+                    <div class="question-bubble" v-html="currentQ?.question_text"></div>
+                    <div class="component-box" :class="{ 'opts--shake': shakeActive }">
+                        <component
+                            v-if="currentQ"
+                            :is="COMPONENT_MAP[quizType]"
+                            :question="currentQ"
+                            :modelValue="answers[currentQ.id]"
+                            @update-answer="updateAnswer"
+                        />
+                    </div>
                 </template>
 
-                <template v-if="phase === 'done'">
-                    <div class="f-space"></div>
-                    <button class="fbtn fbtn--mint" @click="goToMissions" :disabled="submitting">
-                        <template v-if="submitting">
-                            <Loader2 :size="13" class="spin" />
-                            <span>Menyimpan…</span>
-                        </template>
-                        <template v-else>
-                            <Rocket :size="14" :stroke-width="2" />
-                            <span>Mulai Misi</span>
-                            <ArrowRight :size="14" :stroke-width="2.5" />
-                        </template>
-                    </button>
+                <!-- ══ PHASE: DONE ══ -->
+                <template v-else-if="phase === 'done'">
+                    <div class="title-pill" style="background: #10b981; border-color: #34d399; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+                        SELESAI!
+                    </div>
+                    <div class="question-bubble" style="background: #a7f3d0;">
+                        <span style="color: #065f46;">Kamu telah menyelesaikan pretest dengan luar biasa. Sekarang saatnya memulai petualangan misi belajar!</span>
+                    </div>
+                    <div class="component-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+                        <div class="trophy-wrap">
+                            <div class="trophy-ring">
+                                <Trophy :size="64" color="#34D399" :stroke-width="1.5" />
+                            </div>
+                            <span class="sp sp1"><Sparkles :size="18" color="#2563EB" /></span>
+                            <span class="sp sp2"><Star :size="16" color="#F59E0B" fill="#F59E0B" /></span>
+                            <span class="sp sp3"><Sparkles :size="14" color="#BFDBFE" /></span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ══ PHASE: CELEBRATION ══ -->
+                <template v-else-if="phase === 'celebration'">
+                    <div class="celeb-overlay">
+                        <!-- Confetti -->
+                        <div class="celeb-confetti" aria-hidden="true">
+                            <span v-for="n in 18" :key="n" :class="`conf conf-${n}`"></span>
+                        </div>
+                        <!-- Score ring -->
+                        <div class="celeb-ring-wrap">
+                            <svg class="celeb-ring-svg" viewBox="0 0 140 140">
+                                <circle cx="70" cy="70" r="58" class="celeb-track"/>
+                                <circle cx="70" cy="70" r="58" class="celeb-prog"
+                                    :style="{ strokeDashoffset: 364 - (364 * celebScore / 100) }"/>
+                            </svg>
+                            <div class="celeb-ring-inner">
+                                <span class="celeb-score">{{ celebScore }}</span>
+                                <span class="celeb-pct">%</span>
+                            </div>
+                        </div>
+                        <div class="celeb-label">🎉 Pretest Selesai!</div>
+                        <div class="celeb-sub">Menuju daftar misi…</div>
+                        <div class="celeb-loader">
+                            <div class="celeb-loader-bar"></div>
+                        </div>
+                    </div>
                 </template>
             </div>
-        </footer>
-    </div>
+        </div>
+
+        <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
+        <div class="mascot-absolute" @click="rotateBubble">
+            <Transition name="bbl">
+                <div v-if="bubbleVisible" class="mascot-speech">
+                    <span>{{ BUBBLES[bubbleIdx] }}</span>
+                    <i class="bbl-arrow-out"></i>
+                    <i class="bbl-arrow-in"></i>
+                </div>
+            </Transition>
+            <img :src="mascotUrl" alt="Maskot" class="mascot-img" />
+            <div class="mascot-shadow"></div>
+        </div>
+
+        <div class="action-btn-absolute">
+            <template v-if="phase === 'intro'">
+                <button
+                    class="pill-btn"
+                    style="background: #f59e0b; border-color: #fbbf24; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);"
+                    @click="startQuiz"
+                >
+                    <span>Mulai Pretest</span>
+                    <Rocket :size="20" :stroke-width="2.5" />
+                </button>
+                <button
+                    class="pill-btn"
+                    style="background: #ef4444; border-color: #f87171; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); margin-left: 10px;"
+                    @click="goBack"
+                >
+                    <ArrowLeft :size="20" :stroke-width="2.5" />
+                    <span>Kembali</span>
+                </button>
+            </template>
+
+            <template v-else-if="phase === 'quiz'">
+                <div style="display: flex; gap: 10px;">
+                    <button
+                        v-if="!isFirst"
+                        class="pill-btn"
+                        style="background: #64748b; border-color: #94a3b8; box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);"
+                        @click="goPrev"
+                        :disabled="submitting"
+                    >
+                        <ArrowLeft :size="20" :stroke-width="2.5" />
+                    </button>
+
+                    <button
+                        v-if="isLast"
+                        class="pill-btn pill-btn-finish"
+                        @click="submitQuiz"
+                        :disabled="submitting || !canGoNext"
+                    >
+                        <span v-if="!submitting">Selesaikan Pretest</span>
+                        <Loader2 v-else :size="20" class="spin" />
+                        <CheckCircle2 v-if="!submitting" :size="20" :stroke-width="2.5" />
+                    </button>
+                    <button
+                        v-else
+                        class="pill-btn pill-btn-next"
+                        @click="goNext"
+                        :disabled="!canGoNext || submitting"
+                    >
+                        <span>Selanjutnya</span>
+                        <ArrowRight :size="20" :stroke-width="2.5" />
+                    </button>
+                </div>
+            </template>
+
+            <template v-else-if="phase === 'done'">
+                <button
+                    class="pill-btn pill-btn-finish"
+                    @click="goToMissions"
+                    :disabled="submitting"
+                >
+                    <span>Mulai Misi</span>
+                    <Rocket :size="20" :stroke-width="2.5" />
+                </button>
+            </template>
+        </div>
+    </PretestLayout>
 </template>
 
 <style scoped>
-:root {
-    --blue: #2563eb;
-    --blue-mid: #1d4ed8;
-    --blue-deep: #1e3a8a;
-    --blue-soft: #bfdbfe;
-    --blue-pale: #eff6ff;
-    --mint: #34d399;
-    --mint-deep: #059669;
-    --mint-soft: #d1fae5;
-    --yellow: #f59e0b;
-    --yellow-deep: #92400e;
-    --yellow-soft: #fef3c7;
-    --gray-2: #e2e8f0;
-    --gray-3: #94a3b8;
-    --text: #1e293b;
-    --text-mid: #475569;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-.root {
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    font-family: "Nunito", sans-serif;
+/* ─── MAIN CENTRIC CONTENT ─── */
+.main-wrapper {
     position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10px 20px 140px;
+    opacity: 0;
+    transition: opacity 0.45s;
+    overflow-y: auto;
     overflow-x: hidden;
 }
+.main--on { opacity: 1; }
 
-/* ─── BG ─── */
-.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
-.bg-img {
-    position: absolute; inset: 0;
-    background: url("/images/templates/background-pretest.png") center/cover no-repeat;
-}
-.bg-tint { position: absolute; inset: 0; background: #2563eb; opacity: 0.52; }
-.blob { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
-.b1 { width: 480px; height: 480px; top: -140px; left: -100px; background: #1d4ed8; opacity: 0.35; animation: bDrift 20s ease-in-out infinite alternate; }
-.b2 { width: 380px; height: 380px; bottom: -100px; right: -80px; background: #34d399; opacity: 0.22; animation: bDrift2 24s ease-in-out infinite alternate; }
-.b3 { width: 260px; height: 260px; top: 38%; left: 52%; background: #bfdbfe; opacity: 0.18; animation: bDrift 28s ease-in-out 6s infinite alternate; }
-@keyframes bDrift { 0% { transform: translate(0,0); } 50% { transform: translate(30px,20px) scale(1.05); } 100% { transform: translate(-15px,35px); } }
-@keyframes bDrift2 { 0% { transform: translate(0,0); } 50% { transform: translate(-28px,-18px) scale(1.06); } 100% { transform: translate(22px,-40px); } }
-.sh { position: absolute; pointer-events: none; }
-.sh-circle { border-radius: 50%; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.1); animation: sDrift ease-in-out infinite alternate; }
-.c1 { width: 150px; height: 150px; top: -30px; left: -25px; animation-duration: 22s; }
-.c2 { width: 90px; height: 90px; bottom: 70px; right: 50px; animation-duration: 28s; animation-delay: 4s; }
-.sh-ring { border-radius: 50%; background: transparent; border: 1.5px solid rgba(191,219,254,0.2); animation: rPulse ease-out infinite; }
-.r1 { width: 300px; height: 300px; top: -60px; left: -60px; animation-duration: 9s; }
-.r2 { width: 240px; height: 240px; bottom: -50px; right: -50px; animation-duration: 12s; animation-delay: 2s; }
-.r3 { width: 180px; height: 180px; top: 38%; left: 58%; animation-duration: 10s; animation-delay: 5s; }
-.sh-dot { border-radius: 50%; background: rgba(255,255,255,0.45); animation: dFloat linear infinite; }
-.d1 { width: 5px; height: 5px; top: 12%; left: 9%; animation-duration: 14s; }
-.d2 { width: 3px; height: 3px; top: 32%; left: 22%; animation-duration: 18s; animation-delay: 2s; }
-.d3 { width: 6px; height: 6px; top: 58%; left: 7%; animation-duration: 12s; animation-delay: 5s; }
-.d4 { width: 4px; height: 4px; top: 18%; right: 11%; animation-duration: 16s; animation-delay: 1s; }
-.d5 { width: 5px; height: 5px; top: 72%; right: 16%; animation-duration: 20s; animation-delay: 3.5s; }
-@keyframes sDrift { 0% { transform: translate(0,0) rotate(0); } 50% { transform: translate(14px,-10px) rotate(6deg); } 100% { transform: translate(-10px,18px) rotate(-4deg); } }
-@keyframes rPulse { 0% { transform: scale(1); opacity: 0.38; } 70% { transform: scale(1.38); opacity: 0.06; } 100% { transform: scale(1.65); opacity: 0; } }
-@keyframes dFloat { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 0.55; } 90% { opacity: 0.25; } 100% { transform: translateY(-150px); opacity: 0; } }
-.bg-dots { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgba(255,255,255,0.09) 1px, transparent 1px); background-size: 34px 34px; }
-
-/* ─── TOPBAR ─── */
-.topbar {
-    position: relative; z-index: 50; height: 56px; flex-shrink: 0;
-    display: flex; align-items: center; padding: 0 18px;
-    background: rgba(255,255,255,0.1); backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(255,255,255,0.16);
-}
-.tbtn {
-    display: flex; align-items: center; gap: 6px; padding: 7px 13px;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
-    border-radius: 10px; font-family: "Nunito", sans-serif; font-size: 13px;
-    font-weight: 800; color: #fff; cursor: pointer;
-    transition: background 0.18s, transform 0.15s; flex-shrink: 0;
-}
-.tbtn:hover:not(:disabled) { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
-.tbtn:disabled { opacity: 0.4; cursor: not-allowed; }
-.tbtn-sq { padding: 7px 10px; }
-.tbtn--on { background: #2563eb; border-color: #bfdbfe; }
-.brand {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 8px;
-    pointer-events: none; z-index: 2;
-    transition: opacity 0.34s, transform 0.34s;
-}
-.brand--hide { opacity: 0; transform: translateX(-50%) scale(0.88); }
-.brand-dot {
-    width: 28px; height: 28px; border-radius: 8px; background: #2563eb;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.5);
-}
-.brand-name { font-family: "Righteous", cursive; font-size: 18px; color: #fff; white-space: nowrap; }
-.timer {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    pointer-events: none; z-index: 2; min-width: 138px;
-}
-.timer-row { display: flex; align-items: center; gap: 6px; color: #fff; }
-.timer-val { font-family: "Righteous", cursive; font-size: 21px; letter-spacing: 0.5px; }
-.timer--warn .timer-val { color: #fca5a5; animation: tWarn 1s ease-in-out infinite; }
-@keyframes tWarn { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-.timer-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; }
-.timer-fill { height: 100%; background: #bfdbfe; border-radius: 99px; transition: width 0.9s linear; }
-.fill--warn { background: #f87171; }
-.t-timer-enter-active { transition: opacity 0.4s ease 0.25s, transform 0.42s cubic-bezier(0.34,1.56,0.64,1) 0.25s; }
-.t-timer-leave-active { transition: opacity 0.18s ease; }
-.t-timer-enter-from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.88); }
-.t-timer-leave-to { opacity: 0; }
-.topbar-r { display: flex; align-items: center; gap: 8px; margin-left: auto; z-index: 3; }
-
-/* ─── BODY GRID ─── */
-.body {
-    position: relative; z-index: 10; flex: 1;
-    display: grid; grid-template-columns: 264px 1fr; gap: 20px;
-    max-width: 1080px; width: 100%; margin: 0 auto;
-    padding: 22px 18px 18px; align-items: start;
-    opacity: 0; transition: opacity 0.45s;
-}
-.body--on { opacity: 1; }
-
-/* ─── SIDEBAR ─── */
-.sidebar {
-    display: flex; flex-direction: column;
-    opacity: 0; transform: translateX(-16px);
-    transition: opacity 0.5s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
-    user-select: none; cursor: pointer; min-width: 0;
-}
-.sidebar--on { opacity: 1; transform: none; }
-.sb-info { margin-bottom: 18px; min-width: 0; overflow: hidden; width: 100%; }
-.sb-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.38);
-    border-radius: 999px; padding: 4px 13px; font-size: 11px; font-weight: 900;
-    color: #fff; backdrop-filter: blur(6px); margin-bottom: 10px; max-width: 100%;
-}
-.sb-title {
-    font-family: "Righteous", cursive; font-size: clamp(16px, 2vw, 22px);
-    color: #fff; line-height: 1.25; margin-bottom: 5px;
-    text-shadow: 0 1px 10px rgba(0,0,0,0.35); word-break: break-word; overflow-wrap: anywhere;
-}
-.sb-sub {
-    font-size: 12.5px; font-weight: 800; color: rgba(255,255,255,0.9);
-    line-height: 1.55; margin-bottom: 6px;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.28); word-break: break-word; overflow-wrap: anywhere;
+.mission-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
 }
 
-/* Info meta mobile — hidden di desktop */
-.sb-meta-mobile { display: none; }
-
-.sb-soal {
-    font-size: 11px; font-weight: 900;
-    color: rgba(255,255,255,0.65); letter-spacing: 0.3px; margin-bottom: 16px;
-}
-.prog { margin-bottom: 2px; min-width: 0; }
-.prog-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; gap: 8px; }
-.prog-lbl { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap; flex-shrink: 0; }
-.prog-count { font-family: "Righteous", cursive; font-size: 14px; color: #fff; white-space: nowrap; flex-shrink: 0; }
-.prog-count b { font-size: 16px; }
-.prog-track { height: 8px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; min-width: 0; }
-.prog-fill { height: 100%; background: #34d399; border-radius: 99px; position: relative; overflow: hidden; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
-.prog-shine { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.38), transparent); animation: shine 2.2s ease-in-out infinite; }
-@keyframes shine { 0%, 100% { transform: translateX(-100%); } 60% { transform: translateX(200%); } }
-.sb-pills { display: flex; flex-direction: column; gap: 8px; }
-.sb-pill {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 10px; padding: 9px 13px; font-size: 12.5px; font-weight: 800;
-    color: #fff; backdrop-filter: blur(6px);
+.title-pill {
+    background: #1e62d0;
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    padding: 8px 32px;
+    border-radius: 30px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(30, 98, 208, 0.4);
+    margin-bottom: -16px;
+    z-index: 2;
+    border: 3px solid #6cb2f9;
 }
 
-/* Mascot */
-.mascot-wrap { position: relative; padding-left: 4px; }
-.bubble {
-    position: relative; background: #fff; border: 2px solid #bfdbfe;
-    border-radius: 16px; padding: 9px 14px; min-width: 146px; max-width: 210px;
-    box-shadow: 0 5px 18px rgba(37,99,235,0.13); margin-bottom: 6px;
-    animation: bblFloat 3.5s ease-in-out infinite;
+.question-bubble {
+    background: #a3d9f9;
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 24px 40px 16px;
+    border-radius: 30px;
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 15px rgba(163, 217, 249, 0.4);
 }
-.bubble span { font-size: 12.5px; font-weight: 800; color: #1e3a8a; display: block; }
-.bubble--intro { border-color: #fcd34d; box-shadow: 0 5px 18px rgba(245,158,11,0.18); }
-.bubble--intro span { color: #92400e; }
-.bubble--intro .bbl-o { border-top-color: #fcd34d; }
-.bubble--done { border-color: #6ee7b7; box-shadow: 0 5px 18px rgba(52,211,153,0.22); }
-.bubble--done span { color: #065f46; }
-.bubble--done .bbl-o { border-top-color: #6ee7b7; }
-.bbl-o, .bbl-i { position: absolute; width: 0; height: 0; font-style: normal; }
-.bbl-o { bottom: -14px; left: 15px; border-left: 10px solid transparent; border-right: 6px solid transparent; border-top: 13px solid #bfdbfe; }
-.bbl-i { bottom: -10px; left: 16px; border-left: 8px solid transparent; border-right: 5px solid transparent; border-top: 11px solid #fff; }
-@keyframes bblFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-.bbl-enter-active { transition: opacity 0.26s, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-.bbl-leave-active { transition: opacity 0.16s; }
-.bbl-enter-from { opacity: 0; transform: translateY(8px) scale(0.92); }
-.bbl-leave-to { opacity: 0; }
-.mascot-frame { position: relative; display: inline-block; }
-.mascot {
-    position: relative; z-index: 2; width: clamp(138px, 14vw, 192px); height: auto; display: block;
-    filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22)); animation: mBob 3.5s ease-in-out infinite;
-    transform-origin: bottom center;
-}
-.mascot-shadow {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 65%; height: 13px;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.28) 0%, transparent 70%);
-    border-radius: 50%; z-index: 1;
-}
-@keyframes mBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-8px) rotate(0.5deg); } 70% { transform: translateY(-4px) rotate(-0.3deg); } }
-.pose-swap-enter-active { transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1); }
-.pose-swap-leave-active { transition: opacity 0.2s ease; position: absolute; bottom: 0; }
-.pose-swap-enter-from { opacity: 0; transform: translateY(18px) scale(0.88); }
-.pose-swap-leave-to { opacity: 0; }
 
-/* ─── MAIN ─── */
-.main { opacity: 0; transform: translateY(16px); transition: opacity 0.5s 0.1s, transform 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1); }
-.main--on { opacity: 1; transform: none; }
-.pg-enter-active { transition: opacity 0.36s, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-.pg-leave-active { transition: opacity 0.18s, transform 0.18s; position: absolute; width: 100%; }
-.pg-enter-from { opacity: 0; transform: translateY(16px) scale(0.98); }
-.pg-leave-to { opacity: 0; transform: translateY(-10px) scale(0.98); }
+.component-box {
+    width: 100%;
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
 
-/* ─── INTRO CARD ─── */
-.icard { background: #fdfcfb; border-radius: 20px; overflow: hidden; border: 1.5px solid var(--gray-2); box-shadow: 0 4px 0 var(--blue-soft), 0 10px 32px rgba(59,130,246,0.1); }
-.icard-head { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); position: relative; overflow: hidden; }
-.icard-hdeco { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none; }
-.icard-hdeco-1 { width: 200px; height: 200px; top: -70px; right: -40px; }
-.icard-hdeco-2 { width: 100px; height: 100px; bottom: -42px; left: 18px; }
-.icard-head-inner { position: relative; z-index: 1; padding: 22px 22px 24px; }
-.icard-eyebrow { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 900; color: #fff; margin-bottom: 11px; }
-.icard-title { font-family: "Righteous", cursive; font-size: clamp(18px, 2.5vw, 25px); color: #fff; line-height: 1.2; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.15); word-break: break-word; }
-.icard-sub { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.88); line-height: 1.6; max-width: 460px; word-break: break-word; }
-.icard-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1.5px solid var(--gray-2); }
-.istat { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 20px 12px 18px; border-right: 1.5px solid var(--gray-2); }
+/* ── INTRO STATS ── */
+.icard-stats { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 500px; border-radius: 16px; overflow: hidden; border: 1.5px solid #e2e8f0; margin-bottom: 10px; }
+.istat { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 20px 12px 18px; border-right: 1.5px solid #e2e8f0; }
 .istat:last-child { border-right: none; }
 .istat--red { background: #fff7f7; }
 .istat--red .istat-icon { background: #f87171; box-shadow: 0 4px 14px rgba(248,113,113,0.3); }
@@ -789,10 +482,9 @@ onUnmounted(() => {
 .istat-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: #fff; margin-bottom: 2px; }
 .istat-val { font-family: "Righteous", cursive; font-size: 24px; line-height: 1; }
 .istat-lbl { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-.icard-body { padding: 18px 20px 22px; }
-.icard-instr-hd { display: flex; align-items: center; gap: 7px; font-family: "Righteous", cursive; font-size: 13.5px; color: var(--blue-mid); margin-bottom: 13px; }
-.icard-instr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.instr-row { display: flex; align-items: center; gap: 9px; border-radius: 12px; padding: 11px 13px; font-size: 12.5px; font-weight: 800; color: var(--text); border: 1.5px solid transparent; }
+
+.icard-instr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 600px; }
+.instr-row { display: flex; align-items: center; gap: 9px; border-radius: 12px; padding: 11px 13px; font-size: 12.5px; font-weight: 800; color: #1e293b; border: 1.5px solid transparent; }
 .instr-row--red { background: #fff7f7; border-color: #fecaca; }
 .instr-row--red .instr-num { background: #f87171; color: #fff; }
 .instr-row--red .instr-ico { color: #f87171; }
@@ -809,168 +501,249 @@ onUnmounted(() => {
 .instr-ico { flex-shrink: 0; }
 .instr-txt { flex: 1; line-height: 1.45; word-break: break-word; }
 
-/* ─── QUIZ CARD ─── */
-.qcard { background: #fdfcfb; border-radius: 20px; border: 1.5px solid var(--gray-2); overflow: hidden; box-shadow: 0 4px 0 #bfdbfe, 0 10px 32px rgba(37,99,235,0.1); }
-.qcard--shake { animation: qShake 0.5s ease; }
-@keyframes qShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
-.qcard-bar { height: 4px; }
-.qcard-head { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); position: relative; overflow: hidden; }
-.qcard-deco { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none; }
-.qcard-deco-1 { width: 160px; height: 160px; top: -55px; right: -35px; }
-.qcard-deco-2 { width: 80px; height: 80px; bottom: -30px; left: 18px; }
-.qcard-head-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 18px; flex-wrap: wrap; }
-.qcard-chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 10px; font-size: 10.5px; font-weight: 900; color: #fff; white-space: nowrap; flex-shrink: 0; }
-.qcard-mission { flex: 1; min-width: 0; text-align: center; font-family: "Righteous", cursive; font-size: 13px; color: rgba(255,255,255,0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px; }
-.qcard-counter { display: flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
-.qcard-counter-num { font-family: "Righteous", cursive; font-size: 20px; color: #fff; line-height: 1; }
-.qcard-counter-sep { font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 1px; }
-.qcard-counter-tot { font-family: "Righteous", cursive; font-size: 13px; color: rgba(255,255,255,0.6); }
-.qcard-title-row { padding: 18px 20px; display: flex; align-items: flex-start; gap: 11px; background: #eff6ff; }
-.q-num-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; border-radius: 10px; background: #3b82f6; color: #fff; font-family: "Righteous", cursive; font-size: 13px; flex-shrink: 0; box-shadow: 0 3px 8px rgba(59,130,246,0.28); margin-top: 1px; }
-.qcard-step-title { flex: 1; font-size: 15px; font-weight: 800; color: #1e293b; line-height: 1.65; word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
-.q-answered-badge { display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; border: 1.5px solid #6ee7b7; border-radius: 999px; padding: 3px 9px; font-size: 10px; font-weight: 900; color: #059669; flex-shrink: 0; margin-top: 3px; white-space: nowrap; }
-.question-item { padding: 16px 20px; }
-.qcard-hint { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px 14px; font-size: 11.5px; font-weight: 800; color: #94a3b8; }
-.qcard-hint--done { color: #059669; }
-
-/* ─── DONE CARD ─── */
-.dcard { background: #fff; border-radius: 20px; overflow: hidden; border: 1.5px solid var(--gray-2); position: relative; box-shadow: 0 4px 0 #6ee7b7, 0 10px 32px rgba(52,211,153,0.15); }
-.dcard-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.conf { position: absolute; border-radius: 3px; animation: confFall linear infinite; }
-.conf-1 { width: 8px; height: 8px; background: #f59e0b; top: -10px; left: 8%; animation-duration: 3.5s; animation-delay: 0.1s; transform: rotate(20deg); }
-.conf-2 { width: 6px; height: 6px; background: #2563eb; top: -10px; left: 22%; animation-duration: 4s; animation-delay: 0.6s; transform: rotate(-15deg); }
-.conf-3 { width: 7px; height: 7px; background: #ef4444; top: -10px; left: 38%; animation-duration: 3.2s; animation-delay: 0.3s; transform: rotate(35deg); }
-.conf-4 { width: 5px; height: 5px; background: #34d399; top: -10px; left: 55%; animation-duration: 4.5s; animation-delay: 0.9s; transform: rotate(-30deg); }
-.conf-5 { width: 8px; height: 8px; background: #a78bfa; top: -10px; left: 70%; animation-duration: 3.8s; animation-delay: 0.5s; transform: rotate(10deg); }
-.conf-6 { width: 5px; height: 5px; background: #f59e0b; top: -10px; left: 82%; animation-duration: 4.2s; animation-delay: 1.1s; transform: rotate(-25deg); }
-.conf-7 { width: 6px; height: 6px; background: #ef4444; top: -10px; left: 91%; animation-duration: 3.6s; animation-delay: 0.7s; transform: rotate(45deg); }
-.conf-8 { width: 7px; height: 7px; background: #2563eb; top: -10px; left: 48%; animation-duration: 3.9s; animation-delay: 1.3s; transform: rotate(-10deg); }
-@keyframes confFall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(320px) rotate(360deg); opacity: 0; } }
-.dcard-inner { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 42px 28px 38px; gap: 12px; }
-.trophy-wrap { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
-.trophy-ring { width: 88px; height: 88px; border-radius: 50%; background: var(--mint-soft); border: 2.5px solid var(--mint); display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 22px rgba(52,211,153,0.26); animation: tPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both 0.08s; }
+/* ── TROPHY ── */
+.trophy-wrap { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin: 20px; }
+.trophy-ring { width: 110px; height: 110px; border-radius: 50%; background: #d1fae5; border: 2.5px solid #34d399; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 22px rgba(52,211,153,0.26); animation: tPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both 0.08s; }
 @keyframes tPop { from { transform: scale(0) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
 .sp { position: absolute; animation: spFloat 2.2s ease-in-out infinite; }
 .sp1 { top: -2px; right: 2px; }
 .sp2 { bottom: 2px; left: -2px; animation-delay: 0.5s; }
 .sp3 { top: 8px; left: -4px; animation-delay: 1.1s; }
 @keyframes spFloat { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(14deg); } }
-.done-ttl { font-family: "Righteous", cursive; font-size: clamp(20px, 3vw, 26px); color: var(--blue-deep); }
-.done-party { animation: spFloat 1.8s ease-in-out infinite; }
-.done-sub { font-size: 13.5px; font-weight: 700; color: var(--text-mid); line-height: 1.7; }
 
-/* ─── FOOTER ─── */
-.footer { position: relative; z-index: 50; background: rgba(255,255,255,0.1); backdrop-filter: blur(18px); border-top: 1px solid rgba(255,255,255,0.16); padding: 11px 0 8px; flex-shrink: 0; }
-.footer-inner { display: flex; align-items: center; gap: 10px; max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-.f-space { flex: 1; }
-.f-pos { font-family: "Righteous", cursive; font-size: 13px; color: #fff; flex: 1; text-align: center; }
-.fbtn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px; border: none; border-radius: 10px; font-family: "Nunito", sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; flex-shrink: 0; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s; }
-.fbtn span { white-space: normal; }
-.fbtn--ghost { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
-.fbtn--ghost:hover:not(:disabled) { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
-.fbtn--ghost:disabled { opacity: 0.4; cursor: not-allowed; }
-.fbtn--blue { background: #2563eb; color: #fff; box-shadow: 0 3px 12px rgba(37,99,235,0.4); }
-.fbtn--blue:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(37,99,235,0.5); }
-.fbtn--blue:disabled { background: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.4) !important; box-shadow: none !important; cursor: not-allowed; }
-.fbtn--mint { background: #00c54cd7; color: #fff; box-shadow: 0 3px 12px rgba(52,211,153,0.4); }
-.fbtn--mint:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(52,211,153,0.5); }
-.fbtn--mint:disabled { opacity: 0.5; cursor: not-allowed; }
-.fbtn--yellow { background: #2563eb; color: #fff; box-shadow: 0 3px 12px rgba(37,99,235,0.4); }
-.fbtn--yellow:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(37,99,235,0.5); }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ─── ABSOLUTE ELEMENTS ─── */
+.mascot-absolute {
+    position: fixed;
+    bottom: 20px;
+    left: 40px;
+    z-index: 60;
+    display: flex;
+    align-items: flex-end;
+    cursor: pointer;
+}
+.mascot-img {
+    height: 200px;
+    width: auto;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+    animation: mBob 3.5s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+@keyframes mBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-8px) rotate(1deg); } }
+
+.mascot-speech {
+    position: absolute;
+    bottom: 50%;
+    left: 85%;
+    margin-bottom: -10px;
+    background: #fff;
+    border: 4px solid #fff;
+    border-radius: 24px;
+    padding: 12px 20px;
+    min-width: 140px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    animation: bblFloat 3.5s ease-in-out infinite;
+    z-index: 61;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mascot-speech span {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1e3a8a;
+    text-align: center;
+}
+.bbl-arrow-out, .bbl-arrow-in {
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.bbl-arrow-out { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid rgba(0,0,0,0.05); left: -14px; }
+.bbl-arrow-in { border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #fff; left: -12px; }
+
+@keyframes bblFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.bbl-enter-active { transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bbl-leave-active { transition: opacity 0.2s; }
+.bbl-enter-from { opacity: 0; transform: translateY(10px) scale(0.9); }
+.bbl-leave-to { opacity: 0; }
+
+.action-btn-absolute {
+    position: fixed;
+    bottom: 50px;
+    right: 40px;
+    z-index: 60;
+}
+.pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #1e62d0;
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    padding: 12px 32px;
+    border-radius: 99px;
+    border: 3px solid #6cb2f9;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(30, 98, 208, 0.4);
+    transition: all 0.2s;
+}
+.pill-btn:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(30, 98, 208, 0.5);
+}
+.pill-btn:disabled {
+    background: #94a3b8;
+    border-color: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+.pill-btn-finish {
+    background: #059669;
+    border-color: #6ee7b7;
+    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+}
+.pill-btn-finish:hover:not(:disabled) {
+    box-shadow: 0 12px 30px rgba(5, 150, 105, 0.5);
+}
+.opts--shake { animation: optShake 0.5s ease; }
+@keyframes optShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
 .spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── MOBILE ─── */
+/* MOBILE RESPONSIVE */
 @media (max-width: 820px) {
-    .b1 { width: 300px; height: 300px; }
-    .b2 { width: 240px; height: 240px; }
-    .b3 { width: 180px; height: 180px; }
-    .c1 { width: 100px; height: 100px; }
-    .c2 { display: none; }
-    .r1 { width: 200px; height: 200px; }
-    .topbar { height: 52px; padding: 0 13px; }
-    .brand-name { font-size: 16px; }
-    .brand-dot { width: 25px; height: 25px; }
-    .timer-val { font-size: 18px; }
-
-    .body {
-        grid-template-columns: 1fr;
-        gap: 0;
-        padding: 0;
-        max-width: 100%;
-    }
-
-    /* Sidebar mobile: sembunyikan saat intro/done, tampil ringkas saat quiz */
-    .sidebar {
-        display: none;
-    }
-    .sidebar.sidebar--quiz-mobile {
-        display: flex;
-        opacity: 1 !important;
-        transform: none !important;
-        cursor: default;
-        padding: 10px 15px 12px;
-        background: rgba(29, 78, 216, 0.82);
-        backdrop-filter: blur(18px);
-        border-bottom: 1px solid rgba(191, 219, 254, 0.22);
-    }
-    .sb-info { margin-bottom: 0; width: 100%; }
-    .sb-chip { margin-bottom: 4px; font-size: 10px; }
-    .sb-title { font-size: 14px; margin-bottom: 2px; }
-    .sb-sub { font-size: 11px; margin-bottom: 0; }
-
-    /* Sembunyikan elemen tidak perlu saat quiz mobile */
-    .sb-meta-mobile,
-    .sb-soal--desktop,
-    .sb-pills--desktop {
-        display: none;
-    }
-
-    /* Progress bar saat quiz, lebih tipis */
-    .prog { margin-top: 8px; margin-bottom: 0; width: 100%; }
-    .prog-meta { margin-bottom: 4px; }
-    .prog-track { height: 6px; }
-
-    .mascot-wrap { display: none; }
-
-    .main { transform: none; opacity: 1; }
-    .icard, .qcard, .dcard { border-radius: 0; border-left: none; border-right: none; }
-    .icard-head-inner { padding: 16px 15px 18px; }
-    .icard-title { font-size: 18px; }
-    .icard-stats { grid-template-columns: repeat(3, 1fr); }
-    .istat { padding: 15px 8px 13px; }
-    .istat-icon { width: 38px; height: 38px; border-radius: 10px; }
-    .istat-val { font-size: 20px; }
-    .icard-body { padding: 14px 15px 18px; }
+    .main-wrapper { padding: 0 12px 100px; }
+    .title-pill { font-size: 14px; padding: 6px 20px; }
+    .question-bubble { font-size: 14px; padding: 20px 20px 12px; }
+    .component-box { padding: 16px; border-radius: 16px; }
+    .mascot-img { height: 120px; }
+    .mascot-speech { padding: 10px 16px; min-width: 120px; margin-bottom: -5px; }
+    .mascot-speech span { font-size: 13px; }
+    .mascot-absolute { bottom: 10px; left: 10px; }
+    .action-btn-absolute { bottom: 20px; right: 20px; }
+    .pill-btn { padding: 8px 20px; font-size: 14px; }
+    .icard-stats { grid-template-columns: 1fr; }
     .icard-instr-grid { grid-template-columns: 1fr; }
-    .qcard-head-inner { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
-    .qcard-title-row { padding: 14px 14px; }
-    .qcard-step-title { font-size: 14px; }
-    .question-item { padding: 12px 14px; }
-    .footer-inner { padding: 0 15px; }
-    .fbtn { height: 40px; }
 }
 
-@media (max-width: 480px) {
-    .topbar { height: 48px; padding: 0 11px; }
-    .tbtn-lbl { display: none; }
-    .tbtn { padding: 7px 9px; }
-    .timer-val { font-size: 16px; }
-    .timer { min-width: 105px; }
-    .sidebar { padding: 9px 12px 10px; }
-    .sb-title { font-size: 13px; }
-    .sb-sub { font-size: 10.5px; }
-    .sb-meta-item { font-size: 10.5px; }
-    .icard-head-inner { padding: 14px 13px 16px; }
-    .istat { padding: 12px 6px 10px; }
-    .istat-icon { width: 34px; height: 34px; border-radius: 9px; }
-    .istat-val { font-size: 18px; }
-    .icard-body { padding: 12px 13px 16px; }
-    .qcard-step-title { font-size: 13.5px; }
-    .q-answered-badge { display: none; }
-    .dcard-inner { padding: 32px 16px 28px; }
-    .footer-inner { padding: 0 12px; gap: 7px; }
-    .fbtn { height: 38px; padding: 0 13px; font-size: 12px; }
-    .f-pos { font-size: 12px; }
+/* ══ CELEBRATION ══ */
+.celeb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    animation: celebFadeIn 0.5s ease both;
+}
+@keyframes celebFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.celeb-confetti {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.conf { position: absolute; border-radius: 2px; animation: confFall linear infinite; }
+.conf-1  { width:7px;height:7px;background:#f59e0b;top:-8px;left:5%;animation-duration:2.5s;animation-delay:.1s; }
+.conf-2  { width:5px;height:5px;background:#3b82f6;top:-8px;left:15%;animation-duration:3.1s;animation-delay:.5s; }
+.conf-3  { width:6px;height:6px;background:#ef4444;top:-8px;left:27%;animation-duration:2.7s;animation-delay:.2s; }
+.conf-4  { width:5px;height:5px;background:#10b981;top:-8px;left:40%;animation-duration:3.3s;animation-delay:.8s; }
+.conf-5  { width:8px;height:8px;background:#a78bfa;top:-8px;left:55%;animation-duration:2.9s;animation-delay:.4s; }
+.conf-6  { width:5px;height:5px;background:#f59e0b;top:-8px;left:68%;animation-duration:3.2s;animation-delay:1s; }
+.conf-7  { width:6px;height:6px;background:#ef4444;top:-8px;left:79%;animation-duration:2.6s;animation-delay:.6s; }
+.conf-8  { width:4px;height:4px;background:#3b82f6;top:-8px;left:88%;animation-duration:3s;animation-delay:1.2s; }
+.conf-9  { width:7px;height:7px;background:#10b981;top:-8px;left:22%;animation-duration:3.5s;animation-delay:.3s; }
+.conf-10 { width:5px;height:5px;background:#a78bfa;top:-8px;left:48%;animation-duration:2.8s;animation-delay:.9s; }
+.conf-11 { width:6px;height:6px;background:#f59e0b;top:-8px;left:62%;animation-duration:3.2s;animation-delay:1.4s; }
+.conf-12 { width:4px;height:4px;background:#ef4444;top:-8px;left:92%;animation-duration:2.5s;animation-delay:.7s; }
+.conf-13 { width:8px;height:8px;background:#3b82f6;top:-8px;left:10%;animation-duration:3.1s;animation-delay:0.2s; }
+.conf-14 { width:5px;height:5px;background:#10b981;top:-8px;left:35%;animation-duration:2.7s;animation-delay:1.1s; }
+.conf-15 { width:6px;height:6px;background:#f59e0b;top:-8px;left:75%;animation-duration:3.4s;animation-delay:0.5s; }
+.conf-16 { width:7px;height:7px;background:#a78bfa;top:-8px;left:85%;animation-duration:2.9s;animation-delay:0.8s; }
+.conf-17 { width:5px;height:5px;background:#ef4444;top:-8px;left:50%;animation-duration:3.2s;animation-delay:0.4s; }
+.conf-18 { width:6px;height:6px;background:#3b82f6;top:-8px;left:95%;animation-duration:2.6s;animation-delay:1.3s; }
+@keyframes confFall { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(360deg);opacity:0} }
+
+.celeb-ring-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 20px;
+    animation: celebPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+@keyframes celebPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.celeb-ring-svg {
+    width: 100%; height: 100%; transform: rotate(-90deg);
+}
+.celeb-track {
+    fill: none; stroke: rgba(0,0,0,0.05); stroke-width: 12;
+}
+.celeb-prog {
+    fill: none; stroke-width: 12; stroke-linecap: round;
+    stroke-dasharray: 364;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.34,1.56,0.64,1) 0.5s;
+    stroke: #10b981;
+}
+
+.celeb-ring-inner {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+}
+.celeb-score {
+    font-family: "Righteous", cursive; font-size: 48px; color: #10b981; line-height: 1;
+}
+.celeb-pct {
+    font-size: 20px; font-weight: 900; color: #94a3b8; align-self: flex-end; margin-bottom: 8px;
+}
+
+.celeb-label {
+    font-family: "Righteous", cursive;
+    font-size: 32px;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+    animation: slideUp 0.5s ease 0.4s both;
+}
+.celeb-sub {
+    font-size: 16px;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 24px;
+    animation: slideUp 0.5s ease 0.5s both;
+}
+
+.celeb-loader {
+    width: 200px;
+    height: 6px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    animation: slideUp 0.5s ease 0.6s both;
+}
+.celeb-loader-bar {
+    height: 100%;
+    background: #10b981;
+    width: 0%;
+    animation: celebLoad 3s linear forwards;
+}
+@keyframes celebLoad {
+    to { width: 100%; }
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
 }
 </style>

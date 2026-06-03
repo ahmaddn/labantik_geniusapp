@@ -196,8 +196,10 @@ class PretestController extends Controller
         $score = $this->calcScore($quizId, $studentId);
         $attempt->update(['score' => $score]);
 
-        // Setelah pretest → ke daftar misi
-        return redirect()->route('playground.missions.index', $request->module_id);
+        // Setelah pretest → ke daftar misi (dengan flash score untuk apresiasi)
+        return redirect()->route('playground.missions.index', $request->module_id)
+            ->with('pretest_done', true)
+            ->with('pretest_score', $score);
     }
 
     // ── Preview (untuk development UI, tanpa session) ───────────────
