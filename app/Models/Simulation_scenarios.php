@@ -14,9 +14,11 @@ class Simulation_scenarios extends Model
         'id',
         'module_id',
         'mission_id',
+        'title',
         'context',
         'image',
         'correct_option',
+        'order_number',
     ];
 
     protected static function booted(): void

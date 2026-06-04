@@ -47,6 +47,7 @@ const showToast = (message, type = "success") => {
 const sliderForm = useForm({
     _method: 'put',
     config_type: 'slider',
+    title: props.configs.slider?.title || '',
     x_axis_label: props.configs.slider?.x_axis_label || '',
     conclusion_text: props.configs.slider?.conclusion_text || '',
     levels: props.configs.slider?.levels || []
@@ -101,6 +102,7 @@ const saveSlider = () => {
 const comparisonForm = useForm({
     _method: 'put',
     config_type: 'comparison',
+    page_title: props.configs.comparisons?.[0]?.title || '',
     comparisons: props.configs.comparisons || []
 });
 
@@ -151,6 +153,7 @@ const saveComparison = () => {
 const clickableForm = useForm({
     _method: 'put',
     config_type: 'clickable',
+    page_title: props.configs.clickable_objects?.[0]?.title || '',
     clickables: props.configs.clickable_objects || []
 });
 
@@ -158,8 +161,6 @@ const addClickable = () => {
     clickableForm.clickables.push({
         id: null,
         name: '',
-        pos_x: '',
-        pos_y: '',
         impact_text: '',
         is_positive: 1,
         image: null,
@@ -199,6 +200,7 @@ const saveClickable = () => {
 const scenarioForm = useForm({
     _method: 'put',
     config_type: 'scenario',
+    page_title: props.configs.scenarios?.[0]?.title || '',
     scenarios: props.configs.scenarios || []
 });
 
@@ -301,6 +303,7 @@ const saveScenario = () => {
                 <div v-if="activeTab === 'slider'">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Simulasi Slider</h2>
                     <div class="space-y-4 mb-6">
+                        <InputField label="Judul Halaman Simulasi" v-model="sliderForm.title" placeholder="Misal: Simulasi Perubahan Debit Air" />
                         <InputField label="Teks Kesimpulan (Jika siswa benar)" v-model="sliderForm.conclusion_text" placeholder="Misal: Luar biasa! Kamu berhasil menyeimbangkan ekosistem." />
                     </div>
 
@@ -344,6 +347,10 @@ const saveScenario = () => {
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Simulasi Perbandingan</h2>
                         <Button variant="primary" size="sm" :icon="Plus" @click="addComparison">Tambah Perbandingan</Button>
+                    </div>
+
+                    <div class="mb-6">
+                        <InputField label="Judul Halaman Simulasi" v-model="comparisonForm.page_title" placeholder="Misal: Perbandingan Kondisi Lingkungan" />
                     </div>
 
                     <div class="space-y-6">
@@ -405,22 +412,17 @@ const saveScenario = () => {
                         <Button variant="primary" size="sm" :icon="Plus" @click="addClickable">Tambah Objek</Button>
                     </div>
 
+                    <div class="mb-6">
+                        <InputField label="Judul Halaman Simulasi" v-model="clickableForm.page_title" placeholder="Misal: Solusi untuk Menyelamatkan Sungai" />
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div v-for="(obj, idx) in clickableForm.clickables" :key="idx" class="p-4 border-2 border-green-100 bg-green-50/50 rounded-2xl relative">
                             <button @click="removeClickable(idx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-5 h-5"/></button>
                             <h4 class="font-bold text-green-800 mb-4">Objek {{ idx + 1 }}</h4>
                             
                             <InputField label="Nama Benda" v-model="obj.name" required placeholder="Misal: Sampah Plastik" />
-                            <div class="grid grid-cols-2 gap-2 mt-3">
-                                <InputField label="Posisi X (%) - Kiri ke Kanan" v-model="obj.pos_x" placeholder="Misal: 45" />
-                                <InputField label="Posisi Y (%) - Atas ke Bawah" v-model="obj.pos_y" placeholder="Misal: 60" />
-                            </div>
-                            <p class="text-xs text-blue-600 mt-2 mb-4 bg-blue-50 p-2.5 rounded-lg border border-blue-100 leading-relaxed">
-                                <strong>💡 Petunjuk Posisi (Isi angka 0 sampai 100):</strong><br/>
-                                &bull; <strong>Posisi X</strong> menentukan letak benda dari ujung Kiri (0%) ke Kanan (100%).<br/>
-                                &bull; <strong>Posisi Y</strong> menentukan letak benda dari paling Atas (0%) ke Bawah (100%).<br/>
-                                <em>Misal: X=50 dan Y=50 berarti benda diletakkan persis di tengah layar.</em>
-                            </p>
+                            
                             <div class="mt-3">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Sifat Objek (Dampak)</label>
                                 <select v-model="obj.is_positive" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
@@ -455,6 +457,10 @@ const saveScenario = () => {
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Simulasi Studi Kasus</h2>
                         <Button variant="primary" size="sm" :icon="Plus" @click="addScenario">Tambah Skenario</Button>
+                    </div>
+
+                    <div class="mb-6">
+                        <InputField label="Judul Halaman Simulasi" v-model="scenarioForm.page_title" placeholder="Misal: Studi Kasus Sungai Tercemar" />
                     </div>
 
                     <div class="space-y-6">

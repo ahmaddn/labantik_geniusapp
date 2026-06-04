@@ -117,24 +117,26 @@ class MissionController extends Controller
 
         $mission->load([
             'module',
-            'materials'                        => fn($q) => $q->orderBy('created_at', 'asc'),
+            'materials',
             'materials.mascot',
-            'quizzes'                          => fn($q) => $q->orderBy('created_at', 'asc'),
+            'quizzes',
             'quizzes.questions.mascot',
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
             'module.template',
             'module.template.backgrounds',
+            'simulation_clickable_objects',
         ]);
 
         // Format quizzes
         $quizzes = $mission->quizzes->map(fn($quiz) => [
-            'id'         => $quiz->id,
-            'type'       => $quiz->type,
-            'title'      => $quiz->title,
-            'time_limit' => $quiz->time_limit,
-            'created_at' => $quiz->created_at,
-            'questions'  => $quiz->questions->map(function ($question) {
+            'id'           => $quiz->id,
+            'type'         => $quiz->type,
+            'title'        => $quiz->title,
+            'time_limit'   => $quiz->time_limit,
+            'order_number' => $quiz->order_number ?? 0,
+            'created_at'   => $quiz->created_at,
+            'questions'    => $quiz->questions->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,
                     'question_text' => $question->question_text,
@@ -177,12 +179,13 @@ class MissionController extends Controller
 
         // Format materials
         $materials = $mission->materials->map(fn($material) => [
-            'id'         => $material->id,
-            'type'       => 'materials',
-            'image'      => $material->image,
-            'title'      => $material->title,
-            'subtitle'   => $material->description,
-            'created_at' => $material->created_at,
+            'id'           => $material->id,
+            'type'         => 'materials',
+            'image'        => $material->image,
+            'title'        => $material->title,
+            'subtitle'     => $material->description,
+            'order_number' => $material->order_number ?? 0,
+            'created_at'   => $material->created_at,
             'mascot'     => $material->mascot ? [
                 'id'        => $material->mascot->id,
                 'name_pose' => $material->mascot->name_pose,
@@ -209,9 +212,27 @@ class MissionController extends Controller
             $background = asset('storage/' . $mission->module->template->backgrounds->first()->image);
         }
 
-        // Merge & sort by created_at
-        $allItems = collect(array_merge($quizzes, $materials))
-            ->sortBy(fn($item) => $item['created_at'])
+        $clickables = [];
+        if ($mission->simulation_clickable_objects->isNotEmpty()) {
+            $first = $mission->simulation_clickable_objects->sortBy('order_number')->first();
+            $clickables[] = [
+                'id'           => 'sim_clickable_' . $mission->id,
+                'type'         => 'simulation_clickable',
+                'title'        => $first->title ?? 'Simulasi Objek Klik',
+                'order_number' => $first->order_number ?? 0,
+                'objects'      => $mission->simulation_clickable_objects->map(fn($obj) => [
+                    'id'          => $obj->id,
+                    'name'        => $obj->name,
+                    'image'       => $obj->image,
+                    'impact_text' => $obj->impact_text,
+                    'is_positive' => $obj->is_positive,
+                ])->toArray(),
+            ];
+        }
+
+        // Merge & sort by order_number
+        $allItems = collect(array_merge($quizzes, $materials, $clickables))
+            ->sortBy('order_number')
             ->values()
             ->toArray();
 

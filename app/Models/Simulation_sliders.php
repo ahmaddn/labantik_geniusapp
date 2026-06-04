@@ -13,12 +13,14 @@ class Simulation_sliders extends Model
     protected $fillable = [
         'id',
         'mission_id',
+        'title',
         'x_axis_label',
         'conclusion_text',
         'case_study_scenario',
         'case_study_options',
         'case_study_answer',
         'case_study_feedback',
+        'order_number',
     ];
 
     protected $casts = [

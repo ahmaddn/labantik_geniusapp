@@ -13,12 +13,12 @@ class Simulation_clickable_objects extends Model
     protected $fillable = [
         'id',
         'mission_id',
+        'title',
         'name',
         'image',
-        'pos_x',
-        'pos_y',
         'impact_text',
         'is_positive',
+        'order_number',
     ];
 
     protected $casts = [

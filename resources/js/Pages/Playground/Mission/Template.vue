@@ -43,6 +43,7 @@ import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
 import Case_study from "@/Components/Quiz/Case_study.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
+import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
 import { useMusic } from "@/Composable/useMusic";
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -51,6 +52,7 @@ const COMPONENT_MAP = {
     case_study: Case_study,
     materials: Materials,
     drag_drop: Drag_drop,
+    simulation_clickable: Clickable_objects,
 };
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -69,6 +71,7 @@ const TYPE_META = {
     case_study: { label: "Studi Kasus", color: "#0891b2", bg: "#cffafe" },
     drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7" },
     materials: { label: "Materi", color: "#10b981", bg: "#dcfce7" },
+    simulation_clickable: { label: "Simulasi", color: "#14b8a6", bg: "#ccfbf1" },
 };
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
@@ -91,11 +94,12 @@ const steps = computed(() => {
     const result = [];
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
+        const isSimulation = quiz.type === "simulation_clickable";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 
-        if (isMaterial) {
-            // Material: 1 step, tampilkan question pertama sebagai konten
+        if (isMaterial || isSimulation) {
+            // Material/Simulation: 1 step, tampilkan question pertama sebagai konten
             result.push({
                 quizIndex: quizIdx,
                 quiz,
@@ -583,6 +587,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                         v-if="step.question || step.isMaterial"
                         :is="COMPONENT_MAP[step.quiz.type]"
                         :question="step.question"
+                        :quiz="step.quiz"
                         :modelValue="answers[step.question?.id]"
                         @update-answer="updateAnswer"
                     />

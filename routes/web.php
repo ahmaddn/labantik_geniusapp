@@ -16,6 +16,9 @@ use App\Http\Controllers\Student\DragDropController;
 use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\PretestController;
 use App\Http\Controllers\Student\PosttestController;
+use App\Http\Controllers\Student\MissionController as StudentMissionController;
+use App\Http\Controllers\Admin\ModuleSimulationController;
+use App\Http\Controllers\Admin\SimulationConfigController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
@@ -64,10 +67,10 @@ Route::prefix('player')->name('playground.')->group(function () {
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {
-        Route::get('/module/{module}', [\App\Http\Controllers\Student\MissionController::class, 'missionsList'])->name('index');
-        Route::get('/{mission}', [\App\Http\Controllers\Student\MissionController::class, 'showMission'])->name('show');
-        Route::post('/{mission}/submit', [\App\Http\Controllers\Student\MissionController::class, 'submitMissionAnswers'])->name('submit');
-        Route::get('/{mission}/result', [\App\Http\Controllers\Student\MissionController::class, 'showResult'])->name('result');
+        Route::get('/module/{module}', [StudentMissionController::class, 'missionsList'])->name('index');
+        Route::get('/{mission}', [StudentMissionController::class, 'showMission'])->name('show');
+        Route::post('/{mission}/submit', [StudentMissionController::class, 'submitMissionAnswers'])->name('submit');
+        Route::get('/{mission}/result', [StudentMissionController::class, 'showResult'])->name('result');
     });
 });
 
@@ -147,8 +150,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
 
         // Simulation Config Routes (nested under modules)
         Route::prefix('modules/{modules}/simulation')->name('simulation.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\ModuleSimulationController::class, 'edit'])->name('edit');
-            Route::put('/', [\App\Http\Controllers\Admin\ModuleSimulationController::class, 'update'])->name('update');
+            Route::get('/', [ModuleSimulationController::class, 'edit'])->name('edit');
+            Route::put('/', [ModuleSimulationController::class, 'update'])->name('update');
         });
 
         // Module-level Quiz Routes (for quizzes without a mission_id)
@@ -195,8 +198,8 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
 
             // Simulation Config Routes (nested under missions)
             Route::prefix('{missions}/simulation')->name('simulation.')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Admin\SimulationConfigController::class, 'edit'])->name('edit');
-                Route::put('/', [\App\Http\Controllers\Admin\SimulationConfigController::class, 'update'])->name('update');
+                Route::get('/', [SimulationConfigController::class, 'edit'])->name('edit');
+                Route::put('/', [SimulationConfigController::class, 'update'])->name('update');
             });
         });
     });

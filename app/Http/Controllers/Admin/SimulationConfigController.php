@@ -86,6 +86,7 @@ class SimulationConfigController extends Controller
     private function updateSlider(Request $request, Missions $mission)
     {
         $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
             'x_axis_label' => 'nullable|string|max:255',
             'conclusion_text' => 'nullable|string',
             'case_study_scenario' => 'nullable|string',
@@ -105,6 +106,7 @@ class SimulationConfigController extends Controller
             ['mission_id' => $mission->id],
             [
                 'id' => (string) Str::uuid(),
+                'title' => $validated['title'] ?? null,
                 'x_axis_label' => $validated['x_axis_label'] ?? null,
                 'conclusion_text' => $validated['conclusion_text'] ?? null,
                 'case_study_scenario' => $validated['case_study_scenario'] ?? null,
@@ -116,6 +118,7 @@ class SimulationConfigController extends Controller
 
         // Update if it existed
         $slider->update([
+            'title' => $validated['title'] ?? null,
             'x_axis_label' => $validated['x_axis_label'] ?? null,
             'conclusion_text' => $validated['conclusion_text'] ?? null,
             'case_study_scenario' => $validated['case_study_scenario'] ?? null,
@@ -168,6 +171,7 @@ class SimulationConfigController extends Controller
     private function updateComparison(Request $request, Missions $mission)
     {
         $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
             'comparisons' => 'nullable|array',
             'comparisons.*.id' => 'nullable|string',
             'comparisons.*.left_label' => 'nullable|string|max:255',
@@ -189,6 +193,7 @@ class SimulationConfigController extends Controller
 
                 $comp = Simulation_comparisons::firstOrNew(['id' => $compId]);
                 $comp->mission_id = $mission->id;
+                $comp->title = $validated['page_title'] ?? null;
                 $comp->left_label = $compData['left_label'] ?? null;
                 $comp->right_label = $compData['right_label'] ?? null;
                 $comp->left_narration = $compData['left_narration'] ?? null;
@@ -228,6 +233,7 @@ class SimulationConfigController extends Controller
     private function updateClickable(Request $request, Missions $mission)
     {
         $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
             'clickables' => 'nullable|array',
             'clickables.*.id' => 'nullable|string',
             'clickables.*.name' => 'required|string|max:255',
@@ -247,6 +253,7 @@ class SimulationConfigController extends Controller
 
                 $c = Simulation_clickable_objects::firstOrNew(['id' => $cId]);
                 $c->mission_id = $mission->id;
+                $c->title = $validated['page_title'] ?? null;
                 $c->name = $cData['name'];
                 $c->pos_x = $cData['pos_x'] ?? null;
                 $c->pos_y = $cData['pos_y'] ?? null;
@@ -277,6 +284,7 @@ class SimulationConfigController extends Controller
     {
         // For Scenario & Case Study (Studi Kasus)
         $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
             'scenarios' => 'nullable|array',
             'scenarios.*.id' => 'nullable|string',
             'scenarios.*.context' => 'required|string',
@@ -298,6 +306,7 @@ class SimulationConfigController extends Controller
 
                 $s = Simulation_scenarios::firstOrNew(['id' => $sId]);
                 $s->mission_id = $mission->id;
+                $s->title = $validated['page_title'] ?? null;
                 $s->context = $sData['context'];
                 $s->correct_option = $sData['correct_option'] ?? null;
 

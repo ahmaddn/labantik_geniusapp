@@ -13,6 +13,7 @@ class Simulation_comparisons extends Model
     protected $fillable = [
         'id',
         'mission_id',
+        'title',
         'left_label',
         'right_label',
         'left_narration',
@@ -20,6 +21,7 @@ class Simulation_comparisons extends Model
         'left_image',
         'right_image',
         'explanation',
+        'order_number',
     ];
 
     protected static function booted(): void
