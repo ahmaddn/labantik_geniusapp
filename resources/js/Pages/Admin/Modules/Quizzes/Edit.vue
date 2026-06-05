@@ -875,11 +875,19 @@ const toggleCardVariant = () => {
                                 <h4 class="font-bold text-sm mb-3">
                                     Tambah Opsi Jawaban
                                 </h4>
-                                <div class="space-y-2">
+                                <div class="space-y-3">
                                     <InputField
                                         v-model="currentOption.option_text"
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
+                                    />
+                                    <TextareaField
+                                        v-if="quizForm.type === 'case_study'"
+                                        v-model="currentOption.feedback"
+                                        label="Feedback / Dampak Jawaban (Opsional)"
+                                        placeholder="Jelaskan apa yang terjadi jika siswa memilih opsi ini (Sangat penting untuk Studi Kasus)"
+                                        :rows="2"
+                                        border-color="yellow"
                                     />
                                     <label class="flex items-center gap-2">
                                         <input

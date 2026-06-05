@@ -23,9 +23,4 @@ class Simulation_scores extends Model
     {
         return $this->belongsTo(Missions::class, 'mission_id');
     }
-
-    public function simulation_scenario()
-    {
-        return $this->belongsTo(Simulation_scenarios::class, 'simulation_scenario_id');
-    }
 }

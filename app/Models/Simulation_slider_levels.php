@@ -15,7 +15,7 @@ class Simulation_slider_levels extends Model
         'simulation_slider_id',
         'level_name',
         'narration',
-        'water_debit',
+        'metric_value',
         'image',
     ];
 

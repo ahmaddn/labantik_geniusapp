@@ -11,8 +11,6 @@ use App\Models\Simulation_comparisons;
 use App\Models\Simulation_clickable_objects;
 use App\Models\Simulation_solutions;
 use App\Models\Simulation_solution_options;
-use App\Models\Simulation_scenarios;
-use App\Models\Simulation_scenario_options;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -35,7 +33,6 @@ class SimulationConfigController extends Controller
             'simulation_comparisons',
             'simulation_clickable_objects',
             'simulation_solutions.options',
-            'simulation_scenarios.options',
         ]);
 
         return Inertia::render('Admin/Modules/Missions/Simulation/Edit', [
@@ -46,7 +43,6 @@ class SimulationConfigController extends Controller
                 'comparisons' => $missions->simulation_comparisons,
                 'clickable_objects' => $missions->simulation_clickable_objects,
                 'solutions' => $missions->simulation_solutions->first(),
-                'scenarios' => $missions->simulation_scenarios,
             ]
         ]);
     }
@@ -73,9 +69,6 @@ class SimulationConfigController extends Controller
             case 'clickable':
                 $this->updateClickable($request, $missions);
                 break;
-            case 'scenario':
-                $this->updateScenario($request, $missions);
-                break;
             default:
                 return back()->with('error', 'Tipe konfigurasi tidak valid.');
         }
@@ -87,7 +80,10 @@ class SimulationConfigController extends Controller
     {
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'x_axis_label' => 'nullable|string|max:255',
+            'variables' => 'nullable|array',
+            'variables.*.name' => 'nullable|string|max:255',
+            'variables.*.min_label' => 'nullable|string|max:255',
+            'variables.*.max_label' => 'nullable|string|max:255',
             'conclusion_text' => 'nullable|string',
             'case_study_scenario' => 'nullable|string',
             'case_study_options' => 'nullable|array',
@@ -97,7 +93,7 @@ class SimulationConfigController extends Controller
             'levels.*.id' => 'nullable|string',
             'levels.*.level_name' => 'required|string|max:255',
             'levels.*.narration' => 'nullable|string',
-            'levels.*.water_debit' => 'nullable|string',
+            'levels.*.metric_value' => 'nullable|string',
             'levels.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
             'levels.*.remove_image' => 'nullable|boolean',
         ]);
@@ -107,7 +103,7 @@ class SimulationConfigController extends Controller
             [
                 'id' => (string) Str::uuid(),
                 'title' => $validated['title'] ?? null,
-                'x_axis_label' => $validated['x_axis_label'] ?? null,
+                'variables' => $validated['variables'] ?? [],
                 'conclusion_text' => $validated['conclusion_text'] ?? null,
                 'case_study_scenario' => $validated['case_study_scenario'] ?? null,
                 'case_study_options' => isset($validated['case_study_options']) ? json_encode($validated['case_study_options']) : null,
@@ -119,7 +115,7 @@ class SimulationConfigController extends Controller
         // Update if it existed
         $slider->update([
             'title' => $validated['title'] ?? null,
-            'x_axis_label' => $validated['x_axis_label'] ?? null,
+            'variables' => $validated['variables'] ?? [],
             'conclusion_text' => $validated['conclusion_text'] ?? null,
             'case_study_scenario' => $validated['case_study_scenario'] ?? null,
             'case_study_options' => isset($validated['case_study_options']) ? json_encode($validated['case_study_options']) : null,
@@ -138,7 +134,7 @@ class SimulationConfigController extends Controller
                 $level->simulation_slider_id = $slider->id;
                 $level->level_name = $levelData['level_name'];
                 $level->narration = $levelData['narration'] ?? null;
-                $level->water_debit = $levelData['water_debit'] ?? null;
+                $level->metric_value = $levelData['metric_value'] ?? null;
 
                 if (!empty($levelData['remove_image']) && $level->image) {
                     Storage::disk('public')->delete($level->image);
@@ -277,74 +273,6 @@ class SimulationConfigController extends Controller
         foreach ($toDelete as $item) {
             if ($item->image) Storage::disk('public')->delete($item->image);
             $item->delete();
-        }
-    }
-
-    private function updateScenario(Request $request, Missions $mission)
-    {
-        // For Scenario & Case Study (Studi Kasus)
-        $validated = $request->validate([
-            'page_title' => 'nullable|string|max:255',
-            'scenarios' => 'nullable|array',
-            'scenarios.*.id' => 'nullable|string',
-            'scenarios.*.context' => 'required|string',
-            'scenarios.*.correct_option' => 'nullable|string',
-            'scenarios.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
-            'scenarios.*.remove_image' => 'nullable|boolean',
-            'scenarios.*.options' => 'nullable|array',
-            'scenarios.*.options.*.id' => 'nullable|string',
-            'scenarios.*.options.*.label' => 'required|string',
-            'scenarios.*.options.*.text' => 'required|string',
-            'scenarios.*.options.*.feedback' => 'nullable|string',
-        ]);
-
-        $existingIds = [];
-        if (!empty($validated['scenarios'])) {
-            foreach ($validated['scenarios'] as $index => $sData) {
-                $sId = $sData['id'] ?? (string) Str::uuid();
-                $existingIds[] = $sId;
-
-                $s = Simulation_scenarios::firstOrNew(['id' => $sId]);
-                $s->mission_id = $mission->id;
-                $s->title = $validated['page_title'] ?? null;
-                $s->context = $sData['context'];
-                $s->correct_option = $sData['correct_option'] ?? null;
-
-                if (!empty($sData['remove_image']) && $s->image) {
-                    Storage::disk('public')->delete($s->image);
-                    $s->image = null;
-                }
-                if ($request->hasFile("scenarios.{$index}.image")) {
-                    if ($s->image) Storage::disk('public')->delete($s->image);
-                    $s->image = $request->file("scenarios.{$index}.image")->store('simulations/scenarios', 'public');
-                }
-
-                $s->save();
-
-                // Handle Options
-                $existingOptIds = [];
-                if (!empty($sData['options'])) {
-                    foreach ($sData['options'] as $optData) {
-                        $optId = $optData['id'] ?? (string) Str::uuid();
-                        $existingOptIds[] = $optId;
-
-                        $opt = Simulation_scenario_options::firstOrNew(['id' => $optId]);
-                        $opt->simulation_scenario_id = $s->id;
-                        $opt->label = $optData['label'];
-                        $opt->text = $optData['text'];
-                        $opt->feedback = $optData['feedback'] ?? null;
-                        $opt->save();
-                    }
-                }
-
-                Simulation_scenario_options::where('simulation_scenario_id', $s->id)->whereNotIn('id', $existingOptIds)->delete();
-            }
-        }
-
-        $toDelete = Simulation_scenarios::where('mission_id', $mission->id)->whereNotIn('id', $existingIds)->get();
-        foreach ($toDelete as $item) {
-            if ($item->image) Storage::disk('public')->delete($item->image);
-            $item->delete(); // also deletes options via cascade
         }
     }
 }

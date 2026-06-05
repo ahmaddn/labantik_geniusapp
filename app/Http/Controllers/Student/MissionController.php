@@ -126,6 +126,7 @@ class MissionController extends Controller
             'module.template',
             'module.template.backgrounds',
             'simulation_clickable_objects',
+            'simulation_sliders.levels',
         ]);
 
         // Format quizzes
@@ -230,8 +231,27 @@ class MissionController extends Controller
             ];
         }
 
+        $sliders = [];
+        if ($mission->simulation_sliders->isNotEmpty()) {
+            $firstSlider = $mission->simulation_sliders->sortBy('order_number')->first();
+            $sliders[] = [
+                'id'           => 'sim_slider_' . $mission->id,
+                'type'         => 'simulation_slider',
+                'title'        => $firstSlider->title ?? 'Simulasi Interaktif',
+                'variables'    => $firstSlider->variables ?? [],
+                'order_number' => $firstSlider->order_number ?? 0,
+                'levels'       => $firstSlider->levels->map(fn($lvl) => [
+                    'id'          => $lvl->id,
+                    'level_name'  => $lvl->level_name,
+                    'narration'   => $lvl->narration,
+                    'metric_value'=> $lvl->metric_value,
+                    'image'       => $lvl->image,
+                ])->toArray(),
+            ];
+        }
+
         // Merge & sort by order_number
-        $allItems = collect(array_merge($quizzes, $materials, $clickables))
+        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders))
             ->sortBy('order_number')
             ->values()
             ->toArray();

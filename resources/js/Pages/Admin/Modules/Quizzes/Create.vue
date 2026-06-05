@@ -44,11 +44,14 @@ const showSuccess = ref(false);
 const toastType = ref("success");
 const cardVariant = ref("playful");
 
+const queryParams = new URLSearchParams(window.location.search);
+const initialType = queryParams.get("type") || "multiple_choices";
+
 const quizForm = ref({
     title: "",
     description: "",
     time_limit: 30,
-    type: "multiple_choices",
+    type: initialType,
     category: props.presetCategory || "mission",
 });
 
@@ -287,7 +290,10 @@ const addQuestion = () => {
         }
     } else {
         if (!currentQuestion.value.expected_keywords.trim()) {
-            showToast("Kata kunci jawaban yang diharapkan harus diisi!", "warning");
+            showToast(
+                "Kata kunci jawaban yang diharapkan harus diisi!",
+                "warning",
+            );
             return;
         }
     }
@@ -296,7 +302,12 @@ const addQuestion = () => {
         id: Date.now(),
         options: isShortAnswer.value ? [] : [...questionOptions.value],
     });
-    currentQuestion.value = { question_text: "", mascot_id: null, image: null, expected_keywords: "" };
+    currentQuestion.value = {
+        question_text: "",
+        mascot_id: null,
+        image: null,
+        expected_keywords: "",
+    };
     questionOptions.value = [];
     showToast("Pertanyaan ditambahkan!", "success");
 };
@@ -784,6 +795,7 @@ const finalSave = () => {
                                 label="Tipe Kuis"
                                 :options="quizTypeOptions"
                                 border-color="orange"
+                                :disabled="!!queryParams.get('type')"
                             />
                             <SelectField
                                 v-model="quizForm.category"
@@ -925,7 +937,7 @@ const finalSave = () => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div v-if="isShortAnswer" class="border-t pt-4">
                                 <h4 class="font-bold text-sm mb-3">
                                     Kunci Jawaban Singkat
@@ -937,18 +949,29 @@ const finalSave = () => {
                                     :rows="2"
                                     border-color="green"
                                 />
-                                <p class="text-xs text-gray-500 mt-1">Siswa akan dianggap benar jika jawaban mereka mengandung kata kunci di atas.</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Siswa akan dianggap benar jika jawaban
+                                    mereka mengandung kata kunci di atas.
+                                </p>
                             </div>
-                            
+
                             <div v-else class="border-t pt-4">
                                 <h4 class="font-bold text-sm mb-3">
                                     Tambah Opsi Jawaban
                                 </h4>
-                                <div class="space-y-2">
+                                <div class="space-y-3">
                                     <InputField
                                         v-model="currentOption.option_text"
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
+                                    />
+                                    <TextareaField
+                                        v-if="quizForm.type === 'case_study'"
+                                        v-model="currentOption.feedback"
+                                        label="Feedback / Dampak Jawaban (Opsional)"
+                                        placeholder="Jelaskan apa yang terjadi jika siswa memilih opsi ini (Sangat penting untuk Studi Kasus)"
+                                        :rows="2"
+                                        border-color="yellow"
                                     />
                                     <label class="flex items-center gap-2">
                                         <input
@@ -1061,7 +1084,10 @@ const finalSave = () => {
                                 <div class="text-xs text-blue-600">
                                     {{ question.options.length }} opsi
                                 </div>
-                                <div v-if="isShortAnswer" class="text-xs text-green-600 mt-1">
+                                <div
+                                    v-if="isShortAnswer"
+                                    class="text-xs text-green-600 mt-1"
+                                >
                                     Kunci: {{ question.expected_keywords }}
                                 </div>
                             </div>
@@ -1522,7 +1548,8 @@ const finalSave = () => {
                                 <span class="flex items-center gap-1"
                                     ><Clock class="w-4 h-4" />{{
                                         quizForm.time_limit
-                                    }} {{ timeUnitLabel }}</span
+                                    }}
+                                    {{ timeUnitLabel }}</span
                                 >
                                 <span class="flex items-center gap-1"
                                     ><Tag class="w-4 h-4" />{{

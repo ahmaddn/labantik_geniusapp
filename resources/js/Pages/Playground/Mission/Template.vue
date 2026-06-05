@@ -44,6 +44,7 @@ import Case_study from "@/Components/Quiz/Case_study.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
 import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
+import Double_slider from "@/Components/Simulation/DoubleSlider.vue";
 import { useMusic } from "@/Composable/useMusic";
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -53,6 +54,7 @@ const COMPONENT_MAP = {
     materials: Materials,
     drag_drop: Drag_drop,
     simulation_clickable: Clickable_objects,
+    simulation_slider: Double_slider,
 };
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -72,6 +74,7 @@ const TYPE_META = {
     drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7" },
     materials: { label: "Materi", color: "#10b981", bg: "#dcfce7" },
     simulation_clickable: { label: "Simulasi", color: "#14b8a6", bg: "#ccfbf1" },
+    simulation_slider: { label: "Simulasi Slider", color: "#f43f5e", bg: "#ffe4e6" },
 };
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
@@ -94,7 +97,7 @@ const steps = computed(() => {
     const result = [];
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
-        const isSimulation = quiz.type === "simulation_clickable";
+        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 

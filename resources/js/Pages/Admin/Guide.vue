@@ -231,19 +231,24 @@ const activeTab = ref("modules");
                                         </div>
 
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <!-- Slider -->
                                             <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                <h5 class="font-bold text-blue-600 flex items-center gap-2 mb-2 text-base"><Settings class="w-5 h-5"/> Slider (Perubahan Kondisi)</h5>
-                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> Menunjukkan proses perubahan atau tahapan suatu kejadian. Siswa dapat menggeser tuas (*slider*) ke kanan/kiri untuk melihat gambar yang berubah secara interaktif.</p>
+                                                <h5 class="font-bold text-blue-600 flex items-center gap-2 mb-2 text-base"><Settings class="w-5 h-5"/> Slider Dinamis (Banyak Variabel)</h5>
+                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> Menunjukkan perubahan berdasarkan satu atau banyak variabel. Siswa dapat menggeser beberapa tuas (*slider*) untuk melihat gambar dan status yang berubah secara interaktif (Kombinasi Matriks).</p>
                                                 <div class="bg-blue-50 p-2.5 rounded-lg border border-blue-100 text-sm text-blue-800 leading-relaxed mb-3">
                                                     <strong>💡 Contoh:</strong><br/>
-                                                    Level 1 (Lingkungan Bersih) &rarr; Level 2 (Banyak Sampah) &rarr; Level 3 (Banjir Bandang).
+                                                    Variabel 1 (Suhu Udara) + Variabel 2 (Polusi Udara) = Status Level (Aman / Bahaya). Anda bisa menambah jumlah variabel sesuka hati!
+                                                </div>
+                                                <div class="bg-gray-50 border border-gray-200 p-2.5 rounded-lg text-sm text-gray-700 leading-relaxed mb-3">
+                                                    <strong>Apa bedanya Variabel dan Level?</strong><br/>
+                                                    • <strong>Variabel:</strong> Alat atau "Sebab" yang digeser oleh siswa (misal: "Suhu").<br/>
+                                                    • <strong>Level:</strong> Hasil atau "Akibat" visual yang muncul di layar akibat pergeseran tuas tersebut (misal: Muncul gambar "Pohon Kering").
                                                 </div>
                                                 <p class="text-sm text-gray-600 leading-relaxed">
                                                     <strong>Cara Membuat:</strong><br/>
-                                                    1. Klik tombol <strong>Tambah Level Baru</strong>.<br/>
-                                                    2. Isi <strong>Nama Level</strong> (misal: Tahap 1) dan unggah Gambar-nya.<br/>
-                                                    3. Buat minimal 2 level agar tuas (*slider*) bisa berfungsi.
+                                                    1. Klik tombol <strong>Tambah Variabel</strong> sebanyak yang Anda inginkan (misal: 2 variabel).<br/>
+                                                    2. Isi label kiri (minimal) dan kanan (maksimal) untuk setiap variabel.<br/>
+                                                    3. Klik tombol <strong>Tambah Level Baru</strong>. Isi <strong>Nama Level</strong> dan unggah Gambar-nya.<br/>
+                                                    4. (Opsional) Isi kolom "Keterangan Tambahan" dengan nilai metrik spesifik (misal: "Suhu 30°C").
                                                 </p>
                                             </div>
 
@@ -276,31 +281,32 @@ const activeTab = ref("modules");
                                                     <strong>Cara Membuat:</strong><br/>
                                                     1. Klik <strong>Tambah Objek Baru</strong>.<br/>
                                                     2. Isi Nama Benda dan pilih dampaknya (Positif/Negatif).<br/>
-                                                    3. Atur <strong>Posisi X</strong> (Kiri-Kanan) dan <strong>Posisi Y</strong> (Atas-Bawah) dengan persentase 0 - 100.<br/>
-                                                    4. Unggah gambar benda (sangat disarankan gambar transparan/PNG).
+                                                    3. Unggah gambar benda (sangat disarankan gambar transparan/PNG).
                                                 </p>
                                             </div>
 
-                                            <!-- Studi Kasus -->
-                                            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                <h5 class="font-bold text-purple-600 flex items-center gap-2 mb-2 text-base"><PlayCircle class="w-5 h-5"/> Studi Kasus</h5>
-                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> Memberikan simulasi pengambilan keputusan. Anda mengetik cerita, dan siswa harus memilih opsi A/B/C lalu melihat dampaknya.</p>
-                                                <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-100 text-sm text-purple-800 leading-relaxed mb-3">
-                                                    <strong>💡 Contoh Kasus:</strong> "Temanmu membuang sampah sembarangan".<br/>
-                                                    Pilihan A (Dibiarkan saja), Pilihan B (Ditegur & Diajak membuang ke tempatnya).
-                                                </div>
-                                                <p class="text-sm text-gray-600 leading-relaxed">
-                                                    <strong>Cara Membuat:</strong><br/>
-                                                    1. Klik <strong>Tambah Skenario Kasus</strong>.<br/>
-                                                    2. Ketikkan Cerita/Konteks Kasus dan unggah gambarnya.<br/>
-                                                    3. Klik <strong>Tambah Opsi</strong> untuk membuat pilihan (A, B, C, dst) beserta jawaban/dampaknya.<br/>
-                                                    4. Tentukan huruf label mana yang merupakan opsi paling benar.
-                                                </p>
                                             </div>
-                                        </div>
-                                        
+
                                         <div class="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-sm text-red-600 font-bold">
                                             <Info class="w-4 h-4"/> Jangan lupa selalu klik "Simpan" di setiap tab setelah melakukan perubahan!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 5 -->
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">5</div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">Membuat Studi Kasus <span class="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-lg">Penting</span></h4>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-gray-600">
+                                        <p class="mb-4 text-sm bg-white p-3 rounded-lg border border-gray-100">Fitur ini digunakan untuk membuat skenario studi kasus. Bentuknya berupa narasi cerita dengan opsi tindakan yang jika dipilih oleh siswa akan memunculkan <strong>feedback</strong> (umpan balik/dampak) khusus.</p>
+                                        <p class="mb-3 font-bold text-gray-800">Cara Membuat:</p>
+                                        <div class="space-y-3 mb-4">
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di halaman Detail Misi, klik tombol <span class="bg-red-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Studi Kasus</span>.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Isi judul studi kasus. Tipe kuis akan otomatis terkunci di "Studi Kasus".</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Setelah disimpan, masuk ke halaman Kelola Soal untuk studi kasus tersebut.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Tambahkan Pertanyaan sebagai skenario narasi. Pada setiap pilihan jawaban, pastikan Anda mengisi kolom <span class="bg-yellow-100 text-yellow-800 px-2 rounded font-bold">Feedback / Umpan Balik</span>.</div></div>
                                         </div>
                                     </div>
                                 </div>
@@ -424,8 +430,6 @@ const activeTab = ref("modules");
 
                 </div>
             </div>
-
-        </div>
     </AppLayout>
 </template>
 

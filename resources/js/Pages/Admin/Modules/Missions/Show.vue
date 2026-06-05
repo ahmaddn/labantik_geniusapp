@@ -136,6 +136,15 @@ const goToAddQuiz = () => {
     );
 };
 
+const goToAddCaseStudy = () => {
+    router.visit(
+        route("admin.modules.missions.quizzes.create", [
+            props.module.id,
+            props.mission.id,
+        ]) + "?type=case_study",
+    );
+};
+
 // Import forms (CSV/XLSX)
 const materialImport = useForm({ file: null });
 const quizImport = useForm({ file: null });
@@ -400,6 +409,15 @@ const formatDate = (dateString) => {
                     >
                         Tambah Kuis
                     </Button>
+                    <Button
+                        class="w-full sm:w-auto"
+                        variant="danger"
+                        size="md"
+                        :icon="Plus"
+                        @click="goToAddCaseStudy"
+                    >
+                        Tambah Studi Kasus
+                    </Button>
                     <!-- Import: Materi (modal) -->
                     <div class="flex items-center gap-2">
                         <Button
@@ -477,6 +495,14 @@ const formatDate = (dateString) => {
                         >
                             Tambah Kuis
                         </Button>
+                        <Button
+                            variant="danger"
+                            size="md"
+                            :icon="Plus"
+                            @click="goToAddCaseStudy"
+                        >
+                            Tambah Studi Kasus
+                        </Button>
                     </div>
                 </div>
 
@@ -494,7 +520,8 @@ const formatDate = (dateString) => {
                             class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
                             :class="{
                                 'border-blue-200': item.itemType === 'material',
-                                'border-orange-200': item.itemType === 'quiz',
+                                'border-orange-200': item.itemType === 'quiz' && item.type !== 'case_study',
+                                'border-teal-200': item.itemType === 'quiz' && item.type === 'case_study',
                                 'border-purple-200': item.itemType.startsWith('simulation_'),
                             }"
                         >
@@ -533,7 +560,7 @@ const formatDate = (dateString) => {
                                     </div>
 
                                     <!-- Quiz Item -->
-                                    <div v-else-if="item.itemType === 'quiz'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div v-else-if="item.itemType === 'quiz' && item.type !== 'case_study'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
                                             <div class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 shrink-0">
                                                 <HelpCircle class="text-orange-600 w-8 h-8" />
@@ -564,6 +591,38 @@ const formatDate = (dateString) => {
                                             <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteQuiz(item.id)" />
                                         </div>
                                     </div>
+
+                                    <!-- Case Study Item -->
+                                    <div v-else-if="item.itemType === 'quiz' && item.type === 'case_study'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+                                            <div class="bg-teal-100 p-3 rounded-2xl border-2 border-teal-300 shrink-0">
+                                                <AlignLeft class="text-teal-600 w-8 h-8" />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <span class="text-xs px-2 py-1 rounded-full bg-teal-100 text-teal-700 border border-teal-300 font-medium">STUDI KASUS</span>
+                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                                    <span class="text-xs px-3 py-1 rounded-full border bg-pink-100 text-pink-700 border-pink-300 font-medium">CASE STUDY</span>
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ item.time_limit }} menit</span>
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
+                                                </div>
+                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+                                                <div class="flex flex-wrap gap-4 mt-3">
+                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><List class="w-3 h-3" /> {{ item.questions_count || 0 }} Pertanyaan</span>
+                                                    <span v-if="item.category" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.category }}</span>
+                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowQuiz(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditQuiz(item.id)" />
+                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteQuiz(item.id)" />
+                                        </div>
+                                    </div>
+
                                     
                                     <!-- Simulation Item -->
                                     <div v-else class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -572,7 +631,6 @@ const formatDate = (dateString) => {
                                                 <SlidersHorizontal v-if="item.itemType === 'simulation_slider'" class="text-purple-600 w-8 h-8" />
                                                 <GitCompare v-else-if="item.itemType === 'simulation_comparison'" class="text-purple-600 w-8 h-8" />
                                                 <MousePointerClick v-else-if="item.itemType === 'simulation_clickable_object'" class="text-purple-600 w-8 h-8" />
-                                                <AlignLeft v-else-if="item.itemType === 'simulation_scenario'" class="text-purple-600 w-8 h-8" />
                                                 <HelpCircle v-else class="text-purple-600 w-8 h-8" />
                                             </div>
                                             <div class="flex-1 min-w-0">

@@ -103,11 +103,7 @@ class MissionController extends Controller
         $clickables = $missions->simulation_clickable_objects()->get()->map(function ($s) { 
             return ['id' => $s->id, 'type' => 'simulation_clickable_object', 'title' => 'Simulasi Objek Klik (' . $s->name . ')', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
         });
-        $scenarios = $missions->simulation_scenarios()->get()->map(function ($s) { 
-            return ['id' => $s->id, 'type' => 'simulation_scenario', 'title' => 'Studi Kasus', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
-        });
-
-        $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->concat($scenarios)->values();
+        $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->values();
 
         return Inertia::render('Admin/Modules/Missions/Show', [
             'module' => [
@@ -205,9 +201,6 @@ class MissionController extends Controller
                     break;
                 case 'simulation_clickable_object':
                     $model = \App\Models\Simulation_clickable_objects::find($step['id']);
-                    break;
-                case 'simulation_scenario':
-                    $model = \App\Models\Simulation_scenarios::find($step['id']);
                     break;
             }
 

@@ -310,7 +310,7 @@ class QuizController extends Controller
      */
     public function createModule(Learning_modules $modules, string $category)
     {
-        if (!in_array($category, ['pretest', 'posttest'])) {
+        if (!in_array($category, ['pretest', 'posttest', 'case_study'])) {
             abort(404);
         }
 
@@ -511,7 +511,7 @@ class QuizController extends Controller
             'description' => 'nullable|string',
             'type'        => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
             'time_limit'  => 'required|integer|min:1',
-            'category'    => 'required|in:pretest,posttest',
+            'category'    => 'required|in:pretest,posttest,case_study',
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',

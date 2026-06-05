@@ -152,8 +152,8 @@ const openCreateQuizPretest = (category) => {
     );
 };
 
-const goToSimulation = () => {
-    router.visit(route("admin.modules.simulation.edit", props.module.id));
+const goToCaseStudy = () => {
+    router.visit(route("admin.modules.quizzes.create", [props.module.id, 'case_study']) + '?type=case_study');
 };
 
 const openAddMissionModal = () => {
@@ -358,7 +358,7 @@ const deleteMission = () => {
                                 variant="secondary"
                                 size="md"
                                 :icon="FileText"
-                                @click="goToSimulation"
+                                @click="goToCaseStudy"
                             >
                                 Studi Kasus
                             </Button>

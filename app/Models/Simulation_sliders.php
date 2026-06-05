@@ -21,10 +21,12 @@ class Simulation_sliders extends Model
         'case_study_answer',
         'case_study_feedback',
         'order_number',
+        'variables',
     ];
 
     protected $casts = [
         'case_study_options' => 'array',
+        'variables' => 'array',
     ];
 
     protected static function booted(): void

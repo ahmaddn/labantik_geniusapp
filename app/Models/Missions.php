@@ -79,8 +79,4 @@ class Missions extends Model
         return $this->hasMany(Simulation_solutions::class, 'mission_id');
     }
 
-    public function simulation_scenarios()
-    {
-        return $this->hasMany(Simulation_scenarios::class, 'mission_id');
-    }
 }
