@@ -211,8 +211,9 @@ const activeTab = ref("modules");
                                     <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Kembali ke halaman Detail Modul, gulir/scroll ke bawah ke bagian <strong>Daftar Misi</strong>.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Misi Baru</span>. Isi judul dan urutannya.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk menambahkan halaman kesimpulan di akhir misi, klik <span class="font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded text-sm inline-flex items-center gap-1">Edit (Ikon Pensil)</span> pada misi tersebut. Isi <strong>Teks Kesimpulan Singkat</strong> dan <strong>Penjelasan Kesimpulan</strong>. Kosongkan jika tidak ingin menampilkan kesimpulan.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Setelah tersimpan, klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> pada misi tersebut.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik <span class="bg-green-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Materi</span> untuk mengetik materi pelajaran atau menyisipkan <strong>Link YouTube</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik <span class="bg-green-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Materi</span> untuk menambah materi pelajaran.<br/><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Fitur Baru</span> Pada halaman tambah materi, Anda kini dapat memilih Tipe Layout: <strong>Reguler (Teks/Video)</strong> atau <strong>Konseptual Sistematis</strong>. <br/>Jika memilih <em>Konseptual Sistematis</em>, Anda bisa membuat diagram interaktif (lengkap dengan teks 4 sudut, slider tuas penggeser, dan kotak indikator metrik yang ukurannya membesar/mengecil otomatis sesuai interaksi siswa).</div></div>
                                     </div>
                                 </div>
                             </div>
@@ -254,18 +255,18 @@ const activeTab = ref("modules");
 
                                             <!-- Perbandingan -->
                                             <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                <h5 class="font-bold text-orange-600 flex items-center gap-2 mb-2 text-base"><FileText class="w-5 h-5"/> Perbandingan</h5>
-                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> Membandingkan dua keadaan yang berbeda secara berdampingan (kiri dan kanan), sehingga siswa bisa langsung menganalisis perbedaannya.</p>
+                                                <h5 class="font-bold text-orange-600 flex items-center gap-2 mb-2 text-base"><FileText class="w-5 h-5"/> Perbandingan Dinamis</h5>
+                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> <span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Pembaruan</span> Membandingkan dua atau lebih keadaan secara berdampingan. Posisi gambar sekarang akan menyesuaikan jumlah data secara otomatis (tidak terbatas hanya Kiri-Kanan), sehingga siswa bisa langsung menganalisis perbedaannya secara lebih interaktif.</p>
                                                 <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-100 text-sm text-orange-800 leading-relaxed mb-3">
                                                     <strong>💡 Contoh:</strong><br/>
-                                                    Sisi Kiri (Gambar Paru-paru Perokok) <strong>vs</strong> Sisi Kanan (Gambar Paru-paru Sehat).
+                                                    Gambar Paru-paru Perokok <strong>vs</strong> Gambar Paru-paru Sehat <strong>vs</strong> Gambar Paru-paru Atlet. Anda bisa menambah lebih dari 2 gambar untuk dibandingkan secara berjejer!
                                                 </div>
                                                 <p class="text-sm text-gray-600 leading-relaxed">
                                                     <strong>Cara Membuat:</strong><br/>
-                                                    1. Klik tombol <strong>Tambah Perbandingan</strong>.<br/>
-                                                    2. Unggah gambar dan isi teks untuk <strong>Sisi Kiri</strong>.<br/>
-                                                    3. Unggah gambar dan isi teks untuk <strong>Sisi Kanan</strong>.<br/>
-                                                    4. (Opsional) Ketikkan teks kesimpulan perbandingannya.
+                                                    1. Klik tombol <strong>Tambah Item Perbandingan</strong>.<br/>
+                                                    2. Unggah gambar dan isi teks penjelasan untuk item tersebut.<br/>
+                                                    3. Tambahkan lagi jika perlu. Jika lebih dari dua, tampilannya akan otomatis menyesuaikan layar.<br/>
+                                                    4. (Opsional) Ketikkan teks narasi penjelasan utamanya.
                                                 </p>
                                             </div>
 
@@ -430,6 +431,7 @@ const activeTab = ref("modules");
 
                 </div>
             </div>
+        </div>
     </AppLayout>
 </template>
 

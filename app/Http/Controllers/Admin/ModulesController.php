@@ -111,6 +111,8 @@ class ModulesController extends Controller
                 'duration' => $m->duration ?? null,
                 'materials_count' => $m->materials_count ?? 0,
                 'quizzes_count' => $m->quizzes_count ?? 0,
+                'conclusion_speech' => $m->conclusion_speech ?? null,
+                'conclusion_body' => $m->conclusion_body ?? null,
             ]);
 
         /*

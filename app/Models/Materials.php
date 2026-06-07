@@ -22,6 +22,7 @@ class Materials extends Model
         'mascot_id',
         'module_id',
         'mission_id',
+        'layout_type',
     ];
 
     protected static function booted(): void

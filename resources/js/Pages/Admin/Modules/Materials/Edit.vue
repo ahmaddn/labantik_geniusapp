@@ -46,14 +46,35 @@ const detectMediaType = (path) => {
 
 const mediaType = ref(detectMediaType(props.material.image));
 
+const initialLayoutType = props.material.layout_type || "default";
+let initialConceptualData = {
+    topLeft: "",
+    topRight: "",
+    bottomLeft: "",
+    bottomRight: "",
+    sliderMin: "Ringan",
+    sliderMax: "Deras",
+    metric1Title: "Curah Hujan",
+    metric1Desc: "Input Air",
+    metric2Title: "Debit Sungai",
+    metric2Desc: "Jumlah Debit"
+};
+if (initialLayoutType === 'conceptual_systematic' && props.material.content) {
+    try {
+        initialConceptualData = JSON.parse(props.material.content);
+    } catch(e) {}
+}
+
 const materialForm = ref({
     title: props.material.title || "",
     description: props.material.description || "",
-    content: props.material.content || "",
+    content: initialLayoutType === 'default' ? (props.material.content || "") : "",
     youtube_link: props.material.youtube_link || "",
     mascot_id: props.material.mascot_id || null,
-    image: null, // File baru (gambar atau video)
+    image: null,
     remove_image: false,
+    layout_type: initialLayoutType,
+    conceptual_data: initialConceptualData
 });
 
 // Preview
@@ -109,18 +130,24 @@ const handleSubmit = () => {
         showToast("Judul material harus diisi!", "warning");
         return;
     }
-    if (!materialForm.value.content.trim()) {
+    if (materialForm.value.layout_type === 'default' && !materialForm.value.content.trim()) {
         showToast("Konten material harus diisi!", "warning");
         return;
     }
 
     isSubmitting.value = true;
 
+    let finalContent = materialForm.value.content;
+    if (materialForm.value.layout_type === 'conceptual_systematic') {
+        finalContent = JSON.stringify(materialForm.value.conceptual_data);
+    }
+
     const formData = new FormData();
     formData.append("_method", "PUT");
     formData.append("title", materialForm.value.title);
     formData.append("description", materialForm.value.description || "");
-    formData.append("content", materialForm.value.content);
+    formData.append("content", finalContent);
+    formData.append("layout_type", materialForm.value.layout_type || "default");
     formData.append("youtube_link", materialForm.value.youtube_link || "");
     formData.append("mascot_id", materialForm.value.mascot_id || "");
     formData.append(
@@ -231,30 +258,97 @@ const toggleCardVariant = () => {
                         placeholder="Contoh: Pengenalan Fotosintesis"
                         required
                     />
+
+                    <!-- Layout Type Toggle -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-3">Tipe Layout Materi</label>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'default' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="default" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'default' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'default'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Reguler (Teks/Video)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'conceptual_systematic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="conceptual_systematic" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'conceptual_systematic' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'conceptual_systematic'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Konseptual Sistematis</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <TextareaField
                         label="Deskripsi Singkat"
                         v-model="materialForm.description"
                         placeholder="Deskripsi singkat tentang material ini..."
                         :rows="3"
                     />
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Konten Material</label>
-                        <div class="border rounded-md bg-white">
-                            <QuillEditor
-                                v-model:content="materialForm.content"
-                                contentType="html"
-                                theme="snow"
-                                placeholder="Tulis konten pembelajaran di sini..."
-                                class="h-64"
-                            />
+                    <!-- Default Content -->
+                    <template v-if="materialForm.layout_type === 'default'">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Konten Material</label>
+                            <div class="border rounded-md bg-white">
+                                <QuillEditor
+                                    v-model:content="materialForm.content"
+                                    contentType="html"
+                                    theme="snow"
+                                    placeholder="Tulis konten pembelajaran di sini..."
+                                    class="h-64"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <InputField
-                        label="Link YouTube (Opsional)"
-                        v-model="materialForm.youtube_link"
-                        placeholder="Contoh: https://www.youtube.com/watch?v=..."
-                        type="url"
-                    />
+                        <InputField
+                            label="Link YouTube (Opsional)"
+                            v-model="materialForm.youtube_link"
+                            placeholder="Contoh: https://www.youtube.com/watch?v=..."
+                            type="url"
+                        />
+                    </template>
+
+                    <!-- Conceptual Systematic Content -->
+                    <template v-else-if="materialForm.layout_type === 'conceptual_systematic'">
+                        <div class="bg-gray-50 p-5 rounded-2xl border-2 border-gray-200 space-y-6">
+                            <h3 class="font-bold text-gray-800 text-lg border-b pb-2">Konfigurasi Konseptual Sistematis</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <TextareaField label="Teks Kiri Atas" v-model="materialForm.conceptual_data.topLeft" :rows="2" placeholder="Contoh: Curah hujan adalah..." />
+                                <TextareaField label="Teks Kanan Atas" v-model="materialForm.conceptual_data.topRight" :rows="2" placeholder="Contoh: Semakin tinggi curah hujan..." />
+                                <TextareaField label="Teks Kiri Bawah" v-model="materialForm.conceptual_data.bottomLeft" :rows="2" placeholder="Contoh: Semakin banyak air..." />
+                                <TextareaField label="Teks Kanan Bawah" v-model="materialForm.conceptual_data.bottomRight" :rows="2" placeholder="Contoh: Banyaknya air mengalir..." />
+                            </div>
+                            
+                            <div class="border-t pt-4">
+                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Slider</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <InputField label="Label Slider Kiri (Min)" v-model="materialForm.conceptual_data.sliderMin" placeholder="Contoh: Ringan" />
+                                    <InputField label="Label Slider Kanan (Max)" v-model="materialForm.conceptual_data.sliderMax" placeholder="Contoh: Deras" />
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-4">
+                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Metrik (Kotak Bawah)</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-white p-4 rounded-xl border">
+                                        <h5 class="font-bold text-sm text-green-600 mb-2">Metrik 1 (Hijau)</h5>
+                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric1Title" placeholder="Contoh: Curah Hujan" />
+                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric1Desc" placeholder="Contoh: Input Air" class="mt-2" />
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl border">
+                                        <h5 class="font-bold text-sm text-blue-600 mb-2">Metrik 2 (Biru)</h5>
+                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric2Title" placeholder="Contoh: Debit Sungai" />
+                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric2Desc" placeholder="Contoh: Jumlah Debit" class="mt-2" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
 
                     <!-- ===== MEDIA UPLOAD ===== -->
                     <div>
@@ -263,7 +357,7 @@ const toggleCardVariant = () => {
                             >Media Pembelajaran</label
                         >
                         <!-- Tab Toggle Gambar / Video -->
-                        <div class="flex gap-2 mb-4">
+                        <div v-if="materialForm.layout_type === 'default'" class="flex gap-2 mb-4">
                             <button
                                 type="button"
                                 @click="switchMediaType('image')"
@@ -288,6 +382,9 @@ const toggleCardVariant = () => {
                             >
                                 <VideoIcon class="w-4 h-4" />Video
                             </button>
+                        </div>
+                        <div v-else class="mb-4 text-sm text-gray-600">
+                            Unggah gambar utama yang akan diletakkan di tengah diagram. (Video tidak didukung untuk tipe ini).
                         </div>
 
                         <!-- Upload Gambar -->
@@ -335,7 +432,7 @@ const toggleCardVariant = () => {
                         </div>
 
                         <!-- Upload Video -->
-                        <div v-if="mediaType === 'video'" class="space-y-3">
+                        <div v-if="mediaType === 'video' && materialForm.layout_type === 'default'" class="space-y-3">
                             <div v-if="mediaPreview" class="relative">
                                 <video
                                     :src="mediaPreview"

@@ -54,10 +54,11 @@ const form = useForm({
     mission_count: 1,
 });
 
-// Form untuk edit mission
 const editForm = useForm({
     name: "",
     order_number: null,
+    conclusion_speech: "",
+    conclusion_body: "",
 });
 
 // Toast
@@ -208,6 +209,8 @@ const openEditMissionModal = (mission) => {
     editForm.clearErrors();
     editForm.name = mission.name;
     editForm.order_number = mission.order_number;
+    editForm.conclusion_speech = mission.conclusion_speech || "";
+    editForm.conclusion_body = mission.conclusion_body || "";
     showEditMissionModal.value = true;
 };
 
@@ -654,6 +657,28 @@ const deleteMission = () => {
                 >
                     <template #help> Atur urutan tampilan mission </template>
                 </InputField>
+
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Teks Kesimpulan Singkat (Gelembung Maskot)</label>
+                    <textarea
+                        v-model="editForm.conclusion_speech"
+                        class="w-full border-2 border-blue-200 rounded-xl p-3 text-sm focus:ring-0 focus:border-blue-400 transition-colors"
+                        rows="2"
+                        placeholder="Contoh: Kerja bagus! Kamu telah menyelesaikan misi ini."
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Muncul di atas maskot pada halaman akhir.</p>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Penjelasan Kesimpulan</label>
+                    <textarea
+                        v-model="editForm.conclusion_body"
+                        class="w-full border-2 border-blue-200 rounded-xl p-3 text-sm focus:ring-0 focus:border-blue-400 transition-colors"
+                        rows="4"
+                        placeholder="Contoh: Pada misi ini, kita telah mempelajari bahwa air mengalir dari tempat tinggi ke tempat rendah..."
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Muncul di kotak putih pada halaman akhir.</p>
+                </div>
             </div>
 
             <template #footer>

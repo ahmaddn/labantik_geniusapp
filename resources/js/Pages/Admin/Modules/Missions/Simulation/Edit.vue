@@ -113,25 +113,33 @@ const saveSlider = () => {
 // -------------------------------------------------------------
 // COMPARISON CONFIG
 // -------------------------------------------------------------
+const mapComparisons = (comparisons) => {
+    return (comparisons || []).map(comp => ({
+        id: comp.id,
+        explanation: comp.explanation || '',
+        items: (comp.items || []).map(item => ({
+            toggle_name: item.toggle_name || '',
+            label: item.label || '',
+            narration: item.narration || '',
+            existing_image: item.image || null,
+            image: null,
+            _preview: item.image ? `/storage/${item.image}` : null
+        }))
+    }));
+};
+
 const comparisonForm = useForm({
     _method: 'put',
     config_type: 'comparison',
     page_title: props.configs.comparisons?.[0]?.title || '',
-    comparisons: props.configs.comparisons || []
+    comparisons: mapComparisons(props.configs.comparisons)
 });
 
 const addComparison = () => {
     comparisonForm.comparisons.push({
         id: null,
-        left_label: '',
-        right_label: '',
-        left_narration: '',
-        right_narration: '',
         explanation: '',
-        left_image: null,
-        right_image: null,
-        _preview_left: null,
-        _preview_right: null
+        items: []
     });
 };
 
@@ -139,18 +147,37 @@ const removeComparison = (index) => {
     comparisonForm.comparisons.splice(index, 1);
 };
 
-// Handle comparison image inline in template
+const addComparisonItem = (compIdx) => {
+    comparisonForm.comparisons[compIdx].items.push({
+        toggle_name: '',
+        label: '',
+        narration: '',
+        existing_image: null,
+        image: null,
+        _preview: null
+    });
+};
+
+const removeComparisonItem = (compIdx, itemIdx) => {
+    comparisonForm.comparisons[compIdx].items.splice(itemIdx, 1);
+};
 
 const saveComparison = () => {
     if (comparisonForm.comparisons.length === 0) {
-        showToast("Tambahkan minimal 1 perbandingan terlebih dahulu!", "error");
+        showToast("Tambahkan minimal 1 grup perbandingan terlebih dahulu!", "error");
         return;
     }
 
     for (const comp of comparisonForm.comparisons) {
-        if (!comp.left_label || !comp.right_label) {
-            showToast("Label Kiri dan Label Kanan tidak boleh kosong!", "error");
+        if (!comp.items || comp.items.length === 0) {
+            showToast("Setiap perbandingan harus memiliki minimal 1 item (tampilan)!", "error");
             return;
+        }
+        for (const item of comp.items) {
+            if (!item.toggle_name) {
+                showToast("Nama Toggle (tombol) tidak boleh kosong!", "error");
+                return;
+            }
         }
     }
 
@@ -320,47 +347,44 @@ const saveClickable = () => {
                     <div class="space-y-6">
                         <div v-for="(comp, idx) in comparisonForm.comparisons" :key="idx" class="p-5 border-2 border-orange-100 bg-orange-50/50 rounded-2xl relative">
                             <button @click="removeComparison(idx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-5 h-5"/></button>
-                            <h4 class="font-bold text-orange-800 mb-4">Item Perbandingan {{ idx + 1 }}</h4>
+                            <h4 class="font-bold text-orange-800 mb-4">Grup Perbandingan {{ idx + 1 }}</h4>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Kiri -->
-                                <div class="space-y-4 border-r-0 md:border-r-2 border-orange-200 pr-0 md:pr-4">
-                                    <h5 class="font-bold text-gray-600">Sisi Kiri</h5>
-                                    <InputField label="Label Kiri" v-model="comp.left_label" placeholder="Misal: Hutan Gundul" />
-                                    <TextareaField label="Narasi Kiri" v-model="comp.left_narration" placeholder="Misal: Pohon-pohon ditebang sembarangan menyebabkan..." />
-                                    <div>
-                                        <FileDropzone 
-                                            label="Gambar Kiri" 
-                                            accept="image/*" 
-                                            v-model="comp.left_image"
-                                            @update:modelValue="(file) => { if(file) comp._preview_left = URL.createObjectURL(file); else comp._preview_left = null; }" 
-                                        />
-                                        <div v-if="comp._preview_left || (comp.left_image && typeof comp.left_image === 'string')" class="mt-3">
-                                            <p class="text-xs text-gray-500 mb-1 font-bold">Preview Kiri:</p>
-                                            <img :src="comp._preview_left || `/storage/${comp.left_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
-                                        </div>
+                            <TextareaField label="Penjelasan/Kesimpulan Keseluruhan" v-model="comp.explanation" class="mb-4" placeholder="Penjelasan tentang perbandingan ini..." />
+
+                            <div class="flex justify-between items-center mb-4 mt-6">
+                                <h5 class="font-bold text-lg text-gray-700">Daftar Item (Tampilan)</h5>
+                                <Button variant="outline" size="sm" :icon="Plus" @click="addComparisonItem(idx)">Tambah Tampilan</Button>
+                            </div>
+
+                            <div v-if="!comp.items || comp.items.length === 0" class="text-center py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl text-gray-500 mb-4">
+                                Belum ada item. Klik "Tambah Tampilan" untuk menambahkan.
+                            </div>
+
+                            <div class="space-y-4">
+                                <div v-for="(item, itemIdx) in comp.items" :key="itemIdx" class="p-4 border border-gray-200 bg-white rounded-xl relative">
+                                    <button @click="removeComparisonItem(idx, itemIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-4 h-4"/></button>
+                                    <h6 class="font-bold text-gray-700 mb-3">Tampilan {{ itemIdx + 1 }}</h6>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InputField label="Nama Tombol Toggle" v-model="item.toggle_name" placeholder="Misal: Tampilkan Akar" required />
+                                        <InputField label="Label Gambar" v-model="item.label" placeholder="Misal: Hutan Lebat" />
                                     </div>
-                                </div>
-                                <!-- Kanan -->
-                                <div class="space-y-4">
-                                    <h5 class="font-bold text-gray-600">Sisi Kanan</h5>
-                                    <InputField label="Label Kanan" v-model="comp.right_label" placeholder="Misal: Hutan Rimbun" />
-                                    <TextareaField label="Narasi Kanan" v-model="comp.right_narration" placeholder="Misal: Banyak hewan berlindung di bawah pepohonan..." />
-                                    <div>
+                                    <TextareaField label="Narasi" v-model="item.narration" class="mt-4" placeholder="Misal: Pohon-pohon memiliki akar yang kuat..." />
+                                    
+                                    <div class="mt-4">
                                         <FileDropzone 
-                                            label="Gambar Kanan" 
+                                            label="Gambar Tampilan" 
                                             accept="image/*" 
-                                            v-model="comp.right_image"
-                                            @update:modelValue="(file) => { if(file) comp._preview_right = URL.createObjectURL(file); else comp._preview_right = null; }" 
+                                            v-model="item.image"
+                                            @update:modelValue="(file) => { if(file) item._preview = URL.createObjectURL(file); else item._preview = null; }" 
                                         />
-                                        <div v-if="comp._preview_right || (comp.right_image && typeof comp.right_image === 'string')" class="mt-3">
-                                            <p class="text-xs text-gray-500 mb-1 font-bold">Preview Kanan:</p>
-                                            <img :src="comp._preview_right || `/storage/${comp.right_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                        <div v-if="item._preview || item.existing_image" class="mt-3">
+                                            <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                            <img :src="item._preview || `/storage/${item.existing_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <TextareaField label="Penjelasan Kesimpulan" v-model="comp.explanation" class="mt-4" placeholder="Misal: Perbedaan utamanya adalah ketersediaan resapan air..." />
                         </div>
                     </div>
 

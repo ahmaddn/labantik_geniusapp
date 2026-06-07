@@ -137,6 +137,8 @@ class MissionController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'order_number' => 'nullable|integer|min:1',
+            'conclusion_speech' => 'nullable|string|max:255',
+            'conclusion_body' => 'nullable|string',
         ], [
             'name.required' => 'Nama mission wajib diisi.',
         ]);
@@ -144,6 +146,8 @@ class MissionController extends Controller
         $missions->update([
             'name' => $validated['name'],
             'order_number' => $validated['order_number'] ?? $missions->order_number,
+            'conclusion_speech' => $validated['conclusion_speech'] ?? null,
+            'conclusion_body' => $validated['conclusion_body'] ?? null,
         ]);
 
         return redirect()

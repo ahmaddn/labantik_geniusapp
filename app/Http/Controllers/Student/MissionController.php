@@ -127,6 +127,7 @@ class MissionController extends Controller
             'module.template.backgrounds',
             'simulation_clickable_objects',
             'simulation_sliders.levels',
+            'simulation_comparisons',
         ]);
 
         // Format quizzes
@@ -250,16 +251,34 @@ class MissionController extends Controller
             ];
         }
 
+        $comparisons = [];
+        if ($mission->simulation_comparisons->isNotEmpty()) {
+            $firstComp = $mission->simulation_comparisons->sortBy('order_number')->first();
+            $comparisons[] = [
+                'id'           => 'sim_comparison_' . $mission->id,
+                'type'         => 'simulation_comparison',
+                'title'        => $firstComp->title ?? 'Simulasi Perbandingan',
+                'order_number' => $firstComp->order_number ?? 0,
+                'items'        => $mission->simulation_comparisons->sortBy('order_number')->map(fn($comp) => [
+                    'id'          => $comp->id,
+                    'explanation' => $comp->explanation,
+                    'items'       => $comp->items ?? [],
+                ])->toArray(),
+            ];
+        }
+
         // Merge & sort by order_number
-        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders))
+        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons))
             ->sortBy('order_number')
             ->values()
             ->toArray();
 
         $formattedMission = [
-            'id'      => $mission->id,
-            'name'    => $mission->name,
-            'quizzes' => $allItems,
+            'id'                => $mission->id,
+            'name'              => $mission->name,
+            'conclusion_speech' => $mission->conclusion_speech,
+            'conclusion_body'   => $mission->conclusion_body,
+            'quizzes'           => $allItems,
         ];
 
         return Inertia::render('Playground/Mission/Template', [

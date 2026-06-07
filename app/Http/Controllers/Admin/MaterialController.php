@@ -42,6 +42,7 @@ class MaterialController extends Controller
             'materials.*.mascot_id'   => 'nullable|exists:mascots,id',
             'materials.*.youtube_link'=> 'nullable|url|max:255',
             'materials.*.image'       => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
+            'materials.*.layout_type' => 'nullable|string',
         ], [
             'materials.*.title.required'   => 'Judul material wajib diisi.',
             'materials.*.content.required' => 'Konten material wajib diisi.',
@@ -58,6 +59,7 @@ class MaterialController extends Controller
                 'content'     => $material['content'],
                 'youtube_link'=> $material['youtube_link'] ?? null,
                 'mascot_id'   => $material['mascot_id'] ?? null,
+                'layout_type' => $material['layout_type'] ?? null,
                 'created_by'  => Auth::id(),
             ];
 
@@ -243,6 +245,7 @@ class MaterialController extends Controller
             'youtube_link' => 'nullable|url|max:255',
             'image'        => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
             'remove_image' => 'nullable|boolean',
+            'layout_type'  => 'nullable|string',
         ], [
             'title.required'   => 'Judul material wajib diisi.',
             'content.required' => 'Konten material wajib diisi.',
@@ -256,6 +259,7 @@ class MaterialController extends Controller
             'content'     => $validated['content'],
             'youtube_link'=> $validated['youtube_link'],
             'mascot_id'   => $validated['mascot_id'],
+            'layout_type' => $validated['layout_type'] ?? null,
         ];
 
         // Handle remove / replace image or video

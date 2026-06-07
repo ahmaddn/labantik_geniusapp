@@ -22,6 +22,8 @@ class Missions extends Model
         'image',
         'youtube_link',
         'is_active',
+        'conclusion_speech',
+        'conclusion_body',
     ];
 
     protected static function booted(): void
@@ -72,11 +74,6 @@ class Missions extends Model
     public function simulation_clickable_objects()
     {
         return $this->hasMany(Simulation_clickable_objects::class, 'mission_id');
-    }
-
-    public function simulation_solutions()
-    {
-        return $this->hasMany(Simulation_solutions::class, 'mission_id');
     }
 
 }

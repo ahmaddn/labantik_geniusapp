@@ -45,6 +45,7 @@ import Materials from "@/Components/Quiz/Materials.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
 import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
 import Double_slider from "@/Components/Simulation/DoubleSlider.vue";
+import Comparisons from "@/Components/Simulation/Comparisons.vue";
 import { useMusic } from "@/Composable/useMusic";
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -55,6 +56,7 @@ const COMPONENT_MAP = {
     drag_drop: Drag_drop,
     simulation_clickable: Clickable_objects,
     simulation_slider: Double_slider,
+    simulation_comparison: Comparisons,
 };
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -75,6 +77,7 @@ const TYPE_META = {
     materials: { label: "Materi", color: "#10b981", bg: "#dcfce7" },
     simulation_clickable: { label: "Simulasi", color: "#14b8a6", bg: "#ccfbf1" },
     simulation_slider: { label: "Simulasi Slider", color: "#f43f5e", bg: "#ffe4e6" },
+    simulation_comparison: { label: "Simulasi Perbandingan", color: "#f97316", bg: "#ffedd5" },
 };
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
@@ -97,7 +100,7 @@ const steps = computed(() => {
     const result = [];
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
-        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider";
+        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider" || quiz.type === "simulation_comparison";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 
@@ -138,6 +141,20 @@ const steps = computed(() => {
             });
         }
     });
+
+    if (props.mission.conclusion_speech || props.mission.conclusion_body) {
+        result.push({
+            isConclusion: true,
+            quizIndex: props.mission.quizzes.length,
+            quiz: { type: 'conclusion', title: `KESIMPULAN ${props.mission.name.toUpperCase()}` },
+            question: null,
+            questionIndex: 0,
+            totalInQuiz: 1,
+            isMaterial: true,
+            isDragDrop: false,
+        });
+    }
+
     return result;
 });
 
@@ -432,7 +449,7 @@ const submit = async () => {
             {
                 answers,
                 quiz_ids: props.mission.quizzes
-                    .filter((q) => q.type !== "materials")
+                    .filter((q) => !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison"].includes(q.type))
                     .map((q) => q.id),
             }
         );
@@ -566,40 +583,64 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 
         <!-- ══ MAIN CENTRIC CONTENT ══ -->
         <main class="main-wrapper" :class="{ 'main--on': ready }">
-            <div class="mission-container">
-                <!-- Title Pill -->
-                <div class="title-pill">
-                    {{ module.name.toUpperCase() }}
-                </div>
-
-                <!-- Question Bubble -->
-                <div class="question-bubble" v-if="step?.question && !step.isMaterial" v-html="step.question.question_text"></div>
-                <div class="question-bubble" v-else-if="step?.isMaterial" v-html="step.quiz.title"></div>
-                <div class="question-bubble empty-qs" v-else>
-                    Tidak ada soal
-                </div>
-
-                <!-- Component Container -->
-                <div class="component-box" v-if="step" :class="{ 'opts--shake': shakeActive, 'box-locked': timedOutQuizzes.has(step.quiz?.id) }">
-                    <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
-                        <Timer :size="28" :stroke-width="2" />
-                        <span>Waktu Habis</span>
+            <template v-if="step?.isConclusion">
+                <div class="mission-container conclusion-container">
+                    <div class="title-pill">{{ step.quiz.title }}</div>
+                    <div class="conclusion-box border-4 border-blue-600 rounded-[2rem] bg-white p-6 relative flex flex-col gap-6 w-full max-w-4xl mx-auto mt-6 shadow-xl">
+                        <!-- Top: Mascot & Speech -->
+                        <div class="flex items-start gap-4">
+                            <img :src="mascotUrl" alt="Maskot" class="w-32 h-32 object-contain shrink-0" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1))" />
+                            <div class="conclusion-speech-bubble relative bg-white border-2 border-cyan-400 rounded-3xl p-5 w-full text-gray-700 text-lg font-medium leading-relaxed" style="border-radius: 2rem;">
+                                {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
+                                <!-- Tail pointing left to mascot -->
+                                <svg class="absolute -left-4 top-8 w-6 h-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="#fff" /></svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom: Body -->
+                        <div class="conclusion-body bg-gray-50 rounded-[1.5rem] p-6 text-gray-800 text-base leading-relaxed border border-gray-100 min-h-[150px] shadow-inner font-medium">
+                            {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
+                        </div>
                     </div>
-                    
-                    <component
-                        v-if="step.question || step.isMaterial"
-                        :is="COMPONENT_MAP[step.quiz.type]"
-                        :question="step.question"
-                        :quiz="step.quiz"
-                        :modelValue="answers[step.question?.id]"
-                        @update-answer="updateAnswer"
-                    />
                 </div>
-            </div>
+            </template>
+
+            <template v-else>
+                <div class="mission-container">
+                    <!-- Title Pill -->
+                    <div class="title-pill">
+                        {{ module.name.toUpperCase() }}
+                    </div>
+
+                    <!-- Question Bubble -->
+                    <div class="question-bubble" v-if="step?.question && !step.isMaterial" v-html="step.question.question_text"></div>
+                    <div class="question-bubble" v-else-if="step?.isMaterial" v-html="step.quiz.title"></div>
+                    <div class="question-bubble empty-qs" v-else>
+                        Tidak ada soal
+                    </div>
+
+                    <!-- Component Container -->
+                    <div class="component-box" v-if="step" :class="{ 'opts--shake': shakeActive, 'box-locked': timedOutQuizzes.has(step.quiz?.id) }">
+                        <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
+                            <Timer :size="28" :stroke-width="2" />
+                            <span>Waktu Habis</span>
+                        </div>
+                        
+                        <component
+                            v-if="step.question || step.isMaterial"
+                            :is="COMPONENT_MAP[step.quiz.type]"
+                            :question="step.question"
+                            :quiz="step.quiz"
+                            :modelValue="answers[step.question?.id]"
+                            @update-answer="updateAnswer"
+                        />
+                    </div>
+                </div>
+            </template>
         </main>
 
         <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
-        <div class="mascot-absolute" @click="rotateBubble">
+        <div class="mascot-absolute" @click="rotateBubble" v-if="!step?.isConclusion">
             <Transition name="bbl">
                 <div v-if="bubbleVisible" class="mascot-speech">
                     <span>{{ BUBBLES[bubbleIdx] }}</span>

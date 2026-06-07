@@ -14,14 +14,13 @@ class Simulation_comparisons extends Model
         'id',
         'mission_id',
         'title',
-        'left_label',
-        'right_label',
-        'left_narration',
-        'right_narration',
-        'left_image',
-        'right_image',
+        'items',
         'explanation',
         'order_number',
+    ];
+
+    protected $casts = [
+        'items' => 'array',
     ];
 
     protected static function booted(): void

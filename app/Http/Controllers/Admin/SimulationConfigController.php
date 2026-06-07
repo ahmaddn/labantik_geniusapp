@@ -9,8 +9,6 @@ use App\Models\Simulation_sliders;
 use App\Models\Simulation_slider_levels;
 use App\Models\Simulation_comparisons;
 use App\Models\Simulation_clickable_objects;
-use App\Models\Simulation_solutions;
-use App\Models\Simulation_solution_options;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -32,7 +30,6 @@ class SimulationConfigController extends Controller
             'simulation_sliders.levels',
             'simulation_comparisons',
             'simulation_clickable_objects',
-            'simulation_solutions.options',
         ]);
 
         return Inertia::render('Admin/Modules/Missions/Simulation/Edit', [
@@ -42,7 +39,6 @@ class SimulationConfigController extends Controller
                 'slider' => $missions->simulation_sliders->first(),
                 'comparisons' => $missions->simulation_comparisons,
                 'clickable_objects' => $missions->simulation_clickable_objects,
-                'solutions' => $missions->simulation_solutions->first(),
             ]
         ]);
     }
@@ -170,15 +166,14 @@ class SimulationConfigController extends Controller
             'page_title' => 'nullable|string|max:255',
             'comparisons' => 'nullable|array',
             'comparisons.*.id' => 'nullable|string',
-            'comparisons.*.left_label' => 'nullable|string|max:255',
-            'comparisons.*.right_label' => 'nullable|string|max:255',
-            'comparisons.*.left_narration' => 'nullable|string',
-            'comparisons.*.right_narration' => 'nullable|string',
             'comparisons.*.explanation' => 'nullable|string',
-            'comparisons.*.left_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
-            'comparisons.*.right_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
-            'comparisons.*.remove_left_image' => 'nullable|boolean',
-            'comparisons.*.remove_right_image' => 'nullable|boolean',
+            'comparisons.*.items' => 'nullable|array',
+            'comparisons.*.items.*.toggle_name' => 'nullable|string|max:255',
+            'comparisons.*.items.*.label' => 'nullable|string|max:255',
+            'comparisons.*.items.*.narration' => 'nullable|string',
+            'comparisons.*.items.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'comparisons.*.items.*.remove_image' => 'nullable|boolean',
+            'comparisons.*.items.*.existing_image' => 'nullable|string',
         ]);
 
         $existingIds = [];
@@ -190,38 +185,43 @@ class SimulationConfigController extends Controller
                 $comp = Simulation_comparisons::firstOrNew(['id' => $compId]);
                 $comp->mission_id = $mission->id;
                 $comp->title = $validated['page_title'] ?? null;
-                $comp->left_label = $compData['left_label'] ?? null;
-                $comp->right_label = $compData['right_label'] ?? null;
-                $comp->left_narration = $compData['left_narration'] ?? null;
-                $comp->right_narration = $compData['right_narration'] ?? null;
                 $comp->explanation = $compData['explanation'] ?? null;
 
-                if (!empty($compData['remove_left_image']) && $comp->left_image) {
-                    Storage::disk('public')->delete($comp->left_image);
-                    $comp->left_image = null;
-                }
-                if ($request->hasFile("comparisons.{$index}.left_image")) {
-                    if ($comp->left_image) Storage::disk('public')->delete($comp->left_image);
-                    $comp->left_image = $request->file("comparisons.{$index}.left_image")->store('simulations/comparisons', 'public');
-                }
+                $newItems = [];
+                if (!empty($compData['items'])) {
+                    foreach ($compData['items'] as $itemIndex => $itemData) {
+                        $imagePath = $itemData['existing_image'] ?? null;
 
-                if (!empty($compData['remove_right_image']) && $comp->right_image) {
-                    Storage::disk('public')->delete($comp->right_image);
-                    $comp->right_image = null;
-                }
-                if ($request->hasFile("comparisons.{$index}.right_image")) {
-                    if ($comp->right_image) Storage::disk('public')->delete($comp->right_image);
-                    $comp->right_image = $request->file("comparisons.{$index}.right_image")->store('simulations/comparisons', 'public');
-                }
+                        if (!empty($itemData['remove_image']) && $imagePath) {
+                            Storage::disk('public')->delete($imagePath);
+                            $imagePath = null;
+                        }
 
+                        if ($request->hasFile("comparisons.{$index}.items.{$itemIndex}.image")) {
+                            if ($imagePath) Storage::disk('public')->delete($imagePath);
+                            $imagePath = $request->file("comparisons.{$index}.items.{$itemIndex}.image")->store('simulations/comparisons', 'public');
+                        }
+
+                        $newItems[] = [
+                            'toggle_name' => $itemData['toggle_name'] ?? null,
+                            'label'       => $itemData['label'] ?? null,
+                            'narration'   => $itemData['narration'] ?? null,
+                            'image'       => $imagePath,
+                        ];
+                    }
+                }
+                
+                $comp->items = $newItems;
                 $comp->save();
             }
         }
 
         $toDelete = Simulation_comparisons::where('mission_id', $mission->id)->whereNotIn('id', $existingIds)->get();
         foreach ($toDelete as $item) {
-            if ($item->left_image) Storage::disk('public')->delete($item->left_image);
-            if ($item->right_image) Storage::disk('public')->delete($item->right_image);
+            $items = $item->items ?? [];
+            foreach ($items as $itm) {
+                if (!empty($itm['image'])) Storage::disk('public')->delete($itm['image']);
+            }
             $item->delete();
         }
     }
@@ -233,8 +233,6 @@ class SimulationConfigController extends Controller
             'clickables' => 'nullable|array',
             'clickables.*.id' => 'nullable|string',
             'clickables.*.name' => 'required|string|max:255',
-            'clickables.*.pos_x' => 'nullable|string|max:50',
-            'clickables.*.pos_y' => 'nullable|string|max:50',
             'clickables.*.impact_text' => 'nullable|string',
             'clickables.*.is_positive' => 'required|boolean',
             'clickables.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
@@ -251,8 +249,6 @@ class SimulationConfigController extends Controller
                 $c->mission_id = $mission->id;
                 $c->title = $validated['page_title'] ?? null;
                 $c->name = $cData['name'];
-                $c->pos_x = $cData['pos_x'] ?? null;
-                $c->pos_y = $cData['pos_y'] ?? null;
                 $c->impact_text = $cData['impact_text'] ?? null;
                 $c->is_positive = $cData['is_positive'];
 
