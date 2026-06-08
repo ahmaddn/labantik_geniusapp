@@ -16,7 +16,8 @@ import {
     FileText,
     MousePointerClick,
     Settings,
-    Download
+    Download,
+    Hash
 } from "lucide-vue-next";
 
 const guides = ref([
@@ -283,6 +284,23 @@ const activeTab = ref("modules");
                                                     1. Klik <strong>Tambah Objek Baru</strong>.<br/>
                                                     2. Isi Nama Benda dan pilih dampaknya (Positif/Negatif).<br/>
                                                     3. Unggah gambar benda (sangat disarankan gambar transparan/PNG).
+                                                </p>
+                                            </div>
+
+                                            <!-- Simulasi Keputusan -->
+                                            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                                <h5 class="font-bold text-purple-600 flex items-center gap-2 mb-2 text-base"><Hash class="w-5 h-5"/> Keputusan Dinamis</h5>
+                                                <p class="text-sm text-gray-600 mb-3 leading-relaxed"><strong>Fungsi:</strong> <span class="bg-purple-100 text-purple-700 px-2 rounded text-xs font-bold uppercase mr-1">Terbaru</span> Menyimulasikan dampak langsung dari keputusan. Menampilkan status kondisi awal ("Hari Ini") di mana siswa memilih tindakan/keputusan, yang akan langsung memunculkan animasi perubahan status masa depan disertai penjelasan dari maskot.</p>
+                                                <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-100 text-sm text-purple-800 leading-relaxed mb-3">
+                                                    <strong>💡 Contoh:</strong><br/>
+                                                    "Hari Ini" membuang sampah sembarangan &rarr; Siswa klik tombol "Bersihkan Selokan" &rarr; Maskot memberi pujian, gambar "Masa Depan" berubah jadi selokan bersih!
+                                                </div>
+                                                <p class="text-sm text-gray-600 leading-relaxed">
+                                                    <strong>Cara Membuat:</strong><br/>
+                                                    1. Klik <strong>Tambah Simulasi</strong>.<br/>
+                                                    2. Masukkan judul status masa lalu/awal dan masa depan, serta unggah gambar awal.<br/>
+                                                    3. Tambahkan <strong>Opsi Keputusan</strong> (minimal 2 tindakan).<br/>
+                                                    4. Untuk tiap opsi, atur label tombol, warna tombol, gambar masa depan, dan narasi dari Maskot.
                                                 </p>
                                             </div>
 

@@ -18,7 +18,8 @@ import {
     GitCompare,
     MousePointerClick,
     FileText,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Hash
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -235,6 +236,92 @@ const saveClickable = () => {
     });
 };
 
+// -------------------------------------------------------------
+// DECISION CONFIG
+// -------------------------------------------------------------
+const mapDecisions = (decisions) => {
+    return (decisions || []).map(dec => ({
+        id: dec.id,
+        title: dec.title || '',
+        initial_state_title: dec.initial_state_title || '',
+        future_state_title: dec.future_state_title || '',
+        existing_initial_image: dec.initial_state_image || null,
+        initial_state_image: null,
+        _preview_initial: dec.initial_state_image ? `/storage/${dec.initial_state_image}` : null,
+        existing_character_image: dec.character_image || null,
+        character_image: null,
+        _preview_character: dec.character_image ? `/storage/${dec.character_image}` : null,
+        options: (dec.options || []).map(opt => ({
+            id: opt.id,
+            button_label: opt.button_label || '',
+            button_color: opt.button_color || 'green',
+            feedback_message: opt.feedback_message || '',
+            existing_future_image: opt.future_state_image || null,
+            future_state_image: null,
+            _preview_future: opt.future_state_image ? `/storage/${opt.future_state_image}` : null,
+        }))
+    }));
+};
+
+const decisionForm = useForm({
+    _method: 'put',
+    config_type: 'decision',
+    decisions: mapDecisions(props.configs.decisions)
+});
+
+const addDecision = () => {
+    decisionForm.decisions.push({
+        id: null,
+        title: '',
+        initial_state_title: '',
+        future_state_title: '',
+        initial_state_image: null,
+        _preview_initial: null,
+        character_image: null,
+        _preview_character: null,
+        options: []
+    });
+};
+
+const removeDecision = (index) => {
+    decisionForm.decisions.splice(index, 1);
+};
+
+const addDecisionOption = (decIdx) => {
+    decisionForm.decisions[decIdx].options.push({
+        id: null,
+        button_label: '',
+        button_color: 'green',
+        feedback_message: '',
+        future_state_image: null,
+        _preview_future: null
+    });
+};
+
+const removeDecisionOption = (decIdx, optIdx) => {
+    decisionForm.decisions[decIdx].options.splice(optIdx, 1);
+};
+
+const saveDecision = () => {
+    if (decisionForm.decisions.length === 0) {
+        showToast("Tambahkan minimal 1 simulasi keputusan terlebih dahulu!", "error");
+        return;
+    }
+
+    for (const dec of decisionForm.decisions) {
+        if (!dec.options || dec.options.length < 2) {
+            showToast("Setiap simulasi keputusan harus memiliki minimal 2 opsi!", "error");
+            return;
+        }
+    }
+
+    decisionForm.post(route('admin.modules.missions.simulation.update', [props.module.id, props.mission.id]), {
+        preserveScroll: true,
+        onSuccess: () => showToast("Konfigurasi Keputusan disimpan!"),
+        onError: () => showToast("Gagal menyimpan Keputusan.", "error")
+    });
+};
+
 </script>
 
 <template>
@@ -266,6 +353,9 @@ const saveClickable = () => {
                 </button>
                 <button @click="activeTab = 'clickable'" :class="['px-5 py-3 rounded-xl font-bold flex items-center gap-2 border-2', activeTab === 'clickable' ? 'bg-green-500 text-white border-green-600 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50']">
                     <MousePointerClick class="w-5 h-5" /> Objek Klik
+                </button>
+                <button @click="activeTab = 'decision'" :class="['px-5 py-3 rounded-xl font-bold flex items-center gap-2 border-2', activeTab === 'decision' ? 'bg-purple-500 text-white border-purple-600 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50']">
+                    <Hash class="w-5 h-5" /> Keputusan
                 </button>
             </div>
 
@@ -437,6 +527,103 @@ const saveClickable = () => {
 
                     <div class="mt-8 flex justify-end">
                         <Button variant="primary" :icon="Check" :disabled="clickableForm.processing" @click="saveClickable">Simpan Objek</Button>
+                    </div>
+                </div>
+
+                <!-- DECISION TAB -->
+                <div v-if="activeTab === 'decision'">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Simulasi Keputusan</h2>
+                        <Button variant="primary" size="sm" :icon="Plus" @click="addDecision">Tambah Simulasi</Button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div v-for="(dec, idx) in decisionForm.decisions" :key="idx" class="p-5 border-2 border-purple-100 bg-purple-50/50 rounded-2xl relative">
+                            <button @click="removeDecision(idx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-5 h-5"/></button>
+                            <h4 class="font-bold text-purple-800 mb-4">Simulasi Keputusan {{ idx + 1 }}</h4>
+                            
+                            <InputField label="Judul Simulasi" v-model="dec.title" class="mb-4" placeholder="Misal: Aktivitas Interaktif 3 - Simulasi Keputusan" />
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <InputField label="Judul Status Awal" v-model="dec.initial_state_title" placeholder="Misal: HARI INI" />
+                                <InputField label="Judul Status Masa Depan" v-model="dec.future_state_title" placeholder="Misal: 1 BULAN LAGI" />
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <FileDropzone 
+                                        label="Gambar Status Awal (Hari Ini)" 
+                                        accept="image/*" 
+                                        v-model="dec.initial_state_image"
+                                        @update:modelValue="(file) => { if(file) dec._preview_initial = URL.createObjectURL(file); else dec._preview_initial = null; }" 
+                                    />
+                                    <div v-if="dec._preview_initial || dec.existing_initial_image" class="mt-3">
+                                        <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                        <img :src="dec._preview_initial || `/storage/${dec.existing_initial_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <FileDropzone 
+                                        label="Gambar Maskot Custom (Opsional)" 
+                                        accept="image/*" 
+                                        v-model="dec.character_image"
+                                        @update:modelValue="(file) => { if(file) dec._preview_character = URL.createObjectURL(file); else dec._preview_character = null; }" 
+                                    />
+                                    <div v-if="dec._preview_character || dec.existing_character_image" class="mt-3">
+                                        <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                        <img :src="dec._preview_character || `/storage/${dec.existing_character_image}`" class="w-24 h-24 object-contain rounded-xl border-2 border-gray-200 shadow-sm" />
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">Biarkan kosong untuk menggunakan maskot default Geniuss.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center mb-4 mt-6">
+                                <h5 class="font-bold text-lg text-gray-700">Daftar Opsi Keputusan</h5>
+                                <Button variant="outline" size="sm" :icon="Plus" @click="addDecisionOption(idx)">Tambah Opsi</Button>
+                            </div>
+
+                            <div v-if="!dec.options || dec.options.length === 0" class="text-center py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl text-gray-500 mb-4">
+                                Belum ada opsi. Klik "Tambah Opsi" untuk menambahkan (minimal 2).
+                            </div>
+
+                            <div class="space-y-4">
+                                <div v-for="(opt, optIdx) in dec.options" :key="optIdx" class="p-4 border border-gray-200 bg-white rounded-xl relative">
+                                    <button @click="removeDecisionOption(idx, optIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-4 h-4"/></button>
+                                    <h6 class="font-bold text-gray-700 mb-3">Opsi {{ optIdx + 1 }}</h6>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InputField label="Label Tombol" v-model="opt.button_label" placeholder="Misal: Bersihkan Sampah" required />
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Warna Tombol</label>
+                                            <select v-model="opt.button_color" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                <option value="green">Hijau (Sukses/Baik)</option>
+                                                <option value="yellow">Kuning (Peringatan/Netral)</option>
+                                                <option value="red">Merah (Bahaya/Buruk)</option>
+                                                <option value="blue">Biru (Info)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <TextareaField label="Pesan Maskot (Feedback)" v-model="opt.feedback_message" class="mt-4" placeholder="Misal: Ketika manusia bertindak, sistem-sistem membaik." />
+                                    
+                                    <div class="mt-4">
+                                        <FileDropzone 
+                                            label="Gambar Hasil (Masa Depan)" 
+                                            accept="image/*" 
+                                            v-model="opt.future_state_image"
+                                            @update:modelValue="(file) => { if(file) opt._preview_future = URL.createObjectURL(file); else opt._preview_future = null; }" 
+                                        />
+                                        <div v-if="opt._preview_future || opt.existing_future_image" class="mt-3">
+                                            <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                            <img :src="opt._preview_future || `/storage/${opt.existing_future_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-end">
+                        <Button variant="primary" :icon="Check" :disabled="decisionForm.processing" @click="saveDecision">Simpan Keputusan</Button>
                     </div>
                 </div>
             </div>

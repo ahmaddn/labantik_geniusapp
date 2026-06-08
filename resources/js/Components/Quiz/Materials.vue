@@ -313,7 +313,7 @@ onUnmounted(() => {
           controls
           class="mat-audio"
         ></audio>
-        <p v-else class="mat-error">Audio tidak tersedia</p>
+        <p v-else class="mat-error">Audio tidak ti9ersedia</p>
       </div>
     </div>
   </div>

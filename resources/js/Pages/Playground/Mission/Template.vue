@@ -46,6 +46,7 @@ import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
 import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
 import Double_slider from "@/Components/Simulation/DoubleSlider.vue";
 import Comparisons from "@/Components/Simulation/Comparisons.vue";
+import Decisions from "@/Components/Simulation/Decisions.vue";
 import { useMusic } from "@/Composable/useMusic";
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -57,6 +58,7 @@ const COMPONENT_MAP = {
     simulation_clickable: Clickable_objects,
     simulation_slider: Double_slider,
     simulation_comparison: Comparisons,
+    simulation_decision: Decisions,
 };
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -78,6 +80,7 @@ const TYPE_META = {
     simulation_clickable: { label: "Simulasi", color: "#14b8a6", bg: "#ccfbf1" },
     simulation_slider: { label: "Simulasi Slider", color: "#f43f5e", bg: "#ffe4e6" },
     simulation_comparison: { label: "Simulasi Perbandingan", color: "#f97316", bg: "#ffedd5" },
+    simulation_decision: { label: "Simulasi Keputusan", color: "#8b5cf6", bg: "#ede9fe" },
 };
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
@@ -100,7 +103,7 @@ const steps = computed(() => {
     const result = [];
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
-        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider" || quiz.type === "simulation_comparison";
+        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider" || quiz.type === "simulation_comparison" || quiz.type === "simulation_decision";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 
@@ -449,7 +452,7 @@ const submit = async () => {
             {
                 answers,
                 quiz_ids: props.mission.quizzes
-                    .filter((q) => !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison"].includes(q.type))
+                    .filter((q) => !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison", "simulation_decision"].includes(q.type))
                     .map((q) => q.id),
             }
         );

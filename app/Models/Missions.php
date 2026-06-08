@@ -76,4 +76,9 @@ class Missions extends Model
         return $this->hasMany(Simulation_clickable_objects::class, 'mission_id');
     }
 
+    public function simulation_decisions()
+    {
+        return $this->hasMany(Simulation_decisions::class, 'mission_id');
+    }
+
 }

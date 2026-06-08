@@ -128,6 +128,7 @@ class MissionController extends Controller
             'simulation_clickable_objects',
             'simulation_sliders.levels',
             'simulation_comparisons',
+            'simulation_decisions.options',
         ]);
 
         // Format quizzes
@@ -267,8 +268,31 @@ class MissionController extends Controller
             ];
         }
 
+        $decisions = [];
+        if ($mission->simulation_decisions->isNotEmpty()) {
+            // Note: Since we didn't add order_number to decisions, we'll assume it defaults to 0
+            $firstDec = $mission->simulation_decisions->first();
+            $decisions[] = [
+                'id'                  => 'sim_decision_' . $mission->id,
+                'type'                => 'simulation_decision',
+                'title'               => $firstDec->title ?? 'Simulasi Keputusan',
+                'initial_state_title' => $firstDec->initial_state_title,
+                'initial_state_image' => $firstDec->initial_state_image,
+                'future_state_title'  => $firstDec->future_state_title,
+                'character_image'     => $firstDec->character_image,
+                'order_number'        => $firstDec->order_number ?? 0,
+                'options'             => $firstDec->options->map(fn($opt) => [
+                    'id'                 => $opt->id,
+                    'button_label'       => $opt->button_label,
+                    'button_color'       => $opt->button_color,
+                    'feedback_message'   => $opt->feedback_message,
+                    'future_state_image' => $opt->future_state_image,
+                ])->toArray(),
+            ];
+        }
+
         // Merge & sort by order_number
-        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons))
+        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons, $decisions))
             ->sortBy('order_number')
             ->values()
             ->toArray();

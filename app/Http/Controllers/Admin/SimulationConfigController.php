@@ -9,6 +9,8 @@ use App\Models\Simulation_sliders;
 use App\Models\Simulation_slider_levels;
 use App\Models\Simulation_comparisons;
 use App\Models\Simulation_clickable_objects;
+use App\Models\Simulation_decisions;
+use App\Models\Simulation_decision_options;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +32,7 @@ class SimulationConfigController extends Controller
             'simulation_sliders.levels',
             'simulation_comparisons',
             'simulation_clickable_objects',
+            'simulation_decisions.options',
         ]);
 
         return Inertia::render('Admin/Modules/Missions/Simulation/Edit', [
@@ -39,6 +42,7 @@ class SimulationConfigController extends Controller
                 'slider' => $missions->simulation_sliders->first(),
                 'comparisons' => $missions->simulation_comparisons,
                 'clickable_objects' => $missions->simulation_clickable_objects,
+                'decisions' => $missions->simulation_decisions,
             ]
         ]);
     }
@@ -64,6 +68,9 @@ class SimulationConfigController extends Controller
                 break;
             case 'clickable':
                 $this->updateClickable($request, $missions);
+                break;
+            case 'decision':
+                $this->updateDecision($request, $missions);
                 break;
             default:
                 return back()->with('error', 'Tipe konfigurasi tidak valid.');
@@ -269,6 +276,105 @@ class SimulationConfigController extends Controller
         foreach ($toDelete as $item) {
             if ($item->image) Storage::disk('public')->delete($item->image);
             $item->delete();
+        }
+    }
+
+    private function updateDecision(Request $request, Missions $mission)
+    {
+        $validated = $request->validate([
+            'decisions' => 'nullable|array',
+            'decisions.*.id' => 'nullable|string',
+            'decisions.*.title' => 'nullable|string|max:255',
+            'decisions.*.initial_state_title' => 'nullable|string|max:255',
+            'decisions.*.future_state_title' => 'nullable|string|max:255',
+            'decisions.*.initial_state_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'decisions.*.remove_initial_image' => 'nullable|boolean',
+            'decisions.*.character_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'decisions.*.remove_character_image' => 'nullable|boolean',
+            
+            'decisions.*.options' => 'nullable|array',
+            'decisions.*.options.*.id' => 'nullable|string',
+            'decisions.*.options.*.button_label' => 'nullable|string|max:255',
+            'decisions.*.options.*.button_color' => 'nullable|string|max:255',
+            'decisions.*.options.*.feedback_message' => 'nullable|string',
+            'decisions.*.options.*.future_state_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'decisions.*.options.*.remove_future_image' => 'nullable|boolean',
+        ]);
+
+        $existingDecIds = [];
+        if (!empty($validated['decisions'])) {
+            foreach ($validated['decisions'] as $index => $dData) {
+                $dId = $dData['id'] ?? (string) Str::uuid();
+                $existingDecIds[] = $dId;
+
+                $dec = Simulation_decisions::firstOrNew(['id' => $dId]);
+                $dec->mission_id = $mission->id;
+                $dec->title = $dData['title'] ?? null;
+                $dec->initial_state_title = $dData['initial_state_title'] ?? null;
+                $dec->future_state_title = $dData['future_state_title'] ?? null;
+
+                // Handle initial state image
+                if (!empty($dData['remove_initial_image']) && $dec->initial_state_image) {
+                    Storage::disk('public')->delete($dec->initial_state_image);
+                    $dec->initial_state_image = null;
+                }
+                if ($request->hasFile("decisions.{$index}.initial_state_image")) {
+                    if ($dec->initial_state_image) Storage::disk('public')->delete($dec->initial_state_image);
+                    $dec->initial_state_image = $request->file("decisions.{$index}.initial_state_image")->store('simulations/decisions', 'public');
+                }
+
+                // Handle character image
+                if (!empty($dData['remove_character_image']) && $dec->character_image) {
+                    Storage::disk('public')->delete($dec->character_image);
+                    $dec->character_image = null;
+                }
+                if ($request->hasFile("decisions.{$index}.character_image")) {
+                    if ($dec->character_image) Storage::disk('public')->delete($dec->character_image);
+                    $dec->character_image = $request->file("decisions.{$index}.character_image")->store('simulations/decisions', 'public');
+                }
+
+                $dec->save();
+
+                $existingOptIds = [];
+                if (!empty($dData['options'])) {
+                    foreach ($dData['options'] as $optIndex => $oData) {
+                        $oId = $oData['id'] ?? (string) Str::uuid();
+                        $existingOptIds[] = $oId;
+
+                        $opt = Simulation_decision_options::firstOrNew(['id' => $oId]);
+                        $opt->simulation_decision_id = $dec->id;
+                        $opt->button_label = $oData['button_label'] ?? null;
+                        $opt->button_color = $oData['button_color'] ?? null;
+                        $opt->feedback_message = $oData['feedback_message'] ?? null;
+
+                        if (!empty($oData['remove_future_image']) && $opt->future_state_image) {
+                            Storage::disk('public')->delete($opt->future_state_image);
+                            $opt->future_state_image = null;
+                        }
+                        if ($request->hasFile("decisions.{$index}.options.{$optIndex}.future_state_image")) {
+                            if ($opt->future_state_image) Storage::disk('public')->delete($opt->future_state_image);
+                            $opt->future_state_image = $request->file("decisions.{$index}.options.{$optIndex}.future_state_image")->store('simulations/decisions', 'public');
+                        }
+
+                        $opt->save();
+                    }
+                }
+
+                // Delete removed options
+                $optsToDelete = Simulation_decision_options::where('simulation_decision_id', $dec->id)
+                    ->whereNotIn('id', $existingOptIds)
+                    ->get();
+                foreach ($optsToDelete as $optToDelete) {
+                    if ($optToDelete->future_state_image) Storage::disk('public')->delete($optToDelete->future_state_image);
+                    $optToDelete->delete();
+                }
+            }
+        }
+
+        // Delete removed decisions
+        $decsToDelete = Simulation_decisions::where('mission_id', $mission->id)->whereNotIn('id', $existingDecIds)->get();
+        foreach ($decsToDelete as $item) {
+            $item->delete(); // The model's deleting event will handle the children and files
         }
     }
 }
