@@ -1,92 +1,73 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
-import {
-    Zap,
-    LogIn,
-    User,
-    Music2,
-    VolumeX,
-    ArrowLeft,
-    ChevronRight,
-    Star,
-    Sparkles,
-} from "lucide-vue-next";
 import { useMusic } from "@/Composable/useMusic";
 
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
-const ready = ref(false);
-const brandMoved = ref(false);
-const audioRef = ref(null);
+
 const props = defineProps({
     backsound: { type: String, default: null },
     background: { type: String, default: null },
     classes: { type: Array, default: () => [] },
 });
 
-/* ── Speech bubble ─────────────────────────────── */
-const BUBBLE_LINES = [
-    "Hai! Aku Geni!",
-    "Selamat datang!",
-    "Siap belajar?",
-    "Masukkan username ya!",
-    "Ayo kita mulai!",
-    "Belajar itu seru!",
-    "Aku menunggumu!",
-    "Yuk masuk!",
-];
-const bubbleIdx = ref(0);
-const bubbleVisible = ref(true);
-let bubbleTimer = null;
+const ready = ref(false);
+const mascotBounce = ref(false);
 
-const rotateBubble = () => {
-    bubbleVisible.value = false;
-    setTimeout(() => {
-        bubbleIdx.value = (bubbleIdx.value + 1) % BUBBLE_LINES.length;
-        bubbleVisible.value = true;
-    }, 280);
-};
+/* ── State Partikel Latar Belakang ── */
+const particles = ref([]);
 
-/* ── Form ──────────────────────────────────────── */
+function generateParticles() {
+    const count = 25; // Jumlah partikel melayang
+    const generated = [];
+    for (let i = 0; i < count; i++) {
+        generated.push({
+            id: i,
+            style: {
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 8 + 6}px`,
+                height: `${Math.random() * 8 + 6}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${Math.random() * 10 + 10}s`,
+                opacity: Math.random() * 0.5 + 0.2,
+            },
+        });
+    }
+    particles.value = generated;
+}
+
+/* ── Form & Validation ── */
 const form = useForm({ nama: "" });
 const loginUrl = route("login.admin");
 const localErrors = ref({ nama: "" });
-const shakeBtn = ref(false);
-const inputFocused = ref(false);
+const inputRef = ref(null);
 
 const errors = {
     get nama() {
         return localErrors.value.nama || form.errors.nama || "";
-    }
+    },
 };
 
-/* ── Validation ────────────────────────────────── */
 function validateForm() {
     let isValid = true;
-    
     if (!form.nama.trim()) {
         localErrors.value.nama = "Username wajib diisi!";
         isValid = false;
     } else {
         localErrors.value.nama = "";
     }
-    
     return isValid;
 }
 
 function handleLogin() {
     if (!validateForm()) {
-        shakeBtn.value = true;
-        setTimeout(() => (shakeBtn.value = false), 600);
         return;
     }
     form.post(route("playground.authenticate"), {
         onSuccess: () => router.visit(route("playground.index")),
-        onError: () => {
-            shakeBtn.value = true;
-            setTimeout(() => (shakeBtn.value = false), 600);
-        },
+        onError: () => {},
     });
 }
 
@@ -94,184 +75,221 @@ function goBack() {
     router.visit(loginUrl);
 }
 
-/* ── Lifecycle ─────────────────────────────────── */
 onMounted(() => {
+    // Generate efek partikel hidup
+    generateParticles();
+
+    // Page ready transition
     setTimeout(() => {
         ready.value = true;
-    }, 100);
+        inputRef.value?.focus();
+    }, 120);
+
+    // Mascot bounce on load
     setTimeout(() => {
-        bubbleTimer = setInterval(rotateBubble, 2800);
-    }, 1400);
+        mascotBounce.value = true;
+        setTimeout(() => {
+            mascotBounce.value = false;
+        }, 1200);
+    }, 800);
+
     document.addEventListener("visibilitychange", handleVisibility);
     setTimeout(() => initAutoMusic(null), 500);
 });
+
 onUnmounted(() => {
-    clearInterval(bubbleTimer);
     document.removeEventListener("visibilitychange", handleVisibility);
     destroyAudio();
 });
 </script>
 
 <template>
-    <!-- Font loader -->
     <div style="display: none">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
             rel="stylesheet"
         />
     </div>
 
-    <div class="root">
-        <!-- ══ TOPBAR ══ -->
-        <header class="topbar">
-            <button class="tbtn" @click="goBack">
-                <ArrowLeft :size="15" :stroke-width="2.5" />
-                <span class="tbtn-lbl">Login Ke Admin</span>
+    <div class="page" :class="{ 'page--on': ready }">
+        <!-- Elemen Partikel Latar Belakang -->
+        <div class="particle-container">
+            <div
+                v-for="p in particles"
+                :key="p.id"
+                class="particle"
+                :style="p.style"
+            ></div>
+        </div>
+
+        <nav class="navbar">
+            <button
+                @click="goBack"
+                class="nav-logo"
+                title="Masuk sebagai Admin"
+                style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    text-align: left;
+                "
+            >
+                <div class="logo-icon-wrap">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="10" fill="#fff" />
+                        <path
+                            d="M10 16C10 12.686 12.686 10 16 10C19.314 10 22 12.686 22 16C22 19.314 19.314 22 16 22"
+                            stroke="#38BDF8"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <circle cx="16" cy="16" r="3" fill="#38BDF8" />
+                    </svg>
+                </div>
+                <span class="logo-name">{{
+                    $page.props.global_settings?.platform_name || "Geniuss"
+                }}</span>
             </button>
 
-            <div class="brand">
-                <div class="brand-dot">
-                    <Zap
-                        :size="13"
-                        color="#fff"
-                        fill="white"
-                        :stroke-width="2"
-                    />
-                </div>
-                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
-            </div>
-
-            <div class="topbar-r">
-                <button
-                    class="tbtn tbtn-sq"
-                    :class="{ 'tbtn--on': musicOn }"
-                    @click="toggleMusic(null)"
+            <button
+                class="music-btn"
+                :class="{ 'music-btn--on': musicOn }"
+                @click="toggleMusic(null)"
+                :aria-label="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
+            >
+                <svg
+                    v-if="musicOn"
+                    class="music-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
                 >
-                    <Music2 v-if="musicOn" :size="15" :stroke-width="2" />
-                    <VolumeX v-else :size="15" :stroke-width="2" />
-                </button>
-            </div>
-        </header>
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                </svg>
+                <svg
+                    v-else
+                    class="music-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                >
+                    <line x1="2" y1="2" x2="22" y2="22" />
+                    <path d="M9 9v9" />
+                    <circle cx="6" cy="18" r="3" />
+                    <path d="M21 15.34V5L13 6.5" />
+                </svg>
+                <span class="music-label">{{
+                    musicOn ? "Musik" : "Musik"
+                }}</span>
+                <svg
+                    class="chevron-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.8"
+                    stroke-linecap="round"
+                >
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </button>
+        </nav>
 
-        <!-- ══ SPLIT BODY ══ -->
-        <div class="split" :class="{ 'split--on': ready }">
-            <!-- LEFT PANEL — mascot -->
-            <div class="left-panel">
-                <div class="lp-blob lp-blob-1"></div>
-                <div class="lp-blob lp-blob-2"></div>
-                <div class="lp-rings">
-                    <div class="lp-ring r1"></div>
-                    <div class="lp-ring r2"></div>
-                </div>
-
-                <!-- Partikel mengambang -->
-                <div class="particles" aria-hidden="true">
-                    <span class="p p1"
-                        ><Star :size="16" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p2"
-                        ><Sparkles :size="18" :stroke-width="1.5"
-                    /></span>
-                    <span class="p p3"
-                        ><Star :size="10" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p4"
-                        ><Zap :size="13" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p5"
-                        ><Star :size="20" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p6"
-                        ><Sparkles :size="14" :stroke-width="1.5"
-                    /></span>
-                    <span class="p p7"
-                        ><Zap :size="11" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p8"
-                        ><Star :size="13" fill="currentColor" :stroke-width="0"
-                    /></span>
-                    <span class="p p9"
-                        ><Sparkles :size="11" :stroke-width="1.5"
-                    /></span>
-                    <span class="p p10"
-                        ><Star :size="8" fill="currentColor" :stroke-width="0"
-                    /></span>
-                </div>
-
-                <div class="lp-text">
-                    <h1 class="lp-title">Selamat Datang!</h1>
-                    <p class="lp-sub">
-                        Masuk dan mulai petualangan belajarmu bersama Geni hari
-                        ini.
-                    </p>
-                </div>
-
-                <div class="mascot-wrap" @click="rotateBubble">
-                    <Transition name="bbl">
-                        <div v-if="bubbleVisible" class="bubble">
-                            <p>{{ BUBBLE_LINES[bubbleIdx] }}</p>
-                            <span class="bub-o"></span>
-                            <span class="bub-i"></span>
-                        </div>
-                    </Transition>
-                    <div class="mascot-glow"></div>
+        <main class="main">
+            <!-- Sisi Kiri Hero (Akan otomatis hilang total di mobile) -->
+            <div class="hero-side">
+                <div class="mascot-wrap" :class="{ bounce: mascotBounce }">
                     <img
-                        :src="$page.props.global_settings?.platform_mascot || '/images/templates/pose_keren.png'"
+                        :src="
+                            $page.props.global_settings?.platform_mascot ||
+                            '/images/templates/pose_keren.png'
+                        "
                         alt="Maskot Geni"
-                        class="mascot"
+                        class="mascot-img"
                         draggable="false"
                     />
-                    <div class="mascot-shadow"></div>
+                </div>
+
+                <div class="hero-tagline">
+                    <h1 class="hero-title">Cara seru belajar interaktif!</h1>
+                    <p class="hero-sub">
+                        Quiz, modul, dan materi lengkap untuk kamu
+                    </p>
                 </div>
             </div>
 
-            <!-- RIGHT PANEL — form card -->
-            <div class="right-panel">
+            <div class="form-side">
                 <div class="form-card">
-                    <!-- Avatar icon -->
-                    <div class="fc-avatar">
-                        <User :size="26" :stroke-width="1.8" color="#2563eb" />
+                    <div class="card-header">
+                        <h2 class="card-title">Masuk ke Playground</h2>
+                        <p class="card-sub">
+                            Masukkan username kamu untuk mulai belajar
+                        </p>
                     </div>
 
-                    <h2 class="fc-title">Masuk ke Playground</h2>
-                    <p class="fc-sub">
-                        Masukkan username dari gurumu untuk memulai.
-                    </p>
+                    <Transition name="shake">
+                        <div v-if="errors.nama" class="error-box">
+                            <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            {{ errors.nama }}
+                        </div>
+                    </Transition>
 
-                    <!-- Username field -->
-                    <div class="field-block" style="margin-top: 16px;">
-                        <label class="f-label" for="pg-user">Username</label>
-                        <div
-                            class="f-row"
-                            :class="{
-                                'f-row--on': inputFocused,
-                                'f-row--err': !!errors.nama,
-                            }"
+                    <div
+                        class="field-group"
+                        :class="{ 'field--error': !!errors.nama }"
+                    >
+                        <label class="field-label" for="pg-user"
+                            >Username</label
                         >
-                            <User
-                                :size="16"
-                                :stroke-width="2.2"
-                                class="f-ico"
-                            />
+                        <div class="input-wrap">
+                            <svg
+                                class="input-icon"
+                                width="17"
+                                height="17"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                            >
+                                <path
+                                    d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
                             <input
                                 id="pg-user"
+                                ref="inputRef"
                                 v-model="form.nama"
                                 type="text"
-                                placeholder="Tulis username kamu..."
-                                maxlength="60"
+                                class="field-input"
+                                placeholder="Ketik username kamu..."
                                 autocomplete="off"
-                                class="f-input"
+                                maxlength="60"
                                 @focus="
-                                    inputFocused = true;
                                     localErrors.nama = '';
                                     form.clearErrors('nama');
                                 "
-                                @blur="
-                                    inputFocused = false;
-                                    validateForm();
-                                "
+                                @blur="validateForm"
                                 @input="
                                     localErrors.nama = '';
                                     form.clearErrors('nama');
@@ -279,39 +297,50 @@ onUnmounted(() => {
                                 @keyup.enter="handleLogin"
                             />
                         </div>
-                        <Transition name="err">
-                            <p v-if="errors.nama" class="f-err" role="alert">
-                                {{ errors.nama }}
-                            </p>
-                        </Transition>
                     </div>
 
-                    <!-- CTA -->
                     <button
-                        class="cta-btn"
-                        :class="{
-                            'cta--shake': shakeBtn,
-                            'cta--loading': form.processing,
-                        }"
-                        :disabled="form.processing"
-                        @click="handleLogin"
+                        class="btn-masuk"
+                        :disabled="form.processing || !form.nama.trim()"
+                        @click.prevent="handleLogin"
                     >
-                        <template v-if="!form.processing">
-                            <LogIn :size="17" :stroke-width="2.5" />
-                            <span>Masuk Sekarang</span>
-                        </template>
-                        <template v-else>
-                            <span class="spinner"></span>
-                            <span>Sedang masuk...</span>
-                        </template>
+                        <span v-if="!form.processing">MASUK</span>
+                        <span v-else class="loading-dots">
+                            <span></span><span></span><span></span>
+                        </span>
                     </button>
 
-                    <p class="fc-hint">
-                        Belum punya username? Tanya guru kelasmu!
-                    </p>
+                    <div class="divider">
+                        <span class="divider-line"></span>
+                        <span class="divider-text">INFO</span>
+                        <span class="divider-line"></span>
+                    </div>
+
+                    <div class="info-card">
+                        <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                        >
+                            <path
+                                d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
+                            />
+                            <path
+                                d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
+                            />
+                        </svg>
+                        <p>
+                            Username diberikan oleh gurumu. Hubungi guru jika
+                            belum punya username.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </template>
 
@@ -324,665 +353,373 @@ onUnmounted(() => {
     padding: 0;
 }
 
-/* ─────────── ROOT ─────────── */
-.root {
-    height: 100dvh;
+/* ══════════════════════════════
+   PAGE — flat solid biru dengan sistem partikel
+══════════════════════════════ */
+.page {
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     font-family: "Nunito", sans-serif;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Background foto di belakang */
-.root::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: url("/images/templates/background.png") center / cover no-repeat;
-    z-index: -2;
-}
-
-/* Kaca biru transparan di atasnya */
-.root::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background:
-        radial-gradient(
-            ellipse 90% 70% at 10% 5%,
-            rgba(30, 64, 175, 0.78) 0%,
-            transparent 55%
-        ),
-        radial-gradient(
-            ellipse 75% 60% at 90% 95%,
-            rgba(29, 78, 216, 0.72) 0%,
-            transparent 55%
-        ),
-        rgba(30, 58, 138, 0.65);
-    backdrop-filter: blur(0.3px);
-    -webkit-backdrop-filter: blur(0.3px);
-    z-index: -1;
-}
-
-/* ─────────── TOPBAR ─────────── */
-.topbar {
-    position: relative;
-    z-index: 50;
-    height: 60px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.12);
-}
-.tbtn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    color: #fff;
-    cursor: pointer;
-    transition:
-        background 0.18s,
-        transform 0.15s;
-    flex-shrink: 0;
-}
-.tbtn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-}
-.tbtn-sq {
-    padding: 7px 10px;
-}
-.tbtn--on {
-    background: #2563eb !important;
-    border-color: #bfdbfe !important;
-}
-
-.brand {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-}
-.brand-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
-}
-.brand-name {
-    font-family: "Righteous", cursive;
-    font-size: 18px;
-    color: #fff;
-}
-.topbar-r {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-    z-index: 3;
-}
-
-/* ─────────── SPLIT BODY ─────────── */
-.split {
-    position: relative;
-    z-index: 10;
-    flex: 1;
-    display: flex;
-    min-height: 0;
+    background-color: #e0f2fe;
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: opacity 0.4s ease;
+    position: relative;
+    overflow: hidden;
 }
-.split--on {
+.page--on {
     opacity: 1;
 }
 
-/* ─────────── LEFT PANEL ─────────── */
-.left-panel {
-    width: 44%;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 36px 40px;
-    overflow: hidden;
-    border-radius: 0;
-    background: rgba(29, 78, 216, 0.38);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-right: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 6px 0 40px rgba(0, 0, 0, 0.22);
-    transform: translateX(-30px);
-    opacity: 0;
-    animation: slideInLeft 0.55s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-@keyframes slideInLeft {
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* ─── PARTICLES ─── */
-.particles {
+/* ── Animasi Partikel di Latar Belakang ── */
+.particle-container {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 1;
-    overflow: hidden;
 }
-.p {
+.particle {
     position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: pFloat ease-in-out infinite;
-    opacity: 0;
-}
-.p1,
-.p3,
-.p5,
-.p8,
-.p10 {
-    color: #fcd34d;
-}
-.p2,
-.p6,
-.p9 {
-    color: rgba(255, 255, 255, 0.65);
-}
-.p4,
-.p7 {
-    color: #bfdbfe;
-}
-
-.p1 {
-    left: 8%;
-    top: 15%;
-    animation-duration: 6s;
-    animation-delay: 0s;
-}
-.p2 {
-    left: 78%;
-    top: 20%;
-    animation-duration: 8s;
-    animation-delay: 1.2s;
-}
-.p3 {
-    left: 18%;
-    top: 60%;
-    animation-duration: 7s;
-    animation-delay: 2.5s;
-}
-.p4 {
-    left: 70%;
-    top: 65%;
-    animation-duration: 9s;
-    animation-delay: 0.8s;
-}
-.p5 {
-    left: 85%;
-    top: 35%;
-    animation-duration: 11s;
-    animation-delay: 3.5s;
-}
-.p6 {
-    left: 32%;
-    top: 82%;
-    animation-duration: 7.5s;
-    animation-delay: 1.8s;
-}
-.p7 {
-    left: 50%;
-    top: 10%;
-    animation-duration: 10s;
-    animation-delay: 4.2s;
-}
-.p8 {
-    left: 60%;
-    top: 75%;
-    animation-duration: 8.5s;
-    animation-delay: 5s;
-}
-.p9 {
-    left: 25%;
-    top: 30%;
-    animation-duration: 9.5s;
-    animation-delay: 2s;
-}
-.p10 {
-    left: 92%;
-    top: 50%;
-    animation-duration: 12s;
-    animation-delay: 6s;
-}
-
-@keyframes pFloat {
-    0% {
-        transform: translateY(0) rotate(0deg) scale(1);
-        opacity: 0;
-    }
-    10% {
-        opacity: 0.8;
-    }
-    45% {
-        transform: translateY(-22px) rotate(15deg) scale(1.18);
-        opacity: 0.6;
-    }
-    80% {
-        transform: translateY(-40px) rotate(-8deg) scale(0.95);
-        opacity: 0.3;
-    }
-    100% {
-        transform: translateY(-58px) rotate(5deg) scale(0.85);
-        opacity: 0;
-    }
-}
-
-/* Blobs inside left panel */
-.lp-blob {
-    position: absolute;
+    background-color: #4fafe2;
     border-radius: 50%;
-    filter: blur(60px);
-    pointer-events: none;
+    animation: floatParticle linear infinite;
 }
-.lp-blob-1 {
-    width: 320px;
-    height: 320px;
-    top: -100px;
-    left: -80px;
-    background: #3b82f6;
-    opacity: 0.35;
-    animation: blobDrift 20s ease-in-out infinite alternate;
-}
-.lp-blob-2 {
-    width: 220px;
-    height: 220px;
-    bottom: -60px;
-    right: -40px;
-    background: #34d399;
-    opacity: 0.18;
-    animation: blobDrift 26s ease-in-out 6s infinite alternate;
-}
-@keyframes blobDrift {
+@keyframes floatParticle {
     0% {
-        transform: translate(0, 0);
+        transform: translateY(100vh) scale(0.5) rotate(0deg);
     }
     50% {
-        transform: translate(20px, 14px) scale(1.05);
+        transform: translateY(50vh) scale(1.2) rotate(180deg);
     }
     100% {
-        transform: translate(-14px, 24px);
+        transform: translateY(-10vh) scale(0.5) rotate(360deg);
     }
 }
 
-/* Rings */
-.lp-rings {
+/* ══════════════════════════════
+   NAVBAR (Dibuat Transparan & Absolute)
+══════════════════════════════ */
+.navbar {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-.lp-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1.5px solid rgba(191, 219, 254, 0.16);
-    background: transparent;
-    animation: ringPulse ease-out infinite;
-}
-.r1 {
-    width: 260px;
-    height: 260px;
-    top: -60px;
-    left: -60px;
-    animation-duration: 10s;
-}
-.r2 {
-    width: 180px;
-    height: 180px;
-    bottom: -40px;
-    right: -40px;
-    animation-duration: 13s;
-    animation-delay: 4s;
-}
-@keyframes ringPulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.4;
-    }
-    70% {
-        transform: scale(1.5);
-        opacity: 0.05;
-    }
-    100% {
-        transform: scale(1.8);
-        opacity: 0;
-    }
-}
-
-/* Text block */
-.lp-text {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    margin-bottom: 28px;
-}
-.lp-title {
-    font-family: "Righteous", cursive;
-    font-size: clamp(28px, 3.5vw, 44px);
-    color: #fff;
-    line-height: 1.15;
-    margin-bottom: 10px;
-    text-shadow: 0 3px 18px rgba(0, 0, 0, 0.25);
-}
-.lp-sub {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.78);
-    line-height: 1.65;
-    max-width: 260px;
-    margin: 0 auto;
-}
-
-/* Mascot */
-.mascot-wrap {
-    position: relative;
-    z-index: 2;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    height: 72px;
+    width: 100%;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    cursor: pointer;
-    user-select: none;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: transparent; /* Full Transparan */
+    border-bottom: none; /* Hilangkan border pengganggu */
 }
-.bubble {
-    position: relative;
-    background: #fff;
-    border: 2.5px solid #ffffff;
-    border-radius: 18px;
+
+/* Logo & Brand text */
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+.nav-logo:hover {
+    transform: scale(1.03);
+}
+.logo-icon-wrap {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+}
+.logo-name {
+    font-size: 22px;
+    font-weight: 900;
+    color: #0369a1;
+    letter-spacing: -0.3px;
+    text-transform: uppercase;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Music button */
+.music-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     padding: 10px 16px;
-    max-width: 210px;
-    box-shadow: 0 6px 22px rgba(17, 11, 0, 0.22);
-    margin-bottom: 6px;
-    animation: bubFloat 3.5s ease-in-out infinite;
-}
-.bubble p {
+    background: #fff;
+    border: 2.5px solid #7dd3fc;
+    border-radius: 14px;
+    font-family: "Nunito", sans-serif;
     font-size: 13px;
     font-weight: 800;
-    color: #2b2b2b;
+    color: #0369a1;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 0 0 #bae6fd;
+    transition: all 0.1s ease;
+    outline: none;
+    flex-shrink: 0;
 }
-.bub-o,
-.bub-i {
-    position: absolute;
-    bottom: -13px;
-    left: 22px;
-    width: 0;
-    height: 0;
+.music-btn:hover {
+    border-color: #0ea5e9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 0 #bae6fd;
 }
-.bub-o {
-    border-left: 10px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 13px solid #ffffff;
+.music-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 0 #bae6fd;
 }
-.bub-i {
-    bottom: -10px;
-    left: 23px;
-    border-left: 8px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 11px solid #fff;
+.music-btn--on {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+    box-shadow: 0 4px 0 0 #0284c7;
 }
-@keyframes bubFloat {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-6px);
-    }
+.music-btn--on:hover {
+    border-color: #0284c7;
+    box-shadow: 0 6px 0 0 #0284c7;
 }
-.bbl-enter-active {
-    transition:
-        opacity 0.28s,
-        transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+.music-btn--on:active {
+    box-shadow: 0 2px 0 0 #0284c7;
 }
-.bbl-leave-active {
-    transition: opacity 0.18s;
+.music-icon {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
 }
-.bbl-enter-from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.9);
+.chevron-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.6;
 }
-.bbl-leave-to {
-    opacity: 0;
-}
-
-.mascot-glow {
-    position: absolute;
-    width: 180px;
-    height: 180px;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: radial-gradient(
-        circle,
-        rgba(59, 130, 246, 0.3) 0%,
-        transparent 70%
-    );
-    filter: blur(24px);
-    animation: glowPulse 3.5s ease-in-out infinite;
-    pointer-events: none;
-}
-@keyframes glowPulse {
-    0%,
-    100% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
-}
-.mascot {
-    position: relative;
-    z-index: 2;
-    width: clamp(140px, 16vw, 210px);
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.28));
-    animation: charBob 3.5s ease-in-out infinite;
-    transform-origin: bottom center;
-}
-@keyframes charBob {
-    0%,
-    100% {
-        transform: translateY(0) rotate(0);
-    }
-    45% {
-        transform: translateY(-10px) rotate(0.6deg);
-    }
-    70% {
-        transform: translateY(-5px) rotate(-0.4deg);
-    }
-}
-.mascot-shadow {
-    width: 68%;
-    height: 14px;
-    border-radius: 50%;
-    background: radial-gradient(
-        ellipse,
-        rgba(0, 0, 0, 0.28) 0%,
-        transparent 70%
-    );
-    position: relative;
-    z-index: 1;
-    margin: -2px auto 0;
+.music-label {
+    white-space: nowrap;
 }
 
-/* ─────────── RIGHT PANEL ─────────── */
-.right-panel {
+/* ══════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════ */
+.main {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 48px;
-    transform: translateY(20px);
-    opacity: 0;
-    animation: slideInRight 0.55s 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)
-        forwards;
-}
-@keyframes slideInRight {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    gap: 64px;
+    padding: 100px 40px 56px; /* Ditambah padding atas agar tidak tertutup navbar absolute */
+    max-width: 1080px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 2; /* Di atas partikel background */
 }
 
-/* ─────────── FORM CARD ─────────── */
-.form-card {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255, 255, 255, 0.97);
-    border-radius: 28px;
-    padding: 44px 40px 40px;
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.22),
-        0 2px 0 rgba(255, 255, 255, 0.8) inset;
+/* ══════════════════════════════
+   HERO SIDE — kiri
+══════════════════════════════ */
+.hero-side {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
-}
-.form-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 3px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        #bfdbfe 30%,
-        #3b82f6 50%,
-        #bfdbfe 70%,
-        transparent
-    );
-    border-radius: 0 0 4px 4px;
+    gap: 24px;
 }
 
-/* Avatar */
-.fc-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    background: #eff6ff;
-    border: 3px solid #bfdbfe;
+.mascot-wrap {
+    width: 100%;
+    max-width: 340px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 18px rgba(37, 99, 235, 0.14);
-    animation: avatarPop 2.8s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
+    filter: drop-shadow(0 20px 32px rgba(3, 105, 161, 0.25));
 }
-@keyframes avatarPop {
-    0%,
-    100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.07);
-    }
-}
-.fc-title {
-    font-family: "Righteous", cursive;
-    font-size: clamp(20px, 2.4vw, 26px);
-    color: #111827;
-    text-align: center;
-    margin-bottom: 8px;
-    line-height: 1.2;
-}
-.fc-sub {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: #6b7280;
-    text-align: center;
-    line-height: 1.6;
-    margin-bottom: 28px;
-    max-width: 290px;
+.mascot-img {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
-/* Field */
-.field-block {
-    width: 100%;
-    margin-bottom: 20px;
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-16px);
+    }
 }
-.f-label {
-    display: block;
+
+.mascot-wrap.bounce {
+    animation:
+        mascot-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1),
+        float 4s ease-in-out 1.2s infinite;
+}
+@keyframes mascot-bounce {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-28px) rotate(-3deg);
+    }
+    55% {
+        transform: translateY(-14px) rotate(2deg);
+    }
+    75% {
+        transform: translateY(-6px) rotate(-1deg);
+    }
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+.hero-tagline {
+    text-align: center;
+}
+.hero-title {
+    font-size: clamp(24px, 2.8vw, 32px);
+    font-weight: 900;
+    color: #0c4a6e;
+    line-height: 1.2;
+    margin-bottom: 10px;
+}
+.hero-sub {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0369a1;
+    line-height: 1.5;
+}
+
+/* ══════════════════════════════
+   FORM SIDE — kanan
+══════════════════════════════ */
+.form-side {
+    flex: 0 0 auto;
+    width: 390px;
+    max-width: 100%;
+}
+
+.form-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 36px 32px 32px;
+    border: 2.5px solid #bae6fd;
+    box-shadow:
+        0 6px 0 0 #bae6fd,
+        0 12px 32px rgba(3, 105, 161, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: transform 0.3s ease;
+}
+
+/* Card header */
+.card-header {
+    margin-bottom: 2px;
+}
+.card-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #0c4a6e;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+.card-sub {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0369a1;
+    line-height: 1.5;
+}
+
+/* Error Alert Box */
+.error-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 12px;
+    padding: 11px 13px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #dc2626;
+}
+.shake-enter-active {
+    animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    20% {
+        transform: translateX(-7px);
+    }
+    40% {
+        transform: translateX(7px);
+    }
+    60% {
+        transform: translateX(-4px);
+    }
+    80% {
+        transform: translateX(4px);
+    }
+}
+
+/* Input Fields */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.field-label {
     font-size: 12px;
     font-weight: 900;
     color: #374151;
-    margin-bottom: 7px;
-    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
 }
-.f-row {
+.input-wrap {
     display: flex;
     align-items: center;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    background: #f8faff;
-    overflow: hidden;
+    border: 2.5px solid #e5e7eb;
+    border-radius: 16px;
+    background: #f9fafb;
     transition:
-        border-color 0.2s,
-        box-shadow 0.2s,
-        background 0.2s;
+        border-color 0.15s,
+        box-shadow 0.15s,
+        background 0.15s;
+    overflow: hidden;
 }
-.f-row--on {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+.input-wrap:focus-within {
+    border-color: #38bdf8;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
 }
-.f-row--err {
+.field--error .input-wrap {
     border-color: #fca5a5;
-    background: #fef2f2;
+    background: #fff5f5;
+    box-shadow: none;
 }
-.f-ico {
+.input-icon {
     flex-shrink: 0;
     width: 48px;
-    color: #9ca3af;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
+    color: #9ca3af;
+    transition: color 0.15s;
 }
-.f-row--on .f-ico {
-    color: #3b82f6;
+.input-wrap:focus-within .input-icon {
+    color: #38bdf8;
 }
-.f-row--err .f-ico {
-    color: #f87171;
-}
-.f-input {
+.field-input {
     flex: 1;
-    height: 52px;
-    padding: 0 16px 0 0;
     border: none;
     outline: none;
     background: transparent;
@@ -990,240 +727,178 @@ onUnmounted(() => {
     font-size: 15px;
     font-weight: 700;
     color: #111827;
+    padding: 14px 14px 14px 0;
 }
-.f-input::placeholder {
-    color: #9ca3af;
+.field-input::placeholder {
+    color: #d1d5db;
     font-weight: 600;
 }
-.f-err {
-    font-size: 12px;
-    font-weight: 800;
-    color: #ef4444;
-    margin-top: 6px;
-    padding-left: 4px;
-}
-.err-enter-active {
+
+/* Chunky Duolingo Button */
+.btn-masuk {
+    width: 100%;
+    height: 54px;
+    border: none;
+    border-radius: 16px;
+    background: #38bdf8;
+    box-shadow: 0 5px 0 0 #0284c7;
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    top: 0;
     transition:
-        opacity 0.2s,
-        transform 0.22s;
+        background 0.1s,
+        top 0.08s,
+        box-shadow 0.08s;
 }
-.err-leave-active {
-    transition: opacity 0.15s;
+.btn-masuk:hover:not(:disabled) {
+    background: #0ea5e9;
+    box-shadow: 0 5px 0 0 #0369a1;
 }
-.err-enter-from {
-    opacity: 0;
-    transform: translateY(-4px);
+.btn-masuk:active:not(:disabled) {
+    top: 5px;
+    box-shadow: 0 0 0 0 transparent;
 }
-.err-leave-to {
-    opacity: 0;
+.btn-masuk:disabled {
+    background: #bae6fd;
+    box-shadow: 0 5px 0 0 #7dd3fc;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: not-allowed;
+    top: 0;
 }
 
-/* CTA button */
-.cta-btn {
-    width: 100%;
-    height: 52px;
-    display: flex;
+/* Loading dots */
+.loading-dots {
+    display: inline-flex;
+    gap: 6px;
     align-items: center;
-    justify-content: center;
-    gap: 9px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    border: none;
-    border-radius: 14px;
-    font-family: "Righteous", cursive;
-    font-size: 16px;
-    color: #fff;
-    cursor: pointer;
-    box-shadow:
-        0 5px 0 #1e3a8a,
-        0 10px 28px rgba(37, 99, 235, 0.38);
-    transition:
-        transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.15s;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 16px;
 }
-.cta-btn::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.12) 0%,
-        transparent 55%
-    );
-    pointer-events: none;
+.loading-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    animation: dot-bounce 0.7s ease-in-out infinite;
 }
-.cta-btn:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow:
-        0 8px 0 #1e3a8a,
-        0 16px 36px rgba(37, 99, 235, 0.42);
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.1s;
 }
-.cta-btn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow:
-        0 2px 0 #1e3a8a,
-        0 4px 14px rgba(37, 99, 235, 0.28);
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.2s;
 }
-.cta-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-.cta--shake {
-    animation: ctaShake 0.5s ease;
-}
-.cta--loading {
-    opacity: 0.8;
-    cursor: wait;
-}
-@keyframes ctaShake {
+@keyframes dot-bounce {
     0%,
+    80%,
     100% {
-        transform: translateX(0);
-    }
-    20% {
-        transform: translateX(-8px);
+        transform: scale(1);
+        opacity: 0.8;
     }
     40% {
-        transform: translateX(8px);
-    }
-    60% {
-        transform: translateX(-5px);
-    }
-    80% {
-        transform: translateX(5px);
+        transform: scale(1.3);
+        opacity: 1;
     }
 }
 
-.spinner {
-    width: 19px;
-    height: 19px;
-    flex-shrink: 0;
-    border: 3px solid rgba(255, 255, 255, 0.35);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.divider-line {
+    flex: 1;
+    height: 1.5px;
+    background: #e5e7eb;
+    border-radius: 2px;
 }
-
-.fc-hint {
-    font-size: 12px;
-    font-weight: 700;
+.divider-text {
+    font-size: 10.5px;
+    font-weight: 900;
     color: #9ca3af;
-    text-align: center;
+    letter-spacing: 1px;
 }
 
-/* ─────────── RESPONSIVE ≤ 820px ─────────── */
+/* Info card */
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 14px 16px;
+    background: #f0f9ff;
+    border: 2px solid #bae6fd;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 0 #bae6fd;
+}
+.info-card svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #0ea5e9;
+}
+.info-card p {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0369a1;
+    line-height: 1.55;
+}
+
+/* ══════════════════════════════
+   RESPONSIVE MEDIA QUERIES (DYNAMIC RESPONSIVE)
+══════════════════════════════ */
 @media (max-width: 820px) {
-    .split {
+    /* Sembunyikan Maskot & Tagline Kata-kata Sepenuhnya di Mobile/Tablet Kecil */
+    .hero-side {
+        display: none !important;
+    }
+
+    .navbar {
+        padding: 0 24px;
+        height: 64px;
+    }
+
+    .main {
         flex-direction: column;
-    }
-
-    .left-panel {
-        display: none;
-    }
-
-    .right-panel {
-        flex: 1;
-        display: flex;
+        gap: 0;
+        padding: 90px 24px 40px;
         align-items: center;
         justify-content: center;
-        padding: 32px 20px;
-        margin-top: 50px;
     }
 
-    .form-card {
-        max-width: 420px;
+    .form-side {
         width: 100%;
-        padding: 32px 28px;
-    }
-
-    .fc-avatar {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 16px;
-    }
-    .fc-title {
-        font-size: 22px;
-    }
-    .fc-sub {
-        font-size: 12.5px;
-        margin-bottom: 22px;
-    }
-    .f-input {
-        height: 48px;
-        font-size: 14px;
-    }
-    .f-ico {
-        width: 44px;
-    }
-    .cta-btn {
-        height: 50px;
-        font-size: 15px;
+        max-width: 440px;
     }
 }
 
-/* ─────────── RESPONSIVE ≤ 480px ─────────── */
 @media (max-width: 480px) {
-    .topbar {
-        height: 52px;
-        padding: 0 14px;
+    .navbar {
+        padding: 0 16px;
+        height: 60px;
     }
-    .tbtn-lbl {
-        display: none;
+    .logo-name {
+        font-size: 18px;
     }
-    .tbtn {
-        padding: 7px 10px;
+    .music-label {
+        display: none; /* Sembunyikan teks musik di layar sangat kecil agar fit */
     }
-    .brand-name {
-        font-size: 16px;
+    .music-btn {
+        padding: 8px 12px;
+        gap: 5px;
+        border-radius: 12px;
     }
-    .brand-dot {
-        width: 25px;
-        height: 25px;
+    .main {
+        padding: 84px 16px 32px;
     }
-
-    .right-panel {
-        padding: 24px 14px;
-        margin-top: 40px;
-    }
-
     .form-card {
         padding: 28px 20px 24px;
-        border-radius: 22px;
+        border-radius: 20px;
     }
-    .fc-avatar {
-        width: 54px;
-        height: 54px;
-        margin-bottom: 13px;
-    }
-    .fc-title {
-        font-size: 20px;
-    }
-    .fc-sub {
-        font-size: 12px;
-        margin-bottom: 18px;
-    }
-    .f-row {
-        border-radius: 12px;
-    }
-    .f-input {
-        height: 46px;
-        font-size: 14px;
-    }
-    .cta-btn {
-        height: 48px;
-        font-size: 15px;
-        border-radius: 12px;
-        margin-bottom: 12px;
-    }
-    .fc-hint {
-        font-size: 11.5px;
+    .card-title {
+        font-size: 21px;
     }
 }
 </style>
