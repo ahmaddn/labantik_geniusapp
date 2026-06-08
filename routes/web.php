@@ -17,11 +17,8 @@ use App\Http\Controllers\Student\PlaygroundController;
 use App\Http\Controllers\Student\PretestController;
 use App\Http\Controllers\Student\PosttestController;
 use App\Http\Controllers\Student\MissionController as StudentMissionController;
-use App\Http\Controllers\Admin\ModuleSimulationController;
 use App\Http\Controllers\Admin\SimulationConfigController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -147,12 +144,6 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::put('/modules/{modules}', [ModulesController::class, 'update'])->name('update');
         Route::delete('/modules/{modules}', [ModulesController::class, 'destroy'])->name('destroy');
         Route::patch('/modules/{modules}/toggle-active', [ModulesController::class, 'toggleActive'])->name('toggle-active');
-
-        // Simulation Config Routes (nested under modules)
-        Route::prefix('modules/{modules}/simulation')->name('simulation.')->group(function () {
-            Route::get('/', [ModuleSimulationController::class, 'edit'])->name('edit');
-            Route::put('/', [ModuleSimulationController::class, 'update'])->name('update');
-        });
 
         // Module-level Quiz Routes (for quizzes without a mission_id)
         Route::prefix('modules/{modules}/quizzes')->name('quizzes.')->group(function () {

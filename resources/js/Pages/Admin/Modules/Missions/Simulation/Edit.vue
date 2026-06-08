@@ -248,9 +248,7 @@ const mapDecisions = (decisions) => {
         existing_initial_image: dec.initial_state_image || null,
         initial_state_image: null,
         _preview_initial: dec.initial_state_image ? `/storage/${dec.initial_state_image}` : null,
-        existing_character_image: dec.character_image || null,
-        character_image: null,
-        _preview_character: dec.character_image ? `/storage/${dec.character_image}` : null,
+        character_image: dec.character_image || null,
         options: (dec.options || []).map(opt => ({
             id: opt.id,
             button_label: opt.button_label || '',
@@ -278,7 +276,6 @@ const addDecision = () => {
         initial_state_image: null,
         _preview_initial: null,
         character_image: null,
-        _preview_character: null,
         options: []
     });
 };
@@ -563,17 +560,18 @@ const saveDecision = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <FileDropzone 
-                                        label="Gambar Maskot Custom (Opsional)" 
-                                        accept="image/*" 
-                                        v-model="dec.character_image"
-                                        @update:modelValue="(file) => { if(file) dec._preview_character = URL.createObjectURL(file); else dec._preview_character = null; }" 
-                                    />
-                                    <div v-if="dec._preview_character || dec.existing_character_image" class="mt-3">
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Maskot dari Template (Opsional)</label>
+                                    <select v-model="dec.character_image" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                        <option :value="null">Gunakan Maskot Default Geniuss</option>
+                                        <option v-for="mascot in module.template?.mascots || []" :key="mascot.id" :value="mascot.image">
+                                            {{ mascot.name_pose || 'Pose Maskot' }}
+                                        </option>
+                                    </select>
+                                    <div v-if="dec.character_image" class="mt-3">
                                         <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
-                                        <img :src="dec._preview_character || `/storage/${dec.existing_character_image}`" class="w-24 h-24 object-contain rounded-xl border-2 border-gray-200 shadow-sm" />
+                                        <img :src="`/storage/${dec.character_image}`" class="w-24 h-24 object-contain rounded-xl border-2 border-gray-200 shadow-sm" />
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-2">Biarkan kosong untuk menggunakan maskot default Geniuss.</p>
+                                    <p class="text-xs text-gray-400 mt-2">Memilih maskot yang sesuai dengan modul ini.</p>
                                 </div>
                             </div>
 

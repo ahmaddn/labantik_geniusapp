@@ -43,6 +43,7 @@ import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
 import Case_study from "@/Components/Quiz/Case_study.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
+import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
 import Double_slider from "@/Components/Simulation/DoubleSlider.vue";
 import Comparisons from "@/Components/Simulation/Comparisons.vue";
@@ -55,6 +56,7 @@ const COMPONENT_MAP = {
     case_study: Case_study,
     materials: Materials,
     drag_drop: Drag_drop,
+    short_answer: Short_answer,
     simulation_clickable: Clickable_objects,
     simulation_slider: Double_slider,
     simulation_comparison: Comparisons,
@@ -76,6 +78,7 @@ const TYPE_META = {
     },
     case_study: { label: "Studi Kasus", color: "#0891b2", bg: "#cffafe" },
     drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7" },
+    short_answer: { label: "Isian Singkat", color: "#6366f1", bg: "#e0e7ff" },
     materials: { label: "Materi", color: "#10b981", bg: "#dcfce7" },
     simulation_clickable: { label: "Simulasi", color: "#14b8a6", bg: "#ccfbf1" },
     simulation_slider: { label: "Simulasi Slider", color: "#f43f5e", bg: "#ffe4e6" },

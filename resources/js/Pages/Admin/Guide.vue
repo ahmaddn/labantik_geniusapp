@@ -26,7 +26,8 @@ const guides = ref([
     { id: "modules", title: "Modul Pembelajaran", icon: GraduationCap },
     { id: "classes", title: "Manajemen Kelas", icon: BookOpen },
     { id: "users", title: "Manajemen Pengguna", icon: Users },
-    { id: "reports", title: "Laporan & Riwayat", icon: BarChart }
+    { id: "reports", title: "Laporan & Riwayat", icon: BarChart },
+    { id: "settings", title: "Pengaturan Platform", icon: Settings }
 ]);
 
 const activeTab = ref("modules"); 
@@ -441,6 +442,43 @@ const activeTab = ref("modules");
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1"/> <div>Buka halaman Lihat Riwayat modul.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1"/> <div>Di kanan atas tabel, klik tombol <span class="bg-green-500 text-white font-bold px-2 py-0.5 rounded text-sm inline-flex items-center gap-1"><Download class="w-3 h-3"/> Export Excel</span>.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1"/> <div>File akan otomatis terunduh. Laporan nilai ini sudah diformat lengkap dan bisa langsung dicetak!</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. SETTINGS -->
+                    <div v-show="activeTab === 'settings'">
+                        <div class="flex items-center gap-3 mb-8 border-b border-gray-100 pb-4">
+                            <div class="p-2 bg-blue-100 rounded-xl"><Settings class="w-6 h-6 text-blue-600" /></div>
+                            <h2 class="text-2xl font-bold text-gray-800">Tutorial: Pengaturan Platform</h2>
+                        </div>
+                        
+                        <p class="text-gray-600 mb-6 text-lg">Di sini Anda dapat menyesuaikan identitas platform GENIUSS, maskot default, serta musik latar (BGM) agar pengalaman belajar siswa lebih menyenangkan.</p>
+                        
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 shrink-0 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-blue-200">1</div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mengatur Identitas & Maskot</h4>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Identitas Platform:</strong> Anda bisa mengganti Nama Platform, Sub-judul, dan Logo aplikasi sesuai dengan sekolah atau instansi Anda.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Maskot Platform:</strong> Unggah gambar maskot utama yang akan menemani siswa di layar awal. Disarankan menggunakan gambar dengan format PNG (transparan).</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Dialog Maskot:</strong> Anda dapat menambahkan pesan-pesan acak (contoh: "Halo!", "Semangat belajarnya ya!") yang akan diucapkan maskot saat siswa membuka aplikasi. Klik <strong>Tambah</strong> untuk memasukkan dialog baru.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div>Jangan lupa klik tombol <strong>Simpan Semua Pengaturan</strong> di paling bawah setelah selesai!</div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 shrink-0 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-blue-200">2</div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mengelola Musik Latar (BGM)</h4>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Aktifkan/Nonaktifkan:</strong> Terdapat tombol geser (*toggle*) untuk menghidupkan atau mematikan musik latar secara keseluruhan di aplikasi siswa.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Upload BGM Baru:</strong> Pilih file audio (MP3/WAV/OGG) dari perangkat Anda, lalu klik <strong>Upload</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-blue-500 shrink-0 mt-1"/> <div><strong>Menggunakan BGM:</strong> Pada daftar BGM yang tersedia, klik tombol <strong>Gunakan</strong> untuk menjadikan musik tersebut sebagai lagu utama. Anda juga bisa memutar musik terlebih dahulu dengan klik tombol <strong>Play</strong> (ikon segitiga).</div></div>
                                     </div>
                                 </div>
                             </div>

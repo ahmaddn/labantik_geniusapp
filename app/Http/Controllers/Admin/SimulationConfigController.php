@@ -35,6 +35,8 @@ class SimulationConfigController extends Controller
             'simulation_decisions.options',
         ]);
 
+        $modules->load('template.mascots');
+
         return Inertia::render('Admin/Modules/Missions/Simulation/Edit', [
             'module' => $modules,
             'mission' => $missions,
@@ -289,8 +291,7 @@ class SimulationConfigController extends Controller
             'decisions.*.future_state_title' => 'nullable|string|max:255',
             'decisions.*.initial_state_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
             'decisions.*.remove_initial_image' => 'nullable|boolean',
-            'decisions.*.character_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
-            'decisions.*.remove_character_image' => 'nullable|boolean',
+            'decisions.*.character_image' => 'nullable|string',
             
             'decisions.*.options' => 'nullable|array',
             'decisions.*.options.*.id' => 'nullable|string',
@@ -323,14 +324,9 @@ class SimulationConfigController extends Controller
                     $dec->initial_state_image = $request->file("decisions.{$index}.initial_state_image")->store('simulations/decisions', 'public');
                 }
 
-                // Handle character image
-                if (!empty($dData['remove_character_image']) && $dec->character_image) {
-                    Storage::disk('public')->delete($dec->character_image);
-                    $dec->character_image = null;
-                }
-                if ($request->hasFile("decisions.{$index}.character_image")) {
-                    if ($dec->character_image) Storage::disk('public')->delete($dec->character_image);
-                    $dec->character_image = $request->file("decisions.{$index}.character_image")->store('simulations/decisions', 'public');
+                // Handle character image (selected from template)
+                if (array_key_exists('character_image', $dData)) {
+                    $dec->character_image = $dData['character_image'];
                 }
 
                 $dec->save();

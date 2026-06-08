@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
@@ -49,6 +49,12 @@ const quizForm = ref({
     type: props.quiz.type || "multiple_choices",
     category: props.quiz.category || "mission",
 });
+
+watch(() => quizForm.value.category, (newVal) => {
+    if (newVal === 'pretest' || newVal === 'posttest') {
+        quizForm.value.type = 'multiple_choices';
+    }
+}, { immediate: true });
 
 // Image quiz
 const quizImageFile = ref(null);
@@ -734,6 +740,7 @@ const toggleCardVariant = () => {
                                 label="Tipe Kuis"
                                 :options="quizTypeOptions"
                                 border-color="orange"
+                                :disabled="quizForm.category === 'pretest' || quizForm.category === 'posttest'"
                             />
                             <SelectField
                                 v-model="quizForm.category"

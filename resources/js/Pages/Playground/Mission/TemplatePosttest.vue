@@ -30,6 +30,7 @@ import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
 import True_false from "@/Components/Quiz/True_false.vue";
 import Case_study from "@/Components/Quiz/Case_study.vue";
 import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
+import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import PretestLayout from "@/Layouts/PretestLayout.vue";
 
@@ -46,6 +47,7 @@ const COMPONENT_MAP = {
     true_false: True_false,
     case_study: Case_study,
     drag_drop: Drag_drop,
+    short_answer: Short_answer,
     material: Materials,
 };
 

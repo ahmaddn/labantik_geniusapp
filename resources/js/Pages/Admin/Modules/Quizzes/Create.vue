@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
@@ -54,6 +54,12 @@ const quizForm = ref({
     type: initialType,
     category: props.presetCategory || "mission",
 });
+
+watch(() => quizForm.value.category, (newVal) => {
+    if (newVal === 'pretest' || newVal === 'posttest') {
+        quizForm.value.type = 'multiple_choices';
+    }
+}, { immediate: true });
 
 // Image quiz
 const quizImageFile = ref(null);
@@ -795,7 +801,7 @@ const finalSave = () => {
                                 label="Tipe Kuis"
                                 :options="quizTypeOptions"
                                 border-color="orange"
-                                :disabled="!!queryParams.get('type')"
+                                :disabled="quizForm.category === 'pretest' || quizForm.category === 'posttest' || !!queryParams.get('type')"
                             />
                             <SelectField
                                 v-model="quizForm.category"
