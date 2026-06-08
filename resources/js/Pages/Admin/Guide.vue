@@ -195,12 +195,12 @@ const activeTab = ref("modules");
                             <div class="flex gap-4">
                                 <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">2</div>
                                 <div class="flex-1">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Menyiapkan Pretest / Posttest</h4>
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Menyiapkan Pretest / Posttest & Uji Pemahaman</h4>
                                     <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> di baris modul tersebut.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di bagian paling atas, klik <span class="font-bold border border-gray-300 px-2 rounded">Kelola Soal</span> pada kartu Pretest.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik <span class="font-bold">Tambah Pertanyaan</span>. Anda bisa memilih Pilihan Ganda atau Jawaban Singkat.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="text-sm bg-yellow-100 px-2 rounded">Catatan:</span> Untuk jawaban singkat, tuliskan <strong>Kata Kunci Benar</strong> (misal: "sampah,plastik").</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di bagian paling atas, klik <span class="font-bold border border-gray-300 px-2 rounded">Kelola Soal</span> pada kartu Pretest/Posttest. <span class="bg-blue-100 text-blue-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Info</span> Tipe soal untuk Pretest & Posttest secara <strong>otomatis dikunci</strong> menjadi <strong>Pilihan Ganda</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk mengevaluasi siswa di tengah misi, Anda bisa membuat kuis baru di dalam misi dan memilih tipe soal <strong>Isian Singkat (Uji Pemahaman)</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="text-sm bg-yellow-100 px-2 rounded">Catatan Isian Singkat:</span> Pastikan Anda menuliskan <strong>Kata Kunci Benar</strong> saat membuat pertanyaan Isian Singkat (misal: "sampah,plastik").</div></div>
                                     </div>
                                 </div>
                             </div>
