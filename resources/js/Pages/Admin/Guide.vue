@@ -332,6 +332,43 @@ const activeTab = ref("modules");
                                 </div>
                             </div>
 
+                            <!-- Step 6 -->
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">6</div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">Import Materi & Kuis <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-lg">Fitur Baru</span></h4>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-gray-600">
+                                        <p class="mb-4 text-sm bg-white p-3 rounded-lg border border-gray-100">Gunakan fitur ini jika Anda sudah memiliki data materi atau kuis di file Excel/CSV dan ingin memasukkannya sekaligus tanpa mengetik satu-satu.</p>
+                                        <p class="mb-3 font-bold text-gray-800">Cara Import:</p>
+                                        <div class="space-y-3 mb-4">
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di halaman Detail Misi, klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Import Materi</span> atau <span class="bg-yellow-500 text-white px-2 py-0.5 rounded text-sm font-bold">Import Kuis</span>.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Unduh (Download) file <strong>Template CSV</strong> yang disediakan di dalam popup/modal.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Isi template CSV tersebut sesuai dengan instruksi kolomnya menggunakan Microsoft Excel, lalu simpan (Save As CSV).</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Unggah kembali file CSV yang sudah diisi, lalu klik <strong>Mulai Import</strong>.</div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 7 -->
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">7</div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">Membuat Refleksi Ilmiah <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-lg">Terbaru</span></h4>
+                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-gray-600">
+                                        <p class="mb-4 text-sm bg-white p-3 rounded-lg border border-gray-100">Fitur ini merupakan tahapan penutup di mana siswa diajak berpikir kritis tentang materi yang baru saja dipelajari melalui sebuah alur (flowchart) interaktif.</p>
+                                        <p class="mb-3 font-bold text-gray-800">Cara Membuat:</p>
+                                        <div class="space-y-3 mb-4">
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di halaman Detail Misi, klik tombol <span class="bg-green-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Refleksi</span>.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Isi judul dan atur <strong>Teks Maskot</strong> yang akan memandu siswa.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Pada bagian <strong>Diagram Alur (Flowchart)</strong>, tambahkan kotak-kotak alur (misal: "Manusia" &rarr; "Aktivitas" &rarr; "Dampak"). Anda bisa mengunggah gambar untuk tiap kotaknya.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Pada bagian <strong>Pertanyaan Refleksi</strong>, buat daftar pertanyaan evaluasi mandiri yang nantinya harus dijawab oleh siswa di dalam kolom input.</div></div>
+                                            <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik Simpan. Refleksi ini akan muncul sebagai tahap interaktif dalam misi siswa!</div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
