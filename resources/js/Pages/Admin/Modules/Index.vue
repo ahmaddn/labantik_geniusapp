@@ -71,7 +71,7 @@ watch(
             page.props.flash.success = null;
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 watch(
     () => page.props.flash?.error,
@@ -81,7 +81,7 @@ watch(
             page.props.flash.error = null;
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 
 // ── useForm ──
@@ -531,7 +531,6 @@ const toggleActive = (module) => {
                     option-label="name"
                     border-color="blue"
                     :error="form.errors.template_id"
-                    required=""
                 />
 
                 <!-- Deskripsi -->
