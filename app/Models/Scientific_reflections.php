@@ -32,6 +32,14 @@ class Scientific_reflections extends Model
                 $model->id = (string) Str::uuid();
             }
         });
+
+        static::deleting(function ($model) {
+            if (method_exists($model, 'questions')) {
+                foreach ($model->questions as $question) {
+                    $question->delete();
+                }
+            }
+        });
     }
 
     public function mission()

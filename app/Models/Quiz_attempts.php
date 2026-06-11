@@ -30,6 +30,14 @@ class Quiz_attempts extends Model
                 $model->id = (string) Str::uuid(); // ← cast ke string
             }
         });
+
+        static::deleting(function ($model) {
+            if (method_exists($model, 'answers')) {
+                foreach ($model->answers as $answer) {
+                    $answer->delete();
+                }
+            }
+        });
     }
 
     public function quiz()

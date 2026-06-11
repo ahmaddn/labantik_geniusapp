@@ -40,6 +40,12 @@ class Quizzes extends Model
                 Storage::disk('public')->delete($model->image);
             }
 
+            if (method_exists($model, 'attempts')) {
+                foreach ($model->attempts as $attempt) {
+                    $attempt->delete();
+                }
+            }
+
             foreach ($model->questions as $question) {
                 $question->delete();
             }
@@ -64,5 +70,10 @@ class Quizzes extends Model
     public function questions()
     {
         return $this->hasMany(Questions::class, 'quiz_id');
+    }
+
+    public function attempts()
+    {
+        return $this->hasMany(Quiz_attempts::class, 'quiz_id');
     }
 }
