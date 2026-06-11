@@ -132,31 +132,20 @@ const activeTab = ref("modules");
                             <h2 class="text-2xl font-bold text-gray-800">Tutorial: Template Desain</h2>
                         </div>
                         
-                        <p class="text-gray-600 mb-6 text-lg">Siapkan gambar latar belakang (background) dan karakter pendamping (maskot) di sini sebelum Anda membuat modul pembelajaran.</p>
+                        <p class="text-gray-600 mb-6 text-lg">Siapkan template desain yang mencakup background, maskot, dan backsound di sini sebelum Anda membuat modul pembelajaran.</p>
                         
                         <div class="space-y-6">
                             <!-- Step 1 -->
                             <div class="flex gap-4">
                                 <div class="w-10 h-10 shrink-0 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-pink-200">1</div>
                                 <div class="flex-1">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mengunggah Background</h4>
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Membuat Template Baru</h4>
                                     <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Background</span></div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Beri nama latar (contoh: "Pemandangan Sungai").</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Pilih file gambar dari komputer Anda.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Klik <span class="font-bold text-blue-600">Simpan</span>.</div></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Step 2 -->
-                            <div class="flex gap-4">
-                                <div class="w-10 h-10 shrink-0 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-pink-200">2</div>
-                                <div class="flex-1">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mengunggah Maskot</h4>
-                                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Pindah ke Tab <span class="font-bold text-gray-800 border-b-2 border-gray-800">Maskot</span> di bagian atas tabel.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Klik <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Maskot</span>.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Unggah gambar. Sangat disarankan gambar <strong>PNG Transparan</strong> tanpa latar putih.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Template</span>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Isi <strong>Nama Template</strong> (contoh: "Template Pemandangan Alam").</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Unggah file audio untuk <strong>Backsound</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Pilih <strong>Background</strong> dari komputer Anda, lalu beri nama background tersebut di kolom yang muncul.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Pada bagian <strong>Maskot</strong>, klik "Tambah Maskot", unggah gambarnya (disarankan PNG transparan tanpa latar putih), dan ketikkan nama pose-nya. Anda bisa menambahkan beberapa maskot.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-pink-500 shrink-0 mt-1"/> <div>Klik <span class="font-bold text-blue-600">Simpan</span>.</div></div>
                                     </div>
                                 </div>
@@ -195,11 +184,14 @@ const activeTab = ref("modules");
                             <div class="flex gap-4">
                                 <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">2</div>
                                 <div class="flex-1">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Menyiapkan Pretest / Posttest & Uji Pemahaman</h4>
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Membuat Misi (Sub-Tema) & Uji Pemahaman</h4>
                                     <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> di baris modul tersebut.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di bagian paling atas, klik <span class="font-bold border border-gray-300 px-2 rounded">Kelola Soal</span> pada kartu Pretest/Posttest. <span class="bg-blue-100 text-blue-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Info</span> Tipe soal untuk Pretest & Posttest secara <strong>otomatis dikunci</strong> menjadi <strong>Pilihan Ganda</strong>.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk mengevaluasi siswa di tengah misi, Anda bisa membuat kuis baru di dalam misi dan memilih tipe soal <strong>Isian Singkat (Uji Pemahaman)</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di halaman Detail Modul, gulir/scroll ke bawah ke bagian <strong>Daftar Misi</strong>.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Misi Baru</span>. Isi judul dan urutannya.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk menambahkan halaman kesimpulan di akhir misi, klik <span class="font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded text-sm inline-flex items-center gap-1">Edit (Ikon Pensil)</span> pada misi tersebut. Isi <strong>Teks Kesimpulan Singkat</strong> dan <strong>Penjelasan Kesimpulan</strong>. Kosongkan jika tidak ingin menampilkan kesimpulan.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Setelah tersimpan, klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> pada misi tersebut.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik <span class="bg-green-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Materi</span> untuk menambah materi pelajaran.<br/><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Fitur Baru</span> Pada halaman tambah materi, Anda kini dapat memilih Tipe Layout: <strong>Reguler (Teks/Video)</strong> atau <strong>Konseptual Sistematis</strong>. <br/>Jika memilih <em>Konseptual Sistematis</em>, Anda bisa membuat diagram interaktif (lengkap dengan teks 4 sudut, slider tuas penggeser, dan kotak indikator metrik yang ukurannya membesar/mengecil otomatis sesuai interaksi siswa).</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk mengevaluasi siswa di tengah misi, Anda bisa mengklik tombol <span class="bg-yellow-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Kuis Misi</span> di dalam detail misi dan memilih tipe soal <strong>Isian Singkat (Uji Pemahaman)</strong> atau Pilihan Ganda.</div></div>
                                         <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="text-sm bg-yellow-100 px-2 rounded">Catatan Isian Singkat:</span> Pastikan Anda menuliskan <strong>Kata Kunci Benar</strong> saat membuat pertanyaan Isian Singkat (misal: "sampah,plastik").</div></div>
                                     </div>
                                 </div>
@@ -209,13 +201,10 @@ const activeTab = ref("modules");
                             <div class="flex gap-4">
                                 <div class="w-10 h-10 shrink-0 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-purple-200">3</div>
                                 <div class="flex-1">
-                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Membuat Misi (Sub-Tema)</h4>
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2">Menyiapkan Pretest / Posttest</h4>
                                     <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3">
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Kembali ke halaman Detail Modul, gulir/scroll ke bawah ke bagian <strong>Daftar Misi</strong>.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik tombol <span class="bg-blue-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Misi Baru</span>. Isi judul dan urutannya.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1">Fitur Baru</span> Untuk menambahkan halaman kesimpulan di akhir misi, klik <span class="font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded text-sm inline-flex items-center gap-1">Edit (Ikon Pensil)</span> pada misi tersebut. Isi <strong>Teks Kesimpulan Singkat</strong> dan <strong>Penjelasan Kesimpulan</strong>. Kosongkan jika tidak ingin menampilkan kesimpulan.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Setelah tersimpan, klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> pada misi tersebut.</div></div>
-                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Klik <span class="bg-green-500 text-white px-2 py-0.5 rounded text-sm font-bold">Tambah Materi</span> untuk menambah materi pelajaran.<br/><span class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Fitur Baru</span> Pada halaman tambah materi, Anda kini dapat memilih Tipe Layout: <strong>Reguler (Teks/Video)</strong> atau <strong>Konseptual Sistematis</strong>. <br/>Jika memilih <em>Konseptual Sistematis</em>, Anda bisa membuat diagram interaktif (lengkap dengan teks 4 sudut, slider tuas penggeser, dan kotak indikator metrik yang ukurannya membesar/mengecil otomatis sesuai interaksi siswa).</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Kembali ke halaman Detail Modul, klik ikon <span class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded">Mata (Detail)</span> di baris modul tersebut jika belum berada di sana.</div></div>
+                                        <div class="flex items-start gap-3 leading-relaxed"><ArrowRight class="w-4 h-4 text-purple-400 shrink-0 mt-1"/> <div>Di bagian paling atas, klik <span class="font-bold border border-gray-300 px-2 rounded">Kelola Soal</span> pada kartu Pretest/Posttest. <span class="bg-blue-100 text-blue-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block">Info</span> Tipe soal untuk Pretest & Posttest secara <strong>otomatis dikunci</strong> menjadi <strong>Pilihan Ganda</strong>.</div></div>
                                     </div>
                                 </div>
                             </div>

@@ -66,14 +66,22 @@ const triggerToast = (message, type = "success") => {
 watch(
     () => page.props.flash?.success,
     (val) => {
-        if (val) triggerToast(val, "success");
+        if (val) {
+            triggerToast(val, "success");
+            page.props.flash.success = null;
+        }
     },
+    { immediate: true }
 );
 watch(
     () => page.props.flash?.error,
     (val) => {
-        if (val) triggerToast(val, "error");
+        if (val) {
+            triggerToast(val, "error");
+            page.props.flash.error = null;
+        }
     },
+    { immediate: true }
 );
 
 // ── useForm ──
