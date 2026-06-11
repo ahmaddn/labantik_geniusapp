@@ -215,6 +215,25 @@ onUnmounted(() => {
     </div>
   </div>
 
+  <div v-else-if="props.question?.layout_type === 'video_only'" class="vo-container w-full h-full flex flex-col items-center justify-center">
+    <div class="vo-header text-center mb-6">
+      <h2 class="vo-title text-3xl md:text-4xl font-heading font-black text-blue-900 drop-shadow-sm uppercase tracking-wide">
+        VIDEO PEMBELAJARAN
+      </h2>
+    </div>
+    
+    <div class="vo-video-wrapper bg-white p-2 md:p-4 rounded-3xl shadow-xl mx-auto w-full max-w-4xl relative" style="aspect-ratio: 16/9;">
+        <iframe 
+            class="w-full h-full rounded-2xl bg-gray-100"
+            :src="props.question.youtube_link" 
+            title="YouTube video player" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+        </iframe>
+    </div>
+  </div>
+
   <div v-else class="mat-container">
 
     <!-- Image/Video Banner -->
@@ -271,6 +290,19 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div class="mat-content">
+
+      <!-- YouTube Embed -->
+      <div v-if="props.question?.youtube_link" class="mb-6 rounded-2xl overflow-hidden shadow-lg border border-gray-200" style="aspect-ratio: 16/9;">
+        <iframe
+            :src="props.question.youtube_link"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+            class="w-full h-full"
+        ></iframe>
+      </div>
 
       <!-- Text -->
       <div v-if="!props.question?.material_type || props.question?.material_type === 'text'" class="mat-text">

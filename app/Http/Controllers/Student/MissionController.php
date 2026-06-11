@@ -203,6 +203,8 @@ class MissionController extends Controller
                     'subtitle'      => $material->description,
                     'content'       => $material->content,
                     'material_type' => 'text',
+                    'layout_type'   => $material->layout_type,
+                    'youtube_link'  => $material->youtube_link,
                 ],
             ],
         ])->toArray();

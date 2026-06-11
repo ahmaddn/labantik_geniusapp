@@ -180,10 +180,29 @@ const formatDate = (dateString) => {
                 border-color="green"
                 :hoverable="false"
             >
-                <div
-                    class="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap"
+                <div v-if="material.layout_type === 'video_only'" class="mt-4">
+                    <iframe 
+                        class="w-full h-64 md:h-96 rounded-xl border border-gray-200"
+                        :src="material.youtube_link" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <div v-else-if="material.layout_type === 'conceptual_systematic'" class="text-gray-700 bg-gray-50 p-4 rounded-xl border">
+                    <pre class="whitespace-pre-wrap text-sm">{{ material.content }}</pre>
+                </div>
+                <div v-else
+                    class="prose max-w-none text-gray-700 leading-relaxed quill-content"
+                    v-html="material.content"
                 >
-                    {{ material.content }}
+                </div>
+                
+                <!-- If default layout has youtube link -->
+                <div v-if="material.layout_type === 'default' && material.youtube_link" class="mt-6">
+                    <h3 class="font-bold text-gray-700 mb-2">Tautan YouTube:</h3>
+                    <a :href="material.youtube_link" target="_blank" class="text-blue-500 hover:underline break-all">{{ material.youtube_link }}</a>
                 </div>
             </Card>
         </div>

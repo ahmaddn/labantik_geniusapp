@@ -281,6 +281,15 @@ const toggleCardVariant = () => {
                                 </div>
                                 <span class="font-bold text-gray-700">Konseptual Sistematis</span>
                             </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'video_only' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="video_only" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'video_only' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'video_only'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Hanya Video YouTube</span>
+                            </label>
                         </div>
                     </div>
 
@@ -305,11 +314,18 @@ const toggleCardVariant = () => {
                             </div>
                         </div>
                         <InputField
-                            label="Link YouTube (Opsional)"
+                            label="Link YouTube Embed (Opsional)"
                             v-model="materialForm.youtube_link"
-                            placeholder="Contoh: https://www.youtube.com/watch?v=..."
+                            placeholder="Contoh: https://www.youtube.com/embed/..."
                             type="url"
                         />
+                        <div class="mt-2 text-xs text-blue-800 bg-blue-50 p-2 rounded border border-blue-200">
+                            <p class="font-bold flex items-center gap-1 mb-1"><AlertTriangle class="w-3 h-3" /> Info Link Embed:</p>
+                            <ul class="list-disc pl-4 space-y-0.5">
+                                <li>Di video YouTube, klik <b>Bagikan</b> &gt; <b>Sematkan</b>.</li>
+                                <li>Copy link di atribut <code>src="..."</code> (berawalan <code>/embed/</code>).</li>
+                            </ul>
+                        </div>
                     </template>
 
                     <!-- Conceptual Systematic Content -->
@@ -350,8 +366,30 @@ const toggleCardVariant = () => {
                         </div>
                     </template>
 
+                    <!-- Video Only Content -->
+                    <template v-else-if="materialForm.layout_type === 'video_only'">
+                        <div class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-200">
+                            <InputField
+                                label="Link YouTube Embed"
+                                v-model="materialForm.youtube_link"
+                                placeholder="Contoh: https://www.youtube.com/embed/..."
+                                type="url"
+                            />
+                            <div class="mt-3 text-sm text-blue-800 bg-blue-100 p-3 rounded-lg border border-blue-300">
+                                <p class="font-bold mb-1 flex items-center gap-2"><AlertTriangle class="w-4 h-4" /> Cara Mendapatkan Link Embed YouTube:</p>
+                                <ol class="list-decimal pl-5 space-y-1">
+                                    <li>Buka video YouTube yang diinginkan.</li>
+                                    <li>Klik tombol <b>Bagikan (Share)</b> di bawah video.</li>
+                                    <li>Pilih opsi <b>Sematkan (Embed)</b> (ikon <code>&lt;&gt;</code>).</li>
+                                    <li>Salin (copy) <b>hanya link</b> yang ada di bagian <code>src="..."</code>. <br><span class="text-xs opacity-80">(Pastikan link berawalan <code>https://www.youtube.com/embed/...</code>)</span></li>
+                                    <li>Tempelkan (paste) link tersebut ke kolom input di atas.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- ===== MEDIA UPLOAD ===== -->
-                    <div>
+                    <div v-if="materialForm.layout_type !== 'video_only'">
                         <label
                             class="block text-sm font-bold text-gray-700 mb-3"
                             >Media Pembelajaran</label
