@@ -192,6 +192,16 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
                 Route::get('/', [SimulationConfigController::class, 'edit'])->name('edit');
                 Route::put('/', [SimulationConfigController::class, 'update'])->name('update');
             });
+
+            // Reflection Routes (nested under missions)
+            Route::prefix('{missions}/reflections')->name('reflections.')->group(function () {
+                Route::get('/create', [App\Http\Controllers\Admin\ReflectionController::class, 'create'])->name('create');
+                Route::post('/', [App\Http\Controllers\Admin\ReflectionController::class, 'store'])->name('store');
+                Route::get('/{reflections}', [App\Http\Controllers\Admin\ReflectionController::class, 'show'])->name('show');
+                Route::get('/{reflections}/edit', [App\Http\Controllers\Admin\ReflectionController::class, 'edit'])->name('edit');
+                Route::put('/{reflections}', [App\Http\Controllers\Admin\ReflectionController::class, 'update'])->name('update');
+                Route::delete('/{reflections}', [App\Http\Controllers\Admin\ReflectionController::class, 'destroy'])->name('destroy');
+            });
         });
     });
 });

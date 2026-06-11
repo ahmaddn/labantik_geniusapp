@@ -26,7 +26,10 @@ import {
     SlidersHorizontal,
     GitCompare,
     MousePointerClick,
-    AlignLeft
+    AlignLeft,
+    FileArchive,
+    Settings,
+    Settings2,
 } from "lucide-vue-next";
 import draggable from "vuedraggable";
 
@@ -39,6 +42,7 @@ const props = defineProps({
     materials: { type: Array, default: () => [] },
     quizzes: { type: Array, default: () => [] },
     simulations: { type: Array, default: () => [] },
+    reflections: { type: Array, default: () => [] },
 });
 
 // State management
@@ -76,25 +80,56 @@ watch(
 const sortedItems = ref([]);
 
 watch(
-    () => [props.materials, props.quizzes, props.simulations],
+    () => [
+        props.materials,
+        props.quizzes,
+        props.simulations,
+        props.reflections,
+    ],
     () => {
-        const materials = props.materials.map((item) => ({ ...item, itemType: "material" }));
-        const quizzes = props.quizzes.map((item) => ({ ...item, itemType: "quiz" }));
-        const simulations = props.simulations.map((item) => ({ ...item, itemType: item.type }));
+        const materials = props.materials.map((item) => ({
+            ...item,
+            itemType: "material",
+        }));
+        const quizzes = props.quizzes.map((item) => ({
+            ...item,
+            itemType: "quiz",
+        }));
+        const simulations = props.simulations.map((item) => ({
+            ...item,
+            itemType: item.type,
+        }));
+        const reflections = props.reflections.map((item) => ({
+            ...item,
+            itemType: "reflection",
+        }));
 
-        const combined = [...materials, ...quizzes, ...simulations];
+        const combined = [
+            ...materials,
+            ...quizzes,
+            ...simulations,
+            ...reflections,
+        ];
         sortedItems.value = combined.sort((a, b) => {
-            if (a.order_number !== undefined && b.order_number !== undefined && (a.order_number !== 0 || b.order_number !== 0)) {
-                 return a.order_number - b.order_number;
+            if (
+                a.order_number !== undefined &&
+                b.order_number !== undefined &&
+                (a.order_number !== 0 || b.order_number !== 0)
+            ) {
+                return a.order_number - b.order_number;
             }
             return new Date(b.created_at) - new Date(a.created_at);
         });
     },
-    { immediate: true, deep: true }
+    { immediate: true, deep: true },
 );
 
 const totalItems = computed(
-    () => props.materials.length + props.quizzes.length + props.simulations.length,
+    () =>
+        props.materials.length +
+        props.quizzes.length +
+        props.simulations.length +
+        props.reflections.length,
 );
 
 const handleDragEnd = () => {
@@ -102,16 +137,24 @@ const handleDragEnd = () => {
     const updatedSteps = sortedItems.value.map((item, index) => ({
         id: item.id,
         itemType: item.itemType,
-        order_number: index + 1
+        order_number: index + 1,
     }));
-    
-    router.post(route('admin.modules.missions.reorder', [props.module.id, props.mission.id]), {
-        steps: updatedSteps
-    }, {
-        preserveScroll: true,
-        onSuccess: () => triggerToast("Urutan berhasil disimpan!", "success"),
-        onError: () => triggerToast("Gagal menyimpan urutan.", "error")
-    });
+
+    router.post(
+        route("admin.modules.missions.reorder", [
+            props.module.id,
+            props.mission.id,
+        ]),
+        {
+            steps: updatedSteps,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () =>
+                triggerToast("Urutan berhasil disimpan!", "success"),
+            onError: () => triggerToast("Gagal menyimpan urutan.", "error"),
+        },
+    );
 };
 
 const goBack = () => {
@@ -142,6 +185,24 @@ const goToAddCaseStudy = () => {
             props.module.id,
             props.mission.id,
         ]) + "?type=case_study",
+    );
+};
+
+const goToAddReflection = () => {
+    router.visit(
+        route("admin.modules.missions.reflections.create", [
+            props.module.id,
+            props.mission.id,
+        ]),
+    );
+};
+
+const goToSimulationConfig = () => {
+    router.visit(
+        route("admin.modules.missions.simulation.edit", [
+            props.module.id,
+            props.mission.id,
+        ]),
     );
 };
 
@@ -390,9 +451,11 @@ const formatDate = (dateString) => {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-wrap gap-3">
+                <div
+                    class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                >
                     <Button
-                        class="w-full sm:w-auto"
+                        class="w-full"
                         variant="blueLight"
                         size="md"
                         :icon="Plus"
@@ -401,7 +464,7 @@ const formatDate = (dateString) => {
                         Tambah Materi
                     </Button>
                     <Button
-                        class="w-full sm:w-auto"
+                        class="w-full"
                         variant="warning"
                         size="md"
                         :icon="Plus"
@@ -410,7 +473,7 @@ const formatDate = (dateString) => {
                         Tambah Kuis
                     </Button>
                     <Button
-                        class="w-full sm:w-auto"
+                        class="w-full"
                         variant="danger"
                         size="md"
                         :icon="Plus"
@@ -418,36 +481,45 @@ const formatDate = (dateString) => {
                     >
                         Tambah Studi Kasus
                     </Button>
+                    <Button
+                        class="w-full"
+                        variant="success"
+                        size="md"
+                        :icon="Plus"
+                        @click="goToAddReflection"
+                    >
+                        Tambah Refleksi
+                    </Button>
                     <!-- Import: Materi (modal) -->
-                    <div class="flex items-center gap-2">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            @click="showMaterialImportModal = true"
-                        >
-                            Import Materi
-                        </Button>
-                    </div>
+                    <Button
+                        class="w-full"
+                        :icon="FileArchive"
+                        variant="primary"
+                        size="md"
+                        @click="showMaterialImportModal = true"
+                    >
+                        Import Materi
+                    </Button>
                     <!-- Import: Quiz (modal) -->
-                    <div class="flex items-center gap-2">
-                        <Button
-                            variant="warning"
-                            size="sm"
-                            @click="showQuizImportModal = true"
-                        >
-                            Import Kuis
-                        </Button>
-                    </div>
+                    <Button
+                        class="w-full"
+                        :icon="FileArchive"
+                        variant="warning"
+                        size="md"
+                        @click="showQuizImportModal = true"
+                    >
+                        Import Kuis
+                    </Button>
                     <!-- Konfigurasi Simulasi -->
-                    <div class="flex items-center gap-2">
-                        <Button
-                            variant="info"
-                            size="sm"
-                            @click="router.visit(route('admin.modules.missions.simulation.edit', [module.id, mission.id]))"
-                        >
-                            Konfigurasi Simulasi
-                        </Button>
-                    </div>
+                    <Button
+                        class="w-full"
+                        variant="info"
+                        :icon="Settings2"
+                        size="md"
+                        @click="goToSimulationConfig"
+                    >
+                        Konfig Simulasi
+                    </Button>
                 </div>
             </div>
 
@@ -478,8 +550,11 @@ const formatDate = (dateString) => {
                     <p class="text-gray-500 mb-6">
                         Tambahkan materi atau kuis untuk misi ini
                     </p>
-                    <div class="flex justify-center gap-3">
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                    >
                         <Button
+                            class="w-full"
                             variant="blueLight"
                             size="md"
                             :icon="Plus"
@@ -488,6 +563,7 @@ const formatDate = (dateString) => {
                             Tambah Materi
                         </Button>
                         <Button
+                            class="w-full"
                             variant="warning"
                             size="md"
                             :icon="Plus"
@@ -496,6 +572,7 @@ const formatDate = (dateString) => {
                             Tambah Kuis
                         </Button>
                         <Button
+                            class="w-full"
                             variant="danger"
                             size="md"
                             :icon="Plus"
@@ -503,13 +580,22 @@ const formatDate = (dateString) => {
                         >
                             Tambah Studi Kasus
                         </Button>
+                        <Button
+                            class="w-full"
+                            variant="success"
+                            size="md"
+                            :icon="Plus"
+                            @click="goToAddReflection"
+                        >
+                            Tambah Refleksi
+                        </Button>
                     </div>
                 </div>
 
                 <!-- Items List -->
-                <draggable 
-                    v-else 
-                    v-model="sortedItems" 
+                <draggable
+                    v-else
+                    v-model="sortedItems"
                     item-key="id"
                     handle=".drag-handle"
                     @end="handleDragEnd"
@@ -520,137 +606,510 @@ const formatDate = (dateString) => {
                             class="bg-white rounded-3xl border-4 shadow-playful p-6 hover:shadow-lg transition-all"
                             :class="{
                                 'border-blue-200': item.itemType === 'material',
-                                'border-orange-200': item.itemType === 'quiz' && item.type !== 'case_study',
-                                'border-teal-200': item.itemType === 'quiz' && item.type === 'case_study',
-                                'border-purple-200': item.itemType.startsWith('simulation_'),
+                                'border-orange-200':
+                                    item.itemType === 'quiz' &&
+                                    item.type !== 'case_study',
+                                'border-teal-200':
+                                    item.itemType === 'quiz' &&
+                                    item.type === 'case_study',
+                                'border-purple-200':
+                                    item.itemType.startsWith('simulation_'),
+                                'border-green-200':
+                                    item.itemType === 'reflection',
                             }"
                         >
                             <!-- Flex Container with Drag Handle -->
                             <div class="flex items-center gap-4">
                                 <!-- Drag Handle -->
-                                <button class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-2 shrink-0">
+                                <button
+                                    class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-2 shrink-0"
+                                >
                                     <GripVertical class="w-6 h-6" />
                                 </button>
-                                
+
                                 <div class="flex-1 min-w-0">
                                     <!-- Material Item -->
-                                    <div v-if="item.itemType === 'material'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
-                                            <div class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 shrink-0">
-                                                <FileText class="text-blue-600 w-8 h-8" />
+                                    <div
+                                        v-if="item.itemType === 'material'"
+                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div
+                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
+                                        >
+                                            <div
+                                                class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-300 shrink-0"
+                                            >
+                                                <FileText
+                                                    class="text-blue-600 w-8 h-8"
+                                                />
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 mb-2">
-                                                    <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium">MATERI</span>
-                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
+                                                <div
+                                                    class="flex items-center gap-2 mb-2"
+                                                >
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium"
+                                                        >MATERI</span
+                                                    >
+                                                    <h3
+                                                        class="text-xl font-bold text-gray-800 truncate"
+                                                    >
+                                                        {{ item.title }}
+                                                    </h3>
                                                 </div>
-                                                <div class="flex flex-wrap items-center gap-3 mb-3">
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
-                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
-                                                    <span v-if="item.mascot" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.mascot.name }}</span>
+                                                <div
+                                                    class="flex flex-wrap items-center gap-3 mb-3"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Clock
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            formatDate(
+                                                                item.created_at,
+                                                            )
+                                                        }}</span
+                                                    >
+                                                    <span
+                                                        v-if="item.created_by"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><User
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            item.created_by
+                                                        }}</span
+                                                    >
+                                                    <span
+                                                        v-if="item.mascot"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Tag class="w-3 h-3" />
+                                                        {{
+                                                            item.mascot.name
+                                                        }}</span
+                                                    >
                                                 </div>
-                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+                                                <p
+                                                    v-if="item.description"
+                                                    class="text-sm text-gray-600 line-clamp-2"
+                                                >
+                                                    {{ item.description }}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
-                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowMaterial(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditMaterial(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteMaterial(item.id)" />
-                                        </div>
-                                    </div>
-
-                                    <!-- Quiz Item -->
-                                    <div v-else-if="item.itemType === 'quiz' && item.type !== 'case_study'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
-                                            <div class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 shrink-0">
-                                                <HelpCircle class="text-orange-600 w-8 h-8" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 mb-2">
-                                                    <span class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium">QUIZ</span>
-                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
-                                                </div>
-                                                <div class="flex flex-wrap items-center gap-3 mb-3">
-                                                    <span :class="['text-xs px-3 py-1 rounded-full border font-medium', item.type === 'multiple_choices' ? 'bg-blue-100 text-blue-700 border-blue-300' : item.type === 'drag_drop' ? 'bg-purple-100 text-purple-700 border-purple-300' : item.type === 'true_false' ? 'bg-blue-100 text-blue-700 border-blue-300' : item.type === 'case_study' ? 'bg-pink-100 text-pink-700 border-pink-300' : 'bg-gray-100 text-gray-700 border-gray-300']">
-                                                        {{ item.type === "multiple_choices" ? "PILIHAN GANDA" : item.type === "drag_drop" ? "DRAG & DROP" : item.type === "true_false" ? "TRUE / FALSE" : item.type === "case_study" ? "CASE STUDY" : item.type?.toUpperCase() }}
-                                                    </span>
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ item.time_limit }} menit</span>
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
-                                                </div>
-                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
-                                                <div class="flex flex-wrap gap-4 mt-3">
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><List class="w-3 h-3" /> {{ item.questions_count || 0 }} Pertanyaan</span>
-                                                    <span v-if="item.category" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.category }}</span>
-                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
-                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowQuiz(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditQuiz(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteQuiz(item.id)" />
-                                        </div>
-                                    </div>
-
-                                    <!-- Case Study Item -->
-                                    <div v-else-if="item.itemType === 'quiz' && item.type === 'case_study'" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
-                                            <div class="bg-teal-100 p-3 rounded-2xl border-2 border-teal-300 shrink-0">
-                                                <AlignLeft class="text-teal-600 w-8 h-8" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 mb-2">
-                                                    <span class="text-xs px-2 py-1 rounded-full bg-teal-100 text-teal-700 border border-teal-300 font-medium">STUDI KASUS</span>
-                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
-                                                </div>
-                                                <div class="flex flex-wrap items-center gap-3 mb-3">
-                                                    <span class="text-xs px-3 py-1 rounded-full border bg-pink-100 text-pink-700 border-pink-300 font-medium">CASE STUDY</span>
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ item.time_limit }} menit</span>
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Calendar class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
-                                                </div>
-                                                <p v-if="item.description" class="text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
-                                                <div class="flex flex-wrap gap-4 mt-3">
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><List class="w-3 h-3" /> {{ item.questions_count || 0 }} Pertanyaan</span>
-                                                    <span v-if="item.category" class="text-xs text-gray-500 flex items-center gap-1"><Tag class="w-3 h-3" /> {{ item.category }}</span>
-                                                    <span v-if="item.created_by" class="text-xs text-gray-500 flex items-center gap-1"><User class="w-3 h-3" /> {{ item.created_by }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
-                                            <Button class="w-full sm:w-auto" variant="info" size="md" :icon="Eye" @click="goToShowQuiz(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="warning" size="md" :icon="Pencil" @click="goToEditQuiz(item.id)" />
-                                            <Button class="w-full sm:w-auto" variant="danger" size="md" :icon="Trash2" @click="confirmDeleteQuiz(item.id)" />
-                                        </div>
-                                    </div>
-
-                                    
-                                    <!-- Simulation Item -->
-                                    <div v-else class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
-                                            <div class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 shrink-0">
-                                                <SlidersHorizontal v-if="item.itemType === 'simulation_slider'" class="text-purple-600 w-8 h-8" />
-                                                <GitCompare v-else-if="item.itemType === 'simulation_comparison'" class="text-purple-600 w-8 h-8" />
-                                                <MousePointerClick v-else-if="item.itemType === 'simulation_clickable_object'" class="text-purple-600 w-8 h-8" />
-                                                <HelpCircle v-else class="text-purple-600 w-8 h-8" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 mb-2">
-                                                    <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-300 font-medium">SIMULASI</span>
-                                                    <h3 class="text-xl font-bold text-gray-800 truncate">{{ item.title }}</h3>
-                                                </div>
-                                                <div class="flex items-center gap-3 mb-3">
-                                                    <span class="text-xs text-gray-500 flex items-center gap-1"><Clock class="w-3 h-3" /> {{ formatDate(item.created_at) }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                        <div
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                        >
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="info"
+                                                size="md"
+                                                :icon="Eye"
+                                                @click="
+                                                    goToShowMaterial(item.id)
+                                                "
+                                            />
                                             <Button
                                                 class="w-full sm:w-auto"
                                                 variant="warning"
                                                 size="md"
                                                 :icon="Pencil"
-                                                @click="router.visit(route('admin.modules.missions.simulation.edit', [module.id, mission.id]))"
-                                            >Edit Konfigurasi</Button>
+                                                @click="
+                                                    goToEditMaterial(item.id)
+                                                "
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="danger"
+                                                size="md"
+                                                :icon="Trash2"
+                                                @click="
+                                                    confirmDeleteMaterial(
+                                                        item.id,
+                                                    )
+                                                "
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Quiz Item -->
+                                    <div
+                                        v-else-if="
+                                            item.itemType === 'quiz' &&
+                                            item.type !== 'case_study'
+                                        "
+                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div
+                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
+                                        >
+                                            <div
+                                                class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 shrink-0"
+                                            >
+                                                <HelpCircle
+                                                    class="text-orange-600 w-8 h-8"
+                                                />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div
+                                                    class="flex items-center gap-2 mb-2"
+                                                >
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium"
+                                                        >QUIZ</span
+                                                    >
+                                                    <h3
+                                                        class="text-xl font-bold text-gray-800 truncate"
+                                                    >
+                                                        {{ item.title }}
+                                                    </h3>
+                                                </div>
+                                                <div
+                                                    class="flex flex-wrap items-center gap-3 mb-3"
+                                                >
+                                                    <span
+                                                        :class="[
+                                                            'text-xs px-3 py-1 rounded-full border font-medium',
+                                                            item.type ===
+                                                            'multiple_choices'
+                                                                ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                                                : item.type ===
+                                                                    'drag_drop'
+                                                                  ? 'bg-purple-100 text-purple-700 border-purple-300'
+                                                                  : item.type ===
+                                                                      'true_false'
+                                                                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                                                    : item.type ===
+                                                                        'case_study'
+                                                                      ? 'bg-pink-100 text-pink-700 border-pink-300'
+                                                                      : 'bg-gray-100 text-gray-700 border-gray-300',
+                                                        ]"
+                                                    >
+                                                        {{
+                                                            item.type ===
+                                                            "multiple_choices"
+                                                                ? "PILIHAN GANDA"
+                                                                : item.type ===
+                                                                    "drag_drop"
+                                                                  ? "DRAG & DROP"
+                                                                  : item.type ===
+                                                                      "true_false"
+                                                                    ? "TRUE / FALSE"
+                                                                    : item.type ===
+                                                                        "case_study"
+                                                                      ? "CASE STUDY"
+                                                                      : item.type?.toUpperCase()
+                                                        }}
+                                                    </span>
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Clock
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{ item.time_limit }}
+                                                        menit</span
+                                                    >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Calendar
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            formatDate(
+                                                                item.created_at,
+                                                            )
+                                                        }}</span
+                                                    >
+                                                </div>
+                                                <p
+                                                    v-if="item.description"
+                                                    class="text-sm text-gray-600 line-clamp-2"
+                                                >
+                                                    {{ item.description }}
+                                                </p>
+                                                <div
+                                                    class="flex flex-wrap gap-4 mt-3"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><List
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            item.questions_count ||
+                                                            0
+                                                        }}
+                                                        Pertanyaan</span
+                                                    >
+                                                    <span
+                                                        v-if="item.category"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Tag class="w-3 h-3" />
+                                                        {{
+                                                            item.category
+                                                        }}</span
+                                                    >
+                                                    <span
+                                                        v-if="item.created_by"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><User
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            item.created_by
+                                                        }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                        >
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="info"
+                                                size="md"
+                                                :icon="Eye"
+                                                @click="goToShowQuiz(item.id)"
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="warning"
+                                                size="md"
+                                                :icon="Pencil"
+                                                @click="goToEditQuiz(item.id)"
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="danger"
+                                                size="md"
+                                                :icon="Trash2"
+                                                @click="
+                                                    confirmDeleteQuiz(item.id)
+                                                "
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Case Study Item -->
+                                    <div
+                                        v-else-if="
+                                            item.itemType === 'quiz' &&
+                                            item.type === 'case_study'
+                                        "
+                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div
+                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
+                                        >
+                                            <div
+                                                class="bg-teal-100 p-3 rounded-2xl border-2 border-teal-300 shrink-0"
+                                            >
+                                                <AlignLeft
+                                                    class="text-teal-600 w-8 h-8"
+                                                />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div
+                                                    class="flex items-center gap-2 mb-2"
+                                                >
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full bg-teal-100 text-teal-700 border border-teal-300 font-medium"
+                                                        >STUDI KASUS</span
+                                                    >
+                                                    <h3
+                                                        class="text-xl font-bold text-gray-800 truncate"
+                                                    >
+                                                        {{ item.title }}
+                                                    </h3>
+                                                </div>
+                                                <div
+                                                    class="flex flex-wrap items-center gap-3 mb-3"
+                                                >
+                                                    <span
+                                                        class="text-xs px-3 py-1 rounded-full border bg-pink-100 text-pink-700 border-pink-300 font-medium"
+                                                        >CASE STUDY</span
+                                                    >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Clock
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{ item.time_limit }}
+                                                        menit</span
+                                                    >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Calendar
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            formatDate(
+                                                                item.created_at,
+                                                            )
+                                                        }}</span
+                                                    >
+                                                </div>
+                                                <p
+                                                    v-if="item.description"
+                                                    class="text-sm text-gray-600 line-clamp-2"
+                                                >
+                                                    {{ item.description }}
+                                                </p>
+                                                <div
+                                                    class="flex flex-wrap gap-4 mt-3"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><List
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            item.questions_count ||
+                                                            0
+                                                        }}
+                                                        Pertanyaan</span
+                                                    >
+                                                    <span
+                                                        v-if="item.category"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Tag class="w-3 h-3" />
+                                                        {{
+                                                            item.category
+                                                        }}</span
+                                                    >
+                                                    <span
+                                                        v-if="item.created_by"
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><User
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            item.created_by
+                                                        }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                        >
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="info"
+                                                size="md"
+                                                :icon="Eye"
+                                                @click="goToShowQuiz(item.id)"
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="warning"
+                                                size="md"
+                                                :icon="Pencil"
+                                                @click="goToEditQuiz(item.id)"
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="danger"
+                                                size="md"
+                                                :icon="Trash2"
+                                                @click="
+                                                    confirmDeleteQuiz(item.id)
+                                                "
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Simulation Item -->
+                                    <div
+                                        v-else
+                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div
+                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
+                                        >
+                                            <div
+                                                class="bg-purple-100 p-3 rounded-2xl border-2 border-purple-300 shrink-0"
+                                            >
+                                                <SlidersHorizontal
+                                                    v-if="
+                                                        item.itemType ===
+                                                        'simulation_slider'
+                                                    "
+                                                    class="text-purple-600 w-8 h-8"
+                                                />
+                                                <GitCompare
+                                                    v-else-if="
+                                                        item.itemType ===
+                                                        'simulation_comparison'
+                                                    "
+                                                    class="text-purple-600 w-8 h-8"
+                                                />
+                                                <MousePointerClick
+                                                    v-else-if="
+                                                        item.itemType ===
+                                                        'simulation_clickable_object'
+                                                    "
+                                                    class="text-purple-600 w-8 h-8"
+                                                />
+                                                <HelpCircle
+                                                    v-else
+                                                    class="text-purple-600 w-8 h-8"
+                                                />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div
+                                                    class="flex items-center gap-2 mb-2"
+                                                >
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-300 font-medium"
+                                                        >SIMULASI</span
+                                                    >
+                                                    <h3
+                                                        class="text-xl font-bold text-gray-800 truncate"
+                                                    >
+                                                        {{ item.title }}
+                                                    </h3>
+                                                </div>
+                                                <div
+                                                    class="flex items-center gap-3 mb-3"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Clock
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            formatDate(
+                                                                item.created_at,
+                                                            )
+                                                        }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                        >
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="warning"
+                                                size="md"
+                                                :icon="Pencil"
+                                                @click="
+                                                    router.visit(
+                                                        route(
+                                                            'admin.modules.missions.simulation.edit',
+                                                            [
+                                                                module.id,
+                                                                mission.id,
+                                                            ],
+                                                        ),
+                                                    )
+                                                "
+                                                >Edit Konfigurasi</Button
+                                            >
                                         </div>
                                     </div>
                                 </div>

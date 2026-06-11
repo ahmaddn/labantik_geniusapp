@@ -43,6 +43,11 @@ class Missions extends Model
             foreach ($model->quizzes as $quiz) {
                 $quiz->delete();
             }
+
+            // Delete reflections
+            foreach ($model->reflections as $reflection) {
+                $reflection->delete();
+            }
         });
     }
 
@@ -79,6 +84,11 @@ class Missions extends Model
     public function simulation_decisions()
     {
         return $this->hasMany(Simulation_decisions::class, 'mission_id');
+    }
+
+    public function reflections()
+    {
+        return $this->hasMany(Scientific_reflections::class, 'mission_id');
     }
 
 }

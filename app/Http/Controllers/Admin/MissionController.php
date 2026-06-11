@@ -105,6 +105,17 @@ class MissionController extends Controller
         });
         $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->values();
 
+        // Load reflections
+        $reflections = $missions->reflections()->get()->map(function ($r) {
+            return [
+                'id' => $r->id,
+                'title' => $r->title,
+                'type' => 'reflection',
+                'itemType' => 'reflection',
+                'created_at' => $r->created_at,
+            ];
+        });
+
         return Inertia::render('Admin/Modules/Missions/Show', [
             'module' => [
                 'id' => $modules->id,
@@ -121,6 +132,7 @@ class MissionController extends Controller
             'materials' => $materials,
             'quizzes' => $quizzes,
             'simulations' => $simulations,
+            'reflections' => $reflections,
         ]);
     }
 
