@@ -590,23 +590,17 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
         <!-- ══ MAIN CENTRIC CONTENT ══ -->
         <main class="main-wrapper" :class="{ 'main--on': ready }">
             <template v-if="step?.isConclusion">
-                <div class="mission-container conclusion-container">
+                <div class="mission-container">
                     <div class="title-pill">{{ step.quiz.title }}</div>
-                    <div class="conclusion-box border-4 border-blue-600 rounded-[2rem] bg-white p-6 relative flex flex-col gap-6 w-full max-w-4xl mx-auto mt-6 shadow-xl">
-                        <!-- Top: Mascot & Speech -->
-                        <div class="flex items-start gap-4">
-                            <img :src="mascotUrl" alt="Maskot" class="w-32 h-32 object-contain shrink-0" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1))" />
-                            <div class="conclusion-speech-bubble relative bg-white border-2 border-cyan-400 rounded-3xl p-5 w-full text-gray-700 text-lg font-medium leading-relaxed" style="border-radius: 2rem;">
-                                {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
-                                <!-- Tail pointing left to mascot -->
-                                <svg class="absolute -left-4 top-8 w-6 h-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="#fff" /></svg>
-                            </div>
-                        </div>
-                        
-                        <!-- Bottom: Body -->
-                        <div class="conclusion-body bg-gray-50 rounded-[1.5rem] p-6 text-gray-800 text-base leading-relaxed border border-gray-100 min-h-[150px] shadow-inner font-medium">
-                            {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
-                        </div>
+                    
+                    <!-- Question Bubble (Speech) -->
+                    <div class="question-bubble">
+                        {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
+                    </div>
+                    
+                    <!-- Component Container (Body) -->
+                    <div class="component-box min-h-[150px] font-medium text-gray-800 flex items-center justify-center text-center p-8 leading-relaxed">
+                        {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
                     </div>
                 </div>
             </template>
@@ -646,7 +640,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
         </main>
 
         <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
-        <div class="mascot-absolute" @click="rotateBubble" v-if="!step?.isConclusion">
+        <div class="mascot-absolute" @click="rotateBubble">
             <Transition name="bbl">
                 <div v-if="bubbleVisible" class="mascot-speech">
                     <span>{{ BUBBLES[bubbleIdx] }}</span>
