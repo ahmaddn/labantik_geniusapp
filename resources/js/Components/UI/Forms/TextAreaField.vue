@@ -134,7 +134,7 @@ const getBorderColorClass = computed(() => {
             v-else-if="error"
             class="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1"
         >
-            <span class="inline-block w-3.5 h-3.5">⚠</span>
+            <span class="inline-block w-3.5 h-3.5"></span>
             {{ error }}
         </p>
     </div>
