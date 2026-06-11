@@ -48,6 +48,7 @@ import Clickable_objects from "@/Components/Simulation/ClickableObjects.vue";
 import Double_slider from "@/Components/Simulation/DoubleSlider.vue";
 import Comparisons from "@/Components/Simulation/Comparisons.vue";
 import Decisions from "@/Components/Simulation/Decisions.vue";
+import Reflection from "@/Components/Simulation/Reflection.vue";
 import { useMusic } from "@/Composable/useMusic";
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -61,6 +62,7 @@ const COMPONENT_MAP = {
     simulation_slider: Double_slider,
     simulation_comparison: Comparisons,
     simulation_decision: Decisions,
+    reflection: Reflection,
 };
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -84,6 +86,7 @@ const TYPE_META = {
     simulation_slider: { label: "Simulasi Slider", color: "#f43f5e", bg: "#ffe4e6" },
     simulation_comparison: { label: "Simulasi Perbandingan", color: "#f97316", bg: "#ffedd5" },
     simulation_decision: { label: "Simulasi Keputusan", color: "#8b5cf6", bg: "#ede9fe" },
+    reflection: { label: "Refleksi Ilmiah", color: "#3b82f6", bg: "#dbeafe" },
 };
 const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
@@ -107,6 +110,7 @@ const steps = computed(() => {
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
         const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider" || quiz.type === "simulation_comparison" || quiz.type === "simulation_decision";
+        const isReflection = quiz.type === "reflection";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 
@@ -119,6 +123,19 @@ const steps = computed(() => {
                 questionIndex: 0,
                 totalInQuiz: Math.max(questions.length, 1),
                 isMaterial: true,
+                isReflection: false,
+                isDragDrop: false,
+            });
+        } else if (isReflection) {
+            // Reflection: 1 step utuh, tapi wajib dijawab (isMaterial = false)
+            result.push({
+                quizIndex: quizIdx,
+                quiz,
+                question: null,
+                questionIndex: 0,
+                totalInQuiz: questions.length,
+                isMaterial: false,
+                isReflection: true,
                 isDragDrop: false,
             });
         } else if (questions.length === 0) {
@@ -130,6 +147,7 @@ const steps = computed(() => {
                 questionIndex: 0,
                 totalInQuiz: 0,
                 isMaterial: false,
+                isReflection: false,
                 isDragDrop,
             });
         } else {
@@ -142,6 +160,7 @@ const steps = computed(() => {
                     questionIndex: qIdx,
                     totalInQuiz: questions.length,
                     isMaterial: false,
+                    isReflection: false,
                     isDragDrop,
                 });
             });
@@ -157,6 +176,7 @@ const steps = computed(() => {
             questionIndex: 0,
             totalInQuiz: 1,
             isMaterial: true,
+            isReflection: false,
             isDragDrop: false,
         });
     }
@@ -305,6 +325,10 @@ const isQuestionAnswered = (question, quizType) => {
 };
 const isStepAnswered = (s) => {
     if (!s || s.isMaterial) return true;
+    if (s.isReflection) {
+        if (!s.quiz?.questions || s.quiz.questions.length === 0) return true;
+        return s.quiz.questions.every(q => isQuestionAnswered(q, s.quiz.type));
+    }
     if (!s.question) return true;
     // Quiz yang sudah timeout → dianggap selesai (bisa next/submit)
     if (timedOutQuizzes.value.has(s.quiz?.id)) return true;
@@ -627,7 +651,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                         </div>
                         
                         <component
-                            v-if="step.question || step.isMaterial"
+                            v-if="step.question || step.isMaterial || step.isReflection"
                             :is="COMPONENT_MAP[step.quiz.type]"
                             :question="step.question"
                             :quiz="step.quiz"

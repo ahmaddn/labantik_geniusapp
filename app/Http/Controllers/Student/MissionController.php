@@ -129,6 +129,7 @@ class MissionController extends Controller
             'simulation_sliders.levels',
             'simulation_comparisons',
             'simulation_decisions.options',
+            'reflections.questions',
         ]);
 
         // Format quizzes
@@ -291,8 +292,28 @@ class MissionController extends Controller
             ];
         }
 
+        $reflections = [];
+        if ($mission->reflections->isNotEmpty()) {
+            foreach ($mission->reflections as $reflection) {
+                $reflections[] = [
+                    'id'                => 'reflection_' . $reflection->id,
+                    'type'              => 'reflection',
+                    'title'             => $reflection->title ?? 'Refleksi Ilmiah',
+                    'mascot_left_text'  => $reflection->mascot_left_text,
+                    'mascot_right_text' => $reflection->mascot_right_text,
+                    'flowchart_data'    => $reflection->flowchart_data,
+                    'order_number'      => 999, // Karena tidak ada order_number di tabel, tempatkan di akhir
+                    'questions'         => $reflection->questions->map(fn($q) => [
+                        'id'            => $q->id,
+                        'question_text' => $q->question_text,
+                        'order_number'  => $q->order_number,
+                    ])->toArray(),
+                ];
+            }
+        }
+
         // Merge & sort by order_number
-        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons, $decisions))
+        $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons, $decisions, $reflections))
             ->sortBy('order_number')
             ->values()
             ->toArray();
@@ -480,6 +501,19 @@ class MissionController extends Controller
 
                 foreach ($answers as $questionId => $answerValue) {
                     if (! in_array((string) $questionId, $quizQuestionIds)) {
+                        // Check if this is a reflection question
+                        if (\App\Models\Reflection_questions::where('id', $questionId)->exists()) {
+                            \App\Models\Reflection_answers::updateOrCreate(
+                                [
+                                    'user_id' => $studentId,
+                                    'reflection_question_id' => $questionId,
+                                ],
+                                [
+                                    'answer_text' => is_array($answerValue) ? json_encode($answerValue) : (string) $answerValue,
+                                    'score' => 0,
+                                ]
+                            );
+                        }
                         continue;
                     }
 
