@@ -105,8 +105,15 @@ class UsersController extends Controller
             return redirect()->back()->with('error', 'Anda tidak diizinkan menghapus akun non-siswa.');
         }
 
-        $user->delete();
-        return redirect()->back()->with('success', 'Pengguna berhasil dihapus');
+        try {
+            $user->delete();
+            return redirect()->back()->with('success', 'Pengguna berhasil dihapus');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return redirect()->back()->with('error', 'Gagal menghapus! Pengguna ini masih terhubung dengan data lain (misalnya sebagai guru di suatu kelas).');
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus pengguna.');
+        }
     }
 
     public function downloadTemplate(Request $request)

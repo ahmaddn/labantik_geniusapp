@@ -565,6 +565,7 @@ const toggleActive = (module) => {
                         :rows="2"
                         border-color="red"
                         :error="form.errors.quotes"
+                        required
                     />
 
                     <TextAreaField

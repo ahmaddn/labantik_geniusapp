@@ -53,18 +53,21 @@ class ModulesController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content'     => 'nullable|string',
-            'quotes'      => 'nullable|string|max:500',
+            'description' => 'required|string',
+            'content'     => 'required|string',
+            'quotes'      => 'required|string|max:500',
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
-            'name.required'      => 'Nama modul wajib diisi.',
-            'thumbnail.image'    => 'File harus berupa gambar.',
-            'thumbnail.max'      => 'Ukuran gambar maksimal 5MB.',
-            'template_id.exists' => 'Template tidak ditemukan.',
+            'name.required'        => 'Nama modul wajib diisi.',
+            'description.required' => 'Deskripsi wajib diisi.',
+            'content.required'     => 'Tujuan Pembelajaran wajib diisi.',
+            'quotes.required'      => 'Kutipan / Quotes wajib diisi.',
+            'thumbnail.image'      => 'File harus berupa gambar.',
+            'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = null;
@@ -168,18 +171,21 @@ class ModulesController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content'     => 'nullable|string',
-            'quotes'      => 'nullable|string|max:500',
+            'description' => 'required|string',
+            'content'     => 'required|string',
+            'quotes'      => 'required|string|max:500',
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
-            'name.required'      => 'Nama modul wajib diisi.',
-            'thumbnail.image'    => 'File harus berupa gambar.',
-            'thumbnail.max'      => 'Ukuran gambar maksimal 5MB.',
-            'template_id.exists' => 'Template tidak ditemukan.',
+            'name.required'        => 'Nama modul wajib diisi.',
+            'description.required' => 'Deskripsi wajib diisi.',
+            'content.required'     => 'Tujuan Pembelajaran wajib diisi.',
+            'quotes.required'      => 'Kutipan / Quotes wajib diisi.',
+            'thumbnail.image'      => 'File harus berupa gambar.',
+            'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = $modules->thumbnail;
