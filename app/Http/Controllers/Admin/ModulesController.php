@@ -53,18 +53,15 @@ class ModulesController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'description' => 'required|string',
-            'content'     => 'required|string',
-            'quotes'      => 'required|string|max:500',
+            'description' => 'nullable|string',
+            'content'     => 'nullable|string',
+            'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
-            'description.required' => 'Deskripsi wajib diisi.',
-            'content.required'     => 'Tujuan Pembelajaran wajib diisi.',
-            'quotes.required'      => 'Kutipan / Quotes wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
             'template_id.exists'   => 'Template tidak ditemukan.',
@@ -78,9 +75,9 @@ class ModulesController extends Controller
 
         Learning_modules::create([
             'name'        => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'content'     => $validated['content'] ?? null,
-            'quotes'      => $validated['quotes'] ?? null,
+            'description' => $validated['description'] ?? '',
+            'content'     => $validated['content'] ?? '',
+            'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
@@ -171,18 +168,15 @@ class ModulesController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'description' => 'required|string',
-            'content'     => 'required|string',
-            'quotes'      => 'required|string|max:500',
+            'description' => 'nullable|string',
+            'content'     => 'nullable|string',
+            'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
-            'description.required' => 'Deskripsi wajib diisi.',
-            'content.required'     => 'Tujuan Pembelajaran wajib diisi.',
-            'quotes.required'      => 'Kutipan / Quotes wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
             'template_id.exists'   => 'Template tidak ditemukan.',
@@ -209,9 +203,9 @@ class ModulesController extends Controller
 
         $modules->update([
             'name'        => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'content'     => $validated['content'] ?? null,
-            'quotes'      => $validated['quotes'] ?? null,
+            'description' => $validated['description'] ?? '',
+            'content'     => $validated['content'] ?? '',
+            'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,

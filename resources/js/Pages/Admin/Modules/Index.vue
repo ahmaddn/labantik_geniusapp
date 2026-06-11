@@ -542,7 +542,6 @@ const toggleActive = (module) => {
                     :rows="3"
                     border-color="blue"
                     :error="form.errors.description"
-                    required=""
                 />
 
                 <!-- Konten -->
@@ -553,7 +552,6 @@ const toggleActive = (module) => {
                     :rows="5"
                     border-color="blue"
                     :error="form.errors.content"
-                    required
                 />
 
                 <!-- Quotes -->
@@ -565,7 +563,6 @@ const toggleActive = (module) => {
                         :rows="2"
                         border-color="red"
                         :error="form.errors.quotes"
-                        required
                     />
 
                     <TextAreaField
