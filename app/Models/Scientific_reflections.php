@@ -19,6 +19,7 @@ class Scientific_reflections extends Model
         'mascot_left_text',
         'mascot_right_text',
         'flowchart_data',
+        'order_number',
     ];
 
     protected $casts = [

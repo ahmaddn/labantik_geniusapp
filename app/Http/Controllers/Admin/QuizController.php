@@ -886,7 +886,7 @@ class QuizController extends Controller
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'description'  => 'nullable|string',
-            'type'         => 'required|in:multiple_choices,drag_drop,true_false,case_study',
+            'type'         => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
             'time_limit'   => 'required|integer|min:1',
             'category'     => 'nullable|string|max:100',
             'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

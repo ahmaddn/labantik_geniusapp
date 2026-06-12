@@ -100,6 +100,7 @@ class SimulationConfigController extends Controller
             'levels.*.narration' => 'nullable|string',
             'levels.*.metric_value' => 'nullable|string',
             'levels.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'levels.*.existing_image' => 'nullable|string',
             'levels.*.remove_image' => 'nullable|boolean',
         ]);
 
@@ -141,19 +142,21 @@ class SimulationConfigController extends Controller
                 $level->narration = $levelData['narration'] ?? null;
                 $level->metric_value = $levelData['metric_value'] ?? null;
 
-                if (!empty($levelData['remove_image']) && $level->image) {
-                    Storage::disk('public')->delete($level->image);
-                    $level->image = null;
+                $imagePath = $levelData['existing_image'] ?? null;
+
+                if (!empty($levelData['remove_image']) && $imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                    $imagePath = null;
                 }
 
                 if ($request->hasFile("levels.{$index}.image")) {
-                    if ($level->image) {
-                        Storage::disk('public')->delete($level->image);
+                    if ($imagePath) {
+                        Storage::disk('public')->delete($imagePath);
                     }
-                    $path = $request->file("levels.{$index}.image")->store('simulations/sliders', 'public');
-                    $level->image = $path;
+                    $imagePath = $request->file("levels.{$index}.image")->store('simulations/sliders', 'public');
                 }
 
+                $level->image = $imagePath;
                 $level->save();
             }
         }
@@ -245,6 +248,7 @@ class SimulationConfigController extends Controller
             'clickables.*.impact_text' => 'nullable|string',
             'clickables.*.is_positive' => 'required|boolean',
             'clickables.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'clickables.*.existing_image' => 'nullable|string',
             'clickables.*.remove_image' => 'nullable|boolean',
         ]);
 
@@ -261,15 +265,18 @@ class SimulationConfigController extends Controller
                 $c->impact_text = $cData['impact_text'] ?? null;
                 $c->is_positive = $cData['is_positive'];
 
-                if (!empty($cData['remove_image']) && $c->image) {
-                    Storage::disk('public')->delete($c->image);
-                    $c->image = null;
+                $imagePath = $cData['existing_image'] ?? null;
+
+                if (!empty($cData['remove_image']) && $imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                    $imagePath = null;
                 }
                 if ($request->hasFile("clickables.{$index}.image")) {
-                    if ($c->image) Storage::disk('public')->delete($c->image);
-                    $c->image = $request->file("clickables.{$index}.image")->store('simulations/clickables', 'public');
+                    if ($imagePath) Storage::disk('public')->delete($imagePath);
+                    $imagePath = $request->file("clickables.{$index}.image")->store('simulations/clickables', 'public');
                 }
 
+                $c->image = $imagePath;
                 $c->save();
             }
         }
@@ -290,6 +297,7 @@ class SimulationConfigController extends Controller
             'decisions.*.initial_state_title' => 'nullable|string|max:255',
             'decisions.*.future_state_title' => 'nullable|string|max:255',
             'decisions.*.initial_state_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'decisions.*.existing_initial_image' => 'nullable|string',
             'decisions.*.remove_initial_image' => 'nullable|boolean',
             'decisions.*.character_image' => 'nullable|string',
             
@@ -299,6 +307,7 @@ class SimulationConfigController extends Controller
             'decisions.*.options.*.button_color' => 'nullable|string|max:255',
             'decisions.*.options.*.feedback_message' => 'nullable|string',
             'decisions.*.options.*.future_state_image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'decisions.*.options.*.existing_future_image' => 'nullable|string',
             'decisions.*.options.*.remove_future_image' => 'nullable|boolean',
         ]);
 
@@ -314,15 +323,18 @@ class SimulationConfigController extends Controller
                 $dec->initial_state_title = $dData['initial_state_title'] ?? null;
                 $dec->future_state_title = $dData['future_state_title'] ?? null;
 
+                $initialImagePath = $dData['existing_initial_image'] ?? null;
+
                 // Handle initial state image
-                if (!empty($dData['remove_initial_image']) && $dec->initial_state_image) {
-                    Storage::disk('public')->delete($dec->initial_state_image);
-                    $dec->initial_state_image = null;
+                if (!empty($dData['remove_initial_image']) && $initialImagePath) {
+                    Storage::disk('public')->delete($initialImagePath);
+                    $initialImagePath = null;
                 }
                 if ($request->hasFile("decisions.{$index}.initial_state_image")) {
-                    if ($dec->initial_state_image) Storage::disk('public')->delete($dec->initial_state_image);
-                    $dec->initial_state_image = $request->file("decisions.{$index}.initial_state_image")->store('simulations/decisions', 'public');
+                    if ($initialImagePath) Storage::disk('public')->delete($initialImagePath);
+                    $initialImagePath = $request->file("decisions.{$index}.initial_state_image")->store('simulations/decisions', 'public');
                 }
+                $dec->initial_state_image = $initialImagePath;
 
                 // Handle character image (selected from template)
                 if (array_key_exists('character_image', $dData)) {
@@ -343,14 +355,18 @@ class SimulationConfigController extends Controller
                         $opt->button_color = $oData['button_color'] ?? null;
                         $opt->feedback_message = $oData['feedback_message'] ?? null;
 
-                        if (!empty($oData['remove_future_image']) && $opt->future_state_image) {
-                            Storage::disk('public')->delete($opt->future_state_image);
-                            $opt->future_state_image = null;
+                        $futureImagePath = $oData['existing_future_image'] ?? null;
+
+                        if (!empty($oData['remove_future_image']) && $futureImagePath) {
+                            Storage::disk('public')->delete($futureImagePath);
+                            $futureImagePath = null;
                         }
                         if ($request->hasFile("decisions.{$index}.options.{$optIndex}.future_state_image")) {
-                            if ($opt->future_state_image) Storage::disk('public')->delete($opt->future_state_image);
-                            $opt->future_state_image = $request->file("decisions.{$index}.options.{$optIndex}.future_state_image")->store('simulations/decisions', 'public');
+                            if ($futureImagePath) Storage::disk('public')->delete($futureImagePath);
+                            $futureImagePath = $request->file("decisions.{$index}.options.{$optIndex}.future_state_image")->store('simulations/decisions', 'public');
                         }
+                        
+                        $opt->future_state_image = $futureImagePath;
 
                         $opt->save();
                     }
@@ -372,5 +388,26 @@ class SimulationConfigController extends Controller
         foreach ($decsToDelete as $item) {
             $item->delete(); // The model's deleting event will handle the children and files
         }
+    }
+
+    public function destroy(Request $request, Learning_modules $modules, Missions $missions, $id)
+    {
+        $type = $request->query('type');
+        switch ($type) {
+            case 'simulation_slider':
+                Simulation_sliders::where('id', $id)->delete();
+                break;
+            case 'simulation_comparison':
+                Simulation_comparisons::where('id', $id)->delete();
+                break;
+            case 'simulation_clickable_object':
+                Simulation_clickable_objects::where('id', $id)->delete();
+                break;
+            case 'simulation_decision':
+                Simulation_decisions::where('id', $id)->delete();
+                break;
+        }
+
+        return back()->with('success', 'Simulasi berhasil dihapus.');
     }
 }

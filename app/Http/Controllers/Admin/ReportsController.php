@@ -171,16 +171,33 @@ class ReportsController extends Controller
 
         $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
             ->where('student_id', $student->id)
-            ->with('quiz')
+            ->with([
+                'quiz', 
+                'answers.question.options', 
+                'answers.question.dragDropGroups.items',
+                'answers.selectedOption'
+            ])
             ->orderBy('finished_at')
             ->get();
 
         $quizzes = $attempts->map(fn($a) => [
+            'attempt_id'  => $a->id,
             'quiz_id'     => $a->quiz_id,
             'quiz_title'  => $a->quiz?->title ?? 'Quiz',
+            'quiz_type'   => $a->quiz?->type,
             'score'       => (int) $a->score,
             'started_at'  => $a->started_at,
             'finished_at' => $a->finished_at,
+            'answers'     => $a->answers->map(fn($ans) => [
+                'question_id'   => $ans->question_id,
+                'question_text' => $ans->question?->question_text,
+                'response'      => $ans->response,
+                'selected_option' => $ans->selectedOption ? $ans->selectedOption->option_text : null,
+                'is_correct'    => $ans->selectedOption ? (bool)$ans->selectedOption->is_correct : null,
+                // Include options or groups if needed for more complex rendering
+                'options'       => $ans->question?->options,
+                'dragDropGroups'=> $ans->question?->dragDropGroups,
+            ]),
         ])->values();
 
         $overall = $quizzes->count() > 0 ? (int) round($quizzes->avg('score')) : 0;
@@ -194,6 +211,29 @@ class ReportsController extends Controller
             'high'   => $quizzes->filter(fn($q) => $q['score'] >= 80)->count(),
         ];
 
+        // Fetch Reflection Answers
+        $reflectionAnswers = \App\Models\Reflection_answers::where('user_id', $student->id)
+            ->whereHas('question.reflection.mission', function($q) use ($modules) {
+                $q->where('module_id', $modules->id);
+            })
+            ->with(['question.reflection'])
+            ->get();
+
+        $reflections = $reflectionAnswers->groupBy('question.reflection_id')->map(function($answers, $reflectionId) {
+            $reflection = $answers->first()->question->reflection;
+            return [
+                'reflection_id' => $reflectionId,
+                'title' => $reflection->title ?? 'Refleksi',
+                'overall_score' => (int) round($answers->avg('score')),
+                'answers' => $answers->map(fn($ans) => [
+                    'answer_id' => $ans->id,
+                    'question_text' => $ans->question->question_text,
+                    'answer_text' => $ans->answer_text,
+                    'score' => $ans->score,
+                ])->values()
+            ];
+        })->values();
+
         return Inertia::render('Admin/Reports/StudentReport', [
             'module'  => ['id' => $modules->id, 'name' => $modules->name],
             'student' => [
@@ -202,11 +242,36 @@ class ReportsController extends Controller
                 'class' => $student->class?->name ?? null,
             ],
             'quizzes'           => $quizzes,
+            'reflections'       => $reflections,
             'overall'           => $overall,
             'chartLabels'       => $chartLabels,
             'chartScores'       => $chartScores,
             'scoreDistribution' => $scoreDistribution,
         ]);
+    }
+
+    /**
+     * Memperbarui skor secara manual oleh admin
+     */
+    public function updateScore(Request $request, Learning_modules $modules, User $student)
+    {
+        $request->validate([
+            'type' => 'required|in:quiz,reflection_answer',
+            'id' => 'required|string',
+            'score' => 'required|numeric|min:0|max:100',
+        ]);
+
+        if ($request->type === 'quiz') {
+            $attempt = Quiz_attempts::findOrFail($request->id);
+            $attempt->score = $request->score;
+            $attempt->save();
+        } elseif ($request->type === 'reflection_answer') {
+            $answer = \App\Models\Reflection_answers::findOrFail($request->id);
+            $answer->score = $request->score;
+            $answer->save();
+        }
+
+        return redirect()->back()->with('success', 'Nilai berhasil diperbarui');
     }
 
     /**

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onUnmounted, computed } from 'vue'
+import * as LucideIcons from 'lucide-vue-next'
 import { BookOpen, Music, Video, CloudRain, Droplets } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -19,6 +20,17 @@ const conceptualData = computed(() => {
     return null
   }
 })
+
+const m1Mult = computed(() => conceptualData.value?.metric1Multiplier !== undefined && conceptualData.value?.metric1Multiplier !== '' ? Number(conceptualData.value.metric1Multiplier) : 0.8)
+const m1Base = computed(() => conceptualData.value?.metric1Base !== undefined && conceptualData.value?.metric1Base !== '' ? Number(conceptualData.value.metric1Base) : 20)
+const m2Mult = computed(() => conceptualData.value?.metric2Multiplier !== undefined && conceptualData.value?.metric2Multiplier !== '' ? Number(conceptualData.value.metric2Multiplier) : 1.5)
+const m2Base = computed(() => conceptualData.value?.metric2Base !== undefined && conceptualData.value?.metric2Base !== '' ? Number(conceptualData.value.metric2Base) : 0)
+
+const metric1Value = computed(() => Math.round(sliderValue.value * m1Mult.value) + m1Base.value)
+const metric2Value = computed(() => Math.round(sliderValue.value * m2Mult.value) + m2Base.value)
+
+const sliderLeftIcon = computed(() => conceptualData.value?.sliderIconLeft || 'CloudRain')
+const sliderRightIcon = computed(() => conceptualData.value?.sliderIconRight || 'Droplets')
 
 const isVideo = (path) => {
   if (!path) return false
@@ -185,11 +197,15 @@ onUnmounted(() => {
     <!-- Slider Area -->
     <div class="cs-slider-area">
       <div class="cs-slider-wrap">
-        <div class="cs-slider-icon bg-blue-500"><CloudRain class="w-5 h-5 text-white" /></div>
+        <div class="cs-slider-icon bg-blue-500">
+            <component :is="LucideIcons[sliderLeftIcon] || LucideIcons.CloudRain" class="w-5 h-5 text-white" />
+        </div>
         <span class="cs-slider-label">{{ conceptualData?.sliderMin || 'Ringan' }}</span>
         <input type="range" min="0" max="100" v-model="sliderValue" class="cs-slider" />
         <span class="cs-slider-label">{{ conceptualData?.sliderMax || 'Deras' }}</span>
-        <div class="cs-slider-icon bg-blue-700"><Droplets class="w-5 h-5 text-white" /></div>
+        <div class="cs-slider-icon bg-blue-700">
+            <component :is="LucideIcons[sliderRightIcon] || LucideIcons.Droplets" class="w-5 h-5 text-white" />
+        </div>
       </div>
     </div>
 
@@ -202,14 +218,14 @@ onUnmounted(() => {
         <div class="cs-metric-box metric-green" :style="{ transform: `scale(${1 + sliderValue/500})` }">
           <h4 class="cs-metric-title">{{ conceptualData?.metric1Title }}</h4>
           <p class="cs-metric-desc">{{ conceptualData?.metric1Desc }}</p>
-          <div class="cs-metric-value">{{ Math.round(sliderValue * 0.8) + 20 }} L/s</div>
+          <div class="cs-metric-value">{{ metric1Value }} {{ conceptualData?.metric1Unit || 'L/s' }}</div>
         </div>
         
         <!-- Metric 2 -->
         <div class="cs-metric-box metric-blue" :style="{ transform: `scale(${1 + sliderValue/300})` }">
           <h4 class="cs-metric-title">{{ conceptualData?.metric2Title }}</h4>
           <p class="cs-metric-desc">{{ conceptualData?.metric2Desc }}</p>
-          <div class="cs-metric-value">{{ Math.round(sliderValue * 1.5) }} m³</div>
+          <div class="cs-metric-value">{{ metric2Value }} {{ conceptualData?.metric2Unit || 'm³' }}</div>
         </div>
       </div>
     </div>
@@ -225,7 +241,7 @@ onUnmounted(() => {
     <div class="vo-video-wrapper bg-white p-2 md:p-4 rounded-3xl shadow-xl mx-auto w-full max-w-4xl relative" style="aspect-ratio: 16/9;">
         <iframe 
             class="w-full h-full rounded-2xl bg-gray-100"
-            :src="props.question.youtube_link" 
+            :src="props.question.youtube_link + (props.question.youtube_link?.includes('?') ? '&autoplay=1' : '?autoplay=1')" 
             title="YouTube video player" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 

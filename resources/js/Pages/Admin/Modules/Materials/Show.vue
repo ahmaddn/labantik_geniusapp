@@ -28,6 +28,18 @@ const formatDate = (dateString) => {
         minute: "2-digit",
     });
 };
+
+import { computed } from "vue";
+const conceptualData = computed(() => {
+    if (props.material.layout_type === 'conceptual_systematic' && props.material.content) {
+        try {
+            return JSON.parse(props.material.content);
+        } catch(e) {
+            return null;
+        }
+    }
+    return null;
+});
 </script>
 
 <template>
@@ -190,8 +202,27 @@ const formatDate = (dateString) => {
                         allowfullscreen>
                     </iframe>
                 </div>
-                <div v-else-if="material.layout_type === 'conceptual_systematic'" class="text-gray-700 bg-gray-50 p-4 rounded-xl border">
-                    <pre class="whitespace-pre-wrap text-sm">{{ material.content }}</pre>
+                <div v-else-if="material.layout_type === 'conceptual_systematic'" class="space-y-4">
+                    <div class="bg-gray-50 p-5 rounded-2xl border-2 border-gray-200">
+                        <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">Data Konseptual Sistematis</h3>
+                        <div v-if="conceptualData" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><strong class="text-xs text-gray-500 uppercase">Teks Kiri Atas</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.topLeft || '-' }}</p></div>
+                            <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Atas</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.topRight || '-' }}</p></div>
+                            <div><strong class="text-xs text-gray-500 uppercase">Teks Kiri Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomLeft || '-' }}</p></div>
+                            <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomRight || '-' }}</p></div>
+                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
+                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kiri</strong><p class="text-sm">{{ conceptualData.sliderMin || '-' }}</p></div>
+                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kanan</strong><p class="text-sm">{{ conceptualData.sliderMax || '-' }}</p></div>
+                            </div>
+                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2 border-t pt-4">
+                                <div><strong class="text-xs text-green-600 uppercase">Metrik 1</strong><p class="font-bold text-sm">{{ conceptualData.metric1Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric1Desc || '-' }}</p></div>
+                                <div><strong class="text-xs text-blue-600 uppercase">Metrik 2</strong><p class="font-bold text-sm">{{ conceptualData.metric2Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric2Desc || '-' }}</p></div>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <pre class="whitespace-pre-wrap text-sm text-red-500">Gagal memuat data (Invalid Format)</pre>
+                        </div>
+                    </div>
                 </div>
                 <div v-else
                     class="prose max-w-none text-gray-700 leading-relaxed quill-content"

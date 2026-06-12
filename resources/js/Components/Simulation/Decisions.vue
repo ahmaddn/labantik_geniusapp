@@ -155,36 +155,35 @@ const getColorClass = (colorStr) => {
             </div>
 
             <!-- Bottom Section: Mascot & Buttons -->
-            <div class="mt-auto relative w-full pt-4 md:pt-10">
+            <div class="mt-4 md:mt-8 relative w-full flex flex-col lg:flex-row items-end lg:items-center justify-between gap-4 z-20">
+                
                 <!-- Mascot & Bubble Positioned -->
-                <div class="flex flex-col md:flex-row items-end gap-4 w-full">
+                <div class="flex flex-row items-center z-10 flex-1 w-full lg:w-auto relative mb-4 lg:mb-0 gap-3">
+                    <img :src="currentMascotImg" class="w-20 md:w-28 lg:w-32 object-contain drop-shadow-xl animate-float z-20" alt="Mascot" />
                     
-                    <div class="flex items-end gap-4 z-10 w-full md:w-auto relative mb-4 md:mb-0 md:-ml-8 lg:-ml-12">
-                        <img :src="currentMascotImg" class="w-24 md:w-36 object-contain drop-shadow-xl animate-float" alt="Mascot" />
-                        
-                        <div class="narration-bubble absolute bottom-full left-16 md:left-24 mb-4 bg-white border-4 border-blue-300 rounded-3xl rounded-bl-none p-4 md:p-6 shadow-xl w-[280px] md:w-[400px]">
-                            <div class="absolute -left-4 bottom-0 w-6 h-6 bg-white border-l-4 border-b-4 border-blue-300 transform rotate-45 translate-y-1/2 translate-x-2"></div>
-                            <p class="text-gray-700 font-bold text-sm md:text-base leading-relaxed whitespace-pre-wrap min-h-[3rem]">
-                                {{ displayedFeedback }}<span class="animate-ping font-black text-blue-500 ml-1">_</span>
-                            </p>
-                        </div>
+                    <div class="narration-bubble relative bg-white border-4 border-blue-300 rounded-3xl p-4 md:p-5 shadow-xl w-full max-w-[280px] md:max-w-[340px] z-10">
+                        <!-- Left Arrow / Tail -->
+                        <div class="absolute top-1/2 -left-3 w-5 h-5 bg-white border-l-4 border-b-4 border-blue-300 transform rotate-45 -translate-y-1/2 rounded-sm"></div>
+                        <p class="text-gray-700 font-bold text-sm md:text-base leading-relaxed whitespace-pre-wrap relative z-20">
+                            {{ displayedFeedback }}<span class="animate-ping font-black text-blue-500 ml-1">_</span>
+                        </p>
                     </div>
+                </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex-1 flex flex-wrap justify-center md:justify-end gap-3 md:gap-4 items-center mb-2 z-20">
-                        <button 
-                            v-for="(opt, idx) in simulation.options" 
-                            :key="'opt-'+idx"
-                            @click="selectOption(idx)"
-                            class="action-btn px-6 py-3 rounded-2xl border-b-4 font-bold text-base md:text-lg transition-all shadow-md active:border-b-0 active:translate-y-1"
-                            :class="[
-                                getColorClass(opt.button_color),
-                                activeOptionIndex === idx ? 'ring-4 ring-offset-2 ring-blue-300 scale-105' : 'hover:scale-105 opacity-90 hover:opacity-100'
-                            ]"
-                        >
-                            {{ opt.button_label }}
-                        </button>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex-1 flex flex-wrap justify-center lg:justify-end gap-3 md:gap-4 items-center z-20 w-full lg:w-auto">
+                    <button 
+                        v-for="(opt, idx) in simulation.options" 
+                        :key="'opt-'+idx"
+                        @click="selectOption(idx)"
+                        class="action-btn px-4 py-2 md:px-6 md:py-3 rounded-2xl border-b-4 font-bold text-sm md:text-base lg:text-lg transition-all shadow-md active:border-b-0 active:translate-y-1"
+                        :class="[
+                            getColorClass(opt.button_color),
+                            activeOptionIndex === idx ? 'ring-4 ring-offset-2 ring-blue-300 scale-105' : 'hover:scale-105 opacity-90 hover:opacity-100'
+                        ]"
+                    >
+                        {{ opt.button_label }}
+                    </button>
                 </div>
             </div>
         </div>

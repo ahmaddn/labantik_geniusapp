@@ -3,6 +3,7 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import Button from "@/Components/UI/Button.vue";
 import Card from "@/Components/UI/Card.vue";
 import { ArrowLeft, Pencil, BookOpen } from "lucide-vue-next";
+import * as LucideIcons from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 
 const props = defineProps({
@@ -57,7 +58,8 @@ const goToEdit = () => {
                         <div class="flex flex-col items-center gap-2">
                             <div class="w-20 h-20 bg-white rounded-full border-4 border-blue-200 flex items-center justify-center overflow-hidden shadow-sm">
                                 <img v-if="step.image" :src="'/storage/' + step.image" alt="Step icon" class="w-full h-full object-cover">
-                                <span v-else class="text-gray-400 font-medium">{{ step.fallback_icon || 'Ikon' }}</span>
+                                <component v-else-if="LucideIcons[step.fallback_icon]" :is="LucideIcons[step.fallback_icon]" class="w-10 h-10 text-blue-400" />
+                                <span v-else class="text-gray-400 font-medium text-xs text-center px-1">{{ step.fallback_icon || 'Ikon' }}</span>
                             </div>
                             <span class="font-bold text-gray-700">{{ step.title }}</span>
                         </div>

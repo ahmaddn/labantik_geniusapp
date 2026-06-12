@@ -345,21 +345,33 @@ const toggleCardVariant = () => {
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <InputField label="Label Slider Kiri (Min)" v-model="materialForm.conceptual_data.sliderMin" placeholder="Contoh: Ringan" />
                                     <InputField label="Label Slider Kanan (Max)" v-model="materialForm.conceptual_data.sliderMax" placeholder="Contoh: Deras" />
+                                    <InputField label="Ikon Slider Kiri (Lucide)" v-model="materialForm.conceptual_data.sliderIconLeft" placeholder="Contoh: CloudRain" />
+                                    <InputField label="Ikon Slider Kanan (Lucide)" v-model="materialForm.conceptual_data.sliderIconRight" placeholder="Contoh: Droplets" />
                                 </div>
                             </div>
 
                             <div class="border-t pt-4">
                                 <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Metrik (Kotak Bawah)</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-white p-4 rounded-xl border">
-                                        <h5 class="font-bold text-sm text-green-600 mb-2">Metrik 1 (Hijau)</h5>
+                                    <div class="bg-white p-4 rounded-xl border space-y-3">
+                                        <h5 class="font-bold text-sm text-green-600 mb-2">Metrik 1 (Kiri)</h5>
                                         <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric1Title" placeholder="Contoh: Curah Hujan" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric1Desc" placeholder="Contoh: Input Air" class="mt-2" />
+                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric1Desc" placeholder="Contoh: Input Air" />
+                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric1Unit" placeholder="Contoh: L/s" />
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric1Multiplier" type="number" step="0.01" placeholder="0.8" />
+                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric1Base" type="number" step="0.01" placeholder="20" />
+                                        </div>
                                     </div>
-                                    <div class="bg-white p-4 rounded-xl border">
-                                        <h5 class="font-bold text-sm text-blue-600 mb-2">Metrik 2 (Biru)</h5>
+                                    <div class="bg-white p-4 rounded-xl border space-y-3">
+                                        <h5 class="font-bold text-sm text-blue-600 mb-2">Metrik 2 (Kanan)</h5>
                                         <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric2Title" placeholder="Contoh: Debit Sungai" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric2Desc" placeholder="Contoh: Jumlah Debit" class="mt-2" />
+                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric2Desc" placeholder="Contoh: Jumlah Debit" />
+                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric2Unit" placeholder="Contoh: m³" />
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric2Multiplier" type="number" step="0.01" placeholder="1.5" />
+                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric2Base" type="number" step="0.01" placeholder="0" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

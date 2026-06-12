@@ -11,6 +11,7 @@ class Simulation_decision_options extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'simulation_decision_id',
         'button_label',
         'button_color',

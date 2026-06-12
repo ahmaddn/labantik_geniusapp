@@ -22,6 +22,7 @@ class Quizzes extends Model
         'created_by',
         'time_limit',
         'category',
+        'order_number',
     ];
 
     protected static function booted(): void

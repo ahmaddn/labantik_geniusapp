@@ -11,10 +11,8 @@ class SubmitMissionAnswersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers'    => ['present', 'array'],
-            'answers.*'  => ['present'],
-            'quiz_ids'   => ['required', 'array'],
-            'quiz_ids.*' => ['required', 'string', 'uuid'],
+            'answers'  => ['nullable', 'array'],
+            'quiz_ids' => ['required', 'array'],
         ];
     }
 

@@ -485,12 +485,33 @@ class MissionController extends Controller
         }
 
         $validated = $request->validated();
-        $answers   = $validated['answers'];
-        $quizIds   = $validated['quiz_ids'];
+        $answers   = $validated['answers'] ?? [];
+        $quizIds   = $validated['quiz_ids'] ?? [];
         $studentId = $player['id'] ?? null;
 
         try {
+            // 1. Save all reflections first
+            foreach ($answers as $questionId => $answerValue) {
+                if (\App\Models\Reflection_questions::where('id', $questionId)->exists()) {
+                    \App\Models\Reflection_answers::updateOrCreate(
+                        [
+                            'user_id' => $studentId,
+                            'reflection_question_id' => $questionId,
+                        ],
+                        [
+                            'answer_text' => is_array($answerValue) ? json_encode($answerValue) : (string) $answerValue,
+                            'score' => 0,
+                        ]
+                    );
+                }
+            }
+
+            // 2. Save quiz answers
             foreach ($quizIds as $quizId) {
+                if (str_starts_with($quizId, 'reflection_')) {
+                    continue; // Skip pseudo-quizzes
+                }
+
                 $quizQuestionIds = Questions::where('quiz_id', $quizId)
                     ->pluck('id')
                     ->map(fn($id) => (string) $id)
@@ -503,19 +524,6 @@ class MissionController extends Controller
 
                 foreach ($answers as $questionId => $answerValue) {
                     if (! in_array((string) $questionId, $quizQuestionIds)) {
-                        // Check if this is a reflection question
-                        if (\App\Models\Reflection_questions::where('id', $questionId)->exists()) {
-                            \App\Models\Reflection_answers::updateOrCreate(
-                                [
-                                    'user_id' => $studentId,
-                                    'reflection_question_id' => $questionId,
-                                ],
-                                [
-                                    'answer_text' => is_array($answerValue) ? json_encode($answerValue) : (string) $answerValue,
-                                    'score' => 0,
-                                ]
-                            );
-                        }
                         continue;
                     }
 
@@ -525,9 +533,14 @@ class MissionController extends Controller
                             ['selected_option_id' => null, 'selected_group_id' => null, 'response' => json_encode($answerValue)]
                         );
                     } else {
+                        $isUuid = \Illuminate\Support\Str::isUuid((string) $answerValue);
                         User_answers::updateOrCreate(
                             ['attempt_id' => $attempt->id, 'question_id' => $questionId],
-                            ['selected_option_id' => $answerValue, 'selected_group_id' => null, 'response' => (string) $answerValue]
+                            [
+                                'selected_option_id' => $isUuid ? $answerValue : null, 
+                                'selected_group_id' => null, 
+                                'response' => (string) $answerValue
+                            ]
                         );
                     }
                 }

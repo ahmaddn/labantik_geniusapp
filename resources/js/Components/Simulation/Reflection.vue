@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { ArrowRight, Link, CloudRain, Sprout, Lightbulb, MessageSquare } from 'lucide-vue-next';
+import * as LucideIcons from 'lucide-vue-next';
 
 const props = defineProps({
     quiz: {
@@ -62,7 +63,8 @@ const getIcon = (index) => {
                         <div class="flex flex-col items-center group">
                             <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white border-4 border-blue-300 shadow-lg flex items-center justify-center overflow-hidden transition-transform transform group-hover:scale-105">
                                 <img v-if="item.image" :src="`/storage/${item.image}`" class="w-full h-full object-cover" :alt="item.title" />
-                                <span v-else class="text-xs font-bold text-gray-500 text-center px-1">{{ item.title }}</span>
+                                <component v-else-if="LucideIcons[item.fallback_icon]" :is="LucideIcons[item.fallback_icon]" class="w-10 h-10 text-blue-400" />
+                                <span v-else class="text-xs font-bold text-gray-500 text-center px-1">{{ item.fallback_icon || item.title }}</span>
                             </div>
                             <span class="mt-2 font-bold text-gray-800 text-sm md:text-base text-center bg-white/70 px-2 rounded">{{ item.title }}</span>
                         </div>

@@ -30,6 +30,7 @@ import {
     FileArchive,
     Settings,
     Settings2,
+    Workflow,
 } from "lucide-vue-next";
 import draggable from "vuedraggable";
 
@@ -68,12 +69,14 @@ watch(
     (val) => {
         if (val) triggerToast(val, "success");
     },
+    { immediate: true }
 );
 watch(
     () => page.props.flash?.error,
     (val) => {
         if (val) triggerToast(val, "error");
     },
+    { immediate: true }
 );
 
 // Combine materials, quizzes, simulations, sorted by order_number or created date
@@ -357,6 +360,20 @@ const confirmDeleteQuiz = (quizId) => {
     showDeleteDialog.value = true;
 };
 
+const confirmDeleteReflection = (reflectionId) => {
+    deleteType.value = "reflection";
+    selectedItemId.value = reflectionId;
+    showDeleteDialog.value = true;
+};
+
+const simulationTypeToDelete = ref("");
+const confirmDeleteSimulation = (simulationId, simulationType) => {
+    deleteType.value = "simulation";
+    selectedItemId.value = simulationId;
+    simulationTypeToDelete.value = simulationType;
+    showDeleteDialog.value = true;
+};
+
 const deleteItem = () => {
     if (deleteType.value === "material") {
         router.delete(
@@ -375,7 +392,7 @@ const deleteItem = () => {
                 },
             },
         );
-    } else {
+    } else if (deleteType.value === "quiz") {
         router.delete(
             route("admin.modules.missions.quizzes.destroy", [
                 props.module.id,
@@ -389,6 +406,42 @@ const deleteItem = () => {
                 },
                 onError: () => {
                     triggerToast("Gagal menghapus quiz.", "error");
+                },
+            },
+        );
+    } else if (deleteType.value === "reflection") {
+        router.delete(
+            route("admin.modules.missions.reflections.destroy", [
+                props.module.id,
+                props.mission.id,
+                selectedItemId.value,
+            ]),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showDeleteDialog.value = false;
+                },
+                onError: () => {
+                    triggerToast("Gagal menghapus refleksi.", "error");
+                },
+            },
+        );
+    } else if (deleteType.value === "simulation") {
+        router.delete(
+            route("admin.modules.missions.simulation.destroy", [
+                props.module.id,
+                props.mission.id,
+                selectedItemId.value,
+            ]) +
+                "?type=" +
+                simulationTypeToDelete.value,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showDeleteDialog.value = false;
+                },
+                onError: () => {
+                    triggerToast("Gagal menghapus simulasi.", "error");
                 },
             },
         );
@@ -906,7 +959,7 @@ const formatDate = (dateString) => {
                                             <div
                                                 class="bg-teal-100 p-3 rounded-2xl border-2 border-teal-300 shrink-0"
                                             >
-                                                <AlignLeft
+                                                <Workflow
                                                     class="text-teal-600 w-8 h-8"
                                                 />
                                             </div>
@@ -927,10 +980,6 @@ const formatDate = (dateString) => {
                                                 <div
                                                     class="flex flex-wrap items-center gap-3 mb-3"
                                                 >
-                                                    <span
-                                                        class="text-xs px-3 py-1 rounded-full border bg-pink-100 text-pink-700 border-pink-300 font-medium"
-                                                        >CASE STUDY</span
-                                                    >
                                                     <span
                                                         class="text-xs text-gray-500 flex items-center gap-1"
                                                         ><Clock
@@ -1016,6 +1065,107 @@ const formatDate = (dateString) => {
                                                 :icon="Trash2"
                                                 @click="
                                                     confirmDeleteQuiz(item.id)
+                                                "
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Reflection Item -->
+                                    <div
+                                        v-else-if="
+                                            item.itemType === 'reflection'
+                                        "
+                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div
+                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
+                                        >
+                                            <div
+                                                class="bg-green-100 p-3 rounded-2xl border-2 border-green-300 shrink-0"
+                                            >
+                                                <AlignLeft
+                                                    class="text-green-600 w-8 h-8"
+                                                />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div
+                                                    class="flex items-center gap-2 mb-2"
+                                                >
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-300 font-medium"
+                                                        >REFLEKSI ILMIAH</span
+                                                    >
+                                                    <h3
+                                                        class="text-xl font-bold text-gray-800 truncate"
+                                                    >
+                                                        {{ item.title }}
+                                                    </h3>
+                                                </div>
+                                                <div
+                                                    class="flex items-center gap-3 mb-3"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        ><Clock
+                                                            class="w-3 h-3"
+                                                        />
+                                                        {{
+                                                            formatDate(
+                                                                item.created_at,
+                                                            )
+                                                        }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                        >
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="info"
+                                                size="md"
+                                                :icon="Eye"
+                                                @click="
+                                                    router.visit(
+                                                        route(
+                                                            'admin.modules.missions.reflections.show',
+                                                            [
+                                                                module.id,
+                                                                mission.id,
+                                                                item.id,
+                                                            ],
+                                                        ),
+                                                    )
+                                                "
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="warning"
+                                                size="md"
+                                                :icon="Pencil"
+                                                @click="
+                                                    router.visit(
+                                                        route(
+                                                            'admin.modules.missions.reflections.edit',
+                                                            [
+                                                                module.id,
+                                                                mission.id,
+                                                                item.id,
+                                                            ],
+                                                        ),
+                                                    )
+                                                "
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="danger"
+                                                size="md"
+                                                :icon="Trash2"
+                                                @click="
+                                                    confirmDeleteReflection(
+                                                        item.id,
+                                                    )
                                                 "
                                             />
                                         </div>
@@ -1108,8 +1258,19 @@ const formatDate = (dateString) => {
                                                         ),
                                                     )
                                                 "
-                                                >Edit Konfigurasi</Button
-                                            >
+                                            />
+                                            <Button
+                                                class="w-full sm:w-auto"
+                                                variant="danger"
+                                                size="md"
+                                                :icon="Trash2"
+                                                @click="
+                                                    confirmDeleteSimulation(
+                                                        item.id,
+                                                        item.itemType,
+                                                    )
+                                                "
+                                            />
                                         </div>
                                     </div>
                                 </div>

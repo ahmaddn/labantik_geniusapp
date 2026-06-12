@@ -81,7 +81,7 @@ const handleClose = () => {
 </script>
 
 <template>
-    <Transition name="toast">
+    <Transition name="toast" appear>
         <div
             v-if="show"
             :class="[
@@ -119,18 +119,20 @@ const handleClose = () => {
         0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-.toast-enter-active,
+.toast-enter-active {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 .toast-leave-active {
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .toast-enter-from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateX(50px) scale(0.8);
 }
 
 .toast-leave-to {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateX(50px) scale(0.8);
 }
 </style>

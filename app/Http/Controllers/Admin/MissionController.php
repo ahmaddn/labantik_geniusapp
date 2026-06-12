@@ -64,6 +64,7 @@ class MissionController extends Controller
                     'content' => $material->content,
                     'image' => $material->image,
                     'thumbnail' => $material->thumbnail,
+                    'order_number' => $material->order_number,
                     'created_at' => $material->created_at,
                     'created_by' => $material->createdBy ? $material->createdBy->name : null,
                     'mascot' => $material->mascot ? [
@@ -87,6 +88,7 @@ class MissionController extends Controller
                     'type' => $quiz->type,
                     'time_limit' => $quiz->time_limit,
                     'category' => $quiz->category,
+                    'order_number' => $quiz->order_number,
                     'questions_count' => $quiz->questions_count,
                     'created_at' => $quiz->created_at,
                     'created_by' => $quiz->createdBy ? $quiz->createdBy->name : null,
@@ -103,7 +105,10 @@ class MissionController extends Controller
         $clickables = $missions->simulation_clickable_objects()->get()->map(function ($s) { 
             return ['id' => $s->id, 'type' => 'simulation_clickable_object', 'title' => 'Simulasi Objek Klik (' . $s->name . ')', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
         });
-        $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->values();
+        $decisions = $missions->simulation_decisions()->get()->map(function ($s) { 
+            return ['id' => $s->id, 'type' => 'simulation_decision', 'title' => 'Simulasi Keputusan (' . $s->title . ')', 'order_number' => $s->order_number, 'created_at' => $s->created_at]; 
+        });
+        $simulations = collect([])->concat($sliders)->concat($comparisons)->concat($clickables)->concat($decisions)->values();
 
         // Load reflections
         $reflections = $missions->reflections()->get()->map(function ($r) {
@@ -112,6 +117,7 @@ class MissionController extends Controller
                 'title' => $r->title,
                 'type' => 'reflection',
                 'itemType' => 'reflection',
+                'order_number' => $r->order_number,
                 'created_at' => $r->created_at,
             ];
         });
@@ -217,6 +223,12 @@ class MissionController extends Controller
                     break;
                 case 'simulation_clickable_object':
                     $model = \App\Models\Simulation_clickable_objects::find($step['id']);
+                    break;
+                case 'simulation_decision':
+                    $model = \App\Models\Simulation_decisions::find($step['id']);
+                    break;
+                case 'reflection':
+                    $model = \App\Models\Scientific_reflections::find($step['id']);
                     break;
             }
 

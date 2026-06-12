@@ -11,12 +11,14 @@ class Simulation_decisions extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'mission_id',
         'title',
         'initial_state_title',
         'initial_state_image',
         'future_state_title',
         'character_image',
+        'order_number',
     ];
 
     protected static function booted(): void

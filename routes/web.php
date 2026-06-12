@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::get('/reports/modules/{modules}/history', [ReportsController::class, 'moduleHistory'])->name('history');
         Route::get('/reports/modules/{modules}/export', [ReportsController::class, 'exportModuleXlsx'])->name('export');
         Route::get('/reports/modules/{modules}/students/{student}', [ReportsController::class, 'studentReport'])->name('student');
+        Route::post('/reports/modules/{modules}/students/{student}/update-score', [ReportsController::class, 'updateScore'])->name('update_score');
     });
 
     // Pengaturan
@@ -191,6 +192,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::prefix('{missions}/simulation')->name('simulation.')->group(function () {
                 Route::get('/', [SimulationConfigController::class, 'edit'])->name('edit');
                 Route::put('/', [SimulationConfigController::class, 'update'])->name('update');
+                Route::delete('/{id}', [SimulationConfigController::class, 'destroy'])->name('destroy');
             });
 
             // Reflection Routes (nested under missions)

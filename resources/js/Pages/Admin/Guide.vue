@@ -58,7 +58,6 @@ const activeTab = ref("modules");
                 </div>
             </div>
 
-            <!-- Intro Alert -->
             <div
                 class="bg-yellow-50 border-2 border-yellow-200 p-5 rounded-2xl mb-8 flex gap-4 items-start shadow-sm"
             >
@@ -73,6 +72,19 @@ const activeTab = ref("modules");
                         tes, dan permainan interaktif yang nantinya akan
                         dimainkan oleh siswa di aplikasi Playground.
                     </p>
+                </div>
+            </div>
+
+            <!-- Toast Animation Info -->
+            <div
+                class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl mb-8 flex gap-4 items-center shadow-sm"
+            >
+                <div class="bg-blue-100 p-2 rounded-full border border-blue-300">
+                    <CheckCircle2 class="text-blue-500 w-5 h-5 shrink-0" />
+                </div>
+                <div class="text-sm text-blue-800 leading-relaxed">
+                    <strong class="font-bold">Sistem Notifikasi Otomatis (Baru!):</strong>
+                    Mulai sekarang, perhatikan pojok kanan bawah layar Anda. Setiap kali Anda berhasil menambah, mengubah, atau menghapus data (termasuk kuis, misi, atau materi), akan muncul pesan konfirmasi (animasi masuk & keluar) untuk memastikan data Anda tersimpan sempurna!
                 </div>
             </div>
 
@@ -521,28 +533,23 @@ const activeTab = ref("modules");
                                                 >
                                                 untuk menambah materi
                                                 pelajaran.<br /><span
-                                                    class="bg-green-100 text-green-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block"
-                                                    >Fitur Baru</span
+                                                    class="bg-blue-100 text-blue-700 px-2 rounded text-xs font-bold uppercase mr-1 mt-1 inline-block"
+                                                    >Baru</span
                                                 >
-                                                Pada halaman tambah materi, Anda
-                                                kini dapat memilih Tipe Layout:
-                                                <strong
-                                                    >Reguler
-                                                    (Teks/Video)</strong
-                                                >
+                                                Anda kini dapat memilih Tipe Layout:
+                                                <strong>Reguler (Teks/Video)</strong>
                                                 atau
-                                                <strong
-                                                    >Konseptual
-                                                    Sistematis</strong
-                                                >. <br />Jika memilih
-                                                <em>Konseptual Sistematis</em>,
-                                                Anda bisa membuat diagram
-                                                interaktif (lengkap dengan teks
-                                                4 sudut, slider tuas penggeser,
-                                                dan kotak indikator metrik yang
-                                                ukurannya membesar/mengecil
-                                                otomatis sesuai interaksi
-                                                siswa).
+                                                <strong>Konseptual Sistematis</strong>.
+                                                <br /><br />
+                                                <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl mt-2 text-blue-800 text-sm">
+                                                    <strong>💡 Panduan Layout Konseptual Sistematis:</strong><br />
+                                                    Fitur ini akan menampilkan diagram interaktif dengan tuas (slider) di bawahnya.
+                                                    <ul class="list-disc ml-5 mt-2 space-y-1">
+                                                        <li><strong>Konfigurasi Teks 4 Sudut:</strong> Isi teks yang akan muncul di pojok Kiri Atas, Kanan Atas, Kiri Bawah, dan Kanan Bawah layar materi.</li>
+                                                        <li><strong>Konfigurasi Slider:</strong> Beri label untuk batas minimum (kiri) dan batas maksimum (kanan), contoh: "Cepat" dan "Lambat". Anda juga bisa memilih ikon Lucide.</li>
+                                                        <li><strong>Konfigurasi Metrik (Kotak Indikator):</strong> Atur Judul, Satuan, dan rumus (Multiplier & Base) untuk 2 kotak visual. Semakin digeser slidernya, ukuran kotak metrik ini akan otomatis membesar/mengecil (skala visual) untuk mengilustrasikan perubahan kuantitas (seperti debit air atau ukuran massa).</li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                         <div
@@ -1754,6 +1761,49 @@ const activeTab = ref("modules");
                                                 Laporan nilai ini sudah diformat
                                                 lengkap dan bisa langsung
                                                 dicetak!
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div
+                                    class="w-10 h-10 shrink-0 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-teal-200"
+                                >
+                                    3
+                                </div>
+                                <div class="flex-1">
+                                    <h4
+                                        class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2"
+                                    >
+                                        Detail Jawaban & Penilaian Manual
+                                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-lg">Fitur Baru</span>
+                                    </h4>
+                                    <div
+                                        class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-600 space-y-3"
+                                    >
+                                        <div class="flex items-start gap-3 leading-relaxed">
+                                            <ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1" />
+                                            <div>
+                                                Saat Anda mengklik nama siswa di tabel, Anda akan masuk ke halaman <strong>Laporan & Penilaian</strong>.
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3 leading-relaxed">
+                                            <ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1" />
+                                            <div>
+                                                Di kolom <strong>Aksi</strong> pada riwayat kuis, Anda dapat mengklik tombol <span class="bg-blue-50 border border-blue-200 text-blue-600 font-bold px-2 py-0.5 rounded text-sm">Detail</span> untuk melihat jawaban pasti yang dipilih atau diisi oleh siswa. Jika siswa tidak menjawab sama sekali, sistem otomatis menganggapnya 0.
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3 leading-relaxed">
+                                            <ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1" />
+                                            <div>
+                                                Jika sistem keliru memberikan nilai otomatis, Anda dapat memperbaikinya dengan klik tombol <span class="bg-yellow-50 border border-yellow-200 text-yellow-600 font-bold px-2 py-0.5 rounded text-sm">Nilai</span> untuk memberikan skor manual (0 - 100).
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3 leading-relaxed">
+                                            <ArrowRight class="w-4 h-4 text-teal-500 shrink-0 mt-1" />
+                                            <div>
+                                                Di bagian paling bawah halaman tersebut, terdapat kotak <strong>Jawaban Refleksi</strong>. Anda juga dapat memberikan nilai spesifik pada essay refleksi siswa menggunakan fitur penilaian manual ini!
                                             </div>
                                         </div>
                                     </div>

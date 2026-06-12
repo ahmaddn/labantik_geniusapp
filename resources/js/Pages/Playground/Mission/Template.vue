@@ -637,9 +637,9 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
                     </div>
 
                     <!-- Question Bubble -->
-                    <div class="question-bubble" v-if="step?.question && !step.isMaterial" v-html="step.question.question_text"></div>
+                    <div class="question-bubble" v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer'" v-html="step.question.question_text"></div>
                     <div class="question-bubble" v-else-if="step?.isMaterial" v-html="step.quiz.title"></div>
-                    <div class="question-bubble empty-qs" v-else>
+                    <div class="question-bubble empty-qs" v-else-if="step.quiz.type !== 'short_answer'">
                         Tidak ada soal
                     </div>
 
@@ -664,7 +664,7 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
         </main>
 
         <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
-        <div class="mascot-absolute" @click="rotateBubble">
+        <div class="mascot-absolute" @click="rotateBubble" v-if="!['simulation_decision'].includes(step?.quiz?.type)">
             <Transition name="bbl">
                 <div v-if="bubbleVisible" class="mascot-speech">
                     <span>{{ BUBBLES[bubbleIdx] }}</span>

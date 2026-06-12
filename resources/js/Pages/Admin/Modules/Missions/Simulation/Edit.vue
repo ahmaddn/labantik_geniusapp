@@ -45,15 +45,26 @@ const showToast = (message, type = "success") => {
 // -------------------------------------------------------------
 // SLIDER CONFIG
 // -------------------------------------------------------------
+const mapSliderLevels = (levels) => {
+    return (levels || []).map(level => ({
+        id: level.id,
+        level_name: level.level_name || '',
+        narration: level.narration || '',
+        metric_value: level.metric_value || '',
+        existing_image: level.image || null,
+        image: null,
+        _preview: level.image ? `/storage/${level.image}` : null
+    }));
+};
+
 const sliderForm = useForm({
     _method: 'put',
     config_type: 'slider',
     title: props.configs.slider?.title || '',
     x_axis_label: props.configs.slider?.x_axis_label || '',
     conclusion_text: props.configs.slider?.conclusion_text || '',
-    conclusion_text: props.configs.slider?.conclusion_text || '',
     variables: props.configs.slider?.variables || [],
-    levels: props.configs.slider?.levels || []
+    levels: mapSliderLevels(props.configs.slider?.levels)
 });
 
 const addVariable = () => {
@@ -192,11 +203,23 @@ const saveComparison = () => {
 // -------------------------------------------------------------
 // CLICKABLE CONFIG
 // -------------------------------------------------------------
+const mapClickables = (clickables) => {
+    return (clickables || []).map(obj => ({
+        id: obj.id,
+        name: obj.name || '',
+        impact_text: obj.impact_text || '',
+        is_positive: obj.is_positive ?? 1,
+        existing_image: obj.image || null,
+        image: null,
+        _preview: obj.image ? `/storage/${obj.image}` : null
+    }));
+};
+
 const clickableForm = useForm({
     _method: 'put',
     config_type: 'clickable',
     page_title: props.configs.clickable_objects?.[0]?.title || '',
-    clickables: props.configs.clickable_objects || []
+    clickables: mapClickables(props.configs.clickable_objects)
 });
 
 const addClickable = () => {
@@ -407,9 +430,9 @@ const saveDecision = () => {
                                     v-model="level.image"
                                     @update:modelValue="(file) => { if(file) level._preview = URL.createObjectURL(file); else level._preview = null; }" 
                                 />
-                                <div v-if="level._preview || (level.image && typeof level.image === 'string')" class="mt-3">
+                                <div v-if="level._preview || level.existing_image" class="mt-3">
                                     <p class="text-xs text-gray-500 mb-1 font-bold">Preview Gambar:</p>
-                                    <img :src="level._preview || `/storage/${level.image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                    <img :src="level._preview || `/storage/${level.existing_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
                                 </div>
                             </div>
                         </div>
@@ -514,9 +537,9 @@ const saveDecision = () => {
                                     v-model="obj.image"
                                     @update:modelValue="(file) => { if(file) obj._preview = URL.createObjectURL(file); else obj._preview = null; }" 
                                 />
-                                <div v-if="obj._preview || (obj.image && typeof obj.image === 'string')" class="mt-3">
+                                <div v-if="obj._preview || obj.existing_image" class="mt-3">
                                     <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
-                                    <img :src="obj._preview || `/storage/${obj.image}`" class="w-16 h-16 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                    <img :src="obj._preview || `/storage/${obj.existing_image}`" class="w-16 h-16 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
                                 </div>
                             </div>
                         </div>
