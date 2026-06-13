@@ -49,28 +49,22 @@ export function useMusic() {
         try {
             await audioRef.value.play()
         } catch {
-            // Autoplay blocked → set false supaya tombol bisa diklik
+            // Autoplay blocked — mark as off, wait for any user click (NOT excluding music button)
             musicOn.value = false
-            document.addEventListener('click', async (e) => {
-                // Jangan trigger kalau user klik tombol toggle sendiri
-                if (e.target.closest('.tbtn-sq')) return
-                if (musicOn.value) return
-                try { await audioRef.value?.play(); musicOn.value = true } catch {}
-            }, { once: true })
+            // NOTE: We do NOT attach a once-click listener here anymore.
+            // toggleMusic handles play on demand correctly.
         }
     }
 
     const toggleMusic = async (src) => {
-    console.log('toggleMusic called', src)
-    console.log('audioRef', audioRef.value)
-    console.log('musicOn', musicOn.value)
-
-
-
         const resolvedSrc = src ?? DEFAULT_MUSIC
-            console.log('resolvedSrc', resolvedSrc)
 
-        if (!audioRef.value) {
+        if (!audioRef.value || currentSrc.value !== resolvedSrc) {
+            // Create or recreate audio if needed
+            if (audioRef.value) {
+                audioRef.value.pause()
+                audioRef.value = null
+            }
             currentSrc.value       = resolvedSrc
             audioRef.value         = new Audio(resolvedSrc)
             audioRef.value.loop    = true
@@ -80,6 +74,7 @@ export function useMusic() {
                 audioRef.value   = null
                 currentSrc.value = null
                 musicOn.value    = false
+                savePref(false)
             })
         }
 
@@ -87,8 +82,12 @@ export function useMusic() {
             audioRef.value.pause()
             musicOn.value = false
         } else {
-            try { await audioRef.value.play(); musicOn.value = true }
-            catch { musicOn.value = false }
+            try {
+                await audioRef.value.play()
+                musicOn.value = true
+            } catch {
+                musicOn.value = false
+            }
         }
         savePref(musicOn.value)
     }

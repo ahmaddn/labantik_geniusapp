@@ -1,621 +1,482 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
-    ArrowLeft,
-    Play,
-    Clock,
-    CheckCircle2,
-    BookOpen,
-    Trophy,
-    Zap,
-    ChevronRight,
-    Target,
-    Award,
+    ChevronLeft,
     Music2,
     VolumeX,
-    Sparkles,
+    LogOut,
+    Target,
+    Award,
+    FlameKindling,
+    GraduationCap,
+    BookOpen,
+    Lock,
+    Star,
+    Zap,
+    Home,
+    Trophy,
+    Check,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
 
-const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
-    useMusic();
+const { musicOn, initAutoMusic, toggleMusic, destroyAudio } = useMusic();
 
 const props = defineProps({
+    user: {
+        type: Object,
+        default: () => ({ name: "Siswa", class: { name: "-" } }),
+    },
     module: {
         type: Object,
-        default: () => ({ id: null, name: "Module", description: "" }),
+        default: () => ({
+            id: null,
+            name: "Misi Pembelajaran",
+            description: "Selesaikan setiap misi untuk memperkuat kemampuanmu!",
+        }),
     },
     missions: { type: Array, default: () => [] },
-    user: { type: Object, default: () => ({ name: "Siswa" }) },
     all_missions_done: { type: Boolean, default: false },
     backsound: { type: String, default: null },
-    background: { type: String, default: null },
 });
 
 const ready = ref(false);
-
-// Floating decoration items — stars, sparkles, dots
-const floaters = [
-    {
-        id: 1,
-        type: "star",
-        size: 18,
-        color: "#fcd34d",
-        x: 6,
-        y: 20,
-        dur: 6,
-        delay: 0,
-    },
-    {
-        id: 2,
-        type: "circle",
-        size: 10,
-        color: "#93c5fd",
-        x: 14,
-        y: 65,
-        dur: 8,
-        delay: 1.2,
-    },
-    {
-        id: 3,
-        type: "star",
-        size: 12,
-        color: "#f9a8d4",
-        x: 22,
-        y: 35,
-        dur: 7,
-        delay: 2.5,
-    },
-    {
-        id: 4,
-        type: "circle",
-        size: 14,
-        color: "#6ee7b7",
-        x: 30,
-        y: 75,
-        dur: 9,
-        delay: 0.8,
-    },
-    {
-        id: 5,
-        type: "star",
-        size: 20,
-        color: "#fcd34d",
-        x: 38,
-        y: 15,
-        dur: 11,
-        delay: 3.5,
-    },
-    {
-        id: 6,
-        type: "circle",
-        size: 8,
-        color: "#c4b5fd",
-        x: 46,
-        y: 55,
-        dur: 7.5,
-        delay: 1.8,
-    },
-    {
-        id: 7,
-        type: "star",
-        size: 14,
-        color: "#fdba74",
-        x: 54,
-        y: 30,
-        dur: 10,
-        delay: 4.2,
-    },
-    {
-        id: 8,
-        type: "circle",
-        size: 12,
-        color: "#93c5fd",
-        x: 62,
-        y: 70,
-        dur: 8.5,
-        delay: 0.5,
-    },
-    {
-        id: 9,
-        type: "star",
-        size: 10,
-        color: "#f9a8d4",
-        x: 70,
-        y: 20,
-        dur: 6.5,
-        delay: 5,
-    },
-    {
-        id: 10,
-        type: "circle",
-        size: 16,
-        color: "#6ee7b7",
-        x: 78,
-        y: 60,
-        dur: 12,
-        delay: 2,
-    },
-    {
-        id: 11,
-        type: "star",
-        size: 22,
-        color: "#fcd34d",
-        x: 86,
-        y: 35,
-        dur: 9.5,
-        delay: 3,
-    },
-    {
-        id: 12,
-        type: "circle",
-        size: 9,
-        color: "#c4b5fd",
-        x: 92,
-        y: 75,
-        dur: 7,
-        delay: 6,
-    },
-    // extra on desktop
-    {
-        id: 13,
-        type: "star",
-        size: 11,
-        color: "#fdba74",
-        x: 10,
-        y: 50,
-        dur: 8,
-        delay: 4.5,
-    },
-    {
-        id: 14,
-        type: "circle",
-        size: 13,
-        color: "#fcd34d",
-        x: 50,
-        y: 80,
-        dur: 10,
-        delay: 1.5,
-    },
-    {
-        id: 15,
-        type: "star",
-        size: 16,
-        color: "#93c5fd",
-        x: 72,
-        y: 45,
-        dur: 7.5,
-        delay: 3.8,
-    },
-];
-
-// Touch ripple effect
-const ripples = ref([]);
-let rippleId = 0;
-
-const onHeroTouch = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    const x = ((t.clientX - rect.left) / rect.width) * 100;
-    const y = ((t.clientY - rect.top) / rect.height) * 100;
-    const id = ++rippleId;
-    ripples.value.push({ id, x, y });
-    setTimeout(() => {
-        ripples.value = ripples.value.filter((r) => r.id !== id);
-    }, 700);
-};
+const dropdownOpen = ref(false);
+const showModal = ref(false);
+const modalVisible = ref(false);
+const selectedMission = ref(null);
 
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
-    document.addEventListener("visibilitychange", handleVisibility);
-    setTimeout(() => initAutoMusic(props.backsound), 100);
+    setTimeout(() => initAutoMusic(null), 100);
 });
-onUnmounted(() => {
-    document.removeEventListener("visibilitychange", handleVisibility);
-    destroyAudio();
-});
+onUnmounted(() => destroyAudio());
 
-const goBack = () => router.visit(route("playground.index"));
-const startMission = (m) => {
-    if (m.status !== "completed")
-        router.visit(route("playground.missions.show", m.id));
+const goBack = () => {
+    try {
+        router.visit(route("playground.modules.index"));
+    } catch {
+        try {
+            router.visit(route("playground.module"));
+        } catch {
+            window.history.back();
+        }
+    }
 };
-const goToPosttest = () =>
-    router.visit(route("playground.posttest.show", props.module.id));
 
-const getMissionStatus = (m) =>
-    m.status === "completed"
-        ? "Selesai"
-        : m.status === "in_progress"
-          ? "Lanjutkan"
-          : "Mulai";
-const getMissionStatusColor = (m) =>
-    m.status === "completed"
-        ? "#10b981"
-        : m.status === "in_progress"
-          ? "#f59e0b"
-          : "#3b82f6";
-const getMissionStatusBg = (m) =>
-    m.status === "completed"
-        ? "rgba(16,185,129,.1)"
-        : m.status === "in_progress"
-          ? "rgba(245,158,11,.1)"
-          : "rgba(59,130,246,.1)";
-const getStatusIcon = (m) =>
-    m.status === "completed"
-        ? CheckCircle2
-        : m.status === "in_progress"
-          ? Clock
-          : Play;
+const logout = () => router.post(route("playground.logout"));
+
+const isMissionLocked = (i) => {
+    if (i === 0) return false;
+    return props.missions[i - 1].status !== "completed";
+};
+
+const openModal = (mission, i) => {
+    if (isMissionLocked(i)) return;
+    selectedMission.value = mission;
+    showModal.value = true;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalVisible.value = true;
+        });
+    });
+};
+
+const closeModal = () => {
+    modalVisible.value = false;
+    setTimeout(() => {
+        showModal.value = false;
+        selectedMission.value = null;
+    }, 320);
+};
+
+const startMission = () => {
+    if (!selectedMission.value || selectedMission.value.status === "completed") return;
+    const id = selectedMission.value.id;
+    closeModal();
+    setTimeout(() => router.visit(route("playground.missions.show", id)), 150);
+};
+
+const goToPosttest = () => router.visit(route("playground.posttest.show", props.module.id));
 
 const totalMissions = computed(() => props.missions?.length || 0);
-const completedMissions = computed(
-    () => props.missions?.filter((m) => m.status === "completed").length || 0,
-);
-const notStartedMissions = computed(
-    () => props.missions?.filter((m) => m.status === "not_started").length || 0,
-);
+const completedMissions = computed(() => props.missions?.filter((m) => m.status === "completed").length || 0);
+const inProgressMissions = computed(() => props.missions?.filter((m) => m.status === "in_progress").length || 0);
 const progressPct = computed(() =>
-    totalMissions.value
-        ? Math.round((completedMissions.value / totalMissions.value) * 100)
-        : 0,
+    totalMissions.value ? Math.round((completedMissions.value / totalMissions.value) * 100) : 0
 );
 
-const ACCENTS = [
-    "#2563EB",
-    "#8B5CF6",
-    "#0891B2",
-    "#16A34A",
-    "#E09B2D",
-    "#DC2626",
-    "#0D9488",
-    "#BE185D",
-    "#CA8A04",
-    "#7C3AED",
+const ZIGZAG = [0, 60, 90, 60, 0, -60, -90, -60];
+const getOffset = (i) => ZIGZAG[i % ZIGZAG.length];
+
+const COLORS = [
+    { bg: "#1cb0f6", sh: "#1899d6" },
+    { bg: "#58cc02", sh: "#3f9402" },
+    { bg: "#ff9600", sh: "#cc7800" },
+    { bg: "#a435f0", sh: "#7c28b0" },
+    { bg: "#ff4b4b", sh: "#cc3838" },
+    { bg: "#00c9b1", sh: "#009e8a" },
 ];
-const accent = (i) => ACCENTS[i % ACCENTS.length];
+const getColor = (i) => COLORS[i % COLORS.length];
+
+const modalAccent = computed(() => {
+    if (!selectedMission.value) return "#1cb0f6";
+    return selectedMission.value.status === "completed"
+        ? "#58cc02"
+        : selectedMission.value.status === "in_progress"
+        ? "#ff9600"
+        : "#1cb0f6";
+});
 </script>
 
 <template>
     <div style="display: none">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
-            rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet" />
     </div>
 
-    <div
-        class="root"
-        :style="background ? { '--bg-img': `url('${background}')` } : {}"
-    >
-        <!-- ══ TOPBAR ══ -->
-        <header class="topbar">
-            <button class="back-btn" @click="goBack">
-                <ArrowLeft :size="15" :stroke-width="2.5" />
-                <span class="back-lbl">Kembali</span>
-            </button>
-            <div class="brand">
-                <div class="brand-dot">
-                    <Zap
-                        :size="13"
-                        color="#fff"
-                        fill="white"
-                        :stroke-width="2"
-                    />
-                </div>
-                <span class="brand-name">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
-            </div>
-            <div class="topbar-r">
-                <button
-                    class="tbtn tbtn-sq"
-                    :class="{ 'tbtn--on': musicOn }"
-                    @click="toggleMusic(props.backsound)"
-                >
-                    <Music2 v-if="musicOn" :size="15" :stroke-width="2" />
-                    <VolumeX v-else :size="15" :stroke-width="2" />
-                </button>
-            </div>
-        </header>
+    <div class="app" :class="{ ready }">
+        <div class="bg-particles">
+            <div class="particle p-1"></div>
+            <div class="particle p-2"></div>
+            <div class="particle p-3"></div>
+            <div class="particle p-4"></div>
+            <div class="particle p-5"></div>
+        </div>
 
-        <!-- ══ PAGE BODY ══ -->
-        <div class="page-body" :class="{ 'page-body--on': ready }">
-            <div class="wrap">
-                <!-- ── DONE BANNER ── -->
-                <Transition name="banner">
-                    <div v-if="all_missions_done" class="done-banner">
-                        <Trophy
-                            :size="16"
-                            :stroke-width="2.5"
-                            class="banner-trophy-icon"
+        <aside class="dsk-sidebar-left">
+            <div class="dsk-sidebar-inner">
+                <div class="ds-brand">
+                    <div class="ds-brand-icon">
+                        <Zap :size="18" color="#fff" fill="white" :stroke-width="2" />
+                    </div>
+                    <span class="ds-brand-name">{{ $page.props.global_settings?.platform_name || "Geniuss" }}</span>
+                </div>
+
+                <div class="ds-sep"></div>
+                <p class="ds-label">NAVIGASI</p>
+
+                <button class="ds-nav-btn" @click="goBack">
+                    <ChevronLeft :size="17" :stroke-width="3" />
+                    <span>Kembali</span>
+                </button>
+
+                <div class="ds-nav-btn ds-nav-active" style="pointer-events: none">
+                    <Target :size="17" :stroke-width="3" />
+                    <span>MISI</span>
+                </div>
+
+                <div class="ds-spacer"></div>
+
+                <button class="ds-music-btn" :class="{ on: musicOn }" @click="toggleMusic(null)">
+                    <Music2 v-if="musicOn" :size="17" :stroke-width="3" />
+                    <VolumeX v-else :size="17" :stroke-width="3" />
+                    <span>MUSIK: {{ musicOn ? "ON" : "OFF" }}</span>
+                </button>
+
+                <div class="ds-sep"></div>
+
+                <div class="ds-user">
+                    <button class="ds-user-pill" :class="{ open: dropdownOpen }" @click="dropdownOpen = !dropdownOpen">
+                        <div class="ds-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                        <span class="ds-uname">{{ user.name.split(" ")[0] }}</span>
+                        <ChevronLeft
+                            :size="14"
+                            :stroke-width="3.5"
+                            :style="{
+                                marginLeft: 'auto',
+                                transform: dropdownOpen ? 'rotate(90deg)' : 'rotate(-90deg)',
+                                transition: 'transform .2s',
+                            }"
                         />
-                        <span class="banner-text">Semua misi selesai! 🎉</span>
-                        <button class="banner-cta" @click="goToPosttest">
-                            Mulai Posttest
-                            <ChevronRight :size="14" :stroke-width="3" />
-                        </button>
+                    </button>
+                    <Transition name="t-dropdown">
+                        <div v-if="dropdownOpen" class="ds-dropdown" @click.stop>
+                            <div class="ds-dd-profile">
+                                <div class="ds-avatar ds-avatar-lg">{{ user.name.charAt(0).toUpperCase() }}</div>
+                                <div>
+                                    <div class="ds-dd-name">{{ user.name }}</div>
+                                    <div class="ds-dd-class">Kelas {{ user.class?.name || "-" }}</div>
+                                </div>
+                            </div>
+                            <div class="ds-dd-sep"></div>
+                            <button class="ds-dd-logout" @click="logout">
+                                <LogOut :size="15" :stroke-width="3" /> KELUAR
+                            </button>
+                        </div>
+                    </Transition>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-scroll">
+            <header class="mob-topbar">
+                <button class="mob-back" @click="goBack">
+                    <ChevronLeft :size="22" :stroke-width="3" />
+                </button>
+                <div class="mob-topbar-center">
+                    <span class="mob-topbar-title">{{ module.name }}</span>
+                    <div class="mob-mini-progress">
+                        <div class="mob-mini-track">
+                            <div class="mob-mini-fill" :style="{ width: progressPct + '%' }"></div>
+                        </div>
+                        <span class="mob-mini-pct">{{ progressPct }}%</span>
+                    </div>
+                </div>
+                <div class="mob-topbar-right">
+                    <div class="mob-stat-pill pill-flame">
+                        <FlameKindling :size="15" :stroke-width="3" />
+                        <span>{{ inProgressMissions }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="path-container">
+                <div class="unit-banner">
+                    <div class="unit-banner-left">
+                        <span class="unit-subtitle">MODUL PEMBELAJARAN</span>
+                        <h1 class="unit-title">{{ module.name }}</h1>
+                        <p class="unit-desc">{{ module.description }}</p>
+                    </div>
+                    <div class="unit-banner-right">
+                        <BookOpen :size="48" color="#ffffff" :stroke-width="1.5" />
+                    </div>
+                </div>
+
+                <Transition name="t-pop">
+                    <div v-if="all_missions_done" class="done-banner">
+                        <div class="done-icon-wrap">
+                            <Trophy :size="24" color="#16a34a" :stroke-width="2.5" />
+                        </div>
+                        <div class="done-text">
+                            <strong>Semua misi selesai!</strong>
+                            <span>Kamu siap untuk posttest.</span>
+                        </div>
+                        <button class="done-btn" @click="goToPosttest">MULAI POSTTEST</button>
                     </div>
                 </Transition>
-                <!-- ══ HERO CARD ══ -->
-                <section class="hero-section">
-                    <div
-                        class="hero-card"
-                        @touchstart.passive="onHeroTouch"
-                        @click="onHeroTouch"
-                    >
-                        <!-- Animated gradient shimmer background -->
-                        <div class="hero-shimmer"></div>
 
-                        <!-- Floating decorations (CSS animated stars & dots) -->
-                        <div class="floaters" aria-hidden="true">
-                            <span
-                                v-for="f in floaters"
-                                :key="f.id"
-                                class="floater"
-                                :class="f.type"
-                                :style="{
-                                    left: f.x + '%',
-                                    top: f.y + '%',
-                                    width: f.size + 'px',
-                                    height: f.size + 'px',
-                                    background:
-                                        f.type === 'circle'
-                                            ? f.color
-                                            : 'transparent',
-                                    color: f.color,
-                                    animationDuration: f.dur + 's',
-                                    animationDelay: f.delay + 's',
-                                }"
-                            >
-                                <!-- star shape via inline svg clip trick -->
-                                <svg
-                                    v-if="f.type === 'star'"
-                                    viewBox="0 0 24 24"
-                                    :style="{ fill: f.color }"
-                                >
-                                    <polygon
-                                        points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-                                    />
-                                </svg>
-                            </span>
-                        </div>
-
-                        <!-- Touch ripples -->
-                        <span
-                            v-for="r in ripples"
-                            :key="r.id"
-                            class="ripple"
-                            :style="{ left: r.x + '%', top: r.y + '%' }"
-                        ></span>
-
-                        <!-- LEFT: module info + progress -->
-                        <div class="hero-left">
-                            <div class="hero-pill">
-                                <Sparkles :size="10" :stroke-width="2.3" />
-                                Misi Pembelajaran
-                            </div>
-                            <h1 class="hero-name">{{ module.name }}</h1>
-                            <p class="hero-desc">{{ module.description }}</p>
-
-                            <div class="hp-row">
-                                <div class="hp-track">
-                                    <div
-                                        class="hp-fill"
-                                        :style="{ width: progressPct + '%' }"
-                                    >
-                                        <span
-                                            v-if="progressPct > 0"
-                                            class="hp-dot"
-                                        ></span>
-                                    </div>
-                                </div>
-                                <span class="hp-pct">{{ progressPct }}%</span>
-                            </div>
-                        </div>
-
-                        <!-- RIGHT: stat blocks -->
-                        <div class="hero-right">
-                            <div class="hsc">
-                                <div class="hsc-icon hsc-blue">
-                                    <Target :size="16" :stroke-width="2" />
-                                </div>
-                                <div class="hsc-body">
-                                    <span class="hsc-val">{{
-                                        totalMissions
-                                    }}</span>
-                                    <span class="hsc-lbl">Total Misi</span>
-                                </div>
-                            </div>
-                            <div class="hsc-divider"></div>
-                            <div class="hsc">
-                                <div class="hsc-icon hsc-green">
-                                    <Award :size="16" :stroke-width="2" />
-                                </div>
-                                <div class="hsc-body">
-                                    <span class="hsc-val">{{
-                                        completedMissions
-                                    }}</span>
-                                    <span class="hsc-lbl">Selesai</span>
-                                </div>
-                            </div>
-                            <div class="hsc-divider"></div>
-                            <div class="hsc">
-                                <div class="hsc-icon hsc-amber">
-                                    <BookOpen :size="16" :stroke-width="2" />
-                                </div>
-                                <div class="hsc-body">
-                                    <span class="hsc-val">{{
-                                        notStartedMissions
-                                    }}</span>
-                                    <span class="hsc-lbl">Belum</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ── MISSIONS GRID ── -->
-                <section class="grid-section">
-                    <p class="grid-label">{{ totalMissions }} misi tersedia</p>
-
-                    <div v-if="totalMissions > 0" class="mod-grid">
-                        <article
-                            v-for="(mission, i) in missions"
-                            :key="mission.id"
-                            class="mod-card"
-                            :class="{
-                                'card-show': ready,
-                                done: mission.status === 'completed',
-                                'card-in-progress':
-                                    mission.status === 'in_progress',
-                            }"
-                            :style="{
-                                '--ac': accent(i),
-                                '--delay': i * 45 + 'ms',
-                            }"
-                        >
-                            <div
-                                class="card-bar"
-                                :style="{ background: accent(i) }"
-                            ></div>
-                            <div
-                                class="card-thumb"
-                                :style="{ background: accent(i) + '12' }"
-                            >
-                                <div
-                                    class="thumb-icon"
-                                    :style="{
-                                        background: accent(i) + '1e',
-                                        borderColor: accent(i) + '55',
-                                    }"
-                                >
-                                    <component
-                                        :is="getStatusIcon(mission)"
-                                        :size="24"
-                                        :color="accent(i)"
-                                        :stroke-width="1.8"
-                                    />
-                                </div>
-                                <div
-                                    v-if="mission.status === 'completed'"
-                                    class="fin-stamp"
-                                    style="
-                                        color: #22c55e;
-                                        border-color: #22c55e55;
-                                        background: #22c55e15;
-                                    "
-                                >
-                                    <CheckCircle2
-                                        :size="11"
-                                        :stroke-width="2.5"
-                                    />
-                                    Selesai
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <h3 class="mod-title">{{ mission.name }}</h3>
-                                <p class="mod-desc">
-                                    {{ mission.description }}
-                                </p>
+                <div class="mission-path">
+                    <template v-for="(mission, i) in missions" :key="mission.id">
+                        <div class="stage-wrapper">
+                            <div class="stage-row" :style="{ '--offset': getOffset(i) + 'px' }">
                                 <div
                                     v-if="
-                                        mission.best_score != null &&
-                                        mission.status !== 'not_started'
+                                        !isMissionLocked(i) &&
+                                        mission.status !== 'completed' &&
+                                        (i === 0 || missions[i - 1].status === 'completed')
                                     "
-                                    class="score-row"
-                                    :style="{
-                                        color: accent(i),
-                                        background: accent(i) + '14',
-                                    }"
+                                    class="start-tooltip"
+                                    :style="{ color: getColor(i).bg }"
                                 >
-                                    ⭐ Skor terbaik:
-                                    <strong>{{ mission.best_score }}</strong>
+                                    START
+                                    <div class="tip-arrow"></div>
                                 </div>
-                                <div class="divider"></div>
-                                <div class="chips">
-                                    <span
-                                        v-if="mission.total_questions"
-                                        class="chip"
-                                        :style="{
-                                            color: accent(i),
-                                            background: accent(i) + '14',
-                                        }"
-                                    >
-                                        <Zap :size="10" :stroke-width="2.5" />
-                                        {{ mission.total_questions }} soal
-                                    </span>
-                                    <span
-                                        class="chip"
-                                        :style="{
-                                            color: getMissionStatusColor(
-                                                mission,
-                                            ),
-                                            background:
-                                                getMissionStatusBg(mission),
-                                        }"
-                                    >
-                                        <component
-                                            :is="getStatusIcon(mission)"
-                                            :size="10"
-                                            :stroke-width="2.5"
-                                        />
-                                        {{ getMissionStatus(mission) }}
-                                    </span>
-                                </div>
-                                <button
-                                    class="cta"
-                                    :class="{
-                                        'cta-new':
-                                            mission.status === 'not_started',
-                                        'cta-cont':
-                                            mission.status === 'in_progress',
-                                        'cta-done':
-                                            mission.status === 'completed',
-                                    }"
-                                    :style="
-                                        mission.status === 'not_started'
-                                            ? `--btnbg:${accent(i)}`
-                                            : ''
-                                    "
-                                    :disabled="mission.status === 'completed'"
-                                    @click="startMission(mission)"
-                                >
-                                    <component
-                                        :is="getStatusIcon(mission)"
-                                        :size="12"
-                                        :stroke-width="2.5"
-                                        :fill="
-                                            mission.status === 'not_started'
-                                                ? 'currentColor'
-                                                : 'none'
-                                        "
-                                    />
-                                    {{ getMissionStatus(mission) }}
-                                </button>
-                            </div>
-                        </article>
-                    </div>
 
-                    <div v-else class="empty">
-                        <BookOpen
-                            :size="40"
-                            color="rgba(255,255,255,.7)"
-                            :stroke-width="1.4"
-                        />
-                        <p class="empty-t">Belum ada misi</p>
-                        <p class="empty-s">
-                            Misi akan segera tersedia untuk modul ini.
-                        </p>
+                                <button
+                                    class="stage-btn"
+                                    :class="{
+                                        'st-completed': mission.status === 'completed',
+                                        'st-locked': isMissionLocked(i),
+                                        'st-current': !isMissionLocked(i) && mission.status !== 'completed',
+                                    }"
+                                    :style="isMissionLocked(i) ? {} : { '--c': getColor(i).bg, '--s': getColor(i).sh }"
+                                    :disabled="isMissionLocked(i)"
+                                    @click="openModal(mission, i)"
+                                >
+                                    <Check v-if="mission.status === 'completed'" :size="42" color="white" :stroke-width="3" />
+                                    <span v-else-if="!isMissionLocked(i)" class="stage-num">{{ i + 1 }}</span>
+                                    <Lock v-else :size="28" color="#cbd5e1" :stroke-width="3" />
+                                </button>
+
+                                <div class="stage-label" :class="{ 'stage-label-locked': isMissionLocked(i) }">
+                                    {{ mission.name }}
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="i < missions.length - 1"
+                                class="connector"
+                                :style="{ '--off-a': getOffset(i) + 'px', '--off-b': getOffset(i + 1) + 'px' }"
+                            >
+                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
+                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
+                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-if="missions.length === 0" class="empty-state">
+                        <BookOpen :size="48" color="#cbd5e1" :stroke-width="2" />
+                        <h3>Belum ada misi</h3>
+                        <p>Misi akan segera ditambahkan oleh gurumu.</p>
                     </div>
-                </section>
+                </div>
+
+                <div style="height: 120px"></div>
+            </div>
+
+            <nav class="mob-bottomnav">
+                <button class="mob-nav-item" @click="goBack">
+                    <Home :size="22" :stroke-width="2.5" />
+                    <span>Beranda</span>
+                </button>
+                <button class="mob-nav-item mob-nav-active">
+                    <Target :size="22" :stroke-width="2.5" />
+                    <span>Misi</span>
+                </button>
+                <button class="mob-nav-item" :class="{ 'mob-nav-music': musicOn }" @click="toggleMusic(null)">
+                    <Music2 v-if="musicOn" :size="22" :stroke-width="2.5" />
+                    <VolumeX v-else :size="22" :stroke-width="2.5" />
+                    <span>Musik</span>
+                </button>
+                <button class="mob-nav-item" @click="dropdownOpen = !dropdownOpen">
+                    <div class="mob-nav-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                    <span>Profil</span>
+                </button>
+
+                <Transition name="t-sheet">
+                    <div v-if="dropdownOpen" class="mob-sheet-overlay" @click.self="dropdownOpen = false">
+                        <div class="mob-sheet">
+                            <div class="mob-sheet-handle"></div>
+                            <div class="ds-dd-profile" style="padding: 16px 20px">
+                                <div class="ds-avatar ds-avatar-lg">{{ user.name.charAt(0).toUpperCase() }}</div>
+                                <div>
+                                    <div class="ds-dd-name">{{ user.name }}</div>
+                                    <div class="ds-dd-class">Kelas {{ user.class?.name || "-" }}</div>
+                                </div>
+                            </div>
+                            <div class="ds-dd-sep"></div>
+                            <button class="ds-dd-logout" @click="logout">
+                                <LogOut :size="16" :stroke-width="3" /> KELUAR
+                            </button>
+                        </div>
+                    </div>
+                </Transition>
+            </nav>
+        </main>
+
+        <aside class="dsk-sidebar-right">
+            <div class="dsk-sidebar-inner">
+                <div class="rs-card">
+                    <p class="rs-card-title"><Target :size="14" :stroke-width="3" /> PROGRESS MISI</p>
+                    <div class="rs-prog-row">
+                        <div class="prog-track">
+                            <div class="prog-fill" :style="{ width: progressPct + '%' }">
+                                <div class="prog-shine"></div>
+                            </div>
+                        </div>
+                        <span class="prog-label">{{ progressPct }}%</span>
+                    </div>
+                </div>
+
+                <div class="rs-stat-stack">
+                    <div class="rs-stat chip-blue">
+                        <Zap :size="18" fill="currentColor" :stroke-width="0" />
+                        <div>
+                            <span class="rs-val">{{ totalMissions }}</span><span class="rs-lbl">Total Misi</span>
+                        </div>
+                    </div>
+                    <div class="rs-stat chip-orange">
+                        <FlameKindling :size="18" :stroke-width="3" />
+                        <div>
+                            <span class="rs-val">{{ inProgressMissions }}</span><span class="rs-lbl">Dikerjakan</span>
+                        </div>
+                    </div>
+                    <div class="rs-stat chip-green">
+                        <Award :size="18" :stroke-width="3" />
+                        <div>
+                            <span class="rs-val">{{ completedMissions }}</span><span class="rs-lbl">Selesai</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rs-card rs-class-card" style="margin-top: auto">
+                    <div class="rs-class-icon"><GraduationCap :size="18" :stroke-width="2.5" /></div>
+                    <div>
+                        <p class="rs-class-lbl">KELAS SAYA</p>
+                        <p class="rs-class-val">{{ user.class?.name || "-" }}</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <Teleport to="body">
+        <div v-if="showModal" class="modal-overlay" :class="{ 'modal-overlay-visible': modalVisible }" @click.self="closeModal">
+            <div class="modal-card" :class="{ 'modal-card-visible': modalVisible }">
+                <div class="modal-strip" :style="{ background: modalAccent }"></div>
+                <div class="modal-hdr">
+                    <span
+                        class="modal-badge"
+                        :class="{
+                            'mbadge-done': selectedMission?.status === 'completed',
+                            'mbadge-prog': selectedMission?.status === 'in_progress',
+                            'mbadge-new': selectedMission?.status === 'not_started' || !selectedMission?.status,
+                        }"
+                    >
+                        {{
+                            selectedMission?.status === "completed"
+                                ? "✓ Selesai"
+                                : selectedMission?.status === "in_progress"
+                                ? "▶ Lanjutkan"
+                                : "★ Mulai"
+                        }}
+                    </span>
+                    <button class="modal-close-btn" @click="closeModal">✕</button>
+                </div>
+                <h2 class="modal-title">{{ selectedMission?.name }}</h2>
+                <p class="modal-desc">
+                    {{ selectedMission?.description || "Selesaikan misi ini untuk melanjutkan perjalanan belajarmu!" }}
+                </p>
+
+                <div class="modal-stats">
+                    <div class="mstat">
+                        <span class="mstat-val">{{ selectedMission?.total_questions || "-" }}</span>
+                        <span class="mstat-lbl">Soal</span>
+                    </div>
+                    <div class="mstat-sep"></div>
+                    <div class="mstat">
+                        <span class="mstat-val">{{ selectedMission?.best_score ?? "0" }}</span>
+                        <span class="mstat-lbl">Skor Terbaik</span>
+                    </div>
+                    <div class="mstat-sep"></div>
+                    <div class="mstat">
+                        <span class="mstat-val"
+                            ><Star :size="18" fill="#fbbf24" color="#fbbf24" :stroke-width="0"
+                        /></span>
+                        <span class="mstat-lbl">Reward</span>
+                    </div>
+                </div>
+
+                <button
+                    class="modal-cta"
+                    :class="{
+                        'mcta-new': selectedMission?.status === 'not_started' || !selectedMission?.status,
+                        'mcta-prog': selectedMission?.status === 'in_progress',
+                        'mcta-done': selectedMission?.status === 'completed',
+                    }"
+                    :disabled="selectedMission?.status === 'completed'"
+                    @click="startMission"
+                >
+                    {{
+                        selectedMission?.status === "completed"
+                            ? "✓ SUDAH SELESAI"
+                            : selectedMission?.status === "in_progress"
+                            ? "LANJUTKAN MISI"
+                            : "MULAI MISI"
+                    }}
+                </button>
             </div>
         </div>
-    </div>
+    </Teleport>
 </template>
 
 <style scoped>
+/* ════════════════════════════════
+   BASE & TYPOGRAPHY
+════════════════════════════════ */
 *,
 *::before,
 *::after {
@@ -624,897 +485,1164 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     padding: 0;
 }
 
-.root {
+.app {
+    font-family: "Nunito", sans-serif;
+    color: #334155;
     min-height: 100dvh;
+    background: #f1f5f9;
     display: flex;
-    flex-direction: column;
-    font-family: "Nunito", sans-serif;
-    position: relative;
-    overflow-x: hidden;
-}
-/* Background image from database (v-bind set as CSS var on root element) */
-.root::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: var(--bg-img, url("/images/templates/background.png")) center /
-        cover no-repeat;
-    z-index: -2;
-}
-/* Lighter, more cheerful overlay — just enough contrast for text */
-.root::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background:
-        radial-gradient(
-            ellipse 80% 60% at 0% 0%,
-            rgba(96, 165, 250, 0.38) 0%,
-            transparent 55%
-        ),
-        radial-gradient(
-            ellipse 70% 55% at 100% 100%,
-            rgba(139, 92, 246, 0.28) 0%,
-            transparent 55%
-        ),
-        rgba(30, 58, 138, 0.3);
-    z-index: -1;
-}
-
-/* ══ TOPBAR ══ */
-.topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    height: 60px;
-    flex-shrink: 0;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 10px;
-    padding: 0 24px;
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.12);
-}
-.back-btn {
-    justify-self: start;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    color: #fff;
-    cursor: pointer;
-    transition:
-        background 0.18s,
-        transform 0.15s;
-    white-space: nowrap;
-}
-.back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-}
-.brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-.brand-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
-    flex-shrink: 0;
-}
-.brand-name {
-    font-family: "Righteous", cursive;
-    font-size: 18px;
-    color: #fff;
-    white-space: nowrap;
-}
-.topbar-r {
-    justify-self: end;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.tbtn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    color: #fff;
-    cursor: pointer;
-    transition:
-        background 0.18s,
-        transform 0.15s;
-}
-.tbtn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-}
-.tbtn-sq {
-    padding: 7px 10px;
-}
-.tbtn--on {
-    background: #2563eb !important;
-    border-color: #bfdbfe !important;
-}
-.posttest-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-family: "Righteous", cursive;
-    font-size: 12.5px;
-    cursor: pointer;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-    transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.posttest-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.48);
-}
-
-/* ══ PAGE BODY ══ */
-.page-body {
-    flex: 1;
-    padding-bottom: 48px;
     opacity: 0;
-    transition: opacity 0.45s;
+    transition: opacity 0.25s ease;
+    position: relative;
 }
-.page-body--on {
+.app.ready {
     opacity: 1;
 }
-/* GANTI .wrap yang lama */
-.wrap {
-    max-width: 1180px;
+
+/* ── BACKGROUND PARTICLES ── */
+.bg-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.particle {
+    position: absolute;
+    background: rgba(56, 189, 248, 0.15);
+    border-radius: 35% 65% 70% 30% / 50% 30% 70% 50%;
+    animation: floatParticle 8s infinite ease-in-out;
+}
+.p-1 {
+    width: 80px;
+    height: 80px;
+    top: 15%;
+    left: 20%;
+    animation-delay: 0s;
+}
+.p-2 {
+    width: 120px;
+    height: 120px;
+    bottom: 10%;
+    left: 40%;
+    border-radius: 60% 40% 30% 70%;
+    animation-delay: 2s;
+}
+.p-3 {
+    width: 60px;
+    height: 60px;
+    top: 40%;
+    right: 25%;
+    animation-delay: 4s;
+}
+.p-4 {
+    width: 90px;
+    height: 90px;
+    top: 8%;
+    right: 45%;
+    border-radius: 40% 60% 50% 50%;
+    animation-delay: 1s;
+}
+.p-5 {
+    width: 70px;
+    height: 70px;
+    bottom: 30%;
+    left: 15%;
+    animation-delay: 5s;
+}
+
+@keyframes floatParticle {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-15px) rotate(15deg);
+    }
+}
+
+/* ════════════════════════════════
+   LEFT SIDEBAR
+════════════════════════════════ */
+.dsk-sidebar-left {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: 228px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+}
+.dsk-sidebar-inner {
+    height: 100%;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 0 0 #e2e8f0;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ds-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px 12px;
+    border-bottom: 2px solid #f1f5f9;
+}
+.ds-brand-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #1cb0f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 0 #1899d6;
+    flex-shrink: 0;
+}
+.ds-brand-name {
+    font-size: 20px;
+    font-weight: 900;
+    color: #1cb0f6;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+.ds-sep {
+    height: 2px;
+    background: #f1f5f9;
+    border-radius: 2px;
+    margin: 4px 0;
+}
+.ds-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    padding: 0 6px;
+}
+
+.ds-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.15s;
+}
+.ds-nav-btn:hover {
+    background: #f8fafc;
+    border-color: #f1f5f9;
+}
+.ds-nav-active {
+    background: #ddf4ff !important;
+    border-color: #84d8ff !important;
+    color: #1cb0f6 !important;
+}
+.ds-spacer {
+    flex: 1;
+}
+
+.ds-music-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 3px 0 0 #e2e8f0;
+    transition: all 0.1s;
+}
+.ds-music-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 0 #e2e8f0;
+}
+.ds-music-btn.on {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #ea580c;
+    box-shadow: 0 3px 0 0 #fdba74;
+}
+
+.ds-user {
+    position: relative;
+}
+.ds-user-pill {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 0 0 #e2e8f0;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.1s;
+}
+.ds-user-pill:hover,
+.ds-user-pill.open {
+    background: #f8fafc;
+}
+.ds-user-pill:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 0 #e2e8f0;
+}
+.ds-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #1cb0f6;
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ds-avatar-lg {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+}
+.ds-uname {
+    font-size: 14px;
+    font-weight: 800;
+    color: #334155;
+    flex: 1;
+    text-align: left;
+}
+.ds-dropdown {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 100;
+}
+.ds-dd-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+.ds-dd-name {
+    font-size: 15px;
+    font-weight: 900;
+    color: #1e293b;
+}
+.ds-dd-class {
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+.ds-dd-sep {
+    height: 2px;
+    background: #e2e8f0;
+}
+.ds-dd-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    color: #ef4444;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.ds-dd-logout:hover {
+    background: #fef2f2;
+}
+
+/* ════════════════════════════════
+   MAIN SCROLL AREA
+════════════════════════════════ */
+.main-scroll {
+    flex: 1;
+    margin-left: 260px;
+    margin-right: 312px;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    scrollbar-width: none;
+    z-index: 10;
+}
+
+.path-container {
+    max-width: 580px;
     margin: 0 auto;
-    padding: 16px 20px 0; /* ← tambah padding-top 16px */
+    padding: 24px 24px 0;
+    flex: 1;
+    width: 100%;
+}
+
+/* ── UNIT BANNER ── */
+.unit-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1cb0f6;
+    border-radius: 20px;
+    padding: 24px 28px;
+    color: #ffffff;
+    margin-bottom: 40px;
+    box-shadow: 0 6px 0 0 #1899d6;
+}
+.unit-banner-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.unit-subtitle {
+    font-size: 12px;
+    font-weight: 900;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.unit-title {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+.unit-desc {
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0.9;
+    margin-top: 4px;
+    line-height: 1.4;
 }
 
 /* ── DONE BANNER ── */
-.banner-enter-active {
-    animation: bannerIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+.done-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border: 2px solid #86efac;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 0 0 #86efac;
 }
-.banner-leave-active {
-    animation: bannerIn 0.2s ease-in reverse;
+.done-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-@keyframes bannerIn {
+.done-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.done-text strong {
+    font-size: 15px;
+    font-weight: 900;
+    color: #166534;
+}
+.done-text span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16a34a;
+}
+.done-btn {
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 0 0 #15803d;
+    transition: all 0.1s;
+}
+.done-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 0 #15803d;
+}
+
+/* ════════════════════════════════
+   MISSION PATH & STAGE BUTTONS
+════════════════════════════════ */
+.mission-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 40px;
+}
+
+.stage-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.stage-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(var(--offset, 0px));
+    position: relative;
+    z-index: 2;
+    padding: 10px 0;
+}
+
+/* START TOOLTIP BUBBLE */
+.start-tooltip {
+    position: absolute;
+    top: -45px;
+    background: #ffffff;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 4px 0 0 #e2e8f0;
+    animation: float-tip 2s ease-in-out infinite;
+    z-index: 20;
+}
+.tip-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #e2e8f0;
+}
+.tip-arrow::after {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    left: -6px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #ffffff;
+}
+@keyframes float-tip {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* STAGE BUTTON: Diubah dari Lingkaran (50%) menjadi Kotak Membulat (Rounded Box) */
+.stage-btn {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 24px; /* <--- Tidak lagi lingkaran penuh, melainkan kotak membulat */
+    border: none;
+    cursor: pointer;
+    background: var(--c, #e2e8f0);
+    box-shadow: 0 8px 0 0 var(--s, #cbd5e1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        transform 0.1s,
+        box-shadow 0.1s;
+    outline: none;
+}
+.stage-btn:not(:disabled):active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 0 var(--s, #cbd5e1);
+}
+.st-locked {
+    background: #f1f5f9;
+    box-shadow: 0 8px 0 0 #e2e8f0;
+    cursor: not-allowed !important;
+}
+
+/* Efek Current */
+.st-current {
+    animation: bounce-stage 2.5s ease-in-out infinite;
+}
+.st-current:active {
+    animation: none;
+}
+@keyframes bounce-stage {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.stage-num {
+    font-family: "Righteous", cursive;
+    font-size: 42px;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    line-height: 1;
+}
+
+.stage-label {
+    margin-top: 24px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 4px 14px;
+    max-width: 180px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 0 0 #e2e8f0;
+}
+.stage-label-locked {
+    color: #94a3b8;
+    background: #f8fafc;
+}
+
+/* CONNECTOR DOTS */
+.connector {
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    transform: translateX(calc((var(--off-a, 0px) + var(--off-b, 0px)) / 2));
+    z-index: 1;
+    margin: -10px 0;
+}
+.conn-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e2e8f0;
+}
+.conn-done {
+    background: #86efac;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 64px 32px;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 24px;
+    margin-top: 32px;
+}
+.empty-state h3 {
+    font-size: 18px;
+    font-weight: 900;
+    color: #64748b;
+}
+.empty-state p {
+    font-size: 14px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.mob-topbar,
+.mob-bottomnav {
+    display: none;
+}
+
+/* ════════════════════════════════
+   RIGHT SIDEBAR
+════════════════════════════════ */
+.dsk-sidebar-right {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: 272px;
+    z-index: 50;
+}
+.dsk-sidebar-inner {
+    height: 100%;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 0 0 #e2e8f0;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.rs-card {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+}
+.rs-card-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+.rs-prog-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.prog-track {
+    flex: 1;
+    height: 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.prog-fill {
+    height: 100%;
+    background: #58cc02;
+    border-radius: 10px;
+    position: relative;
+    transition: width 0.5s ease;
+}
+.prog-shine {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    right: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+.prog-label {
+    font-size: 14px;
+    font-weight: 900;
+    color: #58cc02;
+    min-width: 36px;
+    text-align: right;
+}
+
+.rs-stat-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.rs-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 2px solid;
+    border-radius: 16px;
+}
+.rs-stat div {
+    display: flex;
+    flex-direction: column;
+}
+.rs-val {
+    font-size: 16px;
+    font-weight: 900;
+    color: #1e293b;
+    line-height: 1.2;
+}
+.rs-lbl {
+    font-size: 12px;
+    font-weight: 800;
+    color: #94a3b8;
+}
+.chip-blue {
+    color: #1cb0f6;
+    border-color: #ddf4ff;
+    background: #f0f9ff;
+}
+.chip-orange {
+    color: #ff9600;
+    border-color: #ffebc2;
+    background: #fff7ed;
+}
+.chip-green {
+    color: #58cc02;
+    border-color: #d7ffb8;
+    background: #f0fdf4;
+}
+
+.rs-class-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fbf5ff !important;
+    border-color: #f3e8ff !important;
+}
+.rs-class-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #a855f7;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 0 #9333ea;
+    flex-shrink: 0;
+}
+.rs-class-lbl {
+    font-size: 11px;
+    font-weight: 900;
+    color: #c084fc;
+    letter-spacing: 0.5px;
+}
+.rs-class-val {
+    font-size: 16px;
+    font-weight: 900;
+    color: #7e22ce;
+}
+
+/* ════════════════════════════════
+   RESPONSIVE MOBILE
+════════════════════════════════ */
+@media (max-width: 1100px) {
+    .dsk-sidebar-right {
+        display: none;
+    }
+    .main-scroll {
+        margin-right: 0;
+    }
+}
+@media (max-width: 760px) {
+    .dsk-sidebar-left {
+        display: none;
+    }
+    .main-scroll {
+        margin-left: 0;
+        margin-right: 0;
+        height: 100dvh;
+        display: block;
+    }
+    .path-container {
+        max-width: 100%;
+        padding: 0 16px;
+    }
+
+    /* TOP BAR MOBILE */
+    .mob-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        height: 64px;
+        padding: 0 16px;
+        background: #ffffff;
+        border-bottom: 2px solid #e2e8f0;
+        z-index: 80;
+    }
+    .mob-back {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px;
+    }
+    .mob-topbar-center {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .mob-topbar-title {
+        font-size: 15px;
+        font-weight: 900;
+        color: #cbd5e1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .mob-mini-progress {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mob-mini-track {
+        flex: 1;
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .mob-mini-fill {
+        height: 100%;
+        background: #58cc02;
+        border-radius: 6px;
+    }
+    .mob-mini-pct {
+        display: none;
+    }
+    .mob-stat-pill {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        font-weight: 900;
+        color: #ff9600;
+    }
+
+    /* UNIT BANNER MOBILE */
+    .unit-banner {
+        padding: 20px 24px;
+        margin: 24px 0 32px;
+    }
+    .unit-subtitle {
+        font-size: 11px;
+    }
+    .unit-title {
+        font-size: 20px;
+    }
+    .unit-desc {
+        display: none;
+    }
+    .unit-banner-right svg {
+        width: 38px;
+        height: 38px;
+    }
+
+    /* BOTTOM NAV */
+    .mob-bottomnav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 2px solid #e2e8f0;
+        height: 70px;
+        z-index: 80;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .mob-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-family: inherit;
+    }
+    .mob-nav-active {
+        color: #1cb0f6;
+        border-top: 3px solid #1cb0f6;
+        margin-top: -2px;
+        border-radius: 2px;
+    }
+    .mob-nav-music {
+        color: #ea580c;
+    }
+    .mob-nav-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #1cb0f6;
+        color: #fff;
+        font-weight: 900;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mob-sheet-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        z-index: 200;
+        display: flex;
+        align-items: flex-end;
+    }
+    .mob-sheet {
+        background: #fff;
+        width: 100%;
+        border-radius: 24px 24px 0 0;
+        border-top: 2px solid #e2e8f0;
+        padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+    }
+    .mob-sheet-handle {
+        width: 48px;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        margin: 16px auto;
+    }
+}
+
+/* ════════════════════════════════
+   MODAL
+════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(15, 23, 42, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    transition: background 0.28s;
+}
+.modal-overlay-visible {
+    background: rgba(15, 23, 42, 0.5);
+}
+.modal-card {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    transition:
+        opacity 0.3s,
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-card-visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+.modal-overlay:not(.modal-overlay-visible) .modal-card {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+}
+
+.modal-strip {
+    height: 6px;
+    width: 100%;
+    flex-shrink: 0;
+}
+.modal-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+.modal-badge {
+    font-size: 12px;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 6px 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.mbadge-done {
+    background: #dcfce7;
+    color: #16a34a;
+}
+.mbadge-prog {
+    background: #fff7ed;
+    color: #ea580c;
+}
+.mbadge-new {
+    background: #ddf4ff;
+    color: #1cb0f6;
+}
+.modal-close-btn {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 900;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-title {
+    font-family: "Righteous", cursive;
+    font-size: 24px;
+    color: #1e293b;
+    padding: 16px 24px 0;
+}
+.modal-desc {
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748b;
+    line-height: 1.5;
+    padding: 8px 24px 0;
+}
+
+.modal-stats {
+    display: flex;
+    align-items: center;
+    margin: 20px 24px 0;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+}
+.mstat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 10px;
+}
+.mstat-val {
+    font-size: 18px;
+    font-weight: 900;
+    color: #1e293b;
+    line-height: 1;
+}
+.mstat-lbl {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.mstat-sep {
+    width: 2px;
+    height: 40px;
+    background: #e2e8f0;
+}
+
+.modal-cta {
+    margin: 24px;
+    height: 52px;
+    width: calc(100% - 48px);
+    border: none;
+    border-radius: 16px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    position: relative;
+    top: 0;
+    transition:
+        top 0.1s,
+        box-shadow 0.1s;
+}
+.modal-cta:active {
+    top: 5px;
+}
+.mcta-new {
+    background: #1cb0f6;
+    color: #fff;
+    box-shadow: 0 5px 0 0 #1899d6;
+}
+.mcta-new:active {
+    box-shadow: 0 0 0 0 #1899d6;
+}
+.mcta-prog {
+    background: #ff9600;
+    color: #fff;
+    box-shadow: 0 5px 0 0 #cc7800;
+}
+.mcta-prog:active {
+    box-shadow: 0 0 0 0 #cc7800;
+}
+.mcta-done {
+    background: #e2e8f0;
+    color: #94a3b8;
+    box-shadow: 0 5px 0 0 #cbd5e1;
+    cursor: not-allowed;
+}
+
+/* Transitions */
+.t-dropdown-enter-active {
+    animation: t-slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.t-dropdown-leave-active {
+    animation: t-slide-up 0.15s ease-in reverse;
+}
+@keyframes t-slide-up {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
-
-.done-banner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
-    border: 1.5px solid #3b82f6;
-    border-radius: 14px;
-    box-shadow:
-        0 3px 0 #1e3a8a,
-        0 6px 20px rgba(37, 99, 235, 0.35);
+.t-pop-enter-active {
+    animation: t-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
-.banner-trophy-icon {
-    color: #fcd34d;
-    flex-shrink: 0;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+.t-pop-leave-active {
+    animation: t-pop 0.15s ease-in reverse;
 }
-
-.banner-text {
-    flex: 1;
-    font-family: "Righteous", cursive;
-    font-size: 13px;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.banner-cta {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 14px;
-    background: #fff;
-    color: #1d4ed8;
-    font-family: "Righteous", cursive;
-    font-size: 12px;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    box-shadow: 0 2px 0 #bfdbfe;
-    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.banner-cta:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 4px 0 #bfdbfe,
-        0 6px 14px rgba(37, 99, 235, 0.2);
-}
-.banner-cta:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #bfdbfe;
-}
-
-/* ══ HERO CARD ══ */
-.hero-section {
-    padding: 12px 0 0;
-}
-.hero-card {
-    position: relative;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 20px;
-    padding: 18px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    box-shadow:
-        0 6px 28px rgba(0, 0, 0, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-/* Animated shimmer across the card */
-.hero-shimmer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: linear-gradient(
-        105deg,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.04) 40%,
-        rgba(255, 255, 255, 0.09) 50%,
-        rgba(255, 255, 255, 0.04) 60%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmerMove 4s ease-in-out infinite;
-}
-@keyframes shimmerMove {
-    0% {
-        background-position: -100% 0;
-    }
-    100% {
-        background-position: 200% 0;
-    }
-}
-
-/* ── FLOATERS ── */
-.floaters {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    overflow: hidden;
-}
-.floater {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    animation: floatUp ease-in-out infinite both;
-    transform-origin: center;
-}
-.floater.circle {
-    border-radius: 50%;
-    box-shadow: 0 0 6px 2px currentColor;
-}
-.floater.star svg {
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 0 4px currentColor);
-}
-
-/* Varied float animations — some drift left, some right, some twirl */
-@keyframes floatUp {
-    0% {
+@keyframes t-pop {
+    from {
         opacity: 0;
-        transform: translateY(6px) scale(0.7) rotate(0deg);
+        transform: scale(0.9);
     }
-    15% {
-        opacity: 0.75;
-    }
-    50% {
-        opacity: 0.55;
-        transform: translateY(-14px) scale(1.1) rotate(18deg);
-    }
-    85% {
-        opacity: 0.35;
-        transform: translateY(-28px) scale(0.9) rotate(-8deg);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-42px) scale(0.6) rotate(5deg);
-    }
-}
-
-/* Every 3rd floater drifts horizontally */
-.floater:nth-child(3n) {
-    animation-name: floatUpLeft;
-}
-.floater:nth-child(3n + 2) {
-    animation-name: floatUpRight;
-}
-@keyframes floatUpLeft {
-    0% {
-        opacity: 0;
-        transform: translateY(4px) translateX(0) scale(0.7) rotate(0deg);
-    }
-    15% {
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 0.5;
-        transform: translateY(-16px) translateX(-10px) scale(1.1) rotate(-20deg);
-    }
-    85% {
-        opacity: 0.25;
-        transform: translateY(-30px) translateX(-18px) scale(0.85) rotate(5deg);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-44px) translateX(-24px) scale(0.6) rotate(-5deg);
-    }
-}
-@keyframes floatUpRight {
-    0% {
-        opacity: 0;
-        transform: translateY(4px) translateX(0) scale(0.7) rotate(0deg);
-    }
-    15% {
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 0.5;
-        transform: translateY(-14px) translateX(12px) scale(1.1) rotate(15deg);
-    }
-    85% {
-        opacity: 0.25;
-        transform: translateY(-28px) translateX(20px) scale(0.85) rotate(-6deg);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-42px) translateX(26px) scale(0.6) rotate(8deg);
-    }
-}
-
-/* Touch / click ripple */
-.ripple {
-    position: absolute;
-    z-index: 2;
-    pointer-events: none;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: rgba(255, 255, 255, 0.55);
-    animation: rippleOut 0.65s ease-out forwards;
-}
-@keyframes rippleOut {
-    0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0.8;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(18);
-        opacity: 0;
-    }
-}
-
-/* ── LEFT CONTENT ── */
-.hero-left {
-    position: relative;
-    z-index: 3;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 16px 20px 16px 22px;
-    gap: 7px;
-}
-.hero-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 9.5px;
-    font-weight: 900;
-    letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.15);
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
-    border-radius: 50px;
-    padding: 2px 10px;
-    width: fit-content;
-}
-.hero-name {
-    font-family: "Righteous", cursive;
-    font-size: clamp(16px, 2.2vw, 22px);
-    color: #fff;
-    line-height: 1.2;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-.hero-desc {
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 320px;
-}
-.hp-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.hp-track {
-    flex: 1;
-    max-width: 220px;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.13);
-    border-radius: 50px;
-    overflow: hidden;
-}
-.hp-fill {
-    position: relative;
-    height: 100%;
-    background: linear-gradient(90deg, #34d399, #10b981);
-    border-radius: 50px;
-    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 0 8px rgba(52, 211, 153, 0.55);
-}
-.hp-dot {
-    position: absolute;
-    right: -3px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #6ee7b7;
-    box-shadow: 0 0 6px 3px rgba(110, 231, 183, 0.7);
-    animation: glowPulse 1.5s ease-in-out infinite;
-}
-@keyframes glowPulse {
-    0%,
-    100% {
+    to {
         opacity: 1;
-        transform: translateY(-50%) scale(1);
-    }
-    50% {
-        opacity: 0.5;
-        transform: translateY(-50%) scale(0.7);
-    }
-}
-.hp-pct {
-    font-family: "Righteous", cursive;
-    font-size: 12px;
-    color: #fff;
-    flex-shrink: 0;
-}
-
-/* ── RIGHT STAT BLOCKS ── */
-.hero-right {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 0 4px;
-}
-.hsc {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-}
-.hsc-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.hsc-blue {
-    background: rgba(96, 165, 250, 0.25);
-    color: #93c5fd;
-}
-.hsc-green {
-    background: rgba(52, 211, 153, 0.25);
-    color: #6ee7b7;
-}
-.hsc-amber {
-    background: rgba(251, 191, 36, 0.25);
-    color: #fcd34d;
-}
-.hsc-body {
-    display: flex;
-    flex-direction: column;
-}
-.hsc-val {
-    font-family: "Righteous", cursive;
-    font-size: 20px;
-    color: #fff;
-    line-height: 1;
-}
-.hsc-lbl {
-    font-size: 8.5px;
-    font-weight: 800;
-    opacity: 0.65;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #fff;
-    margin-top: 2px;
-}
-.hsc-divider {
-    width: 1px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.12);
-    flex-shrink: 0;
-}
-
-/* ══ GRID ══ */
-.grid-section {
-    padding: 12px 0 0;
-}
-.grid-label {
-    font-size: 12px;
-    font-weight: 800;
-    color: #fff;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-    margin-bottom: 10px;
-    letter-spacing: 0.2px;
-}
-.mod-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-}
-
-.mod-card {
-    background: rgba(255, 255, 255, 0.96);
-    border: 1.5px solid rgba(29, 78, 216, 0.12);
-    border-radius: 18px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-    transition:
-        opacity 0.42s var(--delay, 0ms) ease,
-        transform 0.42s var(--delay, 0ms) cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-.mod-card.card-show {
-    opacity: 1;
-    transform: none;
-}
-.mod-card:hover {
-    transform: translateY(-6px) scale(1.013);
-    box-shadow:
-        0 16px 40px rgba(0, 0, 0, 0.13),
-        0 0 0 1.5px var(--ac);
-    border-color: var(--ac);
-}
-.mod-card.done {
-    border-color: rgba(34, 197, 94, 0.35);
-}
-.mod-card.card-in-progress {
-    border-color: rgba(245, 158, 11, 0.28);
-}
-
-.card-bar {
-    height: 4px;
-}
-.card-thumb {
-    position: relative;
-    height: 86px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.thumb-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 14px;
-    border: 2px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.fin-stamp {
-    position: absolute;
-    bottom: 7px;
-    right: 7px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 9.5px;
-    font-weight: 900;
-    border-radius: 50px;
-    padding: 2px 8px;
-    border: 1.5px solid;
-}
-.card-body {
-    padding: 12px 13px 13px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    flex: 1;
-}
-.mod-title {
-    font-family: "Righteous", cursive;
-    font-size: 14.5px;
-    color: #1e3a8a;
-    line-height: 1.35;
-}
-.mod-desc {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #4b6a9b;
-    line-height: 1.55;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.score-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10.5px;
-    font-weight: 800;
-    border-radius: 50px;
-    padding: 3px 10px;
-    width: fit-content;
-}
-.score-row strong {
-    font-weight: 900;
-}
-.divider {
-    height: 1px;
-    background: rgba(29, 78, 216, 0.08);
-}
-.chips {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    font-weight: 800;
-    border-radius: 8px;
-    padding: 3px 8px;
-}
-.cta {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    height: 37px;
-    border: none;
-    border-radius: 10px;
-    font-family: "Righteous", cursive;
-    font-size: 13.5px;
-    cursor: pointer;
-    margin-top: auto;
-    transition: all 0.17s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.cta:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.07);
-}
-.cta:active {
-    transform: translateY(1px);
-}
-.cta-new {
-    background: var(--btnbg, #1d4ed8);
-    color: #fff;
-    box-shadow: 0 3px 10px rgba(29, 78, 216, 0.3);
-}
-.cta-cont {
-    background: linear-gradient(135deg, #fbbf24, #d97706);
-    color: #fff;
-    box-shadow: 0 3px 8px rgba(217, 119, 6, 0.28);
-}
-.cta-done {
-    background: linear-gradient(135deg, #34d399, #059669);
-    color: #fff;
-    box-shadow: 0 3px 8px rgba(5, 150, 105, 0.25);
-    cursor: not-allowed;
-    opacity: 0.85;
-    position: relative;
-    overflow: hidden;
-}
-.cta-done:hover {
-    transform: none !important;
-    filter: none !important;
-}
-.cta-done::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.15),
-        transparent
-    );
-    animation: cta-shimmer 2.5s ease-in-out infinite;
-}
-@keyframes cta-shimmer {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
-}
-
-.empty {
-    text-align: center;
-    padding: 72px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-.empty-t {
-    font-family: "Righteous", cursive;
-    font-size: 18px;
-    color: #fff;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
-}
-.empty-s {
-    font-size: 13px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* ══ RESPONSIVE ══ */
-@media (max-width: 1100px) {
-    .mod-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-@media (max-width: 820px) {
-    .mod-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 700px) {
-    .hero-card {
-        height: auto;
-        flex-direction: column;
-    }
-    .hero-left {
-        padding: 16px 18px 10px;
-    }
-    .hero-right {
-        border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-        justify-content: space-around;
-        padding: 10px 6px;
-    }
-    .hsc {
-        padding: 8px 10px;
-    }
-    .hsc-val {
-        font-size: 18px;
-    }
-    .hp-track {
-        max-width: none;
-        flex: 1;
-    }
-    .hero-desc {
-        max-width: none;
-    }
-}
-
-@media (max-width: 600px) {
-    .wrap {
-        padding: 0 14px;
-    }
-    .topbar {
-        padding: 0 14px;
-    }
-    .posttest-lbl {
-        display: none;
-    }
-    .brand-name {
-        font-size: 16px;
-    }
-    .brand-dot {
-        width: 24px;
-        height: 24px;
-    }
-}
-
-@media (max-width: 480px) {
-    .topbar {
-        height: 52px;
-        padding: 0 12px;
-    }
-    .back-lbl {
-        display: none;
-    }
-    .back-btn {
-        padding: 7px 10px;
-    }
-    .mod-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    .card-thumb {
-        height: 72px;
-    }
-    .hero-name {
-        font-size: 17px;
-    }
-    .hsc-val {
-        font-size: 16px;
-    }
-    .hsc {
-        padding: 7px 10px;
-    }
-}
-
-@media (max-width: 340px) {
-    .mod-grid {
-        grid-template-columns: 1fr;
+        transform: scale(1);
     }
 }
 </style>
