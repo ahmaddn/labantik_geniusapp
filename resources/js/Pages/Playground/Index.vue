@@ -14,7 +14,7 @@ import {
     FlameKindling,
     Target,
     Award,
-    Image as ImageIcon
+    Image as ImageIcon,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
@@ -87,11 +87,13 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     <div style="display: none">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
     </div>
 
     <div class="duo-layout" :class="{ 'layout--ready': ready }" ref="menuRef">
-        
         <div class="bg-particles">
             <div class="particle p-1"></div>
             <div class="particle p-2"></div>
@@ -103,9 +105,16 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         <aside class="duo-sidebar-left">
             <div class="sidebar-brand">
                 <div class="brand-icon-wrap">
-                    <Zap :size="22" color="#fff" fill="white" :stroke-width="2" />
+                    <Zap
+                        :size="22"
+                        color="#fff"
+                        fill="white"
+                        :stroke-width="2"
+                    />
                 </div>
-                <span class="brand-text">{{ $page.props.global_settings?.platform_name || "Geniuss" }}</span>
+                <span class="brand-text">{{
+                    $page.props.global_settings?.platform_name || "Geniuss"
+                }}</span>
             </div>
 
             <nav class="sidebar-menu">
@@ -113,32 +122,48 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                     <BookOpen :size="20" :stroke-width="2.5" />
                     <span>MODUL</span>
                 </div>
-                
-                <button 
-                    class="menu-item style-music-btn" 
-                    :class="{ 'sidebar-music-on': musicOn }" 
+
+                <button
+                    class="menu-item style-music-btn"
+                    :class="{ 'sidebar-music-on': musicOn }"
                     @click="toggleMusic(null)"
                 >
                     <Music2 v-if="musicOn" :size="20" :stroke-width="2.5" />
                     <VolumeX v-else :size="20" :stroke-width="2.5" />
-                    <span>MUSIK: {{ musicOn ? 'ON' : 'OFF' }}</span>
+                    <span>MUSIK: {{ musicOn ? "ON" : "OFF" }}</span>
                 </button>
             </nav>
 
             <div class="sidebar-user">
-                <button class="user-pill-chunky" :class="{ open: dropdownOpen }" @click="dropdownOpen = !dropdownOpen">
-                    <div class="avatar-chunky">{{ user.name.charAt(0).toUpperCase() }}</div>
-                    <span class="user-pill-name">{{ user.name.split(" ")[0] }}</span>
-                    <ChevronDown :size="14" :stroke-width="3" class="pill-chev" />
+                <button
+                    class="user-pill-chunky"
+                    :class="{ open: dropdownOpen }"
+                    @click="dropdownOpen = !dropdownOpen"
+                >
+                    <div class="avatar-chunky">
+                        {{ user.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="user-pill-name">{{
+                        user.name.split(" ")[0]
+                    }}</span>
+                    <ChevronDown
+                        :size="14"
+                        :stroke-width="3"
+                        class="pill-chev"
+                    />
                 </button>
 
                 <Transition name="dd">
                     <div v-if="dropdownOpen" class="duo-dropdown">
                         <div class="dd-profile-info">
-                            <div class="dd-avatar-big">{{ user.name.charAt(0).toUpperCase() }}</div>
+                            <div class="dd-avatar-big">
+                                {{ user.name.charAt(0).toUpperCase() }}
+                            </div>
                             <div class="dd-text">
                                 <div class="dd-name">{{ user.name }}</div>
-                                <div class="dd-class">Kelas {{ user.class?.name }}</div>
+                                <div class="dd-class">
+                                    Kelas {{ user.class?.name }}
+                                </div>
                             </div>
                         </div>
                         <div class="dd-divider"></div>
@@ -157,35 +182,59 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                     <BookOpen :size="18" :stroke-width="2.5" />
                     <span>MODUL</span>
                 </div>
-                <div class="mobile-menu-item music-toggle-item" :class="{ 'music-on': musicOn }" @click="toggleMusic(null)">
+                <div
+                    class="mobile-menu-item music-toggle-item"
+                    :class="{ 'music-on': musicOn }"
+                    @click="toggleMusic(null)"
+                >
                     <Music2 v-if="musicOn" :size="18" :stroke-width="2.5" />
                     <VolumeX v-else :size="18" :stroke-width="2.5" />
-                    <span>MUSIK: {{ musicOn ? 'ON' : 'OFF' }}</span>
+                    <span>MUSIK: {{ musicOn ? "ON" : "OFF" }}</span>
                 </div>
             </nav>
         </aside>
 
         <main class="duo-main-content">
             <div class="learning-path-container">
-                
                 <header class="mobile-top-bar">
                     <div class="mobile-brand">
                         <div class="brand-icon-wrap mini">
-                            <Zap :size="16" color="#fff" fill="white" :stroke-width="2" />
+                            <Zap
+                                :size="16"
+                                color="#fff"
+                                fill="white"
+                                :stroke-width="2"
+                            />
                         </div>
-                        <span class="mobile-brand-text">{{ $page.props.global_settings?.platform_name || "Geniuss" }}</span>
+                        <span class="mobile-brand-text">{{
+                            $page.props.global_settings?.platform_name ||
+                            "Geniuss"
+                        }}</span>
                     </div>
-                    <div class="mobile-user-trigger" @click.stop="dropdownOpen = !dropdownOpen">
-                        <div class="avatar-chunky mobile-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                    <div
+                        class="mobile-user-trigger"
+                        @click.stop="dropdownOpen = !dropdownOpen"
+                    >
+                        <div class="avatar-chunky mobile-avatar">
+                            {{ user.name.charAt(0).toUpperCase() }}
+                        </div>
                     </div>
-                    
+
                     <Transition name="dd">
-                        <div v-if="dropdownOpen" class="duo-dropdown mobile-dd" @click.stop>
+                        <div
+                            v-if="dropdownOpen"
+                            class="duo-dropdown mobile-dd"
+                            @click.stop
+                        >
                             <div class="dd-profile-info">
-                                <div class="dd-avatar-big">{{ user.name.charAt(0).toUpperCase() }}</div>
+                                <div class="dd-avatar-big">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
                                 <div class="dd-text">
                                     <div class="dd-name">{{ user.name }}</div>
-                                    <div class="dd-class">Kelas {{ user.class?.name }}</div>
+                                    <div class="dd-class">
+                                        Kelas {{ user.class?.name }}
+                                    </div>
                                 </div>
                             </div>
                             <div class="dd-divider"></div>
@@ -199,18 +248,25 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 
                 <header class="path-header">
                     <h1 class="path-title">Materi Pembelajaran</h1>
-                    <p class="path-subtitle">Selesaikan setiap modul untuk memperkuat kemampuanmu!</p>
+                    <p class="path-subtitle">
+                        Selesaikan setiap modul untuk memperkuat kemampuanmu!
+                    </p>
                 </header>
 
                 <div class="mobile-stats-card">
                     <div class="mobile-progress-section">
                         <div class="duo-progress-wrapper">
                             <div class="duo-progress-track">
-                                <div class="duo-progress-bar" :style="{ width: progressPct + '%' }">
+                                <div
+                                    class="duo-progress-bar"
+                                    :style="{ width: progressPct + '%' }"
+                                >
                                     <div class="progress-shine"></div>
                                 </div>
                             </div>
-                            <span class="duo-progress-text">{{ progressPct }}%</span>
+                            <span class="duo-progress-text"
+                                >{{ progressPct }}%</span
+                            >
                         </div>
                     </div>
                     <div class="mobile-stats-grid">
@@ -231,57 +287,100 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 
                 <div class="missions-scroll-viewport">
                     <div class="missions-grid-layout">
-                        
-                        <div 
-                            v-for="(mod, i) in learningModules" 
+                        <div
+                            v-for="(mod, i) in learningModules"
                             :key="mod.id"
                             class="image-chunky-card"
                         >
                             <div class="mission-photo-area">
-                                <img 
-                                    v-if="mod.thumbnail" 
-                                    :src="mod.thumbnail.startsWith('http') ? mod.thumbnail : `/storage/${mod.thumbnail}`" 
+                                <img
+                                    v-if="mod.thumbnail"
+                                    :src="
+                                        mod.thumbnail.startsWith('http')
+                                            ? mod.thumbnail
+                                            : `/storage/${mod.thumbnail}`
+                                    "
                                     :alt="mod.name"
                                     class="mission-uploaded-img"
                                 />
-                                <div v-else class="mission-img-fallback" :style="{ backgroundColor: accent(i) + '20', color: accent(i) }">
+                                <div
+                                    v-else
+                                    class="mission-img-fallback"
+                                    :style="{
+                                        backgroundColor: accent(i) + '20',
+                                        color: accent(i),
+                                    }"
+                                >
                                     <ImageIcon :size="32" :stroke-width="1.5" />
                                 </div>
                             </div>
 
                             <div class="mission-card-center-info">
-                                <h3 class="mission-box-title">{{ mod.name }}</h3>
-                                <p class="mission-box-desc">{{ mod.description }}</p>
-                                
-                                <div v-if="mod.has_attempt" class="mission-box-score">
-                                    <Star :size="14" fill="currentColor" :stroke-width="0" />
-                                    <span>Skor terbaik: <strong>{{ mod.best_score }}</strong></span>
+                                <h3 class="mission-box-title">
+                                    {{ mod.name }}
+                                </h3>
+                                <p class="mission-box-desc">
+                                    {{ mod.description }}
+                                </p>
+
+                                <div
+                                    v-if="mod.has_attempt"
+                                    class="mission-box-score"
+                                >
+                                    <Star
+                                        :size="14"
+                                        fill="currentColor"
+                                        :stroke-width="0"
+                                    />
+                                    <span
+                                        >Skor terbaik:
+                                        <strong>{{
+                                            mod.best_score
+                                        }}</strong></span
+                                    >
                                 </div>
                             </div>
 
                             <div class="mission-card-bottom-action">
-                                <button 
+                                <button
                                     class="chunky-full-btn"
                                     :class="{
-                                        'btn-start': !mod.has_attempt && !mod.fully_completed,
-                                        'btn-continue': mod.has_attempt && !mod.fully_completed,
-                                        'btn-completed': mod.fully_completed
+                                        'btn-start':
+                                            !mod.has_attempt &&
+                                            !mod.fully_completed,
+                                        'btn-continue':
+                                            mod.has_attempt &&
+                                            !mod.fully_completed,
+                                        'btn-completed': mod.fully_completed,
                                     }"
                                     :disabled="mod.fully_completed"
-                                    @click="!mod.fully_completed && goToModule(mod)"
+                                    @click="
+                                        !mod.fully_completed && goToModule(mod)
+                                    "
                                 >
                                     <span class="btn-circle-indicator"></span>
-                                    <span>{{ statusLabel(mod).toUpperCase() }}</span>
+                                    <span>{{
+                                        statusLabel(mod).toUpperCase()
+                                    }}</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div v-if="learningModules.length === 0" class="empty-path-card">
-                            <BookOpen :size="40" color="#94a3b8" :stroke-width="2" />
+                        <div
+                            v-if="learningModules.length === 0"
+                            class="empty-path-card"
+                        >
+                            <BookOpen
+                                :size="40"
+                                color="#94a3b8"
+                                :stroke-width="2"
+                            />
                             <h3>Belum ada modul tersedia</h3>
-                            <p>Modul belajar akan segera ditambahkan oleh guru kamu.</p>
+                            <p>
+                                Modul belajar akan segera ditambahkan oleh guru
+                                kamu.
+                            </p>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -295,7 +394,10 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                 </div>
                 <div class="duo-progress-wrapper">
                     <div class="duo-progress-track">
-                        <div class="duo-progress-bar" :style="{ width: progressPct + '%' }">
+                        <div
+                            class="duo-progress-bar"
+                            :style="{ width: progressPct + '%' }"
+                        >
                             <div class="progress-shine"></div>
                         </div>
                     </div>
@@ -307,7 +409,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                 <div class="chunky-stat-box box-xp">
                     <Zap :size="18" fill="currentColor" :stroke-width="0" />
                     <div class="stat-box-info">
-                        <span class="stat-count">{{ learningModules.length }}</span>
+                        <span class="stat-count">{{
+                            learningModules.length
+                        }}</span>
                         <span class="stat-label">Total Modul</span>
                     </div>
                 </div>
@@ -335,11 +439,12 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                 </div>
                 <div class="class-badge-details">
                     <span class="class-label-top">KELAS SAYA</span>
-                    <span class="class-name-text">{{ user.class?.name || "-" }}</span>
+                    <span class="class-name-text">{{
+                        user.class?.name || "-"
+                    }}</span>
                 </div>
             </div>
         </aside>
-
     </div>
 </template>
 
@@ -379,15 +484,52 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     border-radius: 35% 65% 70% 30% / 50% 30% 70% 50%;
     animation: floatParticle 8s infinite ease-in-out;
 }
-.p-1 { width: 80px; height: 80px; top: 15%; left: 20%; animation-delay: 0s; }
-.p-2 { width: 120px; height: 120px; bottom: 10%; left: 40%; border-radius: 60% 40% 30% 70%; animation-delay: 2s; }
-.p-3 { width: 60px; height: 60px; top: 40%; right: 25%; animation-delay: 4s; }
-.p-4 { width: 90px; height: 90px; top: 8%; right: 45%; border-radius: 40% 60% 50% 50%; animation-delay: 1s; }
-.p-5 { width: 70px; height: 70px; bottom: 30%; left: 15%; animation-delay: 5s; }
+.p-1 {
+    width: 80px;
+    height: 80px;
+    top: 15%;
+    left: 20%;
+    animation-delay: 0s;
+}
+.p-2 {
+    width: 120px;
+    height: 120px;
+    bottom: 10%;
+    left: 40%;
+    border-radius: 60% 40% 30% 70%;
+    animation-delay: 2s;
+}
+.p-3 {
+    width: 60px;
+    height: 60px;
+    top: 40%;
+    right: 25%;
+    animation-delay: 4s;
+}
+.p-4 {
+    width: 90px;
+    height: 90px;
+    top: 8%;
+    right: 45%;
+    border-radius: 40% 60% 50% 50%;
+    animation-delay: 1s;
+}
+.p-5 {
+    width: 70px;
+    height: 70px;
+    bottom: 30%;
+    left: 15%;
+    animation-delay: 5s;
+}
 
 @keyframes floatParticle {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(15deg); }
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-15px) rotate(15deg);
+    }
 }
 
 .duo-sidebar-left {
@@ -497,8 +639,14 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     font-family: inherit;
     transition: all 0.05s ease;
 }
-.user-pill-chunky:hover, .user-pill-chunky.open { background: #f8fafc; }
-.user-pill-chunky:active { transform: translateY(3px); box-shadow: 0 1px 0 0 #cbd5e1; }
+.user-pill-chunky:hover,
+.user-pill-chunky.open {
+    background: #f8fafc;
+}
+.user-pill-chunky:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 0 #cbd5e1;
+}
 
 .avatar-chunky {
     width: 32px;
@@ -513,8 +661,15 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     justify-content: center;
     border: 2px solid #0284c7;
 }
-.user-pill-name { font-size: 14px; font-weight: 800; color: #334155; }
-.pill-chev { margin-left: auto; color: #94a3b8; }
+.user-pill-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #334155;
+}
+.pill-chev {
+    margin-left: auto;
+    color: #94a3b8;
+}
 
 .duo-dropdown {
     position: absolute;
@@ -524,11 +679,16 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     background: #ffffff;
     border: 2px solid #cbd5e1;
     border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     z-index: 200;
 }
-.dd-profile-info { display: flex; align-items: center; gap: 10px; padding: 12px; }
+.dd-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+}
 .dd-avatar-big {
     width: 38px;
     height: 38px;
@@ -541,15 +701,39 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     justify-content: center;
     border: 2px solid #0284c7;
 }
-.dd-name { font-size: 14px; font-weight: 800; color: #334155; }
-.dd-class { font-size: 12px; font-weight: 700; color: #94a3b8; }
-.dd-divider { height: 2px; background: #cbd5e1; }
-.dd-logout-btn {
-    width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px; background: transparent; border: none; font-family: inherit;
-    font-size: 13px; font-weight: 800; color: #ef4444; cursor: pointer; text-transform: uppercase;
+.dd-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #334155;
 }
-.dd-logout-btn:hover { background: #fef2f2; }
+.dd-class {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+.dd-divider {
+    height: 2px;
+    background: #cbd5e1;
+}
+.dd-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    color: #ef4444;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.dd-logout-btn:hover {
+    background: #fef2f2;
+}
 
 .duo-main-content {
     flex: 1;
@@ -576,8 +760,16 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     border-radius: 16px;
     box-shadow: 0 4px 0 0 #cbd5e1;
 }
-.path-title { font-size: 24px; font-weight: 900; color: #1e293b; }
-.path-subtitle { font-size: 14px; font-weight: 700; color: #64748b; }
+.path-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #1e293b;
+}
+.path-subtitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748b;
+}
 
 .missions-scroll-viewport {
     flex: 1;
@@ -587,8 +779,13 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
-.missions-scroll-viewport::-webkit-scrollbar { width: 6px; }
-.missions-scroll-viewport::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.missions-scroll-viewport::-webkit-scrollbar {
+    width: 6px;
+}
+.missions-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
 
 .missions-grid-layout {
     display: grid;
@@ -604,7 +801,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     border-radius: 24px;
     padding: 24px;
     box-shadow: 0 0px 0px transparent;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
     text-align: center;
     align-items: center;
 }
@@ -702,18 +901,43 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     display: inline-block;
 }
 
-.btn-start { background: #1cb0f6; box-shadow: 0 4px 0 0 #0284c7; color: #ffffff; }
-.btn-start:hover { background: #0ea5e9; }
+.btn-start {
+    background: #1cb0f6;
+    box-shadow: 0 4px 0 0 #0284c7;
+    color: #ffffff;
+}
+.btn-start:hover {
+    background: #0ea5e9;
+}
 
-.btn-continue { background: #ff9600; box-shadow: 0 4px 0 0 #ea580c; color: #ffffff; }
-.btn-continue:hover { background: #ea580c; }
+.btn-continue {
+    background: #ff9600;
+    box-shadow: 0 4px 0 0 #ea580c;
+    color: #ffffff;
+}
+.btn-continue:hover {
+    background: #ea580c;
+}
 
-.btn-completed { background: #58cc02; box-shadow: 0 4px 0 0 #3f9402; color: #ffffff; cursor: not-allowed; }
-.btn-completed:active { top: 0; box-shadow: 0 4px 0 0 #3f9402 !important; }
+.btn-completed {
+    background: #58cc02;
+    box-shadow: 0 4px 0 0 #3f9402;
+    color: #ffffff;
+    cursor: not-allowed;
+}
+.btn-completed:active {
+    top: 0;
+    box-shadow: 0 4px 0 0 #3f9402 !important;
+}
 
 .empty-path-card {
-    grid-column: span 2; text-align: center; background: #ffffff; border: 2px dashed #cbd5e1;
-    border-radius: 18px; padding: 40px; color: #64748b;
+    grid-column: span 2;
+    text-align: center;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 18px;
+    padding: 40px;
+    color: #64748b;
 }
 
 .duo-sidebar-right {
@@ -750,11 +974,40 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     margin-bottom: 8px;
 }
 
-.duo-progress-wrapper { display: flex; align-items: center; gap: 10px; }
-.duo-progress-track { flex: 1; height: 12px; background-color: #e2e8f0; border-radius: 10px; overflow: hidden; position: relative; }
-.duo-progress-bar { height: 100%; background: #22c55e; border-radius: 10px; position: relative; transition: width 0.4s ease; }
-.progress-shine { position: absolute; top: 2px; left: 3px; right: 3px; height: 3px; background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
-.duo-progress-text { font-size: 13px; font-weight: 900; color: #22c55e; }
+.duo-progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.duo-progress-track {
+    flex: 1;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.duo-progress-bar {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 10px;
+    position: relative;
+    transition: width 0.4s ease;
+}
+.progress-shine {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    right: 3px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+.duo-progress-text {
+    font-size: 13px;
+    font-weight: 900;
+    color: #22c55e;
+}
 
 .stats-vertical-stack {
     display: flex;
@@ -770,37 +1023,95 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     border-radius: 14px;
     background: #ffffff;
 }
-.stat-box-info { display: flex; flex-direction: column; }
-.stat-count { font-size: 15px; font-weight: 900; color: #1e293b; line-height: 1.2; }
-.stat-label { font-size: 11px; font-weight: 700; color: #94a3b8; }
-
-.box-xp { color: #f97316; border-color: #ffedd5; background: #fffaf5; }
-.box-streak { color: #ef4444; border-color: #fee2e2; background: #fffafb; }
-.box-crown { color: #eab308; border-color: #fef9c3; background: #fffdf5; }
-
-.class-info-card { display: flex; align-items: center; gap: 12px; background: #f8fafc; border-color: #e2e8f0; }
-.class-badge-icon {
-    width: 36px; height: 36px; border-radius: 10px; background: #a855f7;
-    color: #ffffff; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 0 0 #7e22ce; flex-shrink: 0;
+.stat-box-info {
+    display: flex;
+    flex-direction: column;
 }
-.class-badge-details { display: flex; flex-direction: column; }
-.class-label-top { font-size: 10px; font-weight: 800; color: #94a3b8; }
-.class-name-text { font-size: 15px; font-weight: 900; color: #334155; }
+.stat-count {
+    font-size: 15px;
+    font-weight: 900;
+    color: #1e293b;
+    line-height: 1.2;
+}
+.stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.box-xp {
+    color: #f97316;
+    border-color: #ffedd5;
+    background: #fffaf5;
+}
+.box-streak {
+    color: #ef4444;
+    border-color: #fee2e2;
+    background: #fffafb;
+}
+.box-crown {
+    color: #eab308;
+    border-color: #fef9c3;
+    background: #fffdf5;
+}
+
+.class-info-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+.class-badge-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #a855f7;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 0 #7e22ce;
+    flex-shrink: 0;
+}
+.class-badge-details {
+    display: flex;
+    flex-direction: column;
+}
+.class-label-top {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+}
+.class-name-text {
+    font-size: 15px;
+    font-weight: 900;
+    color: #334155;
+}
 
 /* 📱 ELEMENT KHUSUS MOBILE (Default Tersembunyi di Desktop) */
-.mobile-top-bar, .mobile-stats-card, .mobile-bottom-nav {
+.mobile-top-bar,
+.mobile-stats-card,
+.mobile-bottom-nav {
     display: none;
 }
 
 @media (max-width: 1140px) {
-    .duo-sidebar-right { display: none !important; }
-    .duo-main-content { margin-right: 0px; }
+    .duo-sidebar-right {
+        display: none !important;
+    }
+    .duo-main-content {
+        margin-right: 0px;
+    }
 }
 
 @media (max-width: 900px) {
-    .missions-grid-layout { grid-template-columns: 1fr; }
-    .empty-path-card { grid-column: span 1; }
+    .missions-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    .empty-path-card {
+        grid-column: span 1;
+    }
 }
 
 /* ════════════════════════════════════════════════
@@ -810,7 +1121,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     .duo-layout {
         flex-direction: column;
     }
-    
+
     .duo-sidebar-left {
         display: none !important; /* Sembunyikan penuh sidebar kiri asli pada mobile */
     }
@@ -834,7 +1145,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         justify-content: space-between;
         align-items: center;
         position: fixed;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 56px;
         background: rgba(255, 255, 255, 0.96);
         border-bottom: 1px solid #e2e8f0;
@@ -857,7 +1170,8 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         padding: 4px;
     }
     .mobile-avatar {
-        width: 32px; height: 32px;
+        width: 32px;
+        height: 32px;
         font-size: 13px;
     }
 
@@ -869,7 +1183,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         left: auto;
         right: 16px;
         width: 200px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         border-radius: 14px;
         background: #ffffff;
         border: 2px solid #cbd5e1;
@@ -881,8 +1195,12 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         margin-bottom: 16px;
         box-shadow: 0 3px 0 0 #cbd5e1;
     }
-    .path-title { font-size: 20px; }
-    .path-subtitle { font-size: 13px; }
+    .path-title {
+        font-size: 20px;
+    }
+    .path-subtitle {
+        font-size: 13px;
+    }
 
     /* Banner Statistik Ringkas di Mobile */
     .mobile-stats-card {
@@ -917,7 +1235,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     .mobile-bottom-nav {
         display: block;
         position: fixed;
-        bottom: 0; left: 0; right: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
         height: 52px;
         background: #ffffff;
         border-top: 1px solid #e2e8f0;
@@ -946,7 +1266,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     .mobile-menu-item.active {
         color: #0ea5e9;
     }
-    
+
     /* Style Khusus Tombol Musik Terintegrasi */
     .music-toggle-item {
         color: #64748b;
@@ -969,7 +1289,11 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         height: 100px;
         margin-bottom: 12px;
     }
-    .mission-box-title { font-size: 18px; }
-    .mission-box-desc { font-size: 13px; }
+    .mission-box-title {
+        font-size: 18px;
+    }
+    .mission-box-desc {
+        font-size: 13px;
+    }
 }
 </style>
