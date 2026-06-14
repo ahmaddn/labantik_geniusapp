@@ -10,7 +10,9 @@ const clickedObjects = ref(new Set());
 
 const toggleObject = (id) => {
     const newSet = new Set(clickedObjects.value);
-    if (!newSet.has(id)) {
+    if (newSet.has(id)) {
+        newSet.delete(id);
+    } else {
         newSet.add(id);
     }
     clickedObjects.value = newSet;
@@ -26,11 +28,11 @@ const getImageUrl = (path) => {
     <div class="simulation-clickable-container p-4 w-full h-full flex flex-col items-center justify-center">
         <!-- Title is handled by Template.vue's question-bubble, but we can render the grid nicely -->
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-6xl mt-4">
+        <div class="flex flex-wrap justify-center gap-6 md:gap-8 w-full max-w-6xl mt-4">
             <div 
                 v-for="(obj, index) in quiz.objects" 
                 :key="obj.id"
-                class="clickable-card-wrapper perspective-1000 cursor-pointer"
+                class="clickable-card-wrapper perspective-1000 cursor-pointer w-full sm:w-[300px] shrink-0"
                 @click="toggleObject(obj.id)"
             >
                 <div class="clickable-card w-full h-[280px] md:h-[340px] relative preserve-3d transition-transform duration-700"

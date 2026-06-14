@@ -109,7 +109,7 @@ const handleToastClose = () => {
                 <Link :href="route('playground.login')" class="w-full">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="secondary"
                         size="lg"
                         full-width
                     >

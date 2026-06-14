@@ -21,10 +21,9 @@ use App\Http\Controllers\Admin\SimulationConfigController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('admin.dashboard');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -80,9 +79,8 @@ Route::name('playground.')->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-    // Panduan
-    Route::get('/guide', [DashboardController::class, 'guide'])->name('guide');
 
     // Kelas
     Route::name('classes.')->group(function () {

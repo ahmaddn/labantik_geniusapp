@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, reactive } from "vue";
+import SimulationEffects from "./SimulationEffects.vue";
 
 const props = defineProps({
     quiz: Object,
@@ -54,19 +55,11 @@ const currentLevelData = computed(() => {
 
 // Calculate status for UI generically
 const isDanger = computed(() => {
-    const maxScore = variables.value.length * 3;
-    const threshold = Math.floor(maxScore * 0.8); // Top 20%
-    return dangerScore.value >= threshold;
+    return currentLevelData.value?.status === 'bahaya';
 });
 
 const isWarning = computed(() => {
-    const maxScore = variables.value.length * 3;
-    const minPossibleScore = variables.value.length * 1;
-    const thresholdHigh = Math.floor(maxScore * 0.8);
-    const thresholdMid = Math.floor((maxScore + minPossibleScore) / 2); // Midpoint
-    return (
-        dangerScore.value >= thresholdMid && dangerScore.value < thresholdHigh
-    );
+    return currentLevelData.value?.status === 'waspada';
 });
 
 // UI Styling
@@ -99,6 +92,25 @@ const levelNarration = computed(() => {
     );
 });
 
+const effectTranslations = {
+    'none': '',
+    'rain_light': 'Gerimis',
+    'rain_heavy': 'Hujan Deras',
+    'snow': 'Salju',
+    'bubbles': 'Gelembung Air',
+    'fire_sparks': 'Percikan Api',
+    'wind_leaves': 'Daun Berterbangan',
+    'dust': 'Debu / Polusi',
+    'sunbeams': 'Cerah',
+    'earthquake': 'Gempa'
+};
+
+const translatedEffect = computed(() => {
+    const effect = currentLevelData.value?.animation_effect;
+    if (!effect || effect === 'none') return '';
+    return effectTranslations[effect] || effect;
+});
+
 // Update Answer
 watch(sliderValues, () => {
     let valString = Object.values(sliderValues).join("-");
@@ -126,7 +138,10 @@ onMounted(() => {
             <!-- Visual Representation -->
             <div
                 class="visual-box flex-1 relative rounded-2xl overflow-hidden border-4 border-slate-200 shadow-inner bg-slate-100 min-h-[300px] flex items-center justify-center transition-all duration-500"
-                :class="{ 'animate-pulse border-red-400': isDanger }"
+                :class="{ 
+                    'animate-pulse border-red-400': isDanger,
+                    'animate-shake': currentLevelData?.animation_effect === 'earthquake'
+                }"
             >
                 <!-- Image or placeholder -->
                 <img
@@ -141,12 +156,18 @@ onMounted(() => {
                     Gambar Simulasi<br />(Pilih Level)
                 </div>
 
+                <!-- Dynamic Effects Overlay -->
+                <SimulationEffects :effect="currentLevelData?.animation_effect" />
+
                 <!-- Status Badge Overlay -->
                 <div
                     class="absolute top-4 right-4 z-30 px-4 py-2 rounded-xl font-bold border-2 shadow-lg backdrop-blur-md"
                     :class="statusBg + ' ' + statusColor"
                 >
-                    Status: {{ statusText }}
+                    <span :class="statusColor">
+                        {{ statusText }}
+                        <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
+                    </span>
                 </div>
             </div>
 
@@ -239,6 +260,17 @@ onMounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) translateY(-2px) rotate(-1deg); }
+    20%, 40%, 60%, 80% { transform: translateX(5px) translateY(2px) rotate(1deg); }
+}
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) infinite;
+}
+</style>
 
 <style scoped>
 /* Common Thumb styling */

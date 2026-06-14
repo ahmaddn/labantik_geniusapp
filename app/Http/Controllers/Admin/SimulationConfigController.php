@@ -99,6 +99,8 @@ class SimulationConfigController extends Controller
             'levels.*.level_name' => 'required|string|max:255',
             'levels.*.narration' => 'nullable|string',
             'levels.*.metric_value' => 'nullable|string',
+            'levels.*.status' => 'nullable|string',
+            'levels.*.animation_effect' => 'nullable|string',
             'levels.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
             'levels.*.existing_image' => 'nullable|string',
             'levels.*.remove_image' => 'nullable|boolean',
@@ -141,6 +143,8 @@ class SimulationConfigController extends Controller
                 $level->level_name = $levelData['level_name'];
                 $level->narration = $levelData['narration'] ?? null;
                 $level->metric_value = $levelData['metric_value'] ?? null;
+                $level->status = $levelData['status'] ?? 'aman';
+                $level->animation_effect = $levelData['animation_effect'] ?? 'none';
 
                 $imagePath = $levelData['existing_image'] ?? null;
 

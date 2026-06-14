@@ -246,11 +246,13 @@ class MissionController extends Controller
                 'variables'    => $firstSlider->variables ?? [],
                 'order_number' => $firstSlider->order_number ?? 0,
                 'levels'       => $firstSlider->levels->map(fn($lvl) => [
-                    'id'          => $lvl->id,
-                    'level_name'  => $lvl->level_name,
-                    'narration'   => $lvl->narration,
-                    'metric_value'=> $lvl->metric_value,
-                    'image'       => $lvl->image,
+                    'id'               => $lvl->id,
+                    'level_name'       => $lvl->level_name,
+                    'narration'        => $lvl->narration,
+                    'metric_value'     => $lvl->metric_value,
+                    'image'            => $lvl->image,
+                    'status'           => $lvl->status,
+                    'animation_effect' => $lvl->animation_effect,
                 ])->toArray(),
             ];
         }
