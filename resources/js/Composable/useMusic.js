@@ -18,8 +18,15 @@ export function useMusic() {
             : (musicOn.value && audioRef.value.play().catch(() => {}))
     }
 
+    const getCleanSrc = (src) => {
+        if (!src || src === 'null' || String(src).trim() === '') {
+            return DEFAULT_MUSIC
+        }
+        return src
+    }
+
     const initAutoMusic = async (src) => {
-        const resolvedSrc = src ?? DEFAULT_MUSIC
+        const resolvedSrc = getCleanSrc(src)
 
         if (currentSrc.value === resolvedSrc) {
             if (musicOn.value && audioRef.value?.paused) {
@@ -38,10 +45,17 @@ export function useMusic() {
         audioRef.value.loop    = true
         audioRef.value.volume  = 0.4
         audioRef.value.preload = 'auto'
+        
         audioRef.value.addEventListener('error', () => {
-            audioRef.value   = null
-            currentSrc.value = null
-            musicOn.value    = false
+            console.warn(`Audio load failed for: ${resolvedSrc}`);
+            if (resolvedSrc !== DEFAULT_MUSIC) {
+                // Fallback to default
+                initAutoMusic(DEFAULT_MUSIC)
+            } else {
+                audioRef.value   = null
+                currentSrc.value = null
+                musicOn.value    = false
+            }
         })
 
         if (!musicOn.value) return
@@ -49,18 +63,14 @@ export function useMusic() {
         try {
             await audioRef.value.play()
         } catch {
-            // Autoplay blocked — mark as off, wait for any user click (NOT excluding music button)
             musicOn.value = false
-            // NOTE: We do NOT attach a once-click listener here anymore.
-            // toggleMusic handles play on demand correctly.
         }
     }
 
     const toggleMusic = async (src) => {
-        const resolvedSrc = src ?? DEFAULT_MUSIC
+        const resolvedSrc = getCleanSrc(src)
 
         if (!audioRef.value || currentSrc.value !== resolvedSrc) {
-            // Create or recreate audio if needed
             if (audioRef.value) {
                 audioRef.value.pause()
                 audioRef.value = null
@@ -70,11 +80,17 @@ export function useMusic() {
             audioRef.value.loop    = true
             audioRef.value.volume  = 0.4
             audioRef.value.preload = 'auto'
+            
             audioRef.value.addEventListener('error', () => {
-                audioRef.value   = null
-                currentSrc.value = null
-                musicOn.value    = false
-                savePref(false)
+                console.warn(`Audio load failed for: ${resolvedSrc}`);
+                if (resolvedSrc !== DEFAULT_MUSIC) {
+                    toggleMusic(DEFAULT_MUSIC)
+                } else {
+                    audioRef.value   = null
+                    currentSrc.value = null
+                    musicOn.value    = false
+                    savePref(false)
+                }
             })
         }
 

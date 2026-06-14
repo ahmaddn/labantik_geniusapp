@@ -2,11 +2,32 @@
 import { ref, computed, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import {
-    CheckCircle2, XCircle, ArrowLeft, Trophy, ClipboardList,
-    ChevronRight, Rocket, Zap, Target, BarChart3, BookOpen,
-    Clock, Medal, Flame, Star, Sparkles, TrendingUp,
-    AlertCircle, ChevronDown, ChevronUp, LayoutGrid,
-    MousePointerClick, MoveHorizontal, ToggleLeft,
+    CheckCircle2,
+    XCircle,
+    ArrowLeft,
+    Trophy,
+    ClipboardList,
+    ChevronRight,
+    Rocket,
+    Zap,
+    Target,
+    BarChart3,
+    BookOpen,
+    Clock,
+    Medal,
+    Flame,
+    Star,
+    Sparkles,
+    TrendingUp,
+    AlertCircle,
+    ChevronDown,
+    ChevronUp,
+    LayoutGrid,
+    MousePointerClick,
+    MoveHorizontal,
+    ToggleLeft,
+    Check,
+    X,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -20,760 +41,903 @@ const props = defineProps({
 });
 
 const TYPE_META = {
-    multiple_choices: { label: "Pilihan Ganda", color: "#3b82f6", bg: "#dbeafe", icon: LayoutGrid },
-    true_false: { label: "Benar / Salah", color: "#8b5cf6", bg: "#ede9fe", icon: ToggleLeft },
-    case_study: { label: "Studi Kasus", color: "#0891b2", bg: "#cffafe", icon: BookOpen },
-    drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7", icon: MoveHorizontal },
+    multiple_choices: {
+        label: "Pilihan Ganda",
+        color: "#1cb0f6",
+        bg: "#ddf4ff",
+        icon: LayoutGrid,
+    },
+    true_false: {
+        label: "Benar / Salah",
+        color: "#a855f7",
+        bg: "#f3e8ff",
+        icon: ToggleLeft,
+    },
+    case_study: {
+        label: "Studi Kasus",
+        color: "#00c9b1",
+        bg: "#ccf4f0",
+        icon: BookOpen,
+    },
+    drag_drop: {
+        label: "Seret & Lepas",
+        color: "#ff9600",
+        bg: "#ffebd6",
+        icon: MoveHorizontal,
+    },
+    short_answer: {
+        label: "Isian Singkat",
+        color: "#ff4b4b",
+        bg: "#ffe5e5",
+        icon: MousePointerClick,
+    },
 };
-const tm = (t) => TYPE_META[t] || { label: t, color: "#64748b", bg: "#f1f5f9", icon: ClipboardList };
 
-const scoreColor = (s) => s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444";
-const scoreGrad = (s) => s >= 80
-    ? "linear-gradient(135deg, #10b981, #059669)"
-    : s >= 60
-    ? "linear-gradient(135deg, #f59e0b, #d97706)"
-    : "linear-gradient(135deg, #ef4444, #dc2626)";
-const scoreBg = (s) => s >= 80 ? "#ecfdf5" : s >= 60 ? "#fffbeb" : "#fef2f2";
-const scoreLabel = (s) => s >= 80 ? "Luar Biasa!" : s >= 60 ? "Cukup Baik" : "Tetap Semangat";
-const scoreEmoji = (s) => s >= 80 ? "🏆" : s >= 60 ? "👍" : "💪";
-const scoreTier = (s) => s >= 80 ? "gold" : s >= 60 ? "silver" : "bronze";
+const showDetails = ref(false);
 
-// Animasi score counter
-const displayScore = ref(0);
-const animStarted = ref(false);
-const expanded = ref({});
-
-const toggleExpand = (key) => {
-    expanded.value[key] = !expanded.value[key];
+const formatTime = (sec) => {
+    if (!sec || sec < 0) return "0s";
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
 };
 
-const incorrectByType = computed(() => {
-    const groups = {};
-    for (const q of props.results.questions_result || []) {
-        if (!q.is_correct) {
-            if (!groups[q.quiz_type]) groups[q.quiz_type] = [];
-            groups[q.quiz_type].push(q);
-        }
+const score = computed(() => {
+    if (props.is_overall) {
+        return Math.round(props.results.overall_score || 0);
     }
-    return groups;
+    return Math.round(props.results.score || 0);
 });
 
-const hasIncorrect = computed(() =>
-    (props.results.questions_result || []).some((q) => !q.is_correct)
-);
-
-const correctPct = computed(() =>
-    props.results.total > 0 ? Math.round((props.results.correct / props.results.total) * 100) : 0
-);
-
-onMounted(() => {
-    setTimeout(() => {
-        animStarted.value = true;
-        const target = props.results.score;
-        const duration = 1200;
-        const step = 16;
-        const increment = target / (duration / step);
-        let current = 0;
-        const timer = setInterval(() => {
-            current = Math.min(current + increment, target);
-            displayScore.value = Math.round(current);
-            if (current >= target) clearInterval(timer);
-        }, step);
-    }, 300);
+const accuracy = computed(() => {
+    if (props.is_overall) return props.results.overall_accuracy || 0;
+    const total = props.results.total_questions || 0;
+    const correct = props.results.correct_answers || 0;
+    if (total === 0) return 0;
+    return Math.round((correct / total) * 100);
 });
 
-const goToMissions = () => router.visit(route("playground.missions.index", props.module?.id));
-const goToPosttest = () => router.visit(route("playground.posttest.show", props.module?.id));
-const goToNextMission = () => router.visit(route("playground.missions.show", props.next_mission.id));
+const correctCount = computed(() => {
+    if (props.is_overall) {
+        return props.results.overall_correct || 0;
+    }
+    return props.results.correct_answers || 0;
+});
+
+const incorrectCount = computed(() => {
+    if (props.is_overall) {
+        const total = props.results.overall_total || 0;
+        return total - (props.results.overall_correct || 0);
+    }
+    const total = props.results.total_questions || 0;
+    return total - (props.results.correct_answers || 0);
+});
+
+const gradeData = computed(() => {
+    const s = score.value;
+    if (s >= 90) return { title: "Luar Biasa!", color: "#58cc02", icon: Star };
+    if (s >= 75) return { title: "Kerja Bagus!", color: "#1cb0f6", icon: Zap };
+    if (s >= 60)
+        return { title: "Cukup Baik!", color: "#ff9600", icon: TrendingUp };
+    return { title: "Terus Belajar!", color: "#ff4b4b", icon: Flame };
+});
+
+const goBack = () => {
+    if (props.is_overall) {
+        router.visit(route("playground.index"));
+    } else {
+        router.visit(route("playground.missions.index", props.module?.id));
+    }
+};
+
+const startNextMission = () => {
+    if (props.next_mission) {
+        router.visit(route("playground.missions.show", props.next_mission.id));
+    }
+};
+
+const goToPosttest = () => {
+    if (props.module?.id) {
+        router.visit(route("playground.posttest.show", props.module.id));
+    }
+};
+
+const isAnswerCorrect = (detail, ans) => {
+    if (detail.question.type === "drag_drop") return ans.is_correct;
+    if (detail.question.type === "short_answer") return ans.is_correct;
+    return detail.is_correct;
+};
+
+const getQuizExplanation = (detail) => {
+    return detail.question?.explanation || null;
+};
 </script>
 
 <template>
-    <div class="rp">
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet" />
-
-        <!-- BG -->
-        <div class="rp-bg">
-            <div class="rp-bg-dot"></div>
-            <div class="blob bl1"></div>
-            <div class="blob bl2"></div>
-            <div class="blob bl3"></div>
-        </div>
-
-        <!-- TOPBAR -->
-        <header class="topbar">
-            <button class="back-btn" @click="goToMissions">
-                <ArrowLeft :size="15" :stroke-width="2.5" />
-                <span>Daftar Misi</span>
-            </button>
-            <div class="topbar-center">
-                <Target :size="15" color="#2563eb" :stroke-width="2.5" />
-                <span v-if="!is_overall">Hasil Misi</span>
-                <span v-else>Hasil Keseluruhan</span>
-            </div>
-            <div style="width: 90px"></div>
-        </header>
-
-        <main class="main" :class="{ 'main--in': animStarted }">
-
-            <!-- ══ HERO ══ -->
-            <section class="hero" :class="`hero--${scoreTier(results.score)}`">
-
-                <!-- confetti dots saat skor tinggi -->
-                <div class="hero-confetti" v-if="results.score >= 80" aria-hidden="true">
-                    <span v-for="n in 12" :key="n" :class="`conf conf-${n}`"></span>
+    <div class="app-layout">
+        <main class="main-scroll">
+            <div class="result-container">
+                <div class="header-section">
+                    <h1 class="main-title" :style="{ color: gradeData.color }">
+                        {{ gradeData.title }}
+                    </h1>
+                    <p class="subtitle">
+                        {{
+                            is_overall
+                                ? `Evaluasi ${module.name} Selesai`
+                                : `Misi ${mission.title} Selesai`
+                        }}
+                    </p>
                 </div>
 
-                <div class="hero-inner">
-                    <!-- Left: ring -->
-                    <div class="hero-ring-wrap">
-                        <div class="hero-ring" :class="`ring--${scoreTier(results.score)}`">
-                            <svg class="ring-svg" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="50" class="ring-track" />
-                                <circle cx="60" cy="60" r="50" class="ring-prog"
-                                    :style="{
-                                        strokeDashoffset: animStarted ? (314 - (314 * results.score) / 100) : 314,
-                                        stroke: scoreColor(results.score)
-                                    }" />
-                            </svg>
-                            <div class="ring-inner">
-                                <span class="ring-num" :style="{ color: scoreColor(results.score) }">{{ displayScore }}</span>
-                                <span class="ring-pct">%</span>
-                            </div>
-                        </div>
-                        <div class="ring-tier-badge" :class="`tier--${scoreTier(results.score)}`">
-                            <Medal :size="12" :stroke-width="2.5" />
-                            <span>{{ scoreTier(results.score) === 'gold' ? 'Emas' : scoreTier(results.score) === 'silver' ? 'Perak' : 'Perunggu' }}</span>
-                        </div>
+                <div class="score-mascot-section">
+                    <div class="mascot-wrap">
+                        <img
+                            src="/images/templates/pose_jempol.png"
+                            alt="Mascot"
+                            class="mascot-img"
+                        />
                     </div>
 
-                    <!-- Right: info -->
-                    <div class="hero-info">
-                        <div class="hero-module-chip">
-                            <Zap :size="11" fill="currentColor" :stroke-width="2" />
-                            <span>{{ module.name }}</span>
-                        </div>
-                        <h1 class="hero-mission" v-if="!is_overall">{{ mission.name }}</h1>
-                        <h1 class="hero-mission" v-else>Hasil Akhir Pembelajaran</h1>
-                        <div class="hero-verdict" :class="`verdict--${scoreTier(results.score)}`">
-                            <span class="verdict-emoji">{{ scoreEmoji(results.score) }}</span>
-                            <span class="verdict-text">{{ scoreLabel(results.score) }}</span>
-                        </div>
-
-                        <!-- stat pills -->
-                        <div class="hero-stats" v-if="!is_overall">
-                            <div class="hstat hstat--green">
-                                <CheckCircle2 :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.correct }}</span>
-                                <span class="hstat-lbl">Benar</span>
-                            </div>
-                            <div class="hstat hstat--red">
-                                <XCircle :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.incorrect }}</span>
-                                <span class="hstat-lbl">Salah</span>
-                            </div>
-                            <div class="hstat hstat--blue">
-                                <ClipboardList :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.total }}</span>
-                                <span class="hstat-lbl">Total</span>
-                            </div>
-                        </div>
-
-                        <!-- overall stat pills -->
-                        <div class="hero-stats" v-if="is_overall">
-                            <div class="hstat hstat--blue">
-                                <Target :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.pretest }}</span>
-                                <span class="hstat-lbl">Pretest</span>
-                            </div>
-                            <div class="hstat hstat--green">
-                                <CheckCircle2 :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.missions }}</span>
-                                <span class="hstat-lbl">Misi (Rata-rata)</span>
-                            </div>
-                            <div class="hstat hstat--red">
-                                <Medal :size="14" :stroke-width="2.3" />
-                                <span class="hstat-val">{{ results.posttest }}</span>
-                                <span class="hstat-lbl">Posttest</span>
-                            </div>
-                        </div>
-
-                        <!-- accuracy bar -->
-                        <div class="acc-bar-wrap" v-if="!is_overall">
-                            <div class="acc-bar-label">
-                                <span>Akurasi</span>
-                                <span class="acc-pct" :style="{ color: scoreColor(results.score) }">{{ correctPct }}%</span>
-                            </div>
-                            <div class="acc-track">
-                                <div class="acc-fill" :class="`acc--${scoreTier(results.score)}`"
-                                    :style="{ width: animStarted ? correctPct + '%' : '0%' }">
-                                    <span class="acc-shine"></span>
-                                </div>
-                            </div>
+                    <div class="celeb-ring-wrap">
+                        <svg class="celeb-ring-svg" viewBox="0 0 140 140">
+                            <circle
+                                cx="70"
+                                cy="70"
+                                r="58"
+                                class="celeb-track"
+                            />
+                            <circle
+                                cx="70"
+                                cy="70"
+                                r="58"
+                                class="celeb-prog"
+                                :style="{
+                                    strokeDashoffset: 364 - (364 * score) / 100,
+                                    stroke: gradeData.color,
+                                }"
+                            />
+                        </svg>
+                        <div class="celeb-ring-inner">
+                            <span
+                                class="celeb-score"
+                                :style="{ color: gradeData.color }"
+                                >{{ score }}</span
+                            >
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- ══ OVERALL MESSAGE ══ -->
-            <div v-if="is_overall" class="card section-card">
-                 <div class="card-head">
-                    <div class="card-head-left">
-                        <div class="card-icon card-icon--green">
-                            <CheckCircle2 :size="15" :stroke-width="2.3" />
+                <div class="icard-stats">
+                    <div class="istat istat--green">
+                        <div class="istat-icon">
+                            <CheckCircle2 :size="20" :stroke-width="2.5" />
                         </div>
-                        <h2 class="card-title">Selamat! Pembelajaran Selesai</h2>
+                        <span class="istat-val">{{ correctCount }}</span>
+                        <span class="istat-lbl">Benar</span>
+                    </div>
+
+                    <div class="istat istat--red">
+                        <div class="istat-icon">
+                            <XCircle :size="20" :stroke-width="2.5" />
+                        </div>
+                        <span class="istat-val">{{ incorrectCount }}</span>
+                        <span class="istat-lbl">Salah</span>
+                    </div>
+
+                    <div class="istat istat--blue">
+                        <div class="istat-icon">
+                            <BarChart3 :size="20" :stroke-width="2.5" />
+                        </div>
+                        <span class="istat-val">{{ score }}</span>
+                        <span class="istat-lbl">Nilai</span>
                     </div>
                 </div>
-                <div style="padding: 20px; text-align: center; color: #475569; font-size: 15px; line-height: 1.6;">
-                    <p>Kamu telah menyelesaikan seluruh rangkaian kegiatan pada modul <strong>{{ module.name }}</strong> dari tahap Pretest, Misi Belajar, hingga Posttest. Nilai akhir di atas dihitung berdasarkan rata-rata keseluruhan performamu.</p>
-                </div>
-            </div>
 
-            <!-- ══ BREAKDOWN ══ -->
-            <section class="card section-card" v-if="results.breakdown?.length">
-                <div class="card-head">
-                    <div class="card-head-left">
-                        <div class="card-icon card-icon--blue">
-                            <BarChart3 :size="15" :stroke-width="2.3" />
-                        </div>
-                        <h2 class="card-title">Rincian per Tipe</h2>
-                    </div>
-                    <span class="card-badge">{{ results.breakdown.length }} tipe</span>
-                </div>
-                <div class="bk-list">
-                    <div v-for="(item, i) in results.breakdown" :key="item.type"
-                        class="bk-row" :style="{ '--bc': tm(item.type).color, '--bb': tm(item.type).bg, animationDelay: (i * 0.08) + 's' }">
-                        <div class="bk-row-icon" :style="{ background: tm(item.type).bg, color: tm(item.type).color }">
-                            <component :is="tm(item.type).icon" :size="14" :stroke-width="2.2" />
-                        </div>
-                        <div class="bk-row-body">
-                            <div class="bk-row-top">
-                                <span class="bk-row-label">{{ tm(item.type).label }}</span>
-                                <span class="bk-row-score" :style="{ color: scoreColor(item.score) }">{{ item.score }}%</span>
-                            </div>
-                            <div class="bk-bar">
-                                <div class="bk-fill" :style="{ width: animStarted ? item.score + '%' : '0%', background: tm(item.type).color }"></div>
-                            </div>
-                            <div class="bk-row-meta">
-                                <span class="bk-c"><CheckCircle2 :size="11" :stroke-width="2.5" /> {{ item.correct }} benar</span>
-                                <span class="bk-sep">·</span>
-                                <span class="bk-w"><XCircle :size="11" :stroke-width="2.5" /> {{ item.incorrect }} salah</span>
-                                <span class="bk-sep">·</span>
-                                <span class="bk-t">{{ item.total }} soal</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <div class="review-section" v-if="!is_overall">
+                    <button
+                        class="btn-toggle-details"
+                        @click="showDetails = !showDetails"
+                    >
+                        <span>Lihat Detail Jawaban</span>
+                        <ChevronUp v-if="showDetails" :size="20" />
+                        <ChevronDown v-else :size="20" />
+                    </button>
 
-            <!-- ══ REVIEW SOAL SALAH ══ -->
-            <section class="card section-card" v-if="hasIncorrect">
-                <div class="card-head">
-                    <div class="card-head-left">
-                        <div class="card-icon card-icon--red">
-                            <AlertCircle :size="15" :stroke-width="2.3" />
-                        </div>
-                        <h2 class="card-title">Soal yang Salah</h2>
-                    </div>
-                    <span class="card-badge card-badge--red">
-                        {{ (results.questions_result || []).filter(q => !q.is_correct).length }} soal
-                    </span>
-                </div>
-
-                <div class="review-groups">
-                    <div v-for="(questions, type) in incorrectByType" :key="type" class="rg">
-                        <!-- Type header — clickable to collapse -->
-                        <button class="rg-head" :style="{ background: tm(type).bg, color: tm(type).color }"
-                            @click="toggleExpand(type)">
-                            <div class="rg-head-left">
-                                <div class="rg-icon" :style="{ background: tm(type).color + '22' }">
-                                    <component :is="tm(type).icon" :size="13" :stroke-width="2.3" />
-                                </div>
-                                <span class="rg-type-label">{{ tm(type).label }}</span>
-                                <span class="rg-count-badge">{{ questions.length }}</span>
-                            </div>
-                            <ChevronDown v-if="!expanded[type]" :size="15" :stroke-width="2.3" class="rg-chev" />
-                            <ChevronUp v-else :size="15" :stroke-width="2.3" class="rg-chev" />
-                        </button>
-
-                        <!-- Questions list -->
-                        <Transition name="slide-down">
-                            <div class="rg-questions" v-if="expanded[type]">
-                                <div v-for="(q, idx) in questions" :key="q.question_id" class="rq">
-                                    <div class="rq-head">
-                                        <div class="rq-num">{{ idx + 1 }}</div>
-                                        <p class="rq-text">{{ q.question_text }}</p>
+                    <Transition name="slide-fade">
+                        <div v-if="showDetails" class="details-list">
+                            <div
+                                v-for="(detail, index) in results.details"
+                                :key="index"
+                                class="detail-card"
+                                :class="{
+                                    'card-correct': detail.is_correct,
+                                    'card-wrong': !detail.is_correct,
+                                }"
+                            >
+                                <div class="dc-header">
+                                    <div class="dc-badge">
+                                        Soal {{ index + 1 }}
                                     </div>
+                                    <div class="dc-type">
+                                        <component
+                                            :is="
+                                                TYPE_META[detail.question.type]
+                                                    ?.icon || BookOpen
+                                            "
+                                            :size="14"
+                                            class="mr-1"
+                                        />
+                                        {{
+                                            TYPE_META[detail.question.type]
+                                                ?.label || "Soal"
+                                        }}
+                                    </div>
+                                    <div
+                                        class="dc-status"
+                                        :class="
+                                            detail.is_correct
+                                                ? 'text-green'
+                                                : 'text-red'
+                                        "
+                                    >
+                                        <CheckCircle2
+                                            v-if="detail.is_correct"
+                                            :size="20"
+                                        />
+                                        <XCircle v-else :size="20" />
+                                    </div>
+                                </div>
 
-                                    <!-- drag_drop -->
-                                    <template v-if="type === 'drag_drop'">
-                                        <div class="rq-pair">
-                                            <div class="rq-answer wrong-answer">
-                                                <div class="rq-ans-head">
-                                                    <XCircle :size="13" color="#ef4444" :stroke-width="2.3" />
-                                                    <span>Jawaban Kamu</span>
-                                                </div>
-                                                <div class="rq-chips">
-                                                    <span v-for="(gn, il) in q.user_answer_map" :key="il" class="chip chip--wrong">{{ il }} → {{ gn }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="rq-arrow">→</div>
-                                            <div class="rq-answer correct-answer">
-                                                <div class="rq-ans-head">
-                                                    <CheckCircle2 :size="13" color="#10b981" :stroke-width="2.3" />
-                                                    <span>Jawaban Benar</span>
-                                                </div>
-                                                <div class="rq-chips">
-                                                    <span v-for="(gn, il) in q.correct_answer_map" :key="il" class="chip chip--correct">{{ il }} → {{ gn }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
+                                <div
+                                    class="dc-question"
+                                    v-html="detail.question.question_text"
+                                ></div>
 
-                                    <!-- others -->
-                                    <template v-else>
-                                        <div class="rq-pair">
-                                            <div class="rq-answer wrong-answer" v-if="q.user_answer_text">
-                                                <div class="rq-ans-head">
-                                                    <XCircle :size="13" color="#ef4444" :stroke-width="2.3" />
-                                                    <span>Jawaban Kamu</span>
-                                                </div>
-                                                <p class="rq-ans-val rq-ans-wrong">{{ q.user_answer_text }}</p>
-                                            </div>
-                                            <div class="rq-arrow" v-if="q.user_answer_text">→</div>
-                                            <div class="rq-answer correct-answer">
-                                                <div class="rq-ans-head">
-                                                    <CheckCircle2 :size="13" color="#10b981" :stroke-width="2.3" />
-                                                    <span>Jawaban Benar</span>
-                                                </div>
-                                                <p class="rq-ans-val rq-ans-correct">{{ q.correct_answer_text }}</p>
-                                            </div>
+                                <div class="dc-answers">
+                                    <div
+                                        v-for="(
+                                            ans, aIdx
+                                        ) in detail.user_answers"
+                                        :key="aIdx"
+                                        class="answer-item"
+                                        :class="
+                                            isAnswerCorrect(detail, ans)
+                                                ? 'ans-correct'
+                                                : 'ans-wrong'
+                                        "
+                                    >
+                                        <div class="ans-icon">
+                                            <Check
+                                                v-if="
+                                                    isAnswerCorrect(detail, ans)
+                                                "
+                                                :size="16"
+                                            />
+                                            <X v-else :size="16" />
                                         </div>
-                                    </template>
+                                        <div class="ans-text">
+                                            <span class="font-bold">Kamu:</span>
+                                            {{
+                                                ans.user_answer_text ||
+                                                ans.answer_text ||
+                                                "-"
+                                            }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="getQuizExplanation(detail)"
+                                    class="dc-explanation"
+                                >
+                                    <div class="expl-title">
+                                        <Sparkles :size="14" /> Penjelasan:
+                                    </div>
+                                    <div
+                                        class="expl-text"
+                                        v-html="getQuizExplanation(detail)"
+                                    ></div>
                                 </div>
                             </div>
-                        </Transition>
-                    </div>
+                        </div>
+                    </Transition>
                 </div>
-            </section>
-
-            <!-- ══ ALL CORRECT ══ -->
-            <section class="all-correct" v-else-if="!is_overall">
-                <div class="ac-glow"></div>
-                <div class="ac-icon-wrap">
-                    <Trophy :size="42" color="#f59e0b" :stroke-width="1.5" />
-                    <span class="ac-spark sp1"><Sparkles :size="13" color="#2563eb" /></span>
-                    <span class="ac-spark sp2"><Star :size="11" color="#f59e0b" fill="#f59e0b" /></span>
-                    <span class="ac-spark sp3"><Sparkles :size="10" color="#10b981" /></span>
-                </div>
-                <h3 class="ac-title">Sempurna!</h3>
-                <p class="ac-sub">Semua jawaban benar. Kamu luar biasa!</p>
-            </section>
-
-            <!-- ══ FOOTER ACTIONS ══ -->
-            <div class="actions" v-if="!is_overall">
-                <button class="act-btn act-btn--ghost" @click="goToMissions">
-                    <ArrowLeft :size="15" :stroke-width="2.5" />
-                    <span>Daftar Misi</span>
-                </button>
-                <button v-if="all_missions_done && !results.posttest" class="act-btn act-btn--mint" @click="goToPosttest">
-                    <Rocket :size="15" :stroke-width="2.3" />
-                    <span>Lanjut Posttest</span>
-                    <ChevronRight :size="14" :stroke-width="2.5" />
-                </button>
-                <button v-else-if="next_mission" class="act-btn act-btn--yellow" @click="goToNextMission">
-                    <Flame :size="15" :stroke-width="2.3" />
-                    <span>Misi Selanjutnya</span>
-                    <ChevronRight :size="14" :stroke-width="2.5" />
-                </button>
             </div>
-
-            <div class="actions" v-if="is_overall" style="justify-content: center;">
-                <button class="act-btn act-btn--ghost" @click="router.visit(route('playground.index'))">
-                    <ArrowLeft :size="15" :stroke-width="2.5" />
-                    <span>Kembali ke Beranda</span>
-                </button>
-            </div>
-
         </main>
+
+        <footer class="footer-bar">
+            <div class="footer-inner">
+                <div class="footer-left">
+                    <button class="btn-duo btn-duo-secondary" @click="goBack">
+                        <ArrowLeft :size="18" :stroke-width="3" />
+                        <span>{{
+                            is_overall ? "Tutup Evaluasi" : "Kembali"
+                        }}</span>
+                    </button>
+                </div>
+
+                <div class="footer-right">
+                    <template v-if="!is_overall">
+                        <button
+                            v-if="next_mission"
+                            class="btn-duo btn-duo-primary"
+                            @click="startNextMission"
+                        >
+                            <span>Misi Selanjutnya</span>
+                            <ChevronRight :size="18" :stroke-width="3" />
+                        </button>
+                        <button
+                            v-else-if="all_missions_done"
+                            class="btn-duo btn-duo-success"
+                            @click="goToPosttest"
+                        >
+                            <span>Lanjut Posttest</span>
+                            <Rocket :size="18" :stroke-width="3" />
+                        </button>
+                        <button
+                            v-else
+                            class="btn-duo btn-duo-secondary"
+                            @click="goBack"
+                        >
+                            <span>Selesai</span>
+                            <CheckCircle2 :size="18" :stroke-width="3" />
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button class="btn-duo btn-duo-success" @click="goBack">
+                            <span>Selesai</span>
+                            <CheckCircle2 :size="18" :stroke-width="3" />
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </footer>
     </div>
 </template>
 
 <style scoped>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&display=swap");
 
-.rp {
+/* ─── BASE ─── */
+.app-layout {
+    position: relative;
+    width: 100vw;
     min-height: 100vh;
     font-family: "Nunito", sans-serif;
-    background: #eef2ff;
-    position: relative;
+    background-color: #ffffff;
     overflow-x: hidden;
-    padding-bottom: 80px;
 }
 
-/* ── BG ── */
-.rp-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.rp-bg-dot {
-    position: absolute; inset: 0;
-    background-image: radial-gradient(circle, rgba(99,102,241,0.07) 1px, transparent 1px);
-    background-size: 28px 28px;
-}
-.blob { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
-.bl1 { width: 560px; height: 560px; top: -160px; right: -120px; background: #a5b4fc; opacity: 0.3; animation: bDrift 22s ease-in-out infinite alternate; }
-.bl2 { width: 420px; height: 420px; bottom: -100px; left: -80px; background: #6ee7b7; opacity: 0.25; animation: bDrift 26s ease-in-out 5s infinite alternate-reverse; }
-.bl3 { width: 280px; height: 280px; top: 40%; left: 40%; background: #fde68a; opacity: 0.18; animation: bDrift 18s ease-in-out 2s infinite alternate; }
-@keyframes bDrift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(30px,40px) scale(1.06); } }
-
-/* ── TOPBAR ── */
-.topbar {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 20px; height: 56px;
-    background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(99,102,241,0.12);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.05);
-}
-.back-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; background: rgba(37,99,235,0.07);
-    border: 1.5px solid rgba(37,99,235,0.18); border-radius: 10px;
-    color: #1d4ed8; font-family: "Nunito", sans-serif;
-    font-size: 12.5px; font-weight: 800; cursor: pointer;
-    transition: all 0.16s;
-}
-.back-btn:hover { background: rgba(37,99,235,0.13); transform: translateY(-1px); }
-.topbar-center {
-    display: flex; align-items: center; gap: 6px;
-    font-family: "Righteous", cursive; font-size: 16px; color: #1e3a8a;
+.main-scroll {
+    position: relative;
+    z-index: 10;
+    padding-top: 40px;
+    padding-bottom: 130px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
 }
 
-/* ── MAIN ── */
-.main {
-    position: relative; z-index: 1;
-    max-width: 720px; margin: 0 auto;
-    padding: 24px 16px 0;
-    display: flex; flex-direction: column; gap: 20px;
-    opacity: 0; transform: translateY(18px);
-    transition: opacity 0.5s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
-}
-.main--in { opacity: 1; transform: none; }
-
-/* ══ HERO ══ */
-.hero {
-    border-radius: 24px; overflow: hidden; position: relative;
-    border: 1.5px solid rgba(255,255,255,0.6);
-    box-shadow: 0 8px 40px rgba(37,99,235,0.12);
-    animation: heroIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
-}
-@keyframes heroIn { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
-
-.hero--gold { background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 40%, #ecfdf5 100%); }
-.hero--silver { background: linear-gradient(145deg, #fffbeb 0%, #fef9c3 40%, #fff 100%); }
-.hero--bronze { background: linear-gradient(145deg, #fff1f2 0%, #ffe4e6 40%, #fff 100%); }
-
-.hero-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.conf { position: absolute; border-radius: 2px; animation: confFall linear infinite; }
-.conf-1  { width:7px;height:7px;background:#f59e0b;top:-8px;left:5%;animation-duration:3.2s;animation-delay:.1s; }
-.conf-2  { width:5px;height:5px;background:#3b82f6;top:-8px;left:15%;animation-duration:4s;animation-delay:.5s; }
-.conf-3  { width:6px;height:6px;background:#ef4444;top:-8px;left:27%;animation-duration:3.5s;animation-delay:.2s; }
-.conf-4  { width:5px;height:5px;background:#10b981;top:-8px;left:40%;animation-duration:4.3s;animation-delay:.8s; }
-.conf-5  { width:8px;height:8px;background:#a78bfa;top:-8px;left:55%;animation-duration:3.8s;animation-delay:.4s; }
-.conf-6  { width:5px;height:5px;background:#f59e0b;top:-8px;left:68%;animation-duration:4.1s;animation-delay:1s; }
-.conf-7  { width:6px;height:6px;background:#ef4444;top:-8px;left:79%;animation-duration:3.4s;animation-delay:.6s; }
-.conf-8  { width:4px;height:4px;background:#3b82f6;top:-8px;left:88%;animation-duration:3.9s;animation-delay:1.2s; }
-.conf-9  { width:7px;height:7px;background:#10b981;top:-8px;left:22%;animation-duration:4.5s;animation-delay:.3s; }
-.conf-10 { width:5px;height:5px;background:#a78bfa;top:-8px;left:48%;animation-duration:3.7s;animation-delay:.9s; }
-.conf-11 { width:6px;height:6px;background:#f59e0b;top:-8px;left:62%;animation-duration:4.2s;animation-delay:1.4s; }
-.conf-12 { width:4px;height:4px;background:#ef4444;top:-8px;left:92%;animation-duration:3.3s;animation-delay:.7s; }
-@keyframes confFall { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(350px) rotate(360deg);opacity:0} }
-
-.hero-inner {
-    position: relative; z-index: 1;
-    display: flex; align-items: center; gap: 24px;
-    padding: 28px 24px;
-    flex-wrap: wrap;
+.result-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: slideUpFade 0.5s ease-out;
 }
 
-/* Ring */
-.hero-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
-.hero-ring { position: relative; width: 128px; height: 128px; }
-.ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.ring-track { fill: none; stroke: rgba(0,0,0,0.08); stroke-width: 8; }
-.ring-prog {
-    fill: none; stroke-width: 8; stroke-linecap: round;
-    stroke-dasharray: 314;
-    transition: stroke-dashoffset 1.4s cubic-bezier(0.34,1.56,0.64,1) 0.3s;
+/* ─── HEADER ─── */
+.header-section {
+    text-align: center;
+    margin-bottom: 30px;
 }
-.ring-inner {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center; gap: 1px;
-}
-.ring-num { font-family: "Righteous", cursive; font-size: 34px; line-height: 1; }
-.ring-pct { font-size: 14px; font-weight: 900; color: #94a3b8; align-self: flex-end; margin-bottom: 5px; }
 
-.ring-tier-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 12px; border-radius: 99px;
-    font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;
+.main-title {
+    font-family: "Baloo 2", cursive;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
 }
-.tier--gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; box-shadow: 0 2px 8px rgba(245,158,11,0.4); }
-.tier--silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; box-shadow: 0 2px 8px rgba(100,116,139,0.3); }
-.tier--bronze { background: linear-gradient(135deg, #fb923c, #ea580c); color: #fff; box-shadow: 0 2px 8px rgba(234,88,12,0.35); }
 
-/* Hero info */
-.hero-info { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
-.hero-module-chip {
-    display: inline-flex; align-items: center; gap: 5px; width: fit-content;
-    padding: 4px 12px; border-radius: 99px;
-    background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2);
-    font-size: 11px; font-weight: 900; color: #1d4ed8;
+.subtitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #afafaf;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
-.hero-mission {
-    font-family: "Righteous", cursive;
-    font-size: clamp(17px, 2.5vw, 22px);
-    color: #1e3a8a; line-height: 1.25;
-}
-.hero-verdict {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 14px; border-radius: 12px; width: fit-content;
-    font-size: 13px; font-weight: 900;
-}
-.verdict--gold   { background: #fef3c7; color: #92400e; border: 1.5px solid #fde68a; }
-.verdict--silver { background: #fef9c3; color: #854d0e; border: 1.5px solid #fef08a; }
-.verdict--bronze { background: #fee2e2; color: #991b1b; border: 1.5px solid #fecaca; }
-.verdict-emoji { font-size: 16px; }
 
-/* Hstats */
-.hero-stats { display: flex; gap: 8px; flex-wrap: wrap; }
-.hstat {
-    display: flex; align-items: center; gap: 5px;
-    padding: 6px 11px; border-radius: 10px;
-    font-size: 12px; font-weight: 800;
+/* ─── MASCOT & SCORE RING ─── */
+.score-mascot-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
 }
-.hstat-val { font-family: "Righteous", cursive; font-size: 15px; }
-.hstat-lbl { opacity: 0.75; font-size: 11px; }
-.hstat--green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-.hstat--red   { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-.hstat--blue  { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
-/* Accuracy bar */
-.acc-bar-wrap { display: flex; flex-direction: column; gap: 5px; }
-.acc-bar-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #64748b; }
-.acc-pct { font-family: "Righteous", cursive; font-size: 13px; }
-.acc-track { height: 7px; background: rgba(0,0,0,0.08); border-radius: 99px; overflow: hidden; }
-.acc-fill {
-    height: 100%; border-radius: 99px;
-    position: relative; overflow: hidden;
-    transition: width 1.4s cubic-bezier(0.34,1.56,0.64,1) 0.4s;
+.mascot-wrap {
+    width: 160px;
 }
-.acc--gold   { background: linear-gradient(90deg, #10b981, #059669); }
-.acc--silver { background: linear-gradient(90deg, #f59e0b, #d97706); }
-.acc--bronze { background: linear-gradient(90deg, #ef4444, #dc2626); }
-.acc-shine {
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: shine 2.2s ease-in-out infinite;
-}
-@keyframes shine { 0%,100%{transform:translateX(-100%)} 60%{transform:translateX(200%)} }
 
-/* ══ CARD (breakdown + review) ══ */
-.card {
-    background: #fff; border-radius: 20px;
-    border: 1.5px solid rgba(99,102,241,0.1);
-    box-shadow: 0 4px 24px rgba(37,99,235,0.07);
+.mascot-img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
+    animation: bounceIdle 4s ease-in-out infinite;
+}
+
+.celeb-ring-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+}
+
+.celeb-ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.celeb-track {
+    fill: none;
+    stroke: #f1f5f9;
+    stroke-width: 12;
+}
+
+.celeb-prog {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 364;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+}
+
+.celeb-ring-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.celeb-score {
+    font-family: "Baloo 2", cursive;
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* ─── STATS GRID ─── */
+.icard-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.istat {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-bottom: 5px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.istat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.istat--yellow .istat-icon {
+    background-color: #ffc800;
+}
+.istat--green .istat-icon {
+    background-color: #58cc02;
+}
+.istat--blue .istat-icon {
+    background-color: #1cb0f6;
+}
+
+.istat-val {
+    font-family: "Baloo 2", cursive;
+    font-size: 24px;
+    font-weight: 800;
+    color: #3c3c3c;
+    line-height: 1;
+}
+
+.istat-lbl {
+    font-size: 13px;
+    font-weight: 800;
+    color: #afafaf;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── DETAILS ACCORDION ─── */
+.review-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.btn-toggle-details {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    border-radius: 16px;
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #777777;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-toggle-details:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+
+.details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detail-card {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 16px;
     overflow: hidden;
-    animation: cardIn 0.5s ease both;
 }
-@keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-.section-card:nth-child(2) { animation-delay: 0.12s; }
-.section-card:nth-child(3) { animation-delay: 0.22s; }
 
-.card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 18px;
-    border-bottom: 1.5px solid rgba(0,0,0,0.05);
-    background: #fafbff;
+.card-correct {
+    border-left: 6px solid #58cc02;
 }
-.card-head-left { display: flex; align-items: center; gap: 10px; }
-.card-icon {
-    width: 32px; height: 32px; border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
+
+.card-wrong {
+    border-left: 6px solid #ff4b4b;
+}
+
+.dc-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.dc-badge {
+    background-color: #f1f5f9;
+    color: #64748b;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.dc-type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #94a3b8;
+    flex: 1;
+}
+
+.text-green {
+    color: #58cc02;
+}
+.text-red {
+    color: #ff4b4b;
+}
+
+.dc-question {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3c3c3c;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+:deep(.dc-question p) {
+    margin: 0;
+}
+
+.dc-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.answer-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ans-correct {
+    background-color: #eefdf0;
+    color: #58cc02;
+    border: 1px solid #c2f5cc;
+}
+
+.ans-wrong {
+    background-color: #ffe5e5;
+    color: #ff4b4b;
+    border: 1px solid #fecaca;
+}
+
+.ans-icon {
     flex-shrink: 0;
-}
-.card-icon--blue { background: #dbeafe; color: #2563eb; }
-.card-icon--red  { background: #fee2e2; color: #dc2626; }
-.card-title { font-family: "Righteous", cursive; font-size: 15px; color: #1e3a8a; }
-.card-badge {
-    display: inline-flex; align-items: center;
-    padding: 3px 10px; border-radius: 99px;
-    background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;
-    font-size: 11px; font-weight: 900;
-}
-.card-badge--red { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
-
-/* Breakdown list */
-.bk-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-.bk-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px; border-radius: 12px;
-    background: var(--bb); border: 1.5px solid color-mix(in srgb, var(--bc) 20%, transparent);
-    animation: rowIn 0.4s ease both;
-}
-@keyframes rowIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
-.bk-row-icon {
-    width: 34px; height: 34px; border-radius: 9px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.bk-row-body { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.bk-row-top { display: flex; align-items: center; justify-content: space-between; }
-.bk-row-label { font-size: 12px; font-weight: 900; color: var(--bc); text-transform: uppercase; letter-spacing: 0.3px; }
-.bk-row-score { font-family: "Righteous", cursive; font-size: 17px; }
-.bk-bar { height: 5px; background: rgba(0,0,0,0.09); border-radius: 99px; overflow: hidden; }
-.bk-fill { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.5s; }
-.bk-row-meta { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; flex-wrap: wrap; }
-.bk-c { display: flex; align-items: center; gap: 3px; color: #15803d; }
-.bk-w { display: flex; align-items: center; gap: 3px; color: #dc2626; }
-.bk-t { color: #64748b; }
-.bk-sep { color: #cbd5e1; }
-
-/* Review groups */
-.review-groups { display: flex; flex-direction: column; gap: 0; }
-.rg { border-bottom: 1px solid rgba(0,0,0,0.05); }
-.rg:last-child { border-bottom: none; }
-
-.rg-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 18px; width: 100%; border: none; cursor: pointer;
-    transition: opacity 0.15s;
-}
-.rg-head:hover { opacity: 0.85; }
-.rg-head-left { display: flex; align-items: center; gap: 9px; }
-.rg-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-.rg-type-label { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3px; }
-.rg-count-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: currentColor; opacity: 1; font-size: 10px; font-weight: 900;
-    color: #fff; filter: brightness(0.8) saturate(1.2);
-}
-.rg-chev { flex-shrink: 0; }
-
-.rg-questions { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 10px; background: #fafbff; }
-
-.rq {
-    background: #fff; border: 1.5px solid #e2e8f0;
-    border-radius: 14px; padding: 14px;
-    display: flex; flex-direction: column; gap: 11px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
-}
-.rq-head { display: flex; align-items: flex-start; gap: 10px; }
-.rq-num {
-    min-width: 24px; height: 24px; background: #ef4444; color: #fff;
-    border-radius: 50%; font-size: 11px; font-weight: 900;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.rq-text { font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.55; flex: 1; }
-
-.rq-pair {
-    display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;
-}
-.rq-answer { flex: 1; min-width: 120px; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
-.wrong-answer { background: #fef2f2; border: 1.5px solid #fecaca; }
-.correct-answer { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
-.rq-ans-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 900; color: #475569; }
-.rq-ans-val { font-size: 12.5px; font-weight: 700; line-height: 1.45; }
-.rq-ans-wrong { color: #dc2626; }
-.rq-ans-correct { color: #15803d; }
-.rq-arrow { align-self: center; font-size: 16px; color: #94a3b8; flex-shrink: 0; margin-top: 18px; }
-.rq-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
-.chip--wrong { background: #fee2e2; color: #dc2626; }
-.chip--correct { background: #dcfce7; color: #15803d; }
-
-/* Transition */
-.slide-down-enter-active { transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1); }
-.slide-down-leave-active { transition: all 0.18s ease; }
-.slide-down-enter-from { opacity: 0; transform: translateY(-8px); }
-.slide-down-leave-to { opacity: 0; transform: translateY(-4px); }
-
-/* All correct */
-.all-correct {
-    background: #fff; border-radius: 20px; padding: 48px 24px;
-    text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;
-    border: 1.5px solid rgba(16,185,129,0.2); position: relative; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(16,185,129,0.1);
-    animation: cardIn 0.5s ease 0.15s both;
-}
-.ac-glow {
-    position: absolute; width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(52,211,153,0.2) 0%, transparent 70%);
-    top: 50%; left: 50%; transform: translate(-50%,-50%);
-    pointer-events: none;
-}
-.ac-icon-wrap { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
-.ac-spark { position: absolute; animation: spFloat 2.2s ease-in-out infinite; }
-.sp1 { top: -4px; right: -2px; }
-.sp2 { bottom: 0; left: -4px; animation-delay: 0.6s; }
-.sp3 { top: 6px; left: -6px; animation-delay: 1.2s; }
-@keyframes spFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px) rotate(10deg)} }
-.ac-title { font-family: "Righteous", cursive; font-size: 24px; color: #065f46; }
-.ac-sub { font-size: 13.5px; font-weight: 700; color: #6b7280; }
-
-/* Actions */
-.actions {
-    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-    padding-bottom: 8px;
-    animation: cardIn 0.5s ease 0.3s both;
-}
-.act-btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    height: 46px; padding: 0 22px; border: none; border-radius: 13px;
-    font-family: "Nunito", sans-serif; font-size: 13.5px; font-weight: 800;
-    cursor: pointer; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
-    white-space: nowrap;
-}
-.act-btn:hover { transform: translateY(-2px); }
-.act-btn--ghost {
-    background: rgba(37,99,235,0.08);
-    border: 1.5px solid rgba(37,99,235,0.2);
-    color: #1d4ed8;
-}
-.act-btn--ghost:hover { background: rgba(37,99,235,0.14); box-shadow: 0 4px 14px rgba(37,99,235,0.2); }
-.act-btn--mint {
-    background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-    box-shadow: 0 4px 14px rgba(16,185,129,0.35);
-}
-.act-btn--mint:hover { box-shadow: 0 6px 20px rgba(16,185,129,0.5); }
-.act-btn--yellow {
-    background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
-    box-shadow: 0 4px 14px rgba(245,158,11,0.35);
-}
-.act-btn--yellow:hover { box-shadow: 0 6px 20px rgba(245,158,11,0.5); }
-
-/* ── MOBILE ── */
-@media (max-width: 640px) {
-    .topbar { padding: 0 13px; height: 50px; }
-    .back-btn span { display: none; }
-    .back-btn { padding: 7px 10px; }
-    .hero-inner { padding: 20px 16px; gap: 16px; }
-    .hero-ring { width: 108px; height: 108px; }
-    .ring-num { font-size: 28px; }
-    .hero-info { min-width: 160px; }
-    .hstat-lbl { display: none; }
-    .main { padding: 16px 12px 0; gap: 14px; }
-    .card-head { padding: 12px 14px; }
-    .bk-list { padding: 10px 12px; }
-    .rg-questions { padding: 8px 10px 12px; }
-    .rq { padding: 12px; }
-    .rq-pair { flex-direction: column; gap: 6px; }
-    .rq-arrow { display: none; }
-    .actions { flex-direction: column; align-items: stretch; }
-    .act-btn { justify-content: center; height: 44px; }
+    margin-top: 2px;
 }
 
-@media (max-width: 380px) {
-    .hero-inner { flex-direction: column; align-items: center; text-align: center; }
-    .hero-module-chip, .hero-verdict, .hero-stats { margin: 0 auto; }
-    .acc-bar-wrap { width: 100%; }
+.ans-text {
+    flex: 1;
+}
+
+.dc-explanation {
+    background-color: #f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.expl-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.expl-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* ─── FIXED FOOTER ACTION BAR (DUOLINGO STYLE) ─── */
+.footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 94px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 2px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    z-index: 60;
+}
+
+.footer-inner {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.footer-left,
+.footer-right {
+    display: flex;
+    align-items: center;
+}
+
+.btn-duo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 13px 26px;
+    border-radius: 16px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition:
+        filter 0.15s,
+        transform 0.1s,
+        border-bottom-width 0.1s;
+    user-select: none;
+    outline: none;
+}
+
+.btn-duo-primary {
+    background-color: #1cb0f6;
+    border: 2px solid #1cb0f6;
+    border-bottom: 5px solid #1899d6;
+    color: #ffffff;
+}
+.btn-duo-primary:hover:not(:disabled) {
+    filter: brightness(1.04);
+}
+.btn-duo-primary:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+}
+
+.btn-duo-success {
+    background-color: #58cc02;
+    border: 2px solid #58cc02;
+    border-bottom: 5px solid #58a700;
+    color: #ffffff;
+}
+.btn-duo-success:hover:not(:disabled) {
+    filter: brightness(1.04);
+}
+.btn-duo-success:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+}
+
+.btn-duo-secondary {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-bottom: 5px solid #cbd5e1;
+    color: #afafaf;
+}
+.btn-duo-secondary:hover:not(:disabled) {
+    background-color: #f7f7f7;
+    color: #777777;
+}
+.btn-duo-secondary:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceIdle {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.slide-fade-enter-active {
+    transition: all 0.3s ease-out;
+}
+.slide-fade-leave-active {
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+    transform: translateY(-10px);
+    opacity: 0;
+}
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 32px;
+    }
+    .subtitle {
+        font-size: 14px;
+    }
+
+    .score-mascot-section {
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .mascot-wrap {
+        width: 120px;
+    }
+    .celeb-ring-wrap {
+        width: 130px;
+        height: 130px;
+    }
+    .celeb-score {
+        font-size: 40px;
+    }
+
+    .icard-stats {
+        gap: 10px;
+    }
+    .istat {
+        padding: 12px 8px;
+    }
+    .istat-val {
+        font-size: 18px;
+    }
+    .istat-lbl {
+        font-size: 10px;
+    }
+    .istat-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .footer-bar {
+        height: 80px;
+    }
+    .footer-inner {
+        padding: 0 16px;
+    }
+    .btn-duo {
+        padding: 10px 20px;
+        font-size: 13px;
+        border-radius: 12px;
+        border-bottom-width: 4px;
+    }
+    .btn-duo:active:not(:disabled) {
+        transform: translateY(2px);
+        border-bottom-width: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mascot-wrap {
+        display: none; /* Hide mascot on very small screens to focus on score */
+    }
+    .score-mascot-section {
+        justify-content: center;
+    }
+
+    .footer-inner {
+        gap: 8px;
+    }
+    .btn-duo span {
+        display: none; /* Hide text, only show icons on very small screens */
+    }
+    .btn-duo {
+        padding: 12px;
+        border-radius: 50%;
+    }
 }
 </style>
