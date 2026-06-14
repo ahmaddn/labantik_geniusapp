@@ -200,14 +200,80 @@ defineExpose({ musicOn });
                     </div>
                 </div>
 
-                <!-- Siswa info -->
-                <div class="nav-siswa">
-                    <div class="siswa-avatar">
-                        {{ currentUser?.name?.charAt(0).toUpperCase() || 'S' }}
-                    </div>
-                    <div class="siswa-info">
-                        <span class="siswa-nama">{{ currentUser?.name || 'Siswa' }}</span>
-                        <span class="siswa-kelas">{{ currentUser?.kelas || '' }}</span>
+                <!-- Right: Timer + User Pill -->
+                <div class="nav-right">
+                    <!-- Timer (Duolingo-style circular) -->
+                    <Transition name="slide-fade">
+                        <div
+                            v-if="showProgress"
+                            class="timer-badge"
+                            :class="{ 'timer-warning': isWarning }"
+                        >
+                            <div class="timer-icon-wrap">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </div>
+                            <span class="timer-val">{{ timerDisplay }}</span>
+                        </div>
+                    </Transition>
+
+                    <!-- User Pill (identical to Index.vue style) -->
+                    <div class="sidebar-user" id="pretest-user-dropdown-root">
+                        <button
+                            class="user-pill-chunky"
+                            :class="{ open: dropdownOpen }"
+                            @click.stop="dropdownOpen = !dropdownOpen"
+                        >
+                            <div class="avatar-chunky">
+                                {{ userInitials }}
+                            </div>
+                            <span class="user-pill-name hidden-mobile">{{
+                                (currentUser.name || "Siswa").split(" ")[0]
+                            }}</span>
+                            <ChevronDown
+                                :size="14"
+                                :stroke-width="3"
+                                class="pill-chev"
+                            />
+                        </button>
+
+                    <Transition name="">
+                        <div
+                            v-if="dropdownOpen"
+                            class="ds-dropdown"
+                            @click.stop
+                        >
+                            <div class="ds-dd-profile">
+                                <div class="ds-avatar ds-avatar-lg">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
+                                <div>
+                                    <div class="ds-dd-name">
+                                        {{ user.name }}
+                                    </div>
+                                    <div class="ds-dd-class">
+                                        Kelas {{ user.class }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ds-dd-sep"></div>
+                            <button class="ds-dd-logout" @click="logout">
+                                <LogOut :size="15" :stroke-width="3" /> KELUAR
+                            </button>
+                        </div>
+                    </Transition>
                     </div>
                 </div>
             </div>
