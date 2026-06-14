@@ -52,16 +52,16 @@ onMounted(() => {
 });
 onUnmounted(() => destroyAudio());
 
+// Di Index.vue
 const goBack = () => {
-    try {
-        router.visit(route("playground.modules.index"));
-    } catch {
-        try {
-            router.visit(route("playground.module"));
-        } catch {
-            window.history.back();
-        }
-    }
+    // Gunakan playground.index jika itu adalah halaman daftar modul utama siswa
+    router.get(
+        route("playground.index"),
+        {},
+        {
+            replace: true,
+        },
+    );
 };
 
 const logout = () => router.post(route("playground.logout"));
@@ -91,19 +91,27 @@ const closeModal = () => {
 };
 
 const startMission = () => {
-    if (!selectedMission.value || selectedMission.value.status === "completed") return;
+    if (!selectedMission.value || selectedMission.value.status === "completed")
+        return;
     const id = selectedMission.value.id;
     closeModal();
     setTimeout(() => router.visit(route("playground.missions.show", id)), 150);
 };
 
-const goToPosttest = () => router.visit(route("playground.posttest.show", props.module.id));
+const goToPosttest = () =>
+    router.visit(route("playground.posttest.show", props.module.id));
 
 const totalMissions = computed(() => props.missions?.length || 0);
-const completedMissions = computed(() => props.missions?.filter((m) => m.status === "completed").length || 0);
-const inProgressMissions = computed(() => props.missions?.filter((m) => m.status === "in_progress").length || 0);
+const completedMissions = computed(
+    () => props.missions?.filter((m) => m.status === "completed").length || 0,
+);
+const inProgressMissions = computed(
+    () => props.missions?.filter((m) => m.status === "in_progress").length || 0,
+);
 const progressPct = computed(() =>
-    totalMissions.value ? Math.round((completedMissions.value / totalMissions.value) * 100) : 0
+    totalMissions.value
+        ? Math.round((completedMissions.value / totalMissions.value) * 100)
+        : 0,
 );
 
 const ZIGZAG = [0, 60, 90, 60, 0, -60, -90, -60];
@@ -124,8 +132,8 @@ const modalAccent = computed(() => {
     return selectedMission.value.status === "completed"
         ? "#58cc02"
         : selectedMission.value.status === "in_progress"
-        ? "#ff9600"
-        : "#1cb0f6";
+          ? "#ff9600"
+          : "#1cb0f6";
 });
 </script>
 
@@ -133,7 +141,10 @@ const modalAccent = computed(() => {
     <div style="display: none">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
+            rel="stylesheet"
+        />
     </div>
 
     <div class="app" :class="{ ready }">
@@ -149,9 +160,16 @@ const modalAccent = computed(() => {
             <div class="dsk-sidebar-inner">
                 <div class="ds-brand">
                     <div class="ds-brand-icon">
-                        <Zap :size="18" color="#fff" fill="white" :stroke-width="2" />
+                        <Zap
+                            :size="18"
+                            color="#fff"
+                            fill="white"
+                            :stroke-width="2"
+                        />
                     </div>
-                    <span class="ds-brand-name">{{ $page.props.global_settings?.platform_name || "Geniuss" }}</span>
+                    <span class="ds-brand-name">{{
+                        $page.props.global_settings?.platform_name || "Geniuss"
+                    }}</span>
                 </div>
 
                 <div class="ds-sep"></div>
@@ -162,14 +180,21 @@ const modalAccent = computed(() => {
                     <span>Kembali</span>
                 </button>
 
-                <div class="ds-nav-btn ds-nav-active" style="pointer-events: none">
+                <div
+                    class="ds-nav-btn ds-nav-active"
+                    style="pointer-events: none"
+                >
                     <Target :size="17" :stroke-width="3" />
                     <span>MISI</span>
                 </div>
 
                 <div class="ds-spacer"></div>
 
-                <button class="ds-music-btn" :class="{ on: musicOn }" @click="toggleMusic(null)">
+                <button
+                    class="ds-music-btn"
+                    :class="{ on: musicOn }"
+                    @click="toggleMusic(null)"
+                >
                     <Music2 v-if="musicOn" :size="17" :stroke-width="3" />
                     <VolumeX v-else :size="17" :stroke-width="3" />
                     <span>MUSIK: {{ musicOn ? "ON" : "OFF" }}</span>
@@ -178,26 +203,46 @@ const modalAccent = computed(() => {
                 <div class="ds-sep"></div>
 
                 <div class="ds-user">
-                    <button class="ds-user-pill" :class="{ open: dropdownOpen }" @click="dropdownOpen = !dropdownOpen">
-                        <div class="ds-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
-                        <span class="ds-uname">{{ user.name.split(" ")[0] }}</span>
+                    <button
+                        class="ds-user-pill"
+                        :class="{ open: dropdownOpen }"
+                        @click="dropdownOpen = !dropdownOpen"
+                    >
+                        <div class="ds-avatar">
+                            {{ user.name.charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="ds-uname">{{
+                            user.name.split(" ")[0]
+                        }}</span>
                         <ChevronLeft
                             :size="14"
                             :stroke-width="3.5"
                             :style="{
                                 marginLeft: 'auto',
-                                transform: dropdownOpen ? 'rotate(90deg)' : 'rotate(-90deg)',
+                                transform: dropdownOpen
+                                    ? 'rotate(90deg)'
+                                    : 'rotate(-90deg)',
                                 transition: 'transform .2s',
                             }"
                         />
                     </button>
                     <Transition name="t-dropdown">
-                        <div v-if="dropdownOpen" class="ds-dropdown" @click.stop>
+                        <div
+                            v-if="dropdownOpen"
+                            class="ds-dropdown"
+                            @click.stop
+                        >
                             <div class="ds-dd-profile">
-                                <div class="ds-avatar ds-avatar-lg">{{ user.name.charAt(0).toUpperCase() }}</div>
+                                <div class="ds-avatar ds-avatar-lg">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
                                 <div>
-                                    <div class="ds-dd-name">{{ user.name }}</div>
-                                    <div class="ds-dd-class">Kelas {{ user.class?.name || "-" }}</div>
+                                    <div class="ds-dd-name">
+                                        {{ user.name }}
+                                    </div>
+                                    <div class="ds-dd-class">
+                                        Kelas {{ user.class }}
+                                    </div>
                                 </div>
                             </div>
                             <div class="ds-dd-sep"></div>
@@ -219,7 +264,10 @@ const modalAccent = computed(() => {
                     <span class="mob-topbar-title">{{ module.name }}</span>
                     <div class="mob-mini-progress">
                         <div class="mob-mini-track">
-                            <div class="mob-mini-fill" :style="{ width: progressPct + '%' }"></div>
+                            <div
+                                class="mob-mini-fill"
+                                :style="{ width: progressPct + '%' }"
+                            ></div>
                         </div>
                         <span class="mob-mini-pct">{{ progressPct }}%</span>
                     </div>
@@ -240,32 +288,50 @@ const modalAccent = computed(() => {
                         <p class="unit-desc">{{ module.description }}</p>
                     </div>
                     <div class="unit-banner-right">
-                        <BookOpen :size="48" color="#ffffff" :stroke-width="1.5" />
+                        <BookOpen
+                            :size="48"
+                            color="#ffffff"
+                            :stroke-width="1.5"
+                        />
                     </div>
                 </div>
 
                 <Transition name="t-pop">
                     <div v-if="all_missions_done" class="done-banner">
                         <div class="done-icon-wrap">
-                            <Trophy :size="24" color="#16a34a" :stroke-width="2.5" />
+                            <Trophy
+                                :size="24"
+                                color="#16a34a"
+                                :stroke-width="2.5"
+                            />
                         </div>
                         <div class="done-text">
                             <strong>Semua misi selesai!</strong>
                             <span>Kamu siap untuk posttest.</span>
                         </div>
-                        <button class="done-btn" @click="goToPosttest">MULAI POSTTEST</button>
+                        <button class="done-btn" @click="goToPosttest">
+                            MULAI POSTTEST
+                        </button>
                     </div>
                 </Transition>
 
                 <div class="mission-path">
-                    <template v-for="(mission, i) in missions" :key="mission.id">
+                    <template
+                        v-for="(mission, i) in missions"
+                        :key="mission.id"
+                    >
                         <div class="stage-wrapper">
-                            <div class="stage-row" :style="{ '--offset': getOffset(i) + 'px' }">
+                            <div
+                                class="stage-row"
+                                :style="{ '--offset': getOffset(i) + 'px' }"
+                            >
                                 <div
                                     v-if="
                                         !isMissionLocked(i) &&
                                         mission.status !== 'completed' &&
-                                        (i === 0 || missions[i - 1].status === 'completed')
+                                        (i === 0 ||
+                                            missions[i - 1].status ===
+                                                'completed')
                                     "
                                     class="start-tooltip"
                                     :style="{ color: getColor(i).bg }"
@@ -277,20 +343,50 @@ const modalAccent = computed(() => {
                                 <button
                                     class="stage-btn"
                                     :class="{
-                                        'st-completed': mission.status === 'completed',
+                                        'st-completed':
+                                            mission.status === 'completed',
                                         'st-locked': isMissionLocked(i),
-                                        'st-current': !isMissionLocked(i) && mission.status !== 'completed',
+                                        'st-current':
+                                            !isMissionLocked(i) &&
+                                            mission.status !== 'completed',
                                     }"
-                                    :style="isMissionLocked(i) ? {} : { '--c': getColor(i).bg, '--s': getColor(i).sh }"
+                                    :style="
+                                        isMissionLocked(i)
+                                            ? {}
+                                            : {
+                                                  '--c': getColor(i).bg,
+                                                  '--s': getColor(i).sh,
+                                              }
+                                    "
                                     :disabled="isMissionLocked(i)"
                                     @click="openModal(mission, i)"
                                 >
-                                    <Check v-if="mission.status === 'completed'" :size="42" color="white" :stroke-width="3" />
-                                    <span v-else-if="!isMissionLocked(i)" class="stage-num">{{ i + 1 }}</span>
-                                    <Lock v-else :size="28" color="#cbd5e1" :stroke-width="3" />
+                                    <Check
+                                        v-if="mission.status === 'completed'"
+                                        :size="42"
+                                        color="white"
+                                        :stroke-width="3"
+                                    />
+                                    <span
+                                        v-else-if="!isMissionLocked(i)"
+                                        class="stage-num"
+                                        >{{ i + 1 }}</span
+                                    >
+                                    <Lock
+                                        v-else
+                                        :size="28"
+                                        color="#cbd5e1"
+                                        :stroke-width="3"
+                                    />
                                 </button>
 
-                                <div class="stage-label" :class="{ 'stage-label-locked': isMissionLocked(i) }">
+                                <div
+                                    class="stage-label"
+                                    :class="{
+                                        'stage-label-locked':
+                                            isMissionLocked(i),
+                                    }"
+                                >
                                     {{ mission.name }}
                                 </div>
                             </div>
@@ -298,17 +394,42 @@ const modalAccent = computed(() => {
                             <div
                                 v-if="i < missions.length - 1"
                                 class="connector"
-                                :style="{ '--off-a': getOffset(i) + 'px', '--off-b': getOffset(i + 1) + 'px' }"
+                                :style="{
+                                    '--off-a': getOffset(i) + 'px',
+                                    '--off-b': getOffset(i + 1) + 'px',
+                                }"
                             >
-                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
-                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
-                                <div class="conn-dot" :class="{ 'conn-done': mission.status === 'completed' }"></div>
+                                <div
+                                    class="conn-dot"
+                                    :class="{
+                                        'conn-done':
+                                            mission.status === 'completed',
+                                    }"
+                                ></div>
+                                <div
+                                    class="conn-dot"
+                                    :class="{
+                                        'conn-done':
+                                            mission.status === 'completed',
+                                    }"
+                                ></div>
+                                <div
+                                    class="conn-dot"
+                                    :class="{
+                                        'conn-done':
+                                            mission.status === 'completed',
+                                    }"
+                                ></div>
                             </div>
                         </div>
                     </template>
 
                     <div v-if="missions.length === 0" class="empty-state">
-                        <BookOpen :size="48" color="#cbd5e1" :stroke-width="2" />
+                        <BookOpen
+                            :size="48"
+                            color="#cbd5e1"
+                            :stroke-width="2"
+                        />
                         <h3>Belum ada misi</h3>
                         <p>Misi akan segera ditambahkan oleh gurumu.</p>
                     </div>
@@ -326,25 +447,47 @@ const modalAccent = computed(() => {
                     <Target :size="22" :stroke-width="2.5" />
                     <span>Misi</span>
                 </button>
-                <button class="mob-nav-item" :class="{ 'mob-nav-music': musicOn }" @click="toggleMusic(null)">
+                <button
+                    class="mob-nav-item"
+                    :class="{ 'mob-nav-music': musicOn }"
+                    @click="toggleMusic(null)"
+                >
                     <Music2 v-if="musicOn" :size="22" :stroke-width="2.5" />
                     <VolumeX v-else :size="22" :stroke-width="2.5" />
                     <span>Musik</span>
                 </button>
-                <button class="mob-nav-item" @click="dropdownOpen = !dropdownOpen">
-                    <div class="mob-nav-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                <button
+                    class="mob-nav-item"
+                    @click="dropdownOpen = !dropdownOpen"
+                >
+                    <div class="mob-nav-avatar">
+                        {{ user.name.charAt(0).toUpperCase() }}
+                    </div>
                     <span>Profil</span>
                 </button>
 
                 <Transition name="t-sheet">
-                    <div v-if="dropdownOpen" class="mob-sheet-overlay" @click.self="dropdownOpen = false">
+                    <div
+                        v-if="dropdownOpen"
+                        class="mob-sheet-overlay"
+                        @click.self="dropdownOpen = false"
+                    >
                         <div class="mob-sheet">
                             <div class="mob-sheet-handle"></div>
-                            <div class="ds-dd-profile" style="padding: 16px 20px">
-                                <div class="ds-avatar ds-avatar-lg">{{ user.name.charAt(0).toUpperCase() }}</div>
+                            <div
+                                class="ds-dd-profile"
+                                style="padding: 16px 20px"
+                            >
+                                <div class="ds-avatar ds-avatar-lg">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
                                 <div>
-                                    <div class="ds-dd-name">{{ user.name }}</div>
-                                    <div class="ds-dd-class">Kelas {{ user.class?.name || "-" }}</div>
+                                    <div class="ds-dd-name">
+                                        {{ user.name }}
+                                    </div>
+                                    <div class="ds-dd-class">
+                                        Kelas {{ user.class?.name || "-" }}
+                                    </div>
                                 </div>
                             </div>
                             <div class="ds-dd-sep"></div>
@@ -360,10 +503,15 @@ const modalAccent = computed(() => {
         <aside class="dsk-sidebar-right">
             <div class="dsk-sidebar-inner">
                 <div class="rs-card">
-                    <p class="rs-card-title"><Target :size="14" :stroke-width="3" /> PROGRESS MISI</p>
+                    <p class="rs-card-title">
+                        <Target :size="14" :stroke-width="3" /> PROGRESS MISI
+                    </p>
                     <div class="rs-prog-row">
                         <div class="prog-track">
-                            <div class="prog-fill" :style="{ width: progressPct + '%' }">
+                            <div
+                                class="prog-fill"
+                                :style="{ width: progressPct + '%' }"
+                            >
                                 <div class="prog-shine"></div>
                             </div>
                         </div>
@@ -375,28 +523,33 @@ const modalAccent = computed(() => {
                     <div class="rs-stat chip-blue">
                         <Zap :size="18" fill="currentColor" :stroke-width="0" />
                         <div>
-                            <span class="rs-val">{{ totalMissions }}</span><span class="rs-lbl">Total Misi</span>
+                            <span class="rs-val">{{ totalMissions }}</span
+                            ><span class="rs-lbl">Total Misi</span>
                         </div>
                     </div>
                     <div class="rs-stat chip-orange">
                         <FlameKindling :size="18" :stroke-width="3" />
                         <div>
-                            <span class="rs-val">{{ inProgressMissions }}</span><span class="rs-lbl">Dikerjakan</span>
+                            <span class="rs-val">{{ inProgressMissions }}</span
+                            ><span class="rs-lbl">Dikerjakan</span>
                         </div>
                     </div>
                     <div class="rs-stat chip-green">
                         <Award :size="18" :stroke-width="3" />
                         <div>
-                            <span class="rs-val">{{ completedMissions }}</span><span class="rs-lbl">Selesai</span>
+                            <span class="rs-val">{{ completedMissions }}</span
+                            ><span class="rs-lbl">Selesai</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="rs-card rs-class-card" style="margin-top: auto">
-                    <div class="rs-class-icon"><GraduationCap :size="18" :stroke-width="2.5" /></div>
+                    <div class="rs-class-icon">
+                        <GraduationCap :size="18" :stroke-width="2.5" />
+                    </div>
                     <div>
                         <p class="rs-class-lbl">KELAS SAYA</p>
-                        <p class="rs-class-val">{{ user.class?.name || "-" }}</p>
+                        <p class="rs-class-val">{{ user.class || "-" }}</p>
                     </div>
                 </div>
             </div>
@@ -404,47 +557,75 @@ const modalAccent = computed(() => {
     </div>
 
     <Teleport to="body">
-        <div v-if="showModal" class="modal-overlay" :class="{ 'modal-overlay-visible': modalVisible }" @click.self="closeModal">
-            <div class="modal-card" :class="{ 'modal-card-visible': modalVisible }">
-                <div class="modal-strip" :style="{ background: modalAccent }"></div>
+        <div
+            v-if="showModal"
+            class="modal-overlay"
+            :class="{ 'modal-overlay-visible': modalVisible }"
+            @click.self="closeModal"
+        >
+            <div
+                class="modal-card"
+                :class="{ 'modal-card-visible': modalVisible }"
+            >
+                <div
+                    class="modal-strip"
+                    :style="{ background: modalAccent }"
+                ></div>
                 <div class="modal-hdr">
                     <span
                         class="modal-badge"
                         :class="{
-                            'mbadge-done': selectedMission?.status === 'completed',
-                            'mbadge-prog': selectedMission?.status === 'in_progress',
-                            'mbadge-new': selectedMission?.status === 'not_started' || !selectedMission?.status,
+                            'mbadge-done':
+                                selectedMission?.status === 'completed',
+                            'mbadge-prog':
+                                selectedMission?.status === 'in_progress',
+                            'mbadge-new':
+                                selectedMission?.status === 'not_started' ||
+                                !selectedMission?.status,
                         }"
                     >
                         {{
                             selectedMission?.status === "completed"
                                 ? "✓ Selesai"
                                 : selectedMission?.status === "in_progress"
-                                ? "▶ Lanjutkan"
-                                : "★ Mulai"
+                                  ? "▶ Lanjutkan"
+                                  : "★ Mulai"
                         }}
                     </span>
-                    <button class="modal-close-btn" @click="closeModal">✕</button>
+                    <button class="modal-close-btn" @click="closeModal">
+                        ✕
+                    </button>
                 </div>
                 <h2 class="modal-title">{{ selectedMission?.name }}</h2>
                 <p class="modal-desc">
-                    {{ selectedMission?.description || "Selesaikan misi ini untuk melanjutkan perjalanan belajarmu!" }}
+                    {{
+                        selectedMission?.description ||
+                        "Selesaikan misi ini untuk melanjutkan perjalanan belajarmu!"
+                    }}
                 </p>
 
                 <div class="modal-stats">
                     <div class="mstat">
-                        <span class="mstat-val">{{ selectedMission?.total_questions || "-" }}</span>
+                        <span class="mstat-val">{{
+                            selectedMission?.total_questions || "-"
+                        }}</span>
                         <span class="mstat-lbl">Soal</span>
                     </div>
                     <div class="mstat-sep"></div>
                     <div class="mstat">
-                        <span class="mstat-val">{{ selectedMission?.best_score ?? "0" }}</span>
+                        <span class="mstat-val">{{
+                            selectedMission?.best_score ?? "0"
+                        }}</span>
                         <span class="mstat-lbl">Skor Terbaik</span>
                     </div>
                     <div class="mstat-sep"></div>
                     <div class="mstat">
                         <span class="mstat-val"
-                            ><Star :size="18" fill="#fbbf24" color="#fbbf24" :stroke-width="0"
+                            ><Star
+                                :size="18"
+                                fill="#fbbf24"
+                                color="#fbbf24"
+                                :stroke-width="0"
                         /></span>
                         <span class="mstat-lbl">Reward</span>
                     </div>
@@ -453,7 +634,9 @@ const modalAccent = computed(() => {
                 <button
                     class="modal-cta"
                     :class="{
-                        'mcta-new': selectedMission?.status === 'not_started' || !selectedMission?.status,
+                        'mcta-new':
+                            selectedMission?.status === 'not_started' ||
+                            !selectedMission?.status,
                         'mcta-prog': selectedMission?.status === 'in_progress',
                         'mcta-done': selectedMission?.status === 'completed',
                     }"
@@ -464,8 +647,8 @@ const modalAccent = computed(() => {
                         selectedMission?.status === "completed"
                             ? "✓ SUDAH SELESAI"
                             : selectedMission?.status === "in_progress"
-                            ? "LANJUTKAN MISI"
-                            : "MULAI MISI"
+                              ? "LANJUTKAN MISI"
+                              : "MULAI MISI"
                     }}
                 </button>
             </div>
@@ -984,7 +1167,7 @@ const modalAccent = computed(() => {
     position: relative;
     width: 90px;
     height: 90px;
-    border-radius: 24px; /* <--- Tidak lagi lingkaran penuh, melainkan kotak membulat */
+    border-radius: 100px; /* <--- Tidak lagi lingkaran penuh, melainkan kotak membulat */
     border: none;
     cursor: pointer;
     background: var(--c, #e2e8f0);
@@ -1015,7 +1198,8 @@ const modalAccent = computed(() => {
     animation: none;
 }
 @keyframes bounce-stage {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
