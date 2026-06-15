@@ -1,16 +1,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { Check, Info } from 'lucide-vue-next';
 
 const props = defineProps({
-    quiz: {
-        type: Object,
-        required: true,
-    },
+    quiz: { type: Object, required: true },
 });
-
-// quiz.items berisi array dari perbandingan.
-// Karena struktur data kita sekarang dinamis:
-// quiz.items = [ { id, explanation, items: [ { toggle_name, label, narration, image } ] } ]
 
 const activeGroupIndex = ref(0);
 const activeGroup = computed(() => {
@@ -18,14 +12,12 @@ const activeGroup = computed(() => {
     return props.quiz.items[activeGroupIndex.value];
 });
 
-// State untuk mengatur item mana yang sedang aktif (diklik/ditoggle)
 const activeItemIndex = ref(0);
 const activeItem = computed(() => {
     if (!activeGroup.value?.items || activeGroup.value.items.length === 0) return null;
     return activeGroup.value.items[activeItemIndex.value] || activeGroup.value.items[0];
 });
 
-// Reset active item ketika group berubah
 watch(activeGroupIndex, () => {
     activeItemIndex.value = 0;
 });
@@ -33,123 +25,293 @@ watch(activeGroupIndex, () => {
 const setActiveItem = (index) => {
     activeItemIndex.value = index;
 };
-
-// Gambar maskot default
-const mascotImg = "/images/templates/pose_nunjuk.png";
-
 </script>
 
 <template>
-    <div class="comparisons-container w-full h-full flex flex-col p-4 md:p-8" v-if="activeGroup">
+    <div class="cmp-wrap" v-if="activeGroup">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h2 class="text-2xl md:text-4xl font-heading font-black text-green-800 drop-shadow-sm uppercase tracking-wide">
-                {{ quiz.title || 'OBSERVASI PERBANDINGAN' }}
-            </h2>
-            <p v-if="activeGroup.explanation" class="text-gray-600 mt-2 max-w-3xl mx-auto font-medium">
-                {{ activeGroup.explanation }}
-            </p>
+        <div class="cmp-header">
+            <h2 class="cmp-title">{{ quiz.title || 'Observasi Perbandingan' }}</h2>
+            <p v-if="activeGroup.explanation" class="cmp-desc">{{ activeGroup.explanation }}</p>
         </div>
 
-        <!-- Images Grid (munculkan dari kiri ke kanan) -->
-        <div class="flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full">
+        <!-- Image Cards Grid -->
+        <div class="cmp-grid">
             <div 
-                class="grid gap-6 items-end justify-center mb-8 w-full"
-                :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(280px, 1fr))` }"
+                v-for="(item, idx) in activeGroup.items" 
+                :key="idx"
+                class="cmp-card"
+                :class="{ 'cmp-card-active': activeItemIndex === idx }"
+                @click="setActiveItem(idx)"
             >
-                <div 
-                    v-for="(item, idx) in activeGroup.items" 
-                    :key="idx"
-                    class="comparison-item cursor-pointer transition-all duration-300 transform"
-                    :class="{ 
-                        'scale-105 ring-4 ring-green-400 shadow-xl': activeItemIndex === idx,
-                        'opacity-70 hover:opacity-100 hover:scale-100 shadow-md': activeItemIndex !== idx 
-                    }"
-                    @click="setActiveItem(idx)"
-                >
-                    <h3 class="text-center font-bold text-gray-800 text-lg md:text-xl mb-3">
-                        {{ item.label || `Opsi ${idx + 1}` }}
-                    </h3>
-                    <div class="relative rounded-2xl overflow-hidden border-4 border-white bg-white">
-                        <img 
-                            :src="item.image ? `/storage/${item.image}` : '/images/placeholder.jpg'" 
-                            :alt="item.label"
-                            class="w-full h-48 md:h-64 object-cover object-center"
-                        />
-                        <!-- Active Indicator -->
-                        <div v-if="activeItemIndex === idx" class="absolute top-2 right-2 bg-green-500 text-white p-1.5 rounded-full shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
+                <div class="cmp-img-wrap">
+                    <img :src="item.image ? `/storage/${item.image}` : '/images/placeholder.jpg'" :alt="item.label" class="cmp-img" />
+                    <!-- Active Indicator Badge -->
+                    <div v-if="activeItemIndex === idx" class="cmp-active-badge">
+                        <Check :size="16" :stroke-width="3.5" color="#fff" />
                     </div>
                 </div>
+                <h3 class="cmp-card-label" :class="{ 'cmp-card-label-active': activeItemIndex === idx }">
+                    {{ item.label || `Opsi ${idx + 1}` }}
+                </h3>
+            </div>
+        </div>
+
+        <!-- Narration & Toggles Area -->
+        <div class="cmp-bottom-area">
+            <!-- Narration Bubble -->
+            <div class="cmp-narration">
+                <div class="cmp-narration-icon">
+                    <Info :size="20" color="#1cb0f6" :stroke-width="2.5" />
+                </div>
+                <p class="cmp-narration-text">
+                    {{ activeItem?.narration || 'Pilih salah satu gambar untuk melihat penjelasan detailnya.' }}
+                </p>
             </div>
 
-            <!-- Bottom Section: Mascot Narration & Toggles -->
-            <div class="flex flex-col md:flex-row items-end justify-between gap-6 mt-auto bg-white/60 p-4 md:p-6 rounded-3xl backdrop-blur-sm border-2 border-white/50 shadow-sm w-full">
-                
-                <!-- Mascot & Narration Bubble -->
-                <div class="flex items-end gap-4 w-full md:w-2/3">
-                    <img :src="mascotImg" class="w-24 md:w-32 object-contain drop-shadow-md z-10" alt="Mascot" />
-                    <div class="narration-bubble flex-1 bg-white border-2 border-blue-200 rounded-3xl rounded-bl-none p-4 md:p-6 shadow-md relative min-h-[100px] flex items-center">
-                        <!-- Tail -->
-                        <div class="absolute -left-3 bottom-0 w-6 h-6 bg-white border-l-2 border-b-2 border-blue-200 transform rotate-45 translate-y-1/2"></div>
-                        
-                        <p class="text-gray-700 font-medium text-sm md:text-base leading-relaxed">
-                            {{ activeItem?.narration || 'Pilih salah satu gambar untuk melihat penjelasan detailnya.' }}
-                        </p>
+            <!-- Toggles List -->
+            <div class="cmp-toggles">
+                <button 
+                    v-for="(item, idx) in activeGroup.items" 
+                    :key="'toggle-'+idx"
+                    class="cmp-toggle-btn"
+                    :class="{ 'cmp-toggle-btn-active': activeItemIndex === idx }"
+                    @click="setActiveItem(idx)"
+                >
+                    <span class="cmp-toggle-text">{{ item.toggle_name || `Tampilan ${idx + 1}` }}</span>
+                    <div class="cmp-toggle-switch" :class="{ 'cmp-toggle-switch-on': activeItemIndex === idx }">
+                        <div class="cmp-toggle-thumb" :class="{ 'cmp-toggle-thumb-on': activeItemIndex === idx }"></div>
                     </div>
-                </div>
-
-                <!-- Toggles / Buttons -->
-                <div class="flex flex-col gap-3 w-full md:w-auto min-w-[250px]">
-                    <button 
-                        v-for="(item, idx) in activeGroup.items" 
-                        :key="'toggle-'+idx"
-                        @click="setActiveItem(idx)"
-                        class="toggle-btn w-full flex items-center justify-between px-5 py-3 rounded-full border-2 transition-all font-bold shadow-sm"
-                        :class="[
-                            activeItemIndex === idx 
-                                ? 'bg-white border-green-500 text-green-700' 
-                                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-white hover:border-green-300'
-                        ]"
-                    >
-                        <span class="truncate pr-2">{{ item.toggle_name || `Tampilan ${idx + 1}` }}</span>
-                        
-                        <!-- Custom Toggle Switch Icon -->
-                        <div 
-                            class="w-12 h-6 rounded-full p-1 flex items-center transition-colors duration-300 relative"
-                            :class="activeItemIndex === idx ? 'bg-green-500' : 'bg-gray-300'"
-                        >
-                            <div 
-                                class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300"
-                                :class="activeItemIndex === idx ? 'translate-x-6' : 'translate-x-0'"
-                            ></div>
-                        </div>
-                    </button>
-                </div>
+                </button>
             </div>
         </div>
     </div>
     
-    <div v-else class="w-full h-full flex items-center justify-center">
-        <p class="text-gray-500 font-bold text-xl">Data perbandingan belum tersedia.</p>
+    <div v-else class="cmp-empty">
+        <p>Data perbandingan belum tersedia.</p>
     </div>
 </template>
 
 <style scoped>
-.comparison-item {
-    border-radius: 1rem;
+.cmp-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
-.narration-bubble {
-    animation: fadeIn 0.3s ease-out;
+
+/* Header */
+.cmp-header {
+    text-align: center;
+    margin-bottom: 8px;
 }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.cmp-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #58cc02;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
-.toggle-btn:active {
-    transform: scale(0.98);
+.cmp-desc {
+    font-size: 15px;
+    font-weight: 700;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Cards Grid */
+.cmp-grid {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.cmp-card {
+    flex: 1;
+    min-width: 240px;
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    border-bottom-width: 5px;
+    border-radius: 20px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.cmp-card:hover {
+    transform: translateY(-2px);
+    border-color: #58cc02;
+}
+.cmp-card:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+.cmp-card-active {
+    border-color: #58cc02;
+    background: #f0fdf4;
+}
+
+.cmp-img-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: #f1f5f9;
+}
+.cmp-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.cmp-active-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #58cc02;
+    border: 2.5px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(88,204,2,0.4);
+    animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes bounceIn {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+.cmp-card-label {
+    font-size: 16px;
+    font-weight: 800;
+    color: #475569;
+    text-align: center;
+}
+.cmp-card-label-active {
+    color: #58cc02;
+}
+
+/* Bottom Area */
+.cmp-bottom-area {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+/* Narration */
+.cmp-narration {
+    flex: 1;
+    min-width: 280px;
+    background: #f0f9ff;
+    border: 2px solid #bae6fd;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.cmp-narration-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 0 #bae6fd;
+    flex-shrink: 0;
+}
+.cmp-narration-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0369a1;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+/* Toggles */
+.cmp-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 240px;
+    flex-shrink: 0;
+}
+.cmp-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    border-bottom-width: 4px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.cmp-toggle-btn:hover {
+    background: #f8fafc;
+    border-color: #58cc02;
+}
+.cmp-toggle-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+.cmp-toggle-btn-active {
+    border-color: #58cc02;
+    background: #f0fdf4;
+}
+.cmp-toggle-text {
+    font-size: 15px;
+    font-weight: 800;
+    color: #64748b;
+}
+.cmp-toggle-btn-active .cmp-toggle-text {
+    color: #58cc02;
+}
+.cmp-toggle-switch {
+    width: 44px;
+    height: 24px;
+    border-radius: 99px;
+    background: #e2e8f0;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    transition: background 0.3s;
+}
+.cmp-toggle-switch-on {
+    background: #58cc02;
+}
+.cmp-toggle-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cmp-toggle-thumb-on {
+    transform: translateX(20px);
+}
+
+.cmp-empty {
+    text-align: center;
+    color: #94a3b8;
+    font-weight: 800;
+    padding: 40px;
+    font-size: 16px;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .cmp-card { min-width: 100%; }
+    .cmp-bottom-area { flex-direction: column; }
+    .cmp-toggles { min-width: 100%; }
 }
 </style>

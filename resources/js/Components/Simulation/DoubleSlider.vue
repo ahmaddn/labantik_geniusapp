@@ -1,270 +1,129 @@
 <script setup>
 import { ref, computed, watch, onMounted, reactive } from "vue";
-import SimulationEffects from "./SimulationEffects.vue";
+import SimulationEffects from "@/Components/Simulation/SimulationEffects.vue";
+import { AlertCircle, CheckCircle2, MessageCircle, AlertTriangle, Image as ImageIcon } from "lucide-vue-next";
 
 const props = defineProps({
     quiz: Object,
     modelValue: [String, Number, Array],
 });
+const emit = defineEmits(['update-answer']);
 
-const emit = defineEmits(["update-answer"]);
-
-// Derived from config
-const title = computed(() => props.quiz?.title || "Simulasi Interaktif");
+const title = computed(() => props.quiz?.title || 'Simulasi Interaktif');
 const variables = computed(() => props.quiz?.variables || []);
 const levels = computed(() => props.quiz?.levels || []);
 
-// State
 const sliderValues = reactive({});
+variables.value.forEach((v, idx) => { sliderValues[idx] = 1; });
 
-watch(
-  variables,
-  (newVars) => {
-    if (newVars) {
-      newVars.forEach((v, idx) => {
-        if (sliderValues[idx] === undefined) {
-          sliderValues[idx] = 1;
-        }
-      });
-    }
-  },
-  { immediate: true, deep: true }
-);
-
-// Calculate "dangerScore" generically based on sum of sliders
 const dangerScore = computed(() => {
-    let sum = 0;
-    for (let key in sliderValues) {
-        sum += sliderValues[key];
-    }
-    return sum;
+    let s = 0;
+    for (let k in sliderValues) s += sliderValues[k];
+    return s;
 });
 
-// Map dangerScore to level index
 const currentLevelData = computed(() => {
-    if (levels.value.length === 0) return null;
-
-    // We map the sum to the index proportionally
-    const maxPossibleScore = variables.value.length * 3;
-    const minPossibleScore = variables.value.length * 1;
-
-    // If there are no variables, just show first level
-    if (maxPossibleScore === 0) return levels.value[0];
-
-    // Normalize score between 0 and 1
-    let normalized =
-        (dangerScore.value - minPossibleScore) /
-        (maxPossibleScore - minPossibleScore || 1);
-
-    // Map to array index
-    let maxIndex = levels.value.length - 1;
-    let index = Math.round(normalized * maxIndex);
-
-    return levels.value[index];
+    if (!levels.value.length) return null;
+    const max = variables.value.length * 3;
+    const min = variables.value.length * 1;
+    if (max === 0) return levels.value[0];
+    const norm = (dangerScore.value - min) / (max - min || 1);
+    return levels.value[Math.round(norm * (levels.value.length - 1))];
 });
 
-// Calculate status for UI generically
-const isDanger = computed(() => {
-    return currentLevelData.value?.status === 'bahaya';
-});
-
+const isDanger = computed(() => dangerScore.value >= Math.floor(variables.value.length * 3 * 0.8));
 const isWarning = computed(() => {
-    return currentLevelData.value?.status === 'waspada';
+    const max = variables.value.length * 3;
+    const mid = Math.floor((max + variables.value.length) / 2);
+    return dangerScore.value >= mid && dangerScore.value < Math.floor(max * 0.8);
 });
 
-// UI Styling
-const statusColor = computed(() => {
-    if (isDanger.value) return "text-red-600";
-    if (isWarning.value) return "text-yellow-600";
-    return "text-green-600";
-});
-const statusBg = computed(() => {
-    if (isDanger.value) return "bg-red-100 border-red-300";
-    if (isWarning.value) return "bg-yellow-100 border-yellow-300";
-    return "bg-green-100 border-green-300";
-});
-const statusText = computed(() => {
-    if (isDanger.value) return "BAHAYA";
-    if (isWarning.value) return "WASPADA";
-    return "AMAN / NORMAL";
-});
+const statusColor = computed(() => isDanger.value ? '#ef4444' : isWarning.value ? '#eab308' : '#58cc02');
+const statusBg = computed(() => isDanger.value ? '#fef2f2' : isWarning.value ? '#fefce8' : '#f0fdf4');
+const statusBorder = computed(() => isDanger.value ? '#fca5a5' : isWarning.value ? '#fde047' : '#86efac');
+const statusLabel = computed(() => isDanger.value ? 'BAHAYA' : isWarning.value ? 'WASPADA' : 'AMAN');
+const levelImage = computed(() => currentLevelData.value?.image ? `/storage/${currentLevelData.value.image}` : null);
+const levelNarration = computed(() => currentLevelData.value?.narration || 'Ayo ubah penggeser untuk melihat dampaknya!');
 
-const levelImage = computed(() => {
-    return currentLevelData.value?.image
-        ? `/storage/${currentLevelData.value.image}`
-        : null;
-});
+const sliderColor = (idx) => (['#1cb0f6', '#58cc02', '#f97316', '#a855f7'][idx % 4]);
+const sliderTrackColor = (idx) => (['#bae6fd', '#bbf7d0', '#fdba74', '#e9d5ff'][idx % 4]);
 
-const levelNarration = computed(() => {
-    return (
-        currentLevelData.value?.narration ||
-        "Ayo ubah penggeser di bawah untuk melihat perbedaan dampaknya!"
-    );
-});
-
-const effectTranslations = {
-    'none': '',
-    'rain_light': 'Gerimis',
-    'rain_heavy': 'Hujan Deras',
-    'snow': 'Salju',
-    'bubbles': 'Gelembung Air',
-    'fire_sparks': 'Percikan Api',
-    'wind_leaves': 'Daun Berterbangan',
-    'dust': 'Debu / Polusi',
-    'sunbeams': 'Cerah',
-    'earthquake': 'Gempa'
-};
-
-const translatedEffect = computed(() => {
-    const effect = currentLevelData.value?.animation_effect;
-    if (!effect || effect === 'none') return '';
-    return effectTranslations[effect] || effect;
-});
-
-// Update Answer
 watch(sliderValues, () => {
-    let valString = Object.values(sliderValues).join("-");
-    emit("update-answer", { value: valString });
+    emit('update-answer', { value: Object.values(sliderValues).join('-') });
 });
-
 onMounted(() => {
-    let valString = Object.values(sliderValues).join("-");
-    emit("update-answer", { value: valString });
+    emit('update-answer', { value: Object.values(sliderValues).join('-') });
 });
 </script>
 
 <template>
-    <div
-        class="double-slider-container w-full max-w-4xl mx-auto p-4 md:p-8 bg-white/90 backdrop-blur rounded-3xl border-4 border-white/50 shadow-xl overflow-hidden flex flex-col gap-6"
-    >
-        <h2
-            class="text-2xl md:text-3xl font-extrabold text-center text-slate-800 drop-shadow-sm mb-2"
-        >
-            {{ title }}
-        </h2>
+    <div class="ds-wrap">
+        <!-- Title -->
+        <h2 class="ds-title">{{ title }}</h2>
 
-        <!-- Main Display Area -->
-        <div class="main-display flex flex-col md:flex-row gap-6">
-            <!-- Visual Representation -->
-            <div
-                class="visual-box flex-1 relative rounded-2xl overflow-hidden border-4 border-slate-200 shadow-inner bg-slate-100 min-h-[300px] flex items-center justify-center transition-all duration-500"
-                :class="{ 
-                    'animate-pulse border-red-400': isDanger,
-                    'animate-shake': currentLevelData?.animation_effect === 'earthquake'
-                }"
-            >
-                <!-- Image or placeholder -->
-                <img
-                    v-if="levelImage"
-                    :src="levelImage"
-                    class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0 z-10"
-                />
-                <div
-                    v-else
-                    class="text-slate-400 font-bold z-10 text-center p-4"
-                >
-                    Gambar Simulasi<br />(Pilih Level)
+        <!-- Main Area: Visual + Narration -->
+        <div class="ds-main">
+            <!-- Visual box -->
+            <div class="ds-visual" :class="{ 'ds-visual-danger': isDanger, 'ds-quake': currentLevelData?.animation_effect === 'earthquake' }">
+                <img v-if="levelImage" :src="levelImage" class="ds-visual-img" />
+                <div v-else class="ds-visual-placeholder">
+                    <ImageIcon :size="48" color="#cbd5e1" :stroke-width="1.5" />
+                    <span>Gambar Belum Tersedia</span>
                 </div>
 
-                <!-- Dynamic Effects Overlay -->
-                <SimulationEffects :effect="currentLevelData?.animation_effect" />
+                <SimulationEffects :effect="currentLevelData?.animation_effect || 'none'" />
 
-                <!-- Status Badge Overlay -->
-                <div
-                    class="absolute top-4 right-4 z-30 px-4 py-2 rounded-xl font-bold border-2 shadow-lg backdrop-blur-md"
-                    :class="statusBg + ' ' + statusColor"
-                >
-                    <span :class="statusColor">
-                        {{ statusText }}
-                        <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
-                    </span>
+                <!-- Status badge -->
+                <div class="ds-status-badge" :style="{ background: statusBg, borderColor: statusBorder, color: statusColor }">
+                    <AlertTriangle v-if="isDanger" :size="16" :stroke-width="3" />
+                    <AlertCircle v-else-if="isWarning" :size="16" :stroke-width="3" />
+                    <CheckCircle2 v-else :size="16" :stroke-width="3" />
+                    {{ statusLabel }}
                 </div>
             </div>
 
-            <!-- Narration Box -->
-            <div
-                class="narration-box w-full md:w-1/3 bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center"
-            >
-                <div
-                    class="w-20 h-20 bg-blue-100 rounded-full mb-4 flex items-center justify-center text-blue-500 text-4xl shadow-inner relative"
-                >
-                    💡
-                    <div
-                        v-if="isDanger"
-                        class="absolute -top-2 -right-2 text-3xl animate-bounce"
-                    ></div>
+            <!-- Narration panel -->
+            <div class="ds-narration">
+                <div class="ds-narration-badge">
+                    <MessageCircle :size="24" color="#1cb0f6" :stroke-width="2.5" />
                 </div>
-                <p class="text-slate-700 font-bold text-lg italic mb-2">
-                    "{{ currentLevelData?.level_name || "Amati Perubahan" }}"
-                </p>
-                <p class="text-slate-600 font-medium leading-relaxed">
-                    {{ levelNarration }}
-                </p>
-                <!-- Dynamic Metric Value Instead of Water Debit -->
-                <div
-                    v-if="currentLevelData?.metric_value"
-                    class="mt-4 inline-block px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-full border border-blue-200 text-sm"
-                >
-                    {{ currentLevelData.metric_value }}
-                </div>
+                <p class="ds-level-name" v-if="currentLevelData">"{{ currentLevelData.level_name || 'Amati Perubahan' }}"</p>
+                <p class="ds-level-narration">{{ levelNarration }}</p>
+                <div v-if="currentLevelData?.metric_value" class="ds-metric-pill">{{ currentLevelData.metric_value }}</div>
             </div>
         </div>
 
-        <!-- Controls Area -->
-        <div
-            class="controls-area bg-slate-100 p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col gap-8 mt-2"
-        >
-            <div
-                v-if="variables.length === 0"
-                class="text-center text-slate-400 font-bold"
-            >
-                Belum ada variabel penggeser.
-            </div>
+        <!-- Sliders -->
+        <div class="ds-controls">
+            <div v-if="variables.length === 0" class="ds-empty">Belum ada variabel penggeser.</div>
 
-            <!-- Loop through N sliders -->
-            <div v-for="(v, idx) in variables" :key="idx" class="slider-group">
-                <div class="flex justify-between items-center mb-4">
-                    <!-- Alternate colors based on index -->
-                    <span
-                        class="font-bold text-lg px-3 py-1 rounded-lg"
-                        :class="
-                            idx % 2 === 0
-                                ? 'text-blue-800 bg-blue-100'
-                                : 'text-green-800 bg-green-100'
-                        "
-                    >
+            <div v-for="(v, idx) in variables" :key="idx" class="ds-slider-group">
+                <div class="ds-slider-header">
+                    <span class="ds-slider-name" :style="{ color: sliderColor(idx), background: sliderTrackColor(idx) }">
                         {{ v.name || `Variabel ${idx + 1}` }}
                     </span>
-                    <span class="font-bold text-slate-500">
-                        {{
-                            sliderValues[idx] === 1
-                                ? v.min_label
-                                : sliderValues[idx] === 3
-                                  ? v.max_label
-                                  : "Sedang"
-                        }}
+                    <span class="ds-slider-value">
+                        {{ sliderValues[idx] === 1 ? (v.min_label || 'Min') : sliderValues[idx] === 3 ? (v.max_label || 'Max') : 'Sedang' }}
                     </span>
                 </div>
-                <div class="relative w-full px-2">
-                    <input
-                        type="range"
-                        min="1"
-                        max="3"
-                        step="1"
-                        v-model.number="sliderValues[idx]"
-                        class="custom-slider w-full h-4 rounded-full appearance-none outline-none focus:ring-4"
-                        :class="
-                            idx % 2 === 0
-                                ? 'bg-blue-200 focus:ring-blue-300 thumb-blue'
-                                : 'bg-green-200 focus:ring-green-300 thumb-green'
-                        "
-                    />
-                    <div
-                        class="flex justify-between text-xs font-bold text-slate-400 mt-2 px-1"
-                    >
-                        <span>{{ v.min_label || "Min" }}</span>
-                        <span>{{ v.max_label || "Max" }}</span>
+                <div class="ds-slider-row">
+                    <span class="ds-slider-edge">{{ v.min_label || 'Min' }}</span>
+                    <div class="ds-slider-track-wrap">
+                        <input
+                            type="range"
+                            min="1" max="3" step="1"
+                            v-model.number="sliderValues[idx]"
+                            class="ds-slider"
+                            :style="{
+                                '--track-color': sliderTrackColor(idx),
+                                '--thumb-color': sliderColor(idx),
+                            }"
+                        />
+                        <div class="ds-step-dots">
+                            <div v-for="s in 3" :key="s" class="ds-dot" :class="{ 'ds-dot-on': sliderValues[idx] >= s }" :style="{ background: sliderValues[idx] >= s ? sliderColor(idx) : '#cbd5e1' }"></div>
+                        </div>
                     </div>
+                    <span class="ds-slider-edge">{{ v.max_label || 'Max' }}</span>
                 </div>
             </div>
         </div>
@@ -272,66 +131,180 @@ onMounted(() => {
 </template>
 
 <style scoped>
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) translateY(-2px) rotate(-1deg); }
-    20%, 40%, 60%, 80% { transform: translateX(5px) translateY(2px) rotate(1deg); }
+.ds-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
-.animate-shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) infinite;
-}
-</style>
 
-<style scoped>
-/* Common Thumb styling */
-.custom-slider::-webkit-slider-thumb {
+/* Title */
+.ds-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #58cc02;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* Main Area */
+.ds-main {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+}
+
+/* Visual */
+.ds-visual {
+    flex: 1.5;
+    position: relative;
+    border-radius: 20px;
+    border: 2px solid #cbd5e1;
+    border-bottom-width: 5px;
+    background: #f1f5f9;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s;
+}
+.ds-visual-danger { border-color: #ef4444; }
+.ds-quake { animation: ds-quake-shake 0.35s cubic-bezier(.36,.07,.19,.97) infinite; }
+@keyframes ds-quake-shake {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-3px,-2px); }
+    40% { transform: translate(3px,2px); }
+    60% { transform: translate(-2px,3px); }
+    80% { transform: translate(2px,-2px); }
+}
+.ds-visual-img { width: 100%; height: 100%; object-fit: cover; z-index: 10; position: relative; }
+.ds-visual-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #94a3b8; font-weight: 800; font-size: 14px; }
+
+.ds-status-badge {
+    position: absolute;
+    top: 12px; right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 99px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 900;
+    border: 2px solid;
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+/* Narration */
+.ds-narration {
+    flex: 1;
+    border-radius: 20px;
+    border: 2px solid #bae6fd;
+    background: #f0f9ff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 12px;
+}
+.ds-narration-badge {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 0 0 #bae6fd;
+    flex-shrink: 0;
+}
+.ds-level-name { font-size: 16px; font-weight: 800; color: #0369a1; font-style: italic; }
+.ds-level-narration { font-size: 14px; font-weight: 700; color: #475569; line-height: 1.5; }
+.ds-metric-pill {
+    background: #ffffff;
+    color: #1cb0f6;
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    border: 2px solid #bae6fd;
+}
+
+/* Sliders */
+.ds-controls {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 2px solid #cbd5e1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.ds-empty { text-align: center; color: #94a3b8; font-weight: 800; font-size: 15px; }
+.ds-slider-group { display: flex; flex-direction: column; gap: 10px; }
+.ds-slider-header { display: flex; align-items: center; justify-content: space-between; }
+.ds-slider-name {
+    font-size: 13px;
+    font-weight: 900;
+    border-radius: 8px;
+    padding: 4px 12px;
+}
+.ds-slider-value { font-size: 13px; font-weight: 800; color: #64748b; }
+
+.ds-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ds-slider-edge { font-size: 12px; font-weight: 800; color: #94a3b8; min-width: 32px; text-align: center; }
+.ds-slider-track-wrap { flex: 1; display: flex; flex-direction: column; gap: 8px; position: relative; }
+
+.ds-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    width: 100%;
+    height: 12px;
+    background: var(--track-color, #e2e8f0);
+    border-radius: 99px;
+    outline: none;
     cursor: pointer;
-    box-shadow:
-        0 0 0 4px white,
-        0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
 }
-
-.custom-slider::-moz-range-thumb {
-    width: 32px;
-    height: 32px;
+.ds-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--thumb-color, #1cb0f6);
+    box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.ds-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
+.ds-slider::-moz-range-thumb {
+    width: 28px; height: 28px;
     border: none;
     border-radius: 50%;
+    background: var(--thumb-color, #1cb0f6);
+    box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
     cursor: pointer;
-    box-shadow:
-        0 0 0 4px white,
-        0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
 }
 
-.custom-slider:active::-webkit-slider-thumb {
-    transform: scale(1.1);
+.ds-step-dots {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 14px;
+}
+.ds-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    transition: background 0.3s;
 }
 
-/* Blue Thumb */
-.thumb-blue::-webkit-slider-thumb {
-    background: #2563eb;
-}
-.thumb-blue::-moz-range-thumb {
-    background: #2563eb;
-}
-.thumb-blue:active::-webkit-slider-thumb {
-    background: #1d4ed8;
-}
-
-/* Green Thumb */
-.thumb-green::-webkit-slider-thumb {
-    background: #16a34a;
-}
-.thumb-green::-moz-range-thumb {
-    background: #16a34a;
-}
-.thumb-green:active::-webkit-slider-thumb {
-    background: #15803d;
+/* Mobile */
+@media (max-width: 640px) {
+    .ds-main { flex-direction: column; }
+    .ds-visual { min-height: 180px; }
 }
 </style>
