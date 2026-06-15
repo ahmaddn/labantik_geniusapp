@@ -394,7 +394,7 @@ const saveDecision = () => {
                         
                         <div class="flex justify-between items-center mt-6 mb-2">
                             <h3 class="font-bold text-lg text-gray-700">Variabel Penggeser (Slider)</h3>
-                            <Button variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
+                            <Button v-if="sliderForm.variables.length < 1" variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
                         </div>
                         
                         <div v-if="sliderForm.variables.length === 0" class="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-gray-500">

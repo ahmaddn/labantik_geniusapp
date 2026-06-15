@@ -85,7 +85,7 @@ class SimulationConfigController extends Controller
     {
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'variables' => 'nullable|array',
+            'variables' => 'nullable|array|max:1',
             'variables.*.name' => 'nullable|string|max:255',
             'variables.*.min_label' => 'nullable|string|max:255',
             'variables.*.max_label' => 'nullable|string|max:255',
