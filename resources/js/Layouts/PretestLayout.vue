@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
 });
 
 // ── Expose ──
-defineExpose({ musicOn, toggleMusic });
+defineExpose({ musicOn });
 </script>
 
 <template>
@@ -206,8 +206,19 @@ defineExpose({ musicOn, toggleMusic });
                     </Transition>
                 </div>
 
-                <!-- Right: Timer -->
+                <!-- Right: Music (mobile only) + Timer -->
                 <div class="nav-right">
+                    <!-- 🎵 Tombol Musik — hanya tampil di mobile, di desktop pakai FAB -->
+                    <button
+                        class="music-nav-btn"
+                        @click="toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': musicOn }"
+                        title="Musik Latar"
+                    >
+                        <Music2 v-if="musicOn" :size="16" :stroke-width="2.5" />
+                        <VolumeX v-else :size="16" :stroke-width="2.5" />
+                    </button>
+
                     <!-- Timer -->
                     <Transition name="slide-fade">
                         <div
@@ -621,6 +632,32 @@ defineExpose({ musicOn, toggleMusic });
     flex-shrink: 0;
 }
 
+/* ─── MUSIC NAV BUTTON (hanya di mobile) ─── */
+.music-nav-btn {
+    display: none; /* tersembunyi di desktop */
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 3px solid #cbd5e1;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.music-nav-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+}
+.music-nav-btn.music-on {
+    background: #1cb0f6;
+    border-color: #1cb0f6;
+    border-bottom-color: #1899d6;
+    color: white;
+}
 
 /* ─── TIMER ─── */
 .timer-badge {
@@ -765,9 +802,14 @@ defineExpose({ musicOn, toggleMusic });
         height: 13px;
     }
 
-    /* FAB disembunyikan di mobile — diganti tombol di footer */
+    /* FAB disembunyikan di mobile — diganti tombol di navbar */
     .music-fab {
         display: none;
+    }
+
+    /* Tombol musik di navbar muncul saat mobile */
+    .music-nav-btn {
+        display: flex;
     }
 
     .title-pretest {
