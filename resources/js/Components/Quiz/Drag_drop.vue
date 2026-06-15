@@ -301,8 +301,10 @@ onUnmounted(() => { tClone?.remove() })
 
 /* ── Bank ── */
 .dd-bank {
-  background: transparent;
-  padding: 10px 0;
+  background: rgba(248,250,252,.9);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px; padding: 10px 12px;
+  backdrop-filter: blur(6px);
 }
 .dd-bank-head {
   display: flex; align-items: center; gap: 6px;
@@ -329,51 +331,53 @@ onUnmounted(() => { tClone?.remove() })
 .dd-item {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   background: #fff;
-  border: 2px solid #e5e5e5;
-  border-bottom-width: 4px;
-  border-radius: 16px; padding: 12px;
+  border: 2px solid rgba(29,78,216,0.1);
+  border-radius: 12px; padding: 9px 10px 7px;
   min-width: 80px; max-width: 100px;
   cursor: grab; user-select: none;
   position: relative;
-  transition: all .2s cubic-bezier(.34,1.56,.64,1);
+  transition: all .22s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 .dd-item:hover {
-  background: #f7f7f7;
-  transform: translateY(-2px);
+  transform: scale(1.1) translateY(-4px);
+  border-color: #93c5fd;
+  box-shadow: 0 10px 22px rgba(29,78,216,.18);
 }
-.dd-item:active { cursor: grabbing; transform: translateY(2px); border-bottom-width: 2px; }
+.dd-item:active { cursor: grabbing; transform: scale(.97); }
 
 .dd-item-visual { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
 .dd-item-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
 .dd-item-placeholder {
   width: 60px; height: 60px;
-  background: #f7f7f7;
-  border: 2px dashed #e5e5e5;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
 }
-.dd-item-initial { font-size: 22px; font-weight: 800; color: #afafaf; line-height: 1; }
+.dd-item-initial { font-size: 22px; font-weight: 900; color: #3b82f6; line-height: 1; }
 .dd-item-label {
-  font-size: 14px; font-weight: 700; color: #4b4b4b;
+  font-size: 11px; font-weight: 800; color: #1e293b;
   text-align: center; line-height: 1.3;
   max-width: 80px; word-break: break-word;
 }
-.dd-item-grip { display: none; }
+.dd-item-grip { position: absolute; bottom: 4px; right: 4px; opacity: 0; transition: opacity .15s; }
+.dd-item:hover .dd-item-grip { opacity: 1; }
 
 /* ── Zones ── */
-.dd-zones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.dd-zones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .dd-zone {
-  background: #fff;
-  border: 2px dashed #e5e5e5;
-  border-radius: 16px; padding: 12px;
+  background: var(--zbg);
+  border: 2.5px dashed var(--zbdr);
+  border-radius: 14px; padding: 11px;
   display: flex; flex-direction: column; gap: 8px;
   transition: all .18s ease;
+  backdrop-filter: blur(4px);
 }
-.dd-zone:hover { border-color: #cbd5e1; }
+.dd-zone:hover { transform: scale(1.01); }
 .dd-zone--over {
   border-style: solid;
-  border-color: #84d8ff;
-  background: #ddf4ff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zbadge) 20%, transparent), 0 6px 18px rgba(0,0,0,.08);
+  transform: scale(1.015);
 }
 
 .dd-zone-header { display: flex; align-items: center; gap: 7px; color: var(--zhead); }
@@ -391,38 +395,37 @@ onUnmounted(() => { tClone?.remove() })
 }
 
 .dd-zone-body {
-  display: flex; flex-wrap: wrap; gap: 8px; flex: 1;
+  display: flex; flex-wrap: wrap; gap: 6px; flex: 1;
   min-height: 110px; align-content: flex-start;
-  background: #f7f7f7;
-  border-radius: 12px; padding: 8px;
+  background: rgba(255,255,255,.45);
+  border: 1.5px dashed rgba(0,0,0,.07);
+  border-radius: 10px; padding: 7px;
 }
 .dd-zone-hint {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  color: #afafaf; font-size: 13px; font-weight: 700;
+  color: rgba(0,0,0,.2); font-size: 10.5px; font-weight: 800;
   margin: auto; pointer-events: none;
 }
 
 /* ── Placed item ── */
 .dd-placed {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px; border-radius: 12px; border: 2px solid;
-  border-bottom-width: 4px;
-  background: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 8px; border-radius: 10px; border: 2px solid;
   min-width: 64px; position: relative;
   animation: dd-popin .28s cubic-bezier(.34,1.56,.64,1);
 }
-.dd-placed--ok  { border-color: #58cc02; }
-.dd-placed--err { border-color: #ff4b4b; }
+.dd-placed--ok  { background: #f0fdf4; border-color: #4ade80; }
+.dd-placed--err { background: #fef2f2; border-color: #fca5a5; }
 
 .dd-placed-visual { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-.dd-placed-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
+.dd-placed-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
 .dd-placed-initial {
-  font-size: 16px; font-weight: 800; color: #4b4b4b;
+  font-size: 16px; font-weight: 900; color: #64748b;
   width: 44px; height: 44px; border-radius: 8px;
-  background: #f7f7f7;
+  background: #f1f5f9;
   display: flex; align-items: center; justify-content: center;
 }
-.dd-placed-label { font-size: 12px; font-weight: 700; color: #4b4b4b; text-align: center; line-height: 1.2; }
+.dd-placed-label { font-size: 10px; font-weight: 800; color: #1e293b; text-align: center; line-height: 1.2; }
 
 .dd-placed-remove {
   position: absolute; top: -7px; right: -7px;
@@ -438,16 +441,15 @@ onUnmounted(() => { tClone?.remove() })
 /* ── Actions ── */
 .dd-actions { display: flex; justify-content: flex-end; }
 .dd-reset-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px;
-  background: #fff; border: 2px solid #e5e5e5;
-  border-bottom-width: 4px;
-  border-radius: 12px;
-  font-size: 14px; font-weight: 700; color: #afafaf;
-  cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 13px;
+  background: rgba(255,255,255,.7); border: 1.5px solid rgba(29,78,216,.2);
+  border-radius: 8px;
+  font-size: 11.5px; font-weight: 800; color: #1d4ed8;
+  cursor: pointer; transition: all .18s;
+  backdrop-filter: blur(4px);
 }
-.dd-reset-btn:hover { background: #f7f7f7; color: #4b4b4b; }
-.dd-reset-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.dd-reset-btn:hover { background: rgba(255,255,255,.9); border-color: rgba(29,78,216,.35); }
 
 /* ── Transitions ── */
 .dd-pop-enter-active { transition: all .25s cubic-bezier(.34,1.56,.64,1); }

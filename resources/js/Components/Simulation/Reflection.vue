@@ -1,82 +1,154 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight, Link, CloudRain, Sprout, Lightbulb, MessageSquare } from 'lucide-vue-next';
 import * as LucideIcons from 'lucide-vue-next';
 
 const props = defineProps({
-    quiz: { type: Object, required: true },
+    quiz: {
+        type: Object,
+        required: true,
+    },
 });
+
 const emit = defineEmits(['update-answer']);
 
+// State lokal untuk menyimpan jawaban sebelum di-emit (opsional tapi baik untuk reactivity)
 const localAnswers = ref({});
+
 const onInput = (questionId, event) => {
-    localAnswers.value[questionId] = event.target.value;
-    emit('update-answer', { questionId, value: event.target.value });
+    const value = event.target.value;
+    localAnswers.value[questionId] = value;
+    emit('update-answer', { questionId, value });
 };
 
-const iconColors = ['#1cb0f6', '#58cc02', '#ffc800', '#ff4b4b', '#a855f7'];
-const bgColors   = ['#f0f9ff', '#f0fff0', '#fffbeb', '#fff5f5', '#faf5ff'];
-const bdColors   = ['#bae6fd', '#bbf7d0', '#fde68a', '#fecaca', '#e9d5ff'];
+// Gambar maskot default jika tidak ada gambar khusus
+const mascotImg = "/images/templates/pose_nunjuk.png";
+
+const icons = [Link, CloudRain, Sprout, Lightbulb, MessageSquare];
+const getIcon = (index) => {
+    return icons[index % icons.length];
+};
 </script>
 
 <template>
-    <div class="ref-wrap">
+    <div class="reflection-container w-full h-full flex flex-col p-4 md:p-6 overflow-y-auto">
+        
+        <!-- Header: Judul -->
+        <div class="text-center mb-6">
+            <h2 class="text-2xl md:text-3xl font-heading font-black text-gray-800 drop-shadow-sm uppercase tracking-wide">
+                {{ quiz.title || 'REFLEKSI ILMIAH' }}
+            </h2>
+        </div>
 
-        <!-- Flowchart Row -->
-        <div class="ref-flow" v-if="quiz.flowchart_data && quiz.flowchart_data.length > 0">
-            <div class="ref-flow-inner">
-                <template v-for="(item, idx) in quiz.flowchart_data" :key="'flow-'+idx">
-                    <!-- Node -->
-                    <div class="ref-node">
-                        <div class="ref-node-circle">
-                            <img v-if="item.image" :src="`/storage/${item.image}`" class="ref-node-img" :alt="item.title" />
-                            <component v-else-if="LucideIcons[item.fallback_icon]" :is="LucideIcons[item.fallback_icon]" class="ref-node-icon" />
-                            <span v-else class="ref-node-text">{{ item.fallback_icon || item.title }}</span>
-                        </div>
-                        <span class="ref-node-label">{{ item.title }}</span>
+        <!-- Area Atas: Flowchart & Mascot Kiri -->
+        <div class="top-area flex flex-col md:flex-row items-center justify-center gap-6 mb-8 w-full max-w-6xl mx-auto">
+            
+            <!-- Mascot Kiri -->
+            <div class="mascot-left hidden md:flex items-center w-1/4 max-w-[200px]">
+                <div class="flex flex-col items-center">
+                    <div class="bg-white border-2 border-blue-200 rounded-3xl p-3 text-sm font-medium text-gray-700 shadow-md text-center relative mb-4">
+                        {{ quiz.mascot_left_text || 'Ayo perhatikan siklus berikut ini!' }}
+                        <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-blue-200 rotate-45"></div>
                     </div>
+                    <img :src="mascotImg" class="w-24 object-contain" alt="Si Air" />
+                    <span class="font-bold text-blue-600 mt-2">Si Air</span>
+                </div>
+            </div>
 
-                    <!-- Arrow -->
-                    <div v-if="idx < quiz.flowchart_data.length - 1" class="ref-arrow">
-                        <ArrowRight :size="20" color="#1cb0f6" :stroke-width="2.5" />
+            <!-- Flowchart -->
+            <div class="flowchart-container flex-1 flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full">
+                <template v-if="quiz.flowchart_data && quiz.flowchart_data.length > 0">
+                    <div v-for="(item, idx) in quiz.flowchart_data" :key="'flow-'+idx" class="flex items-center">
+                        <!-- Bulatan Flowchart -->
+                        <div class="flex flex-col items-center group">
+                            <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white border-4 border-blue-300 shadow-lg flex items-center justify-center overflow-hidden transition-transform transform group-hover:scale-105">
+                                <img v-if="item.image" :src="`/storage/${item.image}`" class="w-full h-full object-cover" :alt="item.title" />
+                                <component v-else-if="LucideIcons[item.fallback_icon]" :is="LucideIcons[item.fallback_icon]" class="w-10 h-10 text-blue-400" />
+                                <span v-else class="text-xs font-bold text-gray-500 text-center px-1">{{ item.fallback_icon || item.title }}</span>
+                            </div>
+                            <span class="mt-2 font-bold text-gray-800 text-sm md:text-base text-center bg-white/70 px-2 rounded">{{ item.title }}</span>
+                        </div>
+                        
+                        <!-- Panah -->
+                        <div v-if="idx < quiz.flowchart_data.length - 1" class="hidden sm:flex flex-col items-center justify-center mx-1 md:mx-3">
+                            <ArrowRight class="text-blue-500 w-8 h-8 md:w-10 md:h-10" />
+                        </div>
                     </div>
                 </template>
+                <template v-else>
+                    <p class="text-gray-500 italic">Siklus belum tersedia.</p>
+                </template>
             </div>
+            
+            <!-- Mascot Kiri untuk Mobile (muncul di bawah flowchart jika mobile) -->
+            <div class="md:hidden flex items-start gap-3 w-full mt-4">
+                <img :src="mascotImg" class="w-16 object-contain" alt="Si Air" />
+                <div class="bg-white border-2 border-blue-200 rounded-2xl rounded-tl-none p-3 text-xs font-medium text-gray-700 shadow-md">
+                    {{ quiz.mascot_left_text || 'Ayo perhatikan siklus berikut ini!' }}
+                </div>
+            </div>
+
         </div>
 
-        <!-- Section title -->
-        <div class="ref-section-title">
-            <div class="ref-section-line"></div>
-            <span>Refleksi Ilmiah</span>
-            <div class="ref-section-line"></div>
-        </div>
+        <!-- Area Bawah: Refleksi Ilmiah -->
+        <div class="bottom-area w-full max-w-6xl mx-auto bg-blue-50/80 p-4 md:p-6 rounded-3xl border-2 border-white shadow-sm mt-auto relative">
+            <h3 class="text-center font-bold text-xl md:text-2xl text-blue-900 mb-6 drop-shadow-sm">
+                Refleksi Ilmiah
+            </h3>
 
-        <!-- Question Cards -->
-        <div class="ref-questions">
-            <div
-                v-for="(q, idx) in quiz.questions"
-                :key="q.id"
-                class="ref-qcard"
-                :style="{
-                    background: bgColors[idx % bgColors.length],
-                    borderColor: bdColors[idx % bdColors.length],
-                }"
-            >
-                <!-- Number badge -->
-                <div class="ref-qnum" :style="{ background: iconColors[idx % iconColors.length] }">{{ idx + 1 }}</div>
+            <div class="flex flex-col xl:flex-row gap-6">
+                <!-- Grid Cards Pertanyaan -->
+                <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div 
+                        v-for="(q, idx) in quiz.questions" 
+                        :key="q.id" 
+                        class="question-card bg-white rounded-2xl p-4 shadow-md border-b-4 border-blue-200 relative flex flex-col transition-all hover:shadow-lg"
+                    >
+                        <!-- Nomor Urut -->
+                        <div class="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shadow-md border-2 border-white">
+                            {{ idx + 1 }}
+                        </div>
+                        
+                        <!-- Teks Pertanyaan -->
+                        <p class="text-sm md:text-base font-bold text-gray-800 text-center mt-3 min-h-[48px]">
+                            {{ q.question_text }}
+                        </p>
+                        
+                        <!-- Ikon Penengah -->
+                        <div class="flex justify-center my-4 opacity-70">
+                            <component :is="getIcon(idx)" class="w-10 h-10 text-blue-500" stroke-width="1.5" />
+                        </div>
 
-                <!-- Question text -->
-                <p class="ref-qtext">{{ q.question_text }}</p>
+                        <!-- Textarea Jawaban -->
+                        <div class="mt-auto">
+                            <textarea 
+                                :value="localAnswers[q.id]"
+                                @input="(e) => onInput(q.id, e)"
+                                class="w-full resize-none border-2 border-gray-200 bg-gray-50 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder-gray-400 h-24"
+                                placeholder="Tulis jawabanmu di sini..."
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Textarea -->
-                <div class="ref-textarea-wrap" :style="{ borderColor: bdColors[idx % bdColors.length] }">
-                    <textarea
-                        :value="localAnswers[q.id]"
-                        @input="(e) => onInput(q.id, e)"
-                        class="ref-textarea"
-                        placeholder="Tulis jawabanmu di sini..."
-                        rows="3"
-                    ></textarea>
+                <!-- Mascot Kanan -->
+                <div class="mascot-right hidden xl:flex items-end max-w-[200px] pb-4">
+                    <div class="flex items-end gap-3">
+                        <div class="bg-white border-2 border-blue-200 rounded-3xl rounded-br-none p-4 text-sm font-medium text-gray-700 shadow-md relative mb-12">
+                            {{ quiz.mascot_right_text || 'Isi jawabanmu di kotak ini ya!' }}
+                        </div>
+                        <img :src="mascotImg" class="w-24 object-contain scale-x-[-1]" alt="Si Air" />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mascot Kanan untuk layar kecil -->
+            <div class="xl:hidden flex items-end justify-end mt-6">
+                <div class="flex items-end gap-3 max-w-sm">
+                    <div class="bg-white border-2 border-blue-200 rounded-2xl rounded-br-none p-3 text-xs md:text-sm font-medium text-gray-700 shadow-md">
+                        {{ quiz.mascot_right_text || 'Isi jawabanmu di kotak ini ya!' }}
+                    </div>
+                    <img :src="mascotImg" class="w-16 md:w-20 object-contain scale-x-[-1]" alt="Si Air" />
                 </div>
             </div>
         </div>
@@ -85,152 +157,11 @@ const bdColors   = ['#bae6fd', '#bbf7d0', '#fde68a', '#fecaca', '#e9d5ff'];
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
-
-.ref-wrap {
-    font-family: 'Nunito', sans-serif;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.question-card {
+    animation: slideUp 0.4s ease-out;
 }
-
-/* Flowchart */
-.ref-flow {
-    background: #fff;
-    border: 2px solid #e5e5e5;
-    border-radius: 16px;
-    padding: 16px 12px;
-    overflow-x: auto;
-}
-.ref-flow-inner {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: fit-content;
-    margin: 0 auto;
-    justify-content: center;
-}
-
-/* Node */
-.ref-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.ref-node-circle {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    border: 3px solid #bae6fd;
-    background: #fff;
-    overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 10px rgba(28,176,246,0.15);
-    transition: transform 0.2s;
-}
-.ref-node-circle:hover { transform: scale(1.08); }
-.ref-node-img { width: 100%; height: 100%; object-fit: cover; }
-.ref-node-icon { width: 28px; height: 28px; color: #1cb0f6; }
-.ref-node-text { font-size: 10px; font-weight: 800; color: #666; text-align: center; padding: 2px; }
-.ref-node-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: #3c3c3c;
-    text-align: center;
-    max-width: 72px;
-    line-height: 1.2;
-}
-
-/* Arrow */
-.ref-arrow { flex-shrink: 0; display: flex; align-items: center; }
-
-/* Section Title */
-.ref-section-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #777;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.ref-section-line { flex: 1; height: 1.5px; background: #e5e5e5; border-radius: 2px; }
-
-/* Questions */
-.ref-questions {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
-}
-.ref-qcard {
-    position: relative;
-    border-radius: 16px;
-    border: 2px solid;
-    border-bottom: 5px solid;
-    padding: 18px 14px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    transition: box-shadow 0.2s;
-    animation: slideUp 0.35s ease-out;
-}
-.ref-qcard:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
-@keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-
-.ref-qnum {
-    position: absolute;
-    top: -10px; left: 14px;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 900;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    border: 2.5px solid #fff;
-}
-
-.ref-qtext {
-    font-size: 13px;
-    font-weight: 800;
-    color: #3c3c3c;
-    line-height: 1.5;
-    min-height: 40px;
-}
-
-/* Textarea */
-.ref-textarea-wrap {
-    border-radius: 12px;
-    border: 2px solid;
-    overflow: hidden;
-    background: rgba(255,255,255,0.85);
-    transition: box-shadow 0.2s;
-}
-.ref-textarea-wrap:focus-within {
-    box-shadow: 0 0 0 3px rgba(28,176,246,0.15);
-    border-color: #1cb0f6 !important;
-}
-.ref-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: #3c3c3c;
-    background: transparent;
-    border: none;
-    outline: none;
-    resize: none;
-    line-height: 1.5;
-}
-.ref-textarea::placeholder { color: #bbb; font-weight: 600; }
-
-/* Mobile */
-@media (max-width: 480px) {
-    .ref-questions { grid-template-columns: 1fr; }
-    .ref-node-circle { width: 52px; height: 52px; }
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>

@@ -209,7 +209,7 @@ onUnmounted(() => {
                     <img
                         :src="
                             $page.props.global_settings?.platform_mascot ||
-                            '/images/templates/geni.gif'
+                            '/images/templates/pose_keren.png'
                         "
                         alt="Maskot Geni"
                         class="mascot-img"
