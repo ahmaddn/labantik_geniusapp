@@ -257,6 +257,7 @@ class MissionController extends Controller
                     'metric_value'     => $lvl->metric_value,
                     'image'            => $lvl->image,
                     'animation_effect' => $lvl->animation_effect,
+                    'image_transition' => $lvl->image_transition,
                     'status'           => $lvl->status,
                 ])->toArray(),
             ];

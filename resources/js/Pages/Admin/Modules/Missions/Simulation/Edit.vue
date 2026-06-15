@@ -51,6 +51,7 @@ const mapSliderLevels = (levels) => {
         level_name: level.level_name || '',
         status: level.status || 'aman',
         animation_effect: level.animation_effect || 'none',
+        image_transition: level.image_transition || 'none',
         narration: level.narration || '',
         metric_value: level.metric_value || '',
         existing_image: level.image || null,
@@ -87,6 +88,7 @@ const addSliderLevel = () => {
         level_name: '',
         status: 'aman',
         animation_effect: 'none',
+        image_transition: 'none',
         narration: '',
         metric_value: '',
         image: null,
@@ -425,7 +427,7 @@ const saveDecision = () => {
                                 <InputField label="Nama Level (contoh: Tahap Awal, Level 1)" v-model="level.level_name" required placeholder="Misal: Level 1" />
                                 <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Status Bahaya / Suhu 30C" />
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">Status Level</label>
                                     <select v-model="level.status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
@@ -447,6 +449,16 @@ const saveDecision = () => {
                                         <option value="dust">Polusi / Debu</option>
                                         <option value="sunbeams">Cahaya Cerah (Sunbeams)</option>
                                         <option value="earthquake">Guncangan Layar (Gempa)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Efek Transisi Gambar</label>
+                                    <select v-model="level.image_transition" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                        <option value="none">Normal (Tanpa Transisi)</option>
+                                        <option value="fade">Magic Crossfade (Halus)</option>
+                                        <option value="zoom-fade">Magic Zoom & Fade</option>
+                                        <option value="slide-left">Geser Kiri Halus</option>
+                                        <option value="slide-right">Geser Kanan Halus</option>
                                     </select>
                                 </div>
                             </div>

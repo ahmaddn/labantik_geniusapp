@@ -257,7 +257,9 @@ onUnmounted(() => {
             'animate-shake': currentLevelData?.animation_effect === 'earthquake'
         }"
       >
-        <img v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10 relative" />
+        <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
+            <img :key="levelImage" v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10" />
+        </transition>
         
         <!-- Dynamic Effects Overlay -->
         <SimulationEffects :effect="currentLevelData?.animation_effect" />
@@ -980,6 +982,29 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 0;
 }
+
+.cs-center-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0; left: 0;
+}
+
+/* Magic Transitions */
+.magic-fade-enter-active, .magic-fade-leave-active { transition: opacity 0.8s ease-in-out; }
+.magic-fade-enter-from, .magic-fade-leave-to { opacity: 0; }
+
+.magic-zoom-fade-enter-active, .magic-zoom-fade-leave-active { transition: all 0.8s ease-in-out; }
+.magic-zoom-fade-enter-from { opacity: 0; transform: scale(1.1); }
+.magic-zoom-fade-leave-to { opacity: 0; transform: scale(0.9); }
+
+.magic-slide-left-enter-active, .magic-slide-left-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.magic-slide-left-enter-from { opacity: 0; transform: translateX(10%); }
+.magic-slide-left-leave-to { opacity: 0; transform: translateX(-10%); }
+
+.magic-slide-right-enter-active, .magic-slide-right-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.magic-slide-right-enter-from { opacity: 0; transform: translateX(-10%); }
+.magic-slide-right-leave-to { opacity: 0; transform: translateX(10%); }
 
 .mat-video {
   position: relative;

@@ -40,6 +40,7 @@ const successMessage = ref("");
 const showSuccess = ref(false);
 const toastType = ref("success");
 const cardVariant = ref("playful");
+const isSubmitting = ref(false);
 
 // Media type toggle: 'image' | 'video'
 const mediaType = ref("image");
@@ -179,11 +180,20 @@ const addMaterial = () => {
         });
     }
 
+    let conceptualLevelsToSave = null;
+    if (materialForm.value.layout_type === 'conceptual_systematic') {
+        const payload = JSON.parse(finalContent);
+        payload.levels.forEach(l => { delete l.image; delete l._preview; });
+        finalContent = JSON.stringify(payload);
+        conceptualLevelsToSave = materialForm.value.conceptual_data.levels;
+    }
+
     materials.value.push({
         ...materialForm.value,
         content: finalContent,
         image_left: materialForm.value.image_comparison?.image_left,
         image_right: materialForm.value.image_comparison?.image_right,
+        conceptual_levels: conceptualLevelsToSave,
         id: Date.now(),
         mediaType: mediaType.value,
         mediaPreview: mediaPreview.value,
@@ -247,6 +257,8 @@ const finalSave = () => {
         return;
     }
 
+    isSubmitting.value = true;
+
     const formData = new FormData();
     materials.value.forEach((material, index) => {
         formData.append(`materials[${index}][title]`, material.title);
@@ -277,6 +289,13 @@ const finalSave = () => {
                 formData.append(`materials[${index}][image_right]`, material.image_right);
             }
         }
+        if (material.layout_type === 'conceptual_systematic' && material.conceptual_levels) {
+            material.conceptual_levels.forEach((lvl, lvlIdx) => {
+                if (lvl.image) {
+                    formData.append(`materials[${index}][conceptual_level_${lvlIdx}_image]`, lvl.image);
+                }
+            });
+        }
     });
 
     router.post(
@@ -287,6 +306,7 @@ const finalSave = () => {
         formData,
         {
             onSuccess: () => {
+                isSubmitting.value = false;
                 showToast("Semua material berhasil disimpan.", "success");
                 setTimeout(() => {
                     router.visit(
@@ -298,6 +318,7 @@ const finalSave = () => {
                 }, 1500);
             },
             onError: (errors) => {
+                isSubmitting.value = false;
                 showToast(
                     "Gagal menyimpan: " + Object.values(errors).join(", "),
                     "error",
@@ -575,7 +596,7 @@ const toggleCardVariant = () => {
                                                     <InputField label="Nama Level (contoh: Tahap Awal, Level 1)" v-model="level.level_name" required placeholder="Misal: Level 1" />
                                                     <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Status Bahaya / Suhu 30C" />
                                                 </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                                                     <div>
                                                         <label class="block text-sm font-bold text-gray-700 mb-2">Status Level</label>
                                                         <select v-model="level.status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
@@ -599,9 +620,29 @@ const toggleCardVariant = () => {
                                                             <option value="earthquake">Guncangan Layar (Gempa)</option>
                                                         </select>
                                                     </div>
+                                                    <div>
+                                                        <label class="block text-sm font-bold text-gray-700 mb-2">Efek Transisi Gambar</label>
+                                                        <select v-model="level.image_transition" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                            <option value="none">Normal (Tanpa Transisi)</option>
+                                                            <option value="fade">Magic Crossfade (Halus)</option>
+                                                            <option value="zoom-fade">Magic Zoom & Fade</option>
+                                                            <option value="slide-left">Geser Kiri Halus</option>
+                                                            <option value="slide-right">Geser Kanan Halus</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                                 <div class="mt-4">
                                                     <TextareaField label="Narasi Penjelasan Level" v-model="level.narration" :rows="2" placeholder="Misal: Pada level ini, debit air masih stabil..." />
+                                                </div>
+                                                <div class="mt-4">
+                                                    <label class="block text-sm font-bold text-gray-700 mb-2">Gambar / Ilustrasi Level</label>
+                                                    <FileUpload 
+                                                        @change="e => { level.image = e.target.files[0]; level._preview = URL.createObjectURL(e.target.files[0]) }" 
+                                                        accept="image/*" 
+                                                        buttonText="Pilih Gambar" 
+                                                        buttonColor="blue" 
+                                                    />
+                                                    <img v-if="level._preview" :src="level._preview" class="mt-4 h-48 w-full object-cover rounded-xl border-4 border-blue-200" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1039,19 +1080,20 @@ const toggleCardVariant = () => {
                             size="lg"
                             :icon="ArrowLeft"
                             @click="prevStep"
+                            :disabled="isSubmitting"
                             >Kembali</Button
                         >
                         <Button
                             variant="primary"
                             size="lg"
-                            :icon="Check"
+                            :disabled="isSubmitting"
                             @click="finalSave"
                         >
-                            <span class="flex items-center gap-2"
-                                >Simpan Semua Material ({{
-                                    materials.length
-                                }})</span
-                            >
+                            <span class="flex items-center gap-2">
+                                <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin" />
+                                <Check v-else class="w-5 h-5" />
+                                {{ isSubmitting ? 'Menyimpan...' : `Simpan Semua Material (${materials.length})` }}
+                            </span>
                         </Button>
                     </div>
                 </div>

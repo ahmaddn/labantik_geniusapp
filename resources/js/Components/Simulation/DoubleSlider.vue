@@ -65,11 +65,13 @@ onMounted(() => {
         <div class="ds-main">
             <!-- Visual box -->
             <div class="ds-visual" :class="{ 'ds-visual-danger': isDanger, 'ds-quake': currentLevelData?.animation_effect === 'earthquake' }">
-                <img v-if="levelImage" :src="levelImage" class="ds-visual-img" />
-                <div v-else class="ds-visual-placeholder">
-                    <ImageIcon :size="48" color="#cbd5e1" :stroke-width="1.5" />
-                    <span>Gambar Belum Tersedia</span>
-                </div>
+                <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
+                    <img :key="levelImage" v-if="levelImage" :src="levelImage" class="ds-visual-img" />
+                    <div v-else class="ds-visual-placeholder">
+                        <ImageIcon :size="48" color="#cbd5e1" :stroke-width="1.5" />
+                        <span>Gambar Belum Tersedia</span>
+                    </div>
+                </transition>
 
                 <SimulationEffects :effect="currentLevelData?.animation_effect || 'none'" />
 
@@ -179,8 +181,25 @@ onMounted(() => {
     60% { transform: translate(-2px,3px); }
     80% { transform: translate(2px,-2px); }
 }
-.ds-visual-img { width: 100%; height: 100%; object-fit: cover; z-index: 10; position: relative; }
-.ds-visual-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #94a3b8; font-weight: 800; font-size: 14px; }
+.ds-visual-img { width: 100%; height: 100%; object-fit: cover; z-index: 10; position: absolute; top: 0; left: 0; }
+.ds-visual-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-weight: 800; font-size: 14px; position: absolute; width: 100%; height: 100%; }
+
+/* Magic Transitions */
+.magic-fade-enter-active, .magic-fade-leave-active { transition: opacity 0.8s ease-in-out; }
+.magic-fade-enter-from, .magic-fade-leave-to { opacity: 0; }
+
+.magic-zoom-fade-enter-active, .magic-zoom-fade-leave-active { transition: all 0.8s ease-in-out; }
+.magic-zoom-fade-enter-from { opacity: 0; transform: scale(1.1); }
+.magic-zoom-fade-leave-to { opacity: 0; transform: scale(0.9); }
+
+.magic-slide-left-enter-active, .magic-slide-left-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.magic-slide-left-enter-from { opacity: 0; transform: translateX(10%); }
+.magic-slide-left-leave-to { opacity: 0; transform: translateX(-10%); }
+
+.magic-slide-right-enter-active, .magic-slide-right-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.magic-slide-right-enter-from { opacity: 0; transform: translateX(-10%); }
+.magic-slide-right-leave-to { opacity: 0; transform: translateX(10%); }
+
 
 .ds-status-badge {
     position: absolute;

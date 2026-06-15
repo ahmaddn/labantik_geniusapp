@@ -73,7 +73,7 @@ class MaterialController extends Controller
                 $data['image'] = $file->store($folder, 'public');
             }
 
-            // Handle image_comparison specific images
+            // Handle layout-specific images
             if (($data['layout_type'] ?? '') === 'image_comparison') {
                 $contentData = json_decode($data['content'], true);
                 if (!is_array($contentData)) $contentData = [];
@@ -83,6 +83,19 @@ class MaterialController extends Controller
                 }
                 if ($request->hasFile("materials.{$index}.image_right")) {
                     $contentData['image_right'] = $request->file("materials.{$index}.image_right")->store('materials/images', 'public');
+                }
+                $data['content'] = json_encode($contentData);
+            } elseif (($data['layout_type'] ?? '') === 'conceptual_systematic') {
+                $contentData = json_decode($data['content'], true);
+                if (!is_array($contentData)) $contentData = [];
+
+                if (isset($contentData['levels']) && is_array($contentData['levels'])) {
+                    foreach ($contentData['levels'] as $lvlIdx => &$level) {
+                        $inputName = "materials.{$index}.conceptual_level_{$lvlIdx}_image";
+                        if ($request->hasFile($inputName)) {
+                            $level['image'] = $request->file($inputName)->store('materials/images', 'public');
+                        }
+                    }
                 }
                 $data['content'] = json_encode($contentData);
             }
@@ -308,6 +321,20 @@ class MaterialController extends Controller
             if ($request->hasFile('image_right')) {
                 if (!empty($contentData['image_right'])) Storage::disk('public')->delete($contentData['image_right']);
                 $contentData['image_right'] = $request->file('image_right')->store('materials/images', 'public');
+            }
+            $data['content'] = json_encode($contentData);
+        } elseif (($data['layout_type'] ?? '') === 'conceptual_systematic') {
+            $contentData = json_decode($data['content'] ?? '{}', true);
+            if (!is_array($contentData)) $contentData = [];
+
+            if (isset($contentData['levels']) && is_array($contentData['levels'])) {
+                foreach ($contentData['levels'] as $lvlIdx => &$level) {
+                    $inputName = "conceptual_level_{$lvlIdx}_image";
+                    if ($request->hasFile($inputName)) {
+                        if (!empty($level['image'])) Storage::disk('public')->delete($level['image']);
+                        $level['image'] = $request->file($inputName)->store('materials/images', 'public');
+                    }
+                }
             }
             $data['content'] = json_encode($contentData);
         }

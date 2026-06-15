@@ -222,6 +222,7 @@ const conceptualData = computed(() => {
                                     <div v-for="(lvl, idx) in conceptualData.levels" :key="'lvl-'+idx" class="text-sm bg-blue-50 p-2 mb-2 rounded border border-blue-100">
                                         <strong>{{ lvl.level_name || 'Level ' + (idx+1) }}</strong> (Status: {{ lvl.status }}, Efek: {{ lvl.animation_effect }})<br/>
                                         <span class="text-xs text-gray-500">{{ lvl.narration }}</span>
+                                        <img v-if="lvl.image" :src="`/storage/${lvl.image}`" class="mt-2 w-32 h-24 object-cover rounded-md border" />
                                     </div>
                                 </div>
                             </div>
