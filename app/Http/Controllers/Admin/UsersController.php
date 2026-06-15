@@ -31,7 +31,7 @@ class UsersController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => $request->role === 'siswa' ? 'nullable|string|email|max:255|unique:users' : 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'role' => 'required|in:admin,guru,siswa',
             'class_id' => 'nullable|exists:classes,id',
@@ -43,9 +43,18 @@ class UsersController extends Controller
             return redirect()->back()->with('error', 'Role guru hanya dapat membuat akun siswa.');
         }
 
+        $email = $request->email;
+        if ($request->role === 'siswa' && empty($email)) {
+            $baseName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->name));
+            $email = $baseName . rand(100, 999) . '@siswa.com';
+            while (User::where('email', $email)->exists()) {
+                $email = $baseName . rand(1000, 9999) . '@siswa.com';
+            }
+        }
+
         User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $email,
             'username' => $request->username,
             'password' => Hash::make($request->password ?? '11223344'),
             'role' => $request->role,
@@ -61,7 +70,7 @@ class UsersController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => $request->role === 'siswa' ? 'nullable|string|email|max:255|unique:users,email,' . $user->id : 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8',
             'role' => 'required|in:admin,guru,siswa',
             'class_id' => 'nullable|exists:classes,id',
@@ -79,9 +88,14 @@ class UsersController extends Controller
             }
         }
 
+        $email = $request->email;
+        if ($request->role === 'siswa' && empty($email)) {
+            $email = $user->email; // Keep the existing email if not provided during update
+        }
+
         $user->update([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $email,
             'username' => $request->username,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
             'role' => $request->role,

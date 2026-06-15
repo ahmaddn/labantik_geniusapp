@@ -1091,4 +1091,281 @@ class QuizController extends Controller
             return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Update module-level quiz (pretest/posttest)
+     */
+    public function updateModule(Learning_modules $modules, Quizzes $quizzes, Request $request)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string',
+            'type'         => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
+            'time_limit'   => 'required|integer|min:1',
+            'category'     => 'nullable|string|max:100',
+            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'remove_image' => 'nullable|string',
+        ], [
+            'title.required' => 'Judul quiz wajib diisi.',
+        ]);
+
+        if ($request->input('type') === 'true_false') {
+            $request->validate([
+                'tf_question'        => 'required|string',
+                'tf_option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+        } else {
+            $request->validate([
+                'questions' => 'required|string',
+            ], [
+                'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
+            ]);
+        }
+
+        DB::beginTransaction();
+        try {
+            $imagePath = $quizzes->image;
+            if ($request->input('remove_image') === '1') {
+                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                $imagePath = null;
+            }
+            if ($request->hasFile('image')) {
+                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                $imagePath = $request->file('image')->store('quizzes/images', 'public');
+            }
+
+            $quizzes->update([
+                'title'       => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'type'        => $validated['type'],
+                'time_limit'  => $validated['time_limit'],
+                'category'    => $validated['category'] ?? null,
+                'image'       => $imagePath,
+            ]);
+
+            foreach ($quizzes->questions as $oldQuestion) {
+                foreach ($oldQuestion->options as $oldOption) {
+                    if ($oldOption->option_image) {
+                        Storage::disk('public')->delete($oldOption->option_image);
+                    }
+                }
+                foreach ($oldQuestion->dragDropItems as $oldItem) {
+                    if ($oldItem->item_image) {
+                        Storage::disk('public')->delete($oldItem->item_image);
+                    }
+                }
+                $oldQuestion->delete();
+            }
+
+            if ($validated['type'] === 'true_false') {
+                $tfData = json_decode($request->input('tf_question'), true);
+
+                if (!$tfData || empty($tfData['question_text'])) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', 'Data pertanyaan true/false tidak valid.');
+                }
+
+                $question = Questions::create([
+                    'quiz_id'       => $quizzes->id,
+                    'mascot_id'     => $tfData['mascot_id'] ?? null,
+                    'question_text' => $tfData['question_text'],
+                    'image'         => null,
+                    'order_number'  => 1,
+                ]);
+
+                foreach ($tfData['options'] as $idx => $optionMeta) {
+                    $optionImagePath = null;
+
+                    if (isset($optionMeta['has_new_image']) && $optionMeta['has_new_image']) {
+                        if ($request->hasFile("tf_option_images.{$optionMeta['image_index']}")) {
+                            $optionImagePath = $request->file("tf_option_images.{$optionMeta['image_index']}")
+                                ->store('questions/options', 'public');
+                        }
+                    } elseif (!empty($optionMeta['existing_image'])) {
+                        $optionImagePath = $optionMeta['existing_image'];
+                    }
+
+                    Question_options::create([
+                        'question_id'  => $question->id,
+                        'option_text'  => $optionMeta['option_text'] ?? '',
+                        'option_image' => $optionImagePath,
+                        'is_correct'   => (bool) ($optionMeta['is_correct'] ?? false),
+                        'feedback'     => null,
+                    ]);
+                }
+            } else {
+                $questions = json_decode($request->input('questions'), true);
+
+                if (!$questions || count($questions) === 0) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', 'Data pertanyaan tidak valid.');
+                }
+
+                foreach ($questions as $index => $questionData) {
+                    $question = Questions::create([
+                        'quiz_id'       => $quizzes->id,
+                        'mascot_id'     => $questionData['mascot_id'] ?? null,
+                        'question_text' => $questionData['question_text'],
+                        'image'         => $questionData['image'] ?? null,
+                        'order_number'  => $index + 1,
+                        'type'          => $validated['type'] === 'short_answer' ? 'short_answer' : 'multiple_choice',
+                        'expected_keywords' => $questionData['expected_keywords'] ?? null,
+                    ]);
+
+                    if (
+                        in_array($validated['type'], ['multiple_choices', 'case_study'])
+                        && isset($questionData['options'])
+                    ) {
+                        foreach ($questionData['options'] as $optionData) {
+                            Question_options::create([
+                                'question_id'  => $question->id,
+                                'option_text'  => $optionData['option_text'] ?? '',
+                                'option_image' => $optionData['option_image'] ?? null,
+                                'is_correct'   => $optionData['is_correct'],
+                                'feedback'     => $optionData['feedback'] ?? null,
+                            ]);
+                        }
+                    }
+
+                    if ($validated['type'] === 'drag_drop') {
+                        $groupMap = [];
+                        if (isset($questionData['drag_drop_groups'])) {
+                            foreach ($questionData['drag_drop_groups'] as $groupIndex => $groupData) {
+                                $group = Drag_drop_groups::create([
+                                    'question_id' => $question->id,
+                                    'group_name'  => $groupData['group_name'],
+                                ]);
+                                $groupMap[$groupIndex] = $group->id;
+                            }
+                        }
+                        if (isset($questionData['drag_drop_items'])) {
+                            $dragImages = $request->file('drag_item_images', []);
+                            $imgIndex = 0;
+                            foreach ($questionData['drag_drop_items'] as $itemData) {
+                                $storedPath = $itemData['item_image'] ?? null;
+                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
+                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
+                                    $imgIndex++;
+                                }
+
+                                Drag_drop_items::create([
+                                    'question_id'        => $question->id,
+                                    'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
+                                    'item_text'          => $itemData['item_text'],
+                                    'item_image'         => $storedPath ?? null,
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.modules.show', [$modules->id])
+                ->with('success', 'Quiz berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Gagal memperbarui quiz: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete module-level quiz
+     */
+    public function destroyModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($quizzes->questions as $question) {
+                foreach ($question->options as $option) {
+                    if ($option->option_image) {
+                        Storage::disk('public')->delete($option->option_image);
+                    }
+                }
+            }
+            if ($quizzes->image) {
+                Storage::disk('public')->delete($quizzes->image);
+            }
+
+            $quizzes->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.modules.show', [$modules->id])
+                ->with('success', 'Quiz berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
+        }
+    }
+    public function downloadTemplate(Request $request)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $headers = [
+            'A1' => 'quiz_title',
+            'B1' => 'quiz_description',
+            'C1' => 'time_limit',
+            'D1' => 'type',
+            'E1' => 'category',
+            'F1' => 'question_text',
+            'G1' => 'mascot_id',
+            'H1' => 'option_1',
+            'I1' => 'option_1_is_correct',
+            'J1' => 'option_2',
+            'K1' => 'option_2_is_correct',
+            'L1' => 'option_3',
+            'M1' => 'option_3_is_correct',
+            'N1' => 'option_4',
+            'O1' => 'option_4_is_correct',
+        ];
+
+        // Example Data
+        $example = [
+            'A2' => 'Kuis Bumi dan Alam Semesta',
+            'B2' => 'Mari uji pengetahuanmu tentang alam!',
+            'C2' => '30',
+            'D2' => 'multiple_choices',
+            'E2' => 'mission',
+            'F2' => 'Berapa jumlah planet di tata surya?',
+            'G2' => '',
+            'H2' => '7',
+            'I2' => '0',
+            'J2' => '8',
+            'K2' => '1',
+            'L2' => '9',
+            'M2' => '0',
+            'N2' => '10',
+            'O2' => '0',
+        ];
+
+        foreach (array_merge($headers, $example) as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+            $sheet->getColumnDimension(substr($cell, 0, 1))->setAutoSize(true);
+        }
+
+        // Style Header
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'Template_Import_Kuis.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit;
+    }
 }

@@ -47,7 +47,9 @@ const props = defineProps({
 const showAddMissionModal = ref(false);
 const showEditMissionModal = ref(false);
 const showDeleteDialog = ref(false);
+const showDeleteQuizDialog = ref(false);
 const selectedMission = ref(null);
+const selectedQuiz = ref(null);
 
 // Form untuk tambah mission
 const form = useForm({
@@ -263,6 +265,38 @@ const deleteMission = () => {
         },
     );
 };
+
+const goToEditQuiz = (quiz) => {
+    router.visit(
+        route("admin.modules.quizzes.show", [props.module.id, quiz.id]),
+    ); // Currently it points to show. Edit could be handled in show or we need a module quiz edit route, but let's just go to show. Or actually there is no edit route for module quizzes, so we just use goToShowQuiz. But user asked for edit button, we can just use goToShowQuiz for now since editing is done in the show page for quizzes.
+};
+
+const confirmDeleteQuiz = (quiz) => {
+    selectedQuiz.value = quiz;
+    showDeleteQuizDialog.value = true;
+};
+
+const deleteQuiz = () => {
+    if (!selectedQuiz.value) return;
+
+    router.delete(
+        route("admin.modules.quizzes.destroy", [
+            props.module.id,
+            selectedQuiz.value.id,
+        ]),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showDeleteQuizDialog.value = false;
+                selectedQuiz.value = null;
+            },
+            onError: () => {
+                triggerToast("Gagal menghapus tes.", "error");
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -312,6 +346,7 @@ const deleteMission = () => {
                     <div class="w-full sm:w-auto mt-4 sm:mt-0 sm:self-end">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <Button
+                                v-if="!pretest.length"
                                 class="w-full"
                                 variant="warning"
                                 size="md"
@@ -330,6 +365,7 @@ const deleteMission = () => {
                                 Tambah Misi
                             </Button>
                             <Button
+                                v-if="!posttest.length"
                                 class="w-full"
                                 variant="light"
                                 size="md"
@@ -339,6 +375,7 @@ const deleteMission = () => {
                                 Tambah Tes Akhir
                             </Button>
                             <Button
+                                v-if="!pretest.length"
                                 class="w-full"
                                 variant="ghost"
                                 size="md"
@@ -348,6 +385,7 @@ const deleteMission = () => {
                                 Import Tes Awal (Pretest)
                             </Button>
                             <Button
+                                v-if="!posttest.length"
                                 class="w-full"
                                 variant="ghost"
                                 size="md"
@@ -400,10 +438,35 @@ const deleteMission = () => {
                             {{ quiz.title }}
                         </h3>
 
-                        <p class="text-sm text-gray-500 mt-2">
+                        <p class="text-sm text-gray-500 mt-2 mb-4">
                             {{ quiz.questions_count }} Soal •
                             {{ quiz.time_limit }} menit
                         </p>
+
+                        <template #footer>
+                            <div
+                                class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
+                                @click.stop
+                            >
+                                <!-- Edit Button -->
+                                <button
+                                    @click="goToShowQuiz(quiz.id)"
+                                    title="Edit Tes Awal"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
+                                >
+                                    <Pencil class="w-4 h-4" />
+                                </button>
+
+                                <!-- Delete Button -->
+                                <button
+                                    @click="confirmDeleteQuiz(quiz)"
+                                    title="Hapus Tes Awal"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-red-200"
+                                >
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </template>
                     </Card>
                 </div>
             </div>
@@ -539,10 +602,35 @@ const deleteMission = () => {
                                 {{ quiz.title }}
                             </h3>
 
-                            <p class="text-sm text-gray-500 mt-2">
+                            <p class="text-sm text-gray-500 mt-2 mb-4">
                                 {{ quiz.questions_count }} Soal •
                                 {{ quiz.time_limit }} menit
                             </p>
+
+                            <template #footer>
+                                <div
+                                    class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
+                                    @click.stop
+                                >
+                                    <!-- Edit Button -->
+                                    <button
+                                        @click="goToShowQuiz(quiz.id)"
+                                        title="Edit Tes Akhir"
+                                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
+                                    >
+                                        <Pencil class="w-4 h-4" />
+                                    </button>
+
+                                    <!-- Delete Button -->
+                                    <button
+                                        @click="confirmDeleteQuiz(quiz)"
+                                        title="Hapus Tes Akhir"
+                                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-red-200"
+                                    >
+                                        <Trash2 class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </template>
                         </Card>
                     </div>
                 </div>
@@ -725,6 +813,15 @@ const deleteMission = () => {
             @cancel="showDeleteDialog = false"
         />
 
+        <!-- Delete Quiz Confirmation Dialog -->
+        <ConfirmDialog
+            :show="showDeleteQuizDialog"
+            title="Hapus tes ini?"
+            :message="`Tes '${selectedQuiz?.title}' beserta soal-soalnya akan dihapus selamanya.`"
+            @confirm="deleteQuiz"
+            @cancel="showDeleteQuizDialog = false"
+        />
+
         <!-- Import Module-level Pretest/Posttest Modal -->
         <Modal
             :show="showModuleImportModal"
@@ -737,12 +834,16 @@ const deleteMission = () => {
                     Unggah file CSV atau XLSX yang berisi quiz untuk kategori
                     <strong>{{ moduleImport.category }}</strong>. Kolom minimal pada setiap baris:
                     <strong
-                        >quiz_title, question_text, option_1,
-                        option_1_is_correct, option_2, option_2_is_correct,
-                        ...</strong
-                    >. File maksimal 10 MB. Tipe file yang diterima:
+                    >quiz_title, quiz_description, time_limit, question_text, option_1,
+                    option_1_is_correct, option_2, option_2_is_correct,
+                    ...</strong>. File maksimal 10 MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
+                
+                <a :href="route('admin.modules.quizzes.template', module.id)" class="text-blue-600 hover:underline text-sm font-semibold flex items-center gap-1 mb-2">
+                    Unduh Template Excel
+                </a>
+
                 <FileDropzone
                     v-model:modelValue="moduleImport.file"
                     accept=".csv,.xlsx,.xls"

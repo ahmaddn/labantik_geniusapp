@@ -205,6 +205,11 @@ class MissionController extends Controller
                     'material_type' => 'text',
                     'layout_type'   => $material->layout_type,
                     'youtube_link'  => $material->youtube_link,
+                    'mascot'        => $material->mascot ? [
+                        'id'        => $material->mascot->id,
+                        'name_pose' => $material->mascot->name_pose,
+                        'image'     => $material->mascot->image,
+                    ] : null,
                 ],
             ],
         ])->toArray();
@@ -247,10 +252,12 @@ class MissionController extends Controller
                 'order_number' => $firstSlider->order_number ?? 0,
                 'levels'       => $firstSlider->levels->map(fn($lvl) => [
                     'id'          => $lvl->id,
-                    'level_name'  => $lvl->level_name,
-                    'narration'   => $lvl->narration,
-                    'metric_value'=> $lvl->metric_value,
-                    'image'       => $lvl->image,
+                    'level_name'       => $lvl->level_name,
+                    'narration'        => $lvl->narration,
+                    'metric_value'     => $lvl->metric_value,
+                    'image'            => $lvl->image,
+                    'animation_effect' => $lvl->animation_effect,
+                    'status'           => $lvl->status,
                 ])->toArray(),
             ];
         }

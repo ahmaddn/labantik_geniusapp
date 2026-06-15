@@ -16,10 +16,20 @@ const levels = computed(() => props.quiz?.levels || []);
 
 // State
 const sliderValues = reactive({});
-// Initialize to mid value 2 for each slider (1=min, 2=mid, 3=max)
-variables.value.forEach((v, idx) => {
-    sliderValues[idx] = 1;
-});
+
+watch(
+  variables,
+  (newVars) => {
+    if (newVars) {
+      newVars.forEach((v, idx) => {
+        if (sliderValues[idx] === undefined) {
+          sliderValues[idx] = 1;
+        }
+      });
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 // Calculate "dangerScore" generically based on sum of sliders
 const dangerScore = computed(() => {

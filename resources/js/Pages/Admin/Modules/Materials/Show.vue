@@ -31,7 +31,7 @@ const formatDate = (dateString) => {
 
 import { computed } from "vue";
 const conceptualData = computed(() => {
-    if (props.material.layout_type === 'conceptual_systematic' && props.material.content) {
+    if (['conceptual_systematic', 'learning_objectives', 'initial_questions', 'cover_page', 'image_comparison', 'process_list'].includes(props.material.layout_type) && props.material.content) {
         try {
             return JSON.parse(props.material.content);
         } catch(e) {
@@ -210,17 +210,88 @@ const conceptualData = computed(() => {
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Atas</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.topRight || '-' }}</p></div>
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kiri Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomLeft || '-' }}</p></div>
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomRight || '-' }}</p></div>
-                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
-                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kiri</strong><p class="text-sm">{{ conceptualData.sliderMin || '-' }}</p></div>
-                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kanan</strong><p class="text-sm">{{ conceptualData.sliderMax || '-' }}</p></div>
-                            </div>
-                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2 border-t pt-4">
-                                <div><strong class="text-xs text-green-600 uppercase">Metrik 1</strong><p class="font-bold text-sm">{{ conceptualData.metric1Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric1Desc || '-' }}</p></div>
-                                <div><strong class="text-xs text-blue-600 uppercase">Metrik 2</strong><p class="font-bold text-sm">{{ conceptualData.metric2Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric2Desc || '-' }}</p></div>
+                            <div class="md:col-span-2 grid grid-cols-1 gap-4 mt-2 border-t pt-4">
+                                <div v-if="conceptualData.variables" class="w-full">
+                                    <h4 class="font-bold text-sm text-gray-700 mb-2">Variabel Penggeser:</h4>
+                                    <div v-for="(v, idx) in conceptualData.variables" :key="idx" class="text-sm bg-indigo-50 p-2 mb-2 rounded border border-indigo-100">
+                                        <strong>{{ v.name || 'Variabel ' + (idx+1) }}</strong>: {{ v.min_label }} - {{ v.max_label }}
+                                    </div>
+                                </div>
+                                <div v-if="conceptualData.levels" class="w-full mt-4">
+                                    <h4 class="font-bold text-sm text-gray-700 mb-2">Level/Tahapan:</h4>
+                                    <div v-for="(lvl, idx) in conceptualData.levels" :key="'lvl-'+idx" class="text-sm bg-blue-50 p-2 mb-2 rounded border border-blue-100">
+                                        <strong>{{ lvl.level_name || 'Level ' + (idx+1) }}</strong> (Status: {{ lvl.status }}, Efek: {{ lvl.animation_effect }})<br/>
+                                        <span class="text-xs text-gray-500">{{ lvl.narration }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div v-else>
                             <pre class="whitespace-pre-wrap text-sm text-red-500">Gagal memuat data (Invalid Format)</pre>
+                        </div>
+                    </div>
+                </div>
+                <!-- Learning Objectives Preview -->
+                <div v-else-if="material.layout_type === 'learning_objectives'" class="space-y-4">
+                    <div class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-200">
+                        <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">Tujuan Pembelajaran</h3>
+                        <ul class="list-decimal pl-5 space-y-2">
+                            <li v-for="(item, idx) in (conceptualData || [])" :key="idx" class="text-gray-700">{{ item }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Cover Page Preview -->
+                <div v-else-if="material.layout_type === 'cover_page'" class="space-y-4">
+                    <div class="bg-indigo-50 p-5 rounded-2xl border-2 border-indigo-200">
+                        <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">Halaman Cover</h3>
+                        <div class="text-center">
+                            <h2 class="text-2xl font-black text-gray-800 uppercase">{{ material.title }}</h2>
+                            <p class="text-lg text-gray-600 font-bold mt-2">{{ conceptualData?.subtitle || '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Initial Questions Preview -->
+                <div v-else-if="material.layout_type === 'initial_questions'" class="space-y-4">
+                    <div class="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200">
+                        <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">Pertanyaan Awal</h3>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li v-for="(item, idx) in (conceptualData || [])" :key="idx" class="text-gray-700">{{ item }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Image Comparison Preview -->
+                <div v-else-if="material.layout_type === 'image_comparison'" class="space-y-4">
+                    <div class="bg-green-50 p-5 rounded-2xl border-2 border-green-200">
+                        <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">Mengamati Perbedaan Gambar</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <img v-if="conceptualData?.image_left" :src="`/storage/${conceptualData.image_left}`" class="w-full max-h-48 object-cover rounded border" />
+                                <div v-else class="h-32 bg-gray-200 flex items-center justify-center rounded border text-gray-500">Kiri</div>
+                                <p class="font-bold mt-2 text-gray-700">{{ conceptualData?.left_label || '-' }}</p>
+                            </div>
+                            <div class="text-center">
+                                <img v-if="conceptualData?.image_right" :src="`/storage/${conceptualData.image_right}`" class="w-full max-h-48 object-cover rounded border" />
+                                <div v-else class="h-32 bg-gray-200 flex items-center justify-center rounded border text-gray-500">Kanan</div>
+                                <p class="font-bold mt-2 text-gray-700">{{ conceptualData?.right_label || '-' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Process List Preview -->
+                <div v-else-if="material.layout_type === 'process_list'" class="space-y-4">
+                    <div class="bg-orange-50 p-5 rounded-2xl border-2 border-orange-200 flex gap-6">
+                        <div class="w-1/3">
+                            <img v-if="material.image" :src="`/storage/${material.image}`" class="w-full h-auto object-cover rounded-xl border-4 border-white shadow-md" />
+                            <div v-else class="w-full h-32 bg-gray-200 flex items-center justify-center rounded-xl border-4 border-white shadow-md text-gray-500">Gambar Proses</div>
+                        </div>
+                        <div class="w-2/3">
+                            <h3 class="font-bold text-gray-800 text-lg border-b pb-2 mb-4">List Proses</h3>
+                            <div class="space-y-2">
+                                <div v-for="(item, idx) in (conceptualData || [])" :key="idx" class="flex items-center gap-3 bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center">{{ idx + 1 }}</div>
+                                    <span class="font-bold text-gray-700">{{ item }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

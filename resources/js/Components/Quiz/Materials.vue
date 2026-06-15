@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onUnmounted, computed } from 'vue'
+import { ref, onUnmounted, computed, reactive, watch } from 'vue'
 import * as LucideIcons from 'lucide-vue-next'
 import { BookOpen, Music, Video, CloudRain, Droplets } from 'lucide-vue-next'
+import SimulationEffects from "@/Components/Simulation/SimulationEffects.vue";
 
 const props = defineProps({
   question: {
@@ -10,27 +11,100 @@ const props = defineProps({
   },
 })
 
-const sliderValue = ref(50)
+const sliderValues = reactive({})
 
 const conceptualData = computed(() => {
-  if (props.question?.layout_type !== 'conceptual_systematic') return null
-  try {
-    return JSON.parse(props.question.content)
-  } catch (e) {
-    return null
+  if (['conceptual_systematic', 'learning_objectives', 'initial_questions', 'cover_page', 'image_comparison', 'process_list'].includes(props.question?.layout_type)) {
+    try {
+      return JSON.parse(props.question.content)
+    } catch (e) {
+      return null
+    }
   }
+  return null
 })
 
-const m1Mult = computed(() => conceptualData.value?.metric1Multiplier !== undefined && conceptualData.value?.metric1Multiplier !== '' ? Number(conceptualData.value.metric1Multiplier) : 0.8)
-const m1Base = computed(() => conceptualData.value?.metric1Base !== undefined && conceptualData.value?.metric1Base !== '' ? Number(conceptualData.value.metric1Base) : 20)
-const m2Mult = computed(() => conceptualData.value?.metric2Multiplier !== undefined && conceptualData.value?.metric2Multiplier !== '' ? Number(conceptualData.value.metric2Multiplier) : 1.5)
-const m2Base = computed(() => conceptualData.value?.metric2Base !== undefined && conceptualData.value?.metric2Base !== '' ? Number(conceptualData.value.metric2Base) : 0)
+const variables = computed(() => conceptualData.value?.variables || [])
+const levels = computed(() => conceptualData.value?.levels || [])
 
-const metric1Value = computed(() => Math.round(sliderValue.value * m1Mult.value) + m1Base.value)
-const metric2Value = computed(() => Math.round(sliderValue.value * m2Mult.value) + m2Base.value)
+// Initialize sliders when variables change
+watch(
+  variables,
+  (newVars) => {
+    if (newVars) {
+      newVars.forEach((v, idx) => {
+        if (sliderValues[idx] === undefined) {
+          sliderValues[idx] = 1;
+        }
+      });
+    }
+  },
+  { immediate: true, deep: true }
+)
 
-const sliderLeftIcon = computed(() => conceptualData.value?.sliderIconLeft || 'CloudRain')
-const sliderRightIcon = computed(() => conceptualData.value?.sliderIconRight || 'Droplets')
+const dangerScore = computed(() => {
+  let sum = 0;
+  for (let key in sliderValues) {
+    sum += sliderValues[key];
+  }
+  return sum;
+});
+
+const currentLevelData = computed(() => {
+  if (!levels.value || levels.value.length === 0) return null;
+  const maxPossibleScore = variables.value.length * 3;
+  const minPossibleScore = variables.value.length * 1;
+  if (maxPossibleScore === 0) return levels.value[0];
+  let normalized = (dangerScore.value - minPossibleScore) / (maxPossibleScore - minPossibleScore || 1);
+  let maxIndex = levels.value.length - 1;
+  let index = Math.round(normalized * maxIndex);
+  return levels.value[index];
+});
+
+const isDanger = computed(() => currentLevelData.value?.status === 'bahaya');
+const isWarning = computed(() => currentLevelData.value?.status === 'waspada');
+
+const statusColor = computed(() => {
+  if (isDanger.value) return "text-red-600";
+  if (isWarning.value) return "text-yellow-600";
+  return "text-green-600";
+});
+const statusBg = computed(() => {
+  if (isDanger.value) return "bg-red-100 border-red-300";
+  if (isWarning.value) return "bg-yellow-100 border-yellow-300";
+  return "bg-green-100 border-green-300";
+});
+const statusText = computed(() => {
+  if (isDanger.value) return "BAHAYA";
+  if (isWarning.value) return "WASPADA";
+  return "AMAN / NORMAL";
+});
+
+const effectTranslations = {
+    'none': '',
+    'rain_light': 'Gerimis',
+    'rain_heavy': 'Hujan Deras',
+    'snow': 'Salju',
+    'bubbles': 'Gelembung Air',
+    'fire_sparks': 'Percikan Api',
+    'wind_leaves': 'Daun Berterbangan',
+    'dust': 'Debu / Polusi',
+    'sunbeams': 'Cerah',
+    'earthquake': 'Gempa'
+};
+
+const translatedEffect = computed(() => {
+    const effect = currentLevelData.value?.animation_effect;
+    if (!effect || effect === 'none') return '';
+    return effectTranslations[effect] || effect;
+});
+
+const levelImage = computed(() => {
+  if (currentLevelData.value?.image) {
+    return `/storage/${currentLevelData.value.image}`;
+  }
+  return imageUrl(props.question.image);
+});
 
 const isVideo = (path) => {
   if (!path) return false
@@ -177,8 +251,28 @@ onUnmounted(() => {
       </div>
 
       <!-- Center Image -->
-      <div class="cs-image-wrap">
-        <img :src="imageUrl(props.question.image)" alt="Concept" class="cs-center-img" />
+      <div 
+        class="cs-image-wrap relative"
+        :class="{ 
+            'animate-shake': currentLevelData?.animation_effect === 'earthquake'
+        }"
+      >
+        <img v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10 relative" />
+        
+        <!-- Dynamic Effects Overlay -->
+        <SimulationEffects :effect="currentLevelData?.animation_effect" />
+
+        <!-- Status Badge Overlay -->
+        <div
+            v-if="currentLevelData"
+            class="absolute top-4 right-4 z-30 px-3 py-1.5 rounded-xl font-bold border-2 shadow-lg backdrop-blur-md text-xs"
+            :class="statusBg + ' ' + statusColor"
+        >
+            <span :class="statusColor">
+                {{ statusText }}
+                <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
+            </span>
+        </div>
       </div>
 
       <!-- Right Texts -->
@@ -194,39 +288,57 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Slider Area -->
-    <div class="cs-slider-area">
-      <div class="cs-slider-wrap">
-        <div class="cs-slider-icon bg-blue-500">
-            <component :is="LucideIcons[sliderLeftIcon] || LucideIcons.CloudRain" class="w-5 h-5 text-white" />
+    <!-- Sliders Controls Area -->
+    <div class="cs-slider-area flex flex-col gap-6 w-full max-w-xl mx-auto mb-6 mt-6">
+      <div v-if="variables.length === 0" class="text-center text-slate-500 font-bold bg-white/40 p-4 rounded-xl w-full">
+        Belum ada variabel penggeser.
+      </div>
+      
+      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="cs-slider-group bg-white/50 backdrop-blur p-4 rounded-2xl border border-white/40 shadow-sm w-full">
+        <div class="flex justify-between items-center mb-3">
+          <span class="font-extrabold text-blue-900 bg-blue-100/60 px-3 py-1 rounded-lg text-sm">
+            {{ v.name || `Variabel ${idx + 1}` }}
+          </span>
+          <span class="font-bold text-slate-600 text-xs">
+            {{
+                sliderValues[idx] === 1
+                    ? v.min_label
+                    : sliderValues[idx] === 3
+                      ? v.max_label
+                      : "Sedang"
+            }}
+          </span>
         </div>
-        <span class="cs-slider-label">{{ conceptualData?.sliderMin || 'Ringan' }}</span>
-        <input type="range" min="0" max="100" v-model="sliderValue" class="cs-slider" />
-        <span class="cs-slider-label">{{ conceptualData?.sliderMax || 'Deras' }}</span>
-        <div class="cs-slider-icon bg-blue-700">
-            <component :is="LucideIcons[sliderRightIcon] || LucideIcons.Droplets" class="w-5 h-5 text-white" />
+        <div class="relative w-full px-1 flex items-center gap-4">
+          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-right">{{ v.min_label || "Min" }}</span>
+          <input
+              type="range"
+              min="1"
+              max="3"
+              step="1"
+              v-model.number="sliderValues[idx]"
+              class="cs-slider-custom w-full h-3 rounded-full appearance-none outline-none focus:ring-2 focus:ring-blue-300"
+              :class="idx % 2 === 0 ? 'bg-blue-200 thumb-blue' : 'bg-green-200 thumb-green'"
+          />
+          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-left">{{ v.max_label || "Max" }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Metrics Area -->
-    <div class="cs-metrics-area">
-      <p class="cs-instruction">Geser intensitas dan amati perubahan pada indikator</p>
+    <!-- Narration Box / Metrics Area -->
+    <div v-if="currentLevelData" class="cs-metrics-area">
+      <h3 class="font-extrabold text-blue-950 text-lg mb-1">
+        {{ currentLevelData.level_name || "Amati Perubahan" }}
+      </h3>
+      <p class="text-slate-700 font-medium text-sm leading-relaxed mb-4 max-w-xl mx-auto">
+        {{ currentLevelData.narration || "Ayo ubah penggeser di atas untuk melihat perbedaan dampaknya!" }}
+      </p>
       
-      <div class="cs-metrics-grid">
-        <!-- Metric 1 -->
-        <div class="cs-metric-box metric-green" :style="{ transform: `scale(${1 + sliderValue/500})` }">
-          <h4 class="cs-metric-title">{{ conceptualData?.metric1Title }}</h4>
-          <p class="cs-metric-desc">{{ conceptualData?.metric1Desc }}</p>
-          <div class="cs-metric-value">{{ metric1Value }} {{ conceptualData?.metric1Unit || 'L/s' }}</div>
-        </div>
-        
-        <!-- Metric 2 -->
-        <div class="cs-metric-box metric-blue" :style="{ transform: `scale(${1 + sliderValue/300})` }">
-          <h4 class="cs-metric-title">{{ conceptualData?.metric2Title }}</h4>
-          <p class="cs-metric-desc">{{ conceptualData?.metric2Desc }}</p>
-          <div class="cs-metric-value">{{ metric2Value }} {{ conceptualData?.metric2Unit || 'm³' }}</div>
-        </div>
+      <div
+          v-if="currentLevelData.metric_value"
+          class="inline-block px-4 py-1.5 bg-blue-50 text-blue-800 font-bold rounded-full border border-blue-200 text-xs shadow-sm"
+      >
+          {{ currentLevelData.metric_value }}
       </div>
     </div>
   </div>
@@ -247,6 +359,142 @@ onUnmounted(() => {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen>
         </iframe>
+    </div>
+  </div>
+
+  <!-- Learning Objectives -->
+  <div v-else-if="props.question?.layout_type === 'learning_objectives'" class="w-full max-w-4xl mx-auto p-4 md:p-8 bg-blue-50/50 rounded-3xl min-h-[60vh] flex flex-col justify-center">
+    <div class="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-blue-100/50 border-4 border-blue-200 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
+        <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-100 rounded-full opacity-50"></div>
+        
+        <h2 class="text-3xl md:text-5xl font-black text-blue-900 mb-8 text-center relative z-10 font-heading tracking-wide uppercase drop-shadow-sm">Tujuan Pembelajaran</h2>
+        
+        <ul class="space-y-4 md:space-y-6 relative z-10">
+            <li v-for="(item, idx) in conceptualData" :key="idx" class="flex gap-4 md:gap-6 items-start bg-blue-50/80 p-4 md:p-6 rounded-2xl border-2 border-blue-100 hover:border-blue-300 transition-all hover:-translate-y-1">
+                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-blue-500 text-white font-black text-xl md:text-2xl rounded-full flex items-center justify-center shadow-md border-4 border-blue-200">
+                    {{ idx + 1 }}
+                </div>
+                <p class="text-lg md:text-xl font-bold text-slate-700 leading-relaxed pt-1 md:pt-2">{{ item }}</p>
+            </li>
+        </ul>
+    </div>
+  </div>
+
+  <!-- Cover Page -->
+  <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full max-w-5xl mx-auto min-h-[70vh] flex items-center justify-center relative">
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-[3rem] p-8 md:p-16 shadow-2xl shadow-indigo-200 overflow-hidden relative border-8 border-white">
+        <!-- Deco elements -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-3xl"></div>
+        
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div class="flex-1 text-center md:text-left text-white space-y-6">
+                <div class="inline-block px-6 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white font-bold text-sm md:text-base tracking-widest uppercase shadow-inner">
+                    {{ conceptualData?.subtitle || 'Misi Pembelajaran' }}
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black font-heading leading-tight drop-shadow-xl text-yellow-300" style="-webkit-text-stroke: 2px rgba(0,0,0,0.1);">
+                    {{ props.question.title }}
+                </h1>
+            </div>
+            
+            <div class="w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative flex items-center justify-center">
+                <!-- Glowing circle behind mascot -->
+                <div class="absolute w-4/5 h-4/5 bg-white rounded-full opacity-20 blur-xl animate-pulse"></div>
+                <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain relative z-10 filter drop-shadow-2xl animate-float" />
+                <img v-else src="/images/mascot.png" class="w-full h-full object-contain relative z-10 filter drop-shadow-2xl animate-float" />
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Initial Questions -->
+  <div v-else-if="props.question?.layout_type === 'initial_questions'" class="w-full max-w-4xl mx-auto min-h-[60vh] flex flex-col items-center justify-center">
+    <div class="w-full flex flex-col md:flex-row items-center gap-8 md:gap-16">
+        <div class="w-48 h-48 md:w-72 md:h-72 flex-shrink-0">
+            <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain filter drop-shadow-xl animate-bounce-slow" />
+            <img v-else src="/images/mascot.png" class="w-full h-full object-contain filter drop-shadow-xl animate-bounce-slow" />
+        </div>
+        
+        <div class="flex-1 w-full space-y-6">
+            <!-- Chat bubble style -->
+            <div v-for="(q, idx) in conceptualData" :key="idx" class="relative bg-white p-6 md:p-8 rounded-3xl rounded-tl-none shadow-xl border-4 border-purple-200 transform transition-transform hover:-translate-y-2">
+                <div class="absolute -left-4 top-0 w-8 h-8 bg-white border-t-4 border-l-4 border-purple-200 transform -skew-x-12"></div>
+                <p class="text-xl md:text-2xl font-bold text-purple-900 leading-relaxed font-heading relative z-10">
+                    {{ q }}
+                </p>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Image Comparison -->
+  <div v-else-if="props.question?.layout_type === 'image_comparison'" class="w-full max-w-6xl mx-auto bg-green-50/50 p-6 md:p-10 rounded-3xl min-h-[60vh] flex flex-col justify-center">
+    <h2 class="text-3xl md:text-5xl font-black text-green-900 text-center font-heading uppercase mb-10 drop-shadow-sm tracking-wide">
+        {{ props.question.title }}
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+        <div class="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-green-200 transform transition-transform hover:scale-[1.02]">
+            <div class="h-64 md:h-96 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100">
+                <img v-if="conceptualData?.image_left" :src="`/storage/${conceptualData.image_left}`" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kiri</div>
+            </div>
+            <div class="bg-green-100 py-3 px-6 rounded-xl border-2 border-green-300 text-center">
+                <h3 class="text-xl md:text-2xl font-black text-green-800 uppercase tracking-widest">{{ conceptualData?.left_label || 'Gambar 1' }}</h3>
+            </div>
+        </div>
+        
+        <div class="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-blue-200 transform transition-transform hover:scale-[1.02]">
+            <div class="h-64 md:h-96 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100">
+                <img v-if="conceptualData?.image_right" :src="`/storage/${conceptualData.image_right}`" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kanan</div>
+            </div>
+            <div class="bg-blue-100 py-3 px-6 rounded-xl border-2 border-blue-300 text-center">
+                <h3 class="text-xl md:text-2xl font-black text-blue-800 uppercase tracking-widest">{{ conceptualData?.right_label || 'Gambar 2' }}</h3>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Process List -->
+  <div v-else-if="props.question?.layout_type === 'process_list'" class="w-full max-w-6xl mx-auto min-h-[60vh] flex flex-col justify-center py-8">
+    <div class="bg-gradient-to-b from-sky-100 to-green-100 rounded-[3rem] p-6 md:p-12 border-8 border-white shadow-2xl relative overflow-hidden">
+        <!-- Deco elements -->
+        <div class="absolute bottom-0 left-0 w-full h-32 bg-[url('/images/grass-pattern.png')] bg-repeat-x bg-bottom opacity-50 z-0"></div>
+        <div class="absolute top-10 right-10 w-32 h-32 bg-white rounded-full opacity-30 blur-xl"></div>
+        
+        <div class="flex flex-col md:flex-row gap-8 md:gap-12 relative z-10">
+            <!-- Left Side: Image / Polaroid -->
+            <div class="w-full md:w-5/12 flex-shrink-0 flex items-center justify-center transform -rotate-2 hover:rotate-0 transition-transform duration-300">
+                <div class="bg-white p-4 pb-12 rounded-lg shadow-xl border border-gray-200 relative w-full max-w-sm">
+                    <!-- Paper clip -->
+                    <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-16 border-4 border-gray-400 rounded-full bg-transparent transform rotate-12 z-20"></div>
+                    <div class="w-full aspect-square bg-blue-50 overflow-hidden border border-gray-100">
+                        <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
+                        <div v-else class="w-full h-full flex items-center justify-center text-gray-400">Gambar</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side: List -->
+            <div class="w-full md:w-7/12 flex flex-col justify-center">
+                <h2 class="text-3xl md:text-5xl font-black text-slate-700 font-heading uppercase mb-8 drop-shadow-sm leading-tight" style="-webkit-text-stroke: 1px rgba(255,255,255,0.5);">
+                    {{ props.question.title }}
+                </h2>
+                
+                <div class="space-y-4">
+                    <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-center gap-4 group">
+                        <div class="w-12 h-12 rounded-full bg-white border-4 border-slate-400 text-slate-700 font-black text-xl flex items-center justify-center shadow-md group-hover:border-blue-500 group-hover:text-blue-500 transition-colors flex-shrink-0">
+                            {{ idx + 1 }}.
+                        </div>
+                        <div class="bg-white px-6 py-3 rounded-full shadow-md border-2 border-white group-hover:border-blue-200 w-full transition-all">
+                            <span class="font-bold text-slate-700 text-lg md:text-xl uppercase tracking-wide group-hover:text-blue-800">{{ item }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 
@@ -780,4 +1028,40 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 1rem 0 0;
 }
+
+/* ── Earthquake & Slider Styles ── */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) translateY(-2px) rotate(-1deg); }
+    20%, 40%, 60%, 80% { transform: translateX(5px) translateY(2px) rotate(1deg); }
+}
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) infinite;
+}
+
+.cs-slider-custom {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cs-slider-custom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
+  transition: transform 0.1s;
+}
+.cs-slider-custom::-webkit-slider-thumb:active { transform: scale(1.1); }
+
+.thumb-blue::-webkit-slider-thumb { background: #3b82f6; }
+.thumb-green::-webkit-slider-thumb { background: #10b981; }
 </style>

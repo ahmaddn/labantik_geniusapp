@@ -1295,6 +1295,11 @@ const formatDate = (dateString) => {
                     MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
+
+                <a :href="route('admin.modules.missions.materials.template', [module.id, mission.id])" class="text-blue-600 hover:underline text-sm font-semibold flex items-center gap-1 mb-2">
+                    Unduh Template Excel
+                </a>
+
                 <FileDropzone
                     v-model:modelValue="materialImport.file"
                     accept=".csv,.xlsx,.xls"
@@ -1347,6 +1352,11 @@ const formatDate = (dateString) => {
                     10 MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
+
+                <a :href="route('admin.modules.missions.quizzes.template', [module.id, mission.id])" class="text-blue-600 hover:underline text-sm font-semibold flex items-center gap-1 mb-2">
+                    Unduh Template Excel
+                </a>
+
                 <FileDropzone
                     v-model:modelValue="quizImport.file"
                     accept=".csv,.xlsx,.xls"

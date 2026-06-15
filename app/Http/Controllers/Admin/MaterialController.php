@@ -42,6 +42,8 @@ class MaterialController extends Controller
             'materials.*.mascot_id'   => 'nullable|exists:mascots,id',
             'materials.*.youtube_link'=> 'nullable|url|max:255',
             'materials.*.image'       => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
+            'materials.*.image_left'  => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
+            'materials.*.image_right' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
             'materials.*.layout_type' => 'nullable|string',
         ], [
             'materials.*.title.required'   => 'Judul material wajib diisi.',
@@ -69,6 +71,20 @@ class MaterialController extends Controller
                 $isVideo = in_array(strtolower($file->getClientOriginalExtension()), ['mp4', 'mov', 'avi', 'wmv', 'webm']);
                 $folder  = $isVideo ? 'materials/videos' : 'materials/images';
                 $data['image'] = $file->store($folder, 'public');
+            }
+
+            // Handle image_comparison specific images
+            if (($data['layout_type'] ?? '') === 'image_comparison') {
+                $contentData = json_decode($data['content'], true);
+                if (!is_array($contentData)) $contentData = [];
+
+                if ($request->hasFile("materials.{$index}.image_left")) {
+                    $contentData['image_left'] = $request->file("materials.{$index}.image_left")->store('materials/images', 'public');
+                }
+                if ($request->hasFile("materials.{$index}.image_right")) {
+                    $contentData['image_right'] = $request->file("materials.{$index}.image_right")->store('materials/images', 'public');
+                }
+                $data['content'] = json_encode($contentData);
             }
 
             Materials::create($data);
@@ -244,6 +260,8 @@ class MaterialController extends Controller
             'mascot_id'    => 'nullable|exists:mascots,id',
             'youtube_link' => 'nullable|url|max:255',
             'image'        => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,wmv,webm|max:51200',
+            'image_left'   => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
+            'image_right'  => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
             'remove_image' => 'nullable|boolean',
             'layout_type'  => 'nullable|string',
         ], [
@@ -279,6 +297,21 @@ class MaterialController extends Controller
             $data['image'] = $file->store($folder, 'public');
         }
 
+        if (($data['layout_type'] ?? '') === 'image_comparison') {
+            $contentData = json_decode($data['content'] ?? '{}', true);
+            if (!is_array($contentData)) $contentData = [];
+
+            if ($request->hasFile('image_left')) {
+                if (!empty($contentData['image_left'])) Storage::disk('public')->delete($contentData['image_left']);
+                $contentData['image_left'] = $request->file('image_left')->store('materials/images', 'public');
+            }
+            if ($request->hasFile('image_right')) {
+                if (!empty($contentData['image_right'])) Storage::disk('public')->delete($contentData['image_right']);
+                $contentData['image_right'] = $request->file('image_right')->store('materials/images', 'public');
+            }
+            $data['content'] = json_encode($contentData);
+        }
+
         $materials->update($data);
 
         return redirect()
@@ -301,5 +334,43 @@ class MaterialController extends Controller
         return redirect()
             ->route('admin.modules.missions.show', [$modules->id, $missions->id])
             ->with('success', 'Material berhasil dihapus.');
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Header
+        $headers = [
+            'A1' => 'title',
+            'B1' => 'description',
+            'C1' => 'content',
+            'D1' => 'mascot_id',
+        ];
+
+        // Example Data
+        $example = [
+            'A2' => 'Pengenalan Materi 1',
+            'B2' => 'Ini adalah materi pengenalan yang menyenangkan.',
+            'C2' => '<p>Konten materi format HTML atau teks biasa</p>',
+            'D2' => '',
+        ];
+
+        foreach (array_merge($headers, $example) as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+            $sheet->getColumnDimension(substr($cell, 0, 1))->setAutoSize(true);
+        }
+        
+        // Style Header
+        $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'Template_Import_Materi.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="'. urlencode($fileName).'"');
+        $writer->save('php://output');
+        exit;
     }
 }

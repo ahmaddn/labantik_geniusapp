@@ -85,7 +85,7 @@ class SimulationConfigController extends Controller
     {
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'variables' => 'nullable|array',
+            'variables' => 'nullable|array|max:10',
             'variables.*.name' => 'nullable|string|max:255',
             'variables.*.min_label' => 'nullable|string|max:255',
             'variables.*.max_label' => 'nullable|string|max:255',
@@ -97,6 +97,8 @@ class SimulationConfigController extends Controller
             'levels' => 'nullable|array',
             'levels.*.id' => 'nullable|string',
             'levels.*.level_name' => 'required|string|max:255',
+            'levels.*.status' => 'nullable|string|max:255',
+            'levels.*.animation_effect' => 'nullable|string|max:255',
             'levels.*.narration' => 'nullable|string',
             'levels.*.metric_value' => 'nullable|string',
             'levels.*.image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
@@ -139,6 +141,8 @@ class SimulationConfigController extends Controller
                 $level = Simulation_slider_levels::firstOrNew(['id' => $levelId]);
                 $level->simulation_slider_id = $slider->id;
                 $level->level_name = $levelData['level_name'];
+                $level->status = $levelData['status'] ?? 'aman';
+                $level->animation_effect = $levelData['animation_effect'] ?? 'none';
                 $level->narration = $levelData['narration'] ?? null;
                 $level->metric_value = $levelData['metric_value'] ?? null;
 

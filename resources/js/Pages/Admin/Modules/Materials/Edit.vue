@@ -5,6 +5,7 @@ import { router } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
+import FileUpload from "@/Components/UI/Forms/FileUpload.vue";
 import Button from "@/Components/UI/Button.vue";
 import Toast from "@/Components/UI/Toast.vue";
 import Card from "@/Components/UI/Card.vue";
@@ -20,6 +21,8 @@ import {
     Pencil,
     X,
     Loader2,
+    Plus,
+    Trash2
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -52,16 +55,40 @@ let initialConceptualData = {
     topRight: "",
     bottomLeft: "",
     bottomRight: "",
-    sliderMin: "Ringan",
-    sliderMax: "Deras",
-    metric1Title: "Curah Hujan",
-    metric1Desc: "Input Air",
-    metric2Title: "Debit Sungai",
-    metric2Desc: "Jumlah Debit"
+    variables: [],
+    levels: []
 };
-if (initialLayoutType === 'conceptual_systematic' && props.material.content) {
+let initialLearningObjectives = [''];
+let initialInitialQuestions = [''];
+let initialProcessList = [''];
+let initialCoverData = { subtitle: '' };
+let initialImageComparison = {
+    left_label: 'MUSIM KEMARAU',
+    right_label: 'MUSIM HUJAN',
+    image_left: null,
+    image_right: null,
+    image_left_preview: null,
+    image_right_preview: null,
+    existing_image_left: null,
+    existing_image_right: null
+};
+
+if (props.material.content) {
     try {
-        initialConceptualData = JSON.parse(props.material.content);
+        const parsed = JSON.parse(props.material.content);
+        if (initialLayoutType === 'conceptual_systematic') initialConceptualData = parsed;
+        else if (initialLayoutType === 'learning_objectives') initialLearningObjectives = parsed;
+        else if (initialLayoutType === 'initial_questions') initialInitialQuestions = parsed;
+        else if (initialLayoutType === 'process_list') initialProcessList = parsed;
+        else if (initialLayoutType === 'cover_page') initialCoverData = parsed;
+        else if (initialLayoutType === 'image_comparison') {
+            initialImageComparison.left_label = parsed.left_label || 'KIRI';
+            initialImageComparison.right_label = parsed.right_label || 'KANAN';
+            initialImageComparison.existing_image_left = parsed.image_left || null;
+            initialImageComparison.existing_image_right = parsed.image_right || null;
+            if (parsed.image_left) initialImageComparison.image_left_preview = `/storage/${parsed.image_left}`;
+            if (parsed.image_right) initialImageComparison.image_right_preview = `/storage/${parsed.image_right}`;
+        }
     } catch(e) {}
 }
 
@@ -74,8 +101,41 @@ const materialForm = ref({
     image: null,
     remove_image: false,
     layout_type: initialLayoutType,
-    conceptual_data: initialConceptualData
+    conceptual_data: initialConceptualData,
+    learning_objectives: initialLearningObjectives,
+    initial_questions: initialInitialQuestions,
+    process_list: initialProcessList,
+    cover_data: initialCoverData,
+    image_comparison: initialImageComparison
 });
+
+const addVariable = () => {
+    materialForm.value.conceptual_data.variables.push({
+        name: '',
+        min_label: '',
+        max_label: ''
+    });
+};
+
+const removeVariable = (index) => {
+    materialForm.value.conceptual_data.variables.splice(index, 1);
+};
+
+const addSliderLevel = () => {
+    materialForm.value.conceptual_data.levels.push({
+        id: null,
+        level_name: '',
+        status: 'aman',
+        animation_effect: 'none',
+        narration: '',
+        metric_value: '',
+        image: null
+    });
+};
+
+const removeSliderLevel = (index) => {
+    materialForm.value.conceptual_data.levels.splice(index, 1);
+};
 
 // Preview
 const mediaPreview = ref(
@@ -140,6 +200,21 @@ const handleSubmit = () => {
     let finalContent = materialForm.value.content;
     if (materialForm.value.layout_type === 'conceptual_systematic') {
         finalContent = JSON.stringify(materialForm.value.conceptual_data);
+    } else if (materialForm.value.layout_type === 'learning_objectives') {
+        finalContent = JSON.stringify(materialForm.value.learning_objectives);
+    } else if (materialForm.value.layout_type === 'initial_questions') {
+        finalContent = JSON.stringify(materialForm.value.initial_questions);
+    } else if (materialForm.value.layout_type === 'process_list') {
+        finalContent = JSON.stringify(materialForm.value.process_list);
+    } else if (materialForm.value.layout_type === 'cover_page') {
+        finalContent = JSON.stringify(materialForm.value.cover_data);
+    } else if (materialForm.value.layout_type === 'image_comparison') {
+        finalContent = JSON.stringify({
+            left_label: materialForm.value.image_comparison.left_label,
+            right_label: materialForm.value.image_comparison.right_label,
+            image_left: materialForm.value.image_comparison.existing_image_left,
+            image_right: materialForm.value.image_comparison.existing_image_right,
+        });
     }
 
     const formData = new FormData();
@@ -156,6 +231,14 @@ const handleSubmit = () => {
     );
     if (materialForm.value.image) {
         formData.append("image", materialForm.value.image);
+    }
+    if (materialForm.value.layout_type === 'image_comparison') {
+        if (materialForm.value.image_comparison.image_left) {
+            formData.append("image_left", materialForm.value.image_comparison.image_left);
+        }
+        if (materialForm.value.image_comparison.image_right) {
+            formData.append("image_right", materialForm.value.image_comparison.image_right);
+        }
     }
 
     router.post(
@@ -264,6 +347,42 @@ const toggleCardVariant = () => {
                         <label class="block text-sm font-bold text-gray-700 mb-3">Tipe Layout Materi</label>
                         <div class="flex flex-wrap gap-4">
                             <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'cover_page' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="cover_page" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'cover_page' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'cover_page'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Halaman Cover</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'learning_objectives' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="learning_objectives" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'learning_objectives' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'learning_objectives'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Tujuan Pembelajaran</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'initial_questions' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="initial_questions" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'initial_questions' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'initial_questions'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Pertanyaan Awal</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'image_comparison' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="image_comparison" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'image_comparison' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'image_comparison'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Mengamati Gambar</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
                                    :class="materialForm.layout_type === 'default' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
                                 <input type="radio" v-model="materialForm.layout_type" value="default" class="hidden" />
                                 <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
@@ -271,6 +390,15 @@ const toggleCardVariant = () => {
                                     <div v-if="materialForm.layout_type === 'default'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
                                 </div>
                                 <span class="font-bold text-gray-700">Reguler (Teks/Video)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'process_list' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="process_list" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'process_list' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'process_list'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">List Proses & Gambar</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
                                    :class="materialForm.layout_type === 'conceptual_systematic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
@@ -341,36 +469,67 @@ const toggleCardVariant = () => {
                             </div>
                             
                             <div class="border-t pt-4">
-                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Slider</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <InputField label="Label Slider Kiri (Min)" v-model="materialForm.conceptual_data.sliderMin" placeholder="Contoh: Ringan" />
-                                    <InputField label="Label Slider Kanan (Max)" v-model="materialForm.conceptual_data.sliderMax" placeholder="Contoh: Deras" />
-                                    <InputField label="Ikon Slider Kiri (Lucide)" v-model="materialForm.conceptual_data.sliderIconLeft" placeholder="Contoh: CloudRain" />
-                                    <InputField label="Ikon Slider Kanan (Lucide)" v-model="materialForm.conceptual_data.sliderIconRight" placeholder="Contoh: Droplets" />
+                                <div class="flex justify-between items-center mt-6 mb-2">
+                                    <h4 class="font-bold text-gray-700">Variabel Penggeser (Slider)</h4>
+                                    <Button v-if="materialForm.conceptual_data.variables.length < 10" variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
+                                </div>
+                                
+                                <div v-if="materialForm.conceptual_data.variables.length === 0" class="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-gray-500">
+                                    Belum ada variabel penggeser. Klik "Tambah Variabel" untuk menambahkan.
+                                </div>
+
+                                <div v-for="(variable, vIdx) in materialForm.conceptual_data.variables" :key="'var-'+vIdx" class="p-4 border-2 border-indigo-100 bg-indigo-50/50 rounded-xl relative mb-4">
+                                    <button @click="removeVariable(vIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700" title="Hapus Variabel"><Trash2 class="w-5 h-5"/></button>
+                                    <h5 class="font-bold text-indigo-800 mb-3">Variabel {{ vIdx + 1 }}</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <InputField label="Nama Variabel" v-model="variable.name" placeholder="Misal: Intensitas Suhu" />
+                                        <InputField label="Label Kiri (Minimal)" v-model="variable.min_label" placeholder="Misal: Dingin" />
+                                        <InputField label="Label Kanan (Maksimal)" v-model="variable.max_label" placeholder="Misal: Panas" />
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="border-t pt-4">
-                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Metrik (Kotak Bawah)</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-white p-4 rounded-xl border space-y-3">
-                                        <h5 class="font-bold text-sm text-green-600 mb-2">Metrik 1 (Kiri)</h5>
-                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric1Title" placeholder="Contoh: Curah Hujan" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric1Desc" placeholder="Contoh: Input Air" />
-                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric1Unit" placeholder="Contoh: L/s" />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric1Multiplier" type="number" step="0.01" placeholder="0.8" />
-                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric1Base" type="number" step="0.01" placeholder="20" />
+                                <div class="flex justify-between items-center mb-4 mt-6">
+                                    <h4 class="font-bold text-gray-700">Level / Tahapan</h4>
+                                    <Button variant="primary" size="sm" :icon="Plus" @click="addSliderLevel">Tambah Level</Button>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div v-for="(level, idx) in materialForm.conceptual_data.levels" :key="'lvl-'+idx" class="p-4 border-2 border-blue-100 bg-blue-50/50 rounded-2xl relative">
+                                        <button @click="removeSliderLevel(idx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-5 h-5"/></button>
+                                        <h5 class="font-bold text-blue-800 mb-4">Level {{ idx + 1 }}</h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputField label="Nama Level (contoh: Tahap Awal, Level 1)" v-model="level.level_name" required placeholder="Misal: Level 1" />
+                                            <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Status Bahaya / Suhu 30C" />
                                         </div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl border space-y-3">
-                                        <h5 class="font-bold text-sm text-blue-600 mb-2">Metrik 2 (Kanan)</h5>
-                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric2Title" placeholder="Contoh: Debit Sungai" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric2Desc" placeholder="Contoh: Jumlah Debit" />
-                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric2Unit" placeholder="Contoh: m³" />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric2Multiplier" type="number" step="0.01" placeholder="1.5" />
-                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric2Base" type="number" step="0.01" placeholder="0" />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <label class="block text-sm font-bold text-gray-700 mb-2">Status Level</label>
+                                                <select v-model="level.status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <option value="aman">Aman / Normal</option>
+                                                    <option value="waspada">Waspada</option>
+                                                    <option value="bahaya">Bahaya</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-bold text-gray-700 mb-2">Efek Animasi Overlay</label>
+                                                <select v-model="level.animation_effect" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <option value="none">Tidak ada efek</option>
+                                                    <option value="rain_light">Gerimis</option>
+                                                    <option value="rain_heavy">Hujan Deras</option>
+                                                    <option value="snow">Salju</option>
+                                                    <option value="bubbles">Gelembung Air</option>
+                                                    <option value="fire_sparks">Percikan Api</option>
+                                                    <option value="wind_leaves">Daun Berterbangan</option>
+                                                    <option value="dust">Polusi / Debu</option>
+                                                    <option value="sunbeams">Cahaya Cerah (Sunbeams)</option>
+                                                    <option value="earthquake">Guncangan Layar (Gempa)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <TextareaField label="Narasi Penjelasan Level" v-model="level.narration" :rows="2" placeholder="Misal: Pada level ini, debit air masih stabil..." />
                                         </div>
                                     </div>
                                 </div>
@@ -400,11 +559,84 @@ const toggleCardVariant = () => {
                         </div>
                     </template>
 
+                    <!-- Learning Objectives Content -->
+                    <template v-else-if="materialForm.layout_type === 'learning_objectives'">
+                        <div class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Poin Tujuan Pembelajaran</h3>
+                            <div v-for="(obj, idx) in materialForm.learning_objectives" :key="idx" class="flex gap-2 mb-2">
+                                <InputField :label="`Poin ${idx+1}`" v-model="materialForm.learning_objectives[idx]" class="flex-1" placeholder="Masukkan tujuan..." />
+                                <Button variant="danger" class="mt-7" @click="materialForm.learning_objectives.splice(idx, 1)" :icon="Trash2" />
+                            </div>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="materialForm.learning_objectives.push('')">Tambah Poin</Button>
+                        </div>
+                    </template>
+
+                    <!-- Cover Page Content -->
+                    <template v-else-if="materialForm.layout_type === 'cover_page'">
+                        <div class="bg-indigo-50 p-5 rounded-2xl border-2 border-indigo-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Konfigurasi Cover Misi</h3>
+                            <InputField label="Teks Subjudul (Misi X: ...)" v-model="materialForm.cover_data.subtitle" placeholder="Contoh: DARI MANA AIR DATANG?" />
+                            <SelectField label="Pilih Maskot Cover" v-model="materialForm.mascot_id" :options="mascotOptions" />
+                        </div>
+                    </template>
+
+                    <!-- Initial Questions Content -->
+                    <template v-else-if="materialForm.layout_type === 'initial_questions'">
+                        <div class="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Pertanyaan Awal Pembuka</h3>
+                            <SelectField label="Pilih Maskot (Penanya)" v-model="materialForm.mascot_id" :options="mascotOptions" />
+                            <div v-for="(q, idx) in materialForm.initial_questions" :key="idx" class="flex gap-2 mb-2">
+                                <InputField :label="`Pertanyaan ${idx+1}`" v-model="materialForm.initial_questions[idx]" class="flex-1" placeholder="Pernahkah kamu berpikir..." />
+                                <Button variant="danger" class="mt-7" @click="materialForm.initial_questions.splice(idx, 1)" :icon="Trash2" />
+                            </div>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="materialForm.initial_questions.push('')">Tambah Pertanyaan</Button>
+                        </div>
+                    </template>
+
+                    <!-- Image Comparison Content -->
+                    <template v-else-if="materialForm.layout_type === 'image_comparison'">
+                        <div class="bg-green-50 p-5 rounded-2xl border-2 border-green-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Konfigurasi Mengamati Gambar</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <!-- Kiri -->
+                                <div class="border p-4 rounded bg-white">
+                                    <h4 class="font-bold mb-2">Gambar Kiri</h4>
+                                    <InputField label="Label Gambar Kiri" v-model="materialForm.image_comparison.left_label" />
+                                    <div class="mt-2">
+                                        <FileUpload @change="e => { materialForm.image_comparison.image_left = e.target.files[0]; materialForm.image_comparison.image_left_preview = URL.createObjectURL(e.target.files[0]) }" accept="image/*" buttonText="Pilih Gambar Kiri" buttonColor="green" />
+                                        <img v-if="materialForm.image_comparison.image_left_preview || materialForm.image_comparison.existing_image_left" :src="materialForm.image_comparison.image_left_preview || `/storage/${materialForm.image_comparison.existing_image_left}`" class="mt-4 h-32 w-full object-cover rounded-xl border" />
+                                    </div>
+                                </div>
+                                <!-- Kanan -->
+                                <div class="border p-4 rounded bg-white">
+                                    <h4 class="font-bold mb-2">Gambar Kanan</h4>
+                                    <InputField label="Label Gambar Kanan" v-model="materialForm.image_comparison.right_label" />
+                                    <div class="mt-2">
+                                        <FileUpload @change="e => { materialForm.image_comparison.image_right = e.target.files[0]; materialForm.image_comparison.image_right_preview = URL.createObjectURL(e.target.files[0]) }" accept="image/*" buttonText="Pilih Gambar Kanan" buttonColor="blue" />
+                                        <img v-if="materialForm.image_comparison.image_right_preview || materialForm.image_comparison.existing_image_right" :src="materialForm.image_comparison.image_right_preview || `/storage/${materialForm.image_comparison.existing_image_right}`" class="mt-4 h-32 w-full object-cover rounded-xl border" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Process List Content -->
+                    <template v-else-if="materialForm.layout_type === 'process_list'">
+                        <div class="bg-orange-50 p-5 rounded-2xl border-2 border-orange-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Konfigurasi List Proses</h3>
+                            <div v-for="(obj, idx) in materialForm.process_list" :key="idx" class="flex gap-2 mb-2">
+                                <InputField :label="`Langkah ${idx+1}`" v-model="materialForm.process_list[idx]" class="flex-1" placeholder="Masukkan langkah proses..." />
+                                <Button variant="danger" class="mt-7" @click="materialForm.process_list.splice(idx, 1)" :icon="Trash2" />
+                            </div>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="materialForm.process_list.push('')">Tambah Langkah</Button>
+                        </div>
+                    </template>
+
                     <!-- ===== MEDIA UPLOAD ===== -->
-                    <div v-if="materialForm.layout_type !== 'video_only'">
+                    <div v-if="['default', 'learning_objectives', 'process_list'].includes(materialForm.layout_type)">
                         <label
                             class="block text-sm font-bold text-gray-700 mb-3"
-                            >Media Pembelajaran</label
+                            >Media Pembelajaran / Background</label
                         >
                         <!-- Tab Toggle Gambar / Video -->
                         <div v-if="materialForm.layout_type === 'default'" class="flex gap-2 mb-4">
@@ -461,21 +693,12 @@ const toggleCardVariant = () => {
                                     >Gambar saat ini</span
                                 >
                             </div>
-                            <label
-                                class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 border-4 border-blue-200 font-bold text-sm"
-                            >
-                                <ImageIcon class="w-5 h-5" />{{
-                                    mediaPreview
-                                        ? "Ganti Gambar"
-                                        : "Pilih Gambar"
-                                }}
-                                <input
-                                    type="file"
-                                    @change="handleMediaChange"
-                                    accept="image/*"
-                                    class="hidden"
-                                />
-                            </label>
+                            <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="image/*" 
+                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
+                                buttonColor="blue" 
+                            />
                             <p class="text-xs text-gray-400">
                                 Format: JPG, PNG, GIF. Maks 2MB.
                             </p>
@@ -502,19 +725,12 @@ const toggleCardVariant = () => {
                                     >Video saat ini</span
                                 >
                             </div>
-                            <label
-                                class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 border-4 border-blue-200 font-bold text-sm"
-                            >
-                                <VideoIcon class="w-5 h-5" />{{
-                                    mediaPreview ? "Ganti Video" : "Pilih Video"
-                                }}
-                                <input
-                                    type="file"
-                                    @change="handleMediaChange"
-                                    accept="video/*"
-                                    class="hidden"
-                                />
-                            </label>
+                            <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="video/*" 
+                                :buttonText="mediaPreview ? 'Ganti Video' : 'Pilih Video'" 
+                                buttonColor="blue" 
+                            />
                             <p class="text-xs text-gray-400">
                                 Format: MP4, MOV, AVI, WebM. Maks 50MB.
                             </p>

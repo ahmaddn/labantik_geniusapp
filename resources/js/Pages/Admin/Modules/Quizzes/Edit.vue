@@ -31,7 +31,7 @@ import {
 
 const props = defineProps({
     module: { type: Object, required: true },
-    mission: { type: Object, required: true },
+    mission: { type: Object, required: false, default: null },
     quiz: { type: Object, required: true },
     mascots: { type: Array, default: () => [] },
 });
@@ -497,12 +497,12 @@ const finalSave = () => {
         formData.append("questions", JSON.stringify(questions));
     }
 
+    const targetRoute = props.mission
+        ? route("admin.modules.missions.quizzes.update", [props.module.id, props.mission.id, props.quiz.id])
+        : route("admin.modules.quizzes.update", [props.module.id, props.quiz.id]);
+
     router.post(
-        route("admin.modules.missions.quizzes.update", [
-            props.module.id,
-            props.mission.id,
-            props.quiz.id,
-        ]),
+        targetRoute,
         formData,
         {
             onSuccess: (page) => {
@@ -512,12 +512,10 @@ const finalSave = () => {
                 }
                 showToast("Kuis berhasil diperbarui.", "success");
                 setTimeout(() => {
-                    router.visit(
-                        route("admin.modules.missions.show", [
-                            props.module.id,
-                            props.mission.id,
-                        ]),
-                    );
+                    const returnRoute = props.mission
+                        ? route("admin.modules.missions.show", [props.module.id, props.mission.id])
+                        : route("admin.modules.show", [props.module.id]);
+                    router.visit(returnRoute);
                 }, 1500);
             },
             onError: (errors) => {
@@ -565,8 +563,7 @@ const toggleCardVariant = () => {
                                 Edit Kuis: {{ quiz.title }}
                             </h1>
                             <p class="text-sm text-gray-500">
-                                Modul: {{ module.name }} | Misi:
-                                {{ mission.name }}
+                                Modul: {{ module.name }} <span v-if="mission">| Misi: {{ mission.name }}</span>
                             </p>
                         </div>
                     </div>
@@ -787,12 +784,10 @@ const toggleCardVariant = () => {
                                 variant="light"
                                 size="md"
                                 @click="
-                                    router.visit(
-                                        route('admin.modules.missions.show', [
-                                            module.id,
-                                            mission.id,
-                                        ]),
-                                    )
+                                    () => {
+                                        const returnRoute = mission ? route('admin.modules.missions.show', [module.id, mission.id]) : route('admin.modules.show', [module.id]);
+                                        router.visit(returnRoute);
+                                    }
                                 "
                                 >Batal</Button
                             >

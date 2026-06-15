@@ -101,15 +101,6 @@ const menuItems = [
         borderColor: "border-blue-300",
         activeColor: "bg-blue-500",
     },
-    {
-        name: "Petunjuk Penggunaan",
-        route: "admin.guide",
-        icon: HelpCircle,
-        bgColor: "bg-blue-100",
-        iconColor: "text-blue-600",
-        borderColor: "border-blue-300",
-        activeColor: "bg-blue-500",
-    },
 ];
 </script>
 
@@ -140,13 +131,23 @@ const menuItems = [
                     :href="route('dashboard')"
                     class="flex items-center gap-3 min-w-0"
                 >
-                    <img :src="$page.props.global_settings?.platform_logo || '/images/geniuss-logo.png'" alt="Logo" class="h-10 w-auto object-contain shrink-0" />
+                    <img
+                        :src="
+                            $page.props.global_settings?.platform_logo ||
+                            '/images/geniuss-logo.png'
+                        "
+                        alt="Logo"
+                        class="h-10 w-auto object-contain shrink-0"
+                    />
 
                     <span
                         v-if="open || isMobile"
                         class="text-xl font-bold text-blue-600 truncate"
                     >
-                        {{ $page.props.global_settings?.platform_name || 'Geniuss' }}
+                        {{
+                            $page.props.global_settings?.platform_name ||
+                            "Geniuss"
+                        }}
                     </span>
                 </Link>
 
