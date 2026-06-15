@@ -24,6 +24,8 @@ import {
     ChevronRight,
     CheckCircle2,
     MousePointerClick,
+    VolumeX,
+    Music2,
 } from "lucide-vue-next";
 
 import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
@@ -262,6 +264,7 @@ const BUBBLES_DONE = [
 const bubbleIdx = ref(0);
 const bubbleVisible = ref(true);
 let bubbleTimer = null;
+const layoutRef = ref(null);
 
 const activeSpeechText = computed(() => {
     if (phase.value === "intro") {
@@ -339,6 +342,7 @@ onUnmounted(() => {
 
 <template>
     <PretestLayout
+        ref="layoutRef"
         :timerDisplay="timerDisplay"
         :isWarning="timerWarning"
         :progressPercent="progressPct"
@@ -565,25 +569,34 @@ onUnmounted(() => {
             <div class="footer-inner">
                 <!-- Left actions (Kembali / Sebelumnya) -->
                 <div class="footer-left">
+                    <button
+                        class="music-footer-btn"
+                        @click="layoutRef?.toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': layoutRef?.musicOn }"
+                    >
+                        <Music2 v-if="layoutRef?.musicOn" :size="18" :stroke-width="2.5" />
+                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                    </button>
+
                     <template v-if="phase === 'intro'">
                         <button
-                            class="btn-duo btn-duo-secondary"
+                            class="btn-duo btn-duo-secondary btn-icon-mobile"
                             @click="goBack"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Kembali</span>
+                            <span class="hide-mobile">Kembali</span>
                         </button>
                     </template>
 
                     <template v-else-if="phase === 'quiz'">
                         <button
                             v-if="!isFirst"
-                            class="btn-duo btn-duo-secondary"
+                            class="btn-duo btn-duo-secondary btn-icon-mobile"
                             @click="goPrev"
                             :disabled="submitting"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Sebelumnya</span>
+                            <span class="hide-mobile">Sebelumnya</span>
                         </button>
                     </template>
                 </div>
@@ -592,10 +605,10 @@ onUnmounted(() => {
                 <div class="footer-right">
                     <template v-if="phase === 'intro'">
                         <button
-                            class="btn-duo btn-duo-success"
+                            class="btn-duo btn-duo-success btn-icon-mobile"
                             @click="startQuiz"
                         >
-                            <span>Mulai Pretest</span>
+                            <span class="hide-mobile">Mulai Pretest</span>
                             <Rocket :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -603,11 +616,11 @@ onUnmounted(() => {
                     <template v-else-if="phase === 'quiz'">
                         <button
                             v-if="isLast"
-                            class="btn-duo btn-duo-success"
+                            class="btn-duo btn-duo-success btn-icon-mobile"
                             @click="submitQuiz"
                             :disabled="submitting || !canGoNext"
                         >
-                            <span v-if="!submitting">Selesaikan Pretest</span>
+                            <span v-if="!submitting" class="hide-mobile">Selesaikan Pretest</span>
                             <Loader2 v-else :size="18" class="spin" />
                             <CheckCircle2
                                 v-if="!submitting"
@@ -617,11 +630,11 @@ onUnmounted(() => {
                         </button>
                         <button
                             v-else
-                            class="btn-duo btn-duo-primary"
+                            class="btn-duo btn-duo-primary btn-icon-mobile"
                             @click="goNext"
                             :disabled="!canGoNext || submitting"
                         >
-                            <span>Selanjutnya</span>
+                            <span class="hide-mobile">Selanjutnya</span>
                             <ArrowRight :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -1317,6 +1330,8 @@ onUnmounted(() => {
         border-radius: 12px;
         border-bottom-width: 4px;
     }
+    .hide-mobile { display: none; }
+    .btn-icon-mobile { padding: 10px !important; width: 48px; min-width: 48px; height: 48px; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; }
 
     .btn-duo-primary:active:not(:disabled),
     .btn-duo-success:active:not(:disabled),
@@ -1424,19 +1439,152 @@ onUnmounted(() => {
         padding: 9px 9px 9px 10px;
     }
 }
+/* ─── CELEBRATION ─── */
+.celeb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 20px;
+    overflow-y: auto;
+    gap: 0;
+    animation: celebFadeIn 0.5s ease both;
+}
+@keyframes celebFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.celeb-mascot-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: celebPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+@keyframes celebPop {
+    from { opacity: 0; transform: scale(0.8) translateY(16px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.mascot-bubble-wrap {
+    position: relative;
+    width: 260px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05));
+    animation: floatBubble 4s ease-in-out infinite;
+}
+@keyframes floatBubble {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+}
+.mascot-speech-bubble {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 20px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #3c3c3c;
+    line-height: 1.45;
+    word-break: break-word;
+}
+.bubble-arrow {
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    border-right: 2px solid #e5e5e5;
+    border-bottom: 2px solid #e5e5e5;
+    z-index: 1;
+}
+.mascot-avatar-img {
+    height: 180px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 16px rgba(28,176,246,0.15));
+}
+.celeb-label {
+    font-family: "Baloo 2", cursive;
+    font-size: 32px;
+    font-weight: 800;
+    color: #3c3c3c;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    animation: slideUp 0.5s ease 0.3s both;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.celeb-sub {
+    font-size: 15px;
+    color: #777777;
+    font-weight: 700;
+    margin-bottom: 20px;
+    animation: slideUp 0.5s ease 0.4s both;
+}
+.celeb-loader {
+    width: 180px;
+    height: 8px;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 20px;
+    animation: slideUp 0.5s ease 0.5s both;
+}
+.celeb-loader-bar {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 40%;
+    background-color: #1cb0f6;
+    border-radius: 8px;
+    animation: loading 1.5s infinite ease-in-out;
+}
+@keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+}
 
-/* ── Icon-only minimalist footer buttons on small mobile ── */
+@media (max-width: 768px) {
+    .celeb-overlay { padding: 16px 16px; justify-content: center; gap: 0; }
+    .mascot-avatar-img { height: 130px; }
+    .mascot-bubble-wrap { width: 220px; margin-bottom: 10px; }
+    .mascot-speech-bubble { font-size: 13px; padding: 12px 14px; }
+    .celeb-label { font-size: 24px; margin-top: 10px; margin-bottom: 4px; }
+    .celeb-sub { font-size: 13px; margin-bottom: 16px; }
+}
+
+/* ─── MUSIC BUTTON (Mobile Footer) ─── */
+.music-footer-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    background: #ffffff;
+    color: #94a3b8;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.music-footer-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-footer-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+
+@media (max-width: 768px) {
+    .music-footer-btn { display: flex; }
+}
+
+/* ── Minimalist footer adjustment on small mobile ── */
 @media (max-width: 480px) {
-    .btn-duo span { display: none; }
-    .btn-duo {
-        padding: 12px;
-        border-radius: 50%;
-        min-width: 48px;
-        width: 48px;
-        height: 48px;
-        gap: 0;
-    }
     .footer-bar { height: 76px; }
-    .footer-inner { padding: 0 20px; }
+    .footer-inner { padding: 0 16px; }
 }
 </style>
