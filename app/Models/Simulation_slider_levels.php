@@ -14,8 +14,6 @@ class Simulation_slider_levels extends Model
         'id',
         'simulation_slider_id',
         'level_name',
-        'status',
-        'animation_effect',
         'narration',
         'metric_value',
         'image',

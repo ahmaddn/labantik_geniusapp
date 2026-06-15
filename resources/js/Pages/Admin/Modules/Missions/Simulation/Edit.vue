@@ -49,8 +49,6 @@ const mapSliderLevels = (levels) => {
     return (levels || []).map(level => ({
         id: level.id,
         level_name: level.level_name || '',
-        status: level.status || 'aman',
-        animation_effect: level.animation_effect || 'none',
         narration: level.narration || '',
         metric_value: level.metric_value || '',
         existing_image: level.image || null,
@@ -85,8 +83,6 @@ const addSliderLevel = () => {
     sliderForm.levels.push({
         id: null,
         level_name: '',
-        status: 'aman',
-        animation_effect: 'none',
         narration: '',
         metric_value: '',
         image: null,
@@ -394,7 +390,7 @@ const saveDecision = () => {
                         
                         <div class="flex justify-between items-center mt-6 mb-2">
                             <h3 class="font-bold text-lg text-gray-700">Variabel Penggeser (Slider)</h3>
-                            <Button v-if="sliderForm.variables.length < 1" variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
                         </div>
                         
                         <div v-if="sliderForm.variables.length === 0" class="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-gray-500">
@@ -423,32 +419,7 @@ const saveDecision = () => {
                             <h4 class="font-bold text-blue-800 mb-4">Level {{ idx + 1 }}</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InputField label="Nama Level (contoh: Tahap Awal, Level 1)" v-model="level.level_name" required placeholder="Misal: Level 1" />
-                                <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Suhu 30C / Kelembaban 80%" />
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Status Level</label>
-                                    <select v-model="level.status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                        <option value="aman">Aman / Normal</option>
-                                        <option value="waspada">Waspada</option>
-                                        <option value="bahaya">Bahaya</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Efek Animasi Overlay</label>
-                                    <select v-model="level.animation_effect" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                        <option value="none">Tidak ada efek</option>
-                                        <option value="rain_light">Gerimis</option>
-                                        <option value="rain_heavy">Hujan Deras</option>
-                                        <option value="snow">Salju</option>
-                                        <option value="bubbles">Gelembung Air</option>
-                                        <option value="fire_sparks">Percikan Api</option>
-                                        <option value="wind_leaves">Daun Berterbangan</option>
-                                        <option value="dust">Polusi / Debu</option>
-                                        <option value="sunbeams">Cahaya Cerah (Sunbeams)</option>
-                                        <option value="earthquake">Guncangan Layar (Gempa)</option>
-                                    </select>
-                                </div>
+                                <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Status Bahaya / Suhu 30C" />
                             </div>
                             <TextareaField label="Narasi" v-model="level.narration" class="mt-4" placeholder="Misal: Pada level ini, matahari bersinar sangat terik..." />
                             
@@ -604,9 +575,12 @@ const saveDecision = () => {
                                         label="Gambar Status Awal (Hari Ini)" 
                                         accept="image/*" 
                                         v-model="dec.initial_state_image"
-                                        :previewUrl="dec._preview_initial || (dec.existing_initial_image ? `/storage/${dec.existing_initial_image}` : null)"
-                                        @update:modelValue="(file) => { if(file) dec._preview_initial = URL.createObjectURL(file); else { dec._preview_initial = null; dec.existing_initial_image = null; dec.remove_initial_image = true; } }" 
+                                        @update:modelValue="(file) => { if(file) dec._preview_initial = URL.createObjectURL(file); else dec._preview_initial = null; }" 
                                     />
+                                    <div v-if="dec._preview_initial || dec.existing_initial_image" class="mt-3">
+                                        <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                        <img :src="dec._preview_initial || `/storage/${dec.existing_initial_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Maskot dari Template (Opsional)</label>
@@ -657,9 +631,12 @@ const saveDecision = () => {
                                             label="Gambar Hasil (Masa Depan)" 
                                             accept="image/*" 
                                             v-model="opt.future_state_image"
-                                            :previewUrl="opt._preview_future || (opt.existing_future_image ? `/storage/${opt.existing_future_image}` : null)"
-                                            @update:modelValue="(file) => { if(file) opt._preview_future = URL.createObjectURL(file); else { opt._preview_future = null; opt.existing_future_image = null; opt.remove_future_image = true; } }" 
+                                            @update:modelValue="(file) => { if(file) opt._preview_future = URL.createObjectURL(file); else opt._preview_future = null; }" 
                                         />
+                                        <div v-if="opt._preview_future || opt.existing_future_image" class="mt-3">
+                                            <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
+                                            <img :src="opt._preview_future || `/storage/${opt.existing_future_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

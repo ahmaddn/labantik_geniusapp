@@ -90,4 +90,5 @@ class Missions extends Model
     {
         return $this->hasMany(Scientific_reflections::class, 'mission_id');
     }
+
 }

@@ -1,8 +1,7 @@
 <script setup>
-import { ref, onUnmounted, computed, reactive, watch } from 'vue'
+import { ref, onUnmounted, computed } from 'vue'
 import * as LucideIcons from 'lucide-vue-next'
 import { BookOpen, Music, Video, CloudRain, Droplets } from 'lucide-vue-next'
-import SimulationEffects from "@/Components/Simulation/SimulationEffects.vue";
 
 const props = defineProps({
   question: {
@@ -11,7 +10,7 @@ const props = defineProps({
   },
 })
 
-const sliderValues = reactive({})
+const sliderValue = ref(50)
 
 const conceptualData = computed(() => {
   if (props.question?.layout_type !== 'conceptual_systematic') return null
@@ -22,88 +21,16 @@ const conceptualData = computed(() => {
   }
 })
 
-const variables = computed(() => conceptualData.value?.variables || [])
-const levels = computed(() => conceptualData.value?.levels || [])
+const m1Mult = computed(() => conceptualData.value?.metric1Multiplier !== undefined && conceptualData.value?.metric1Multiplier !== '' ? Number(conceptualData.value.metric1Multiplier) : 0.8)
+const m1Base = computed(() => conceptualData.value?.metric1Base !== undefined && conceptualData.value?.metric1Base !== '' ? Number(conceptualData.value.metric1Base) : 20)
+const m2Mult = computed(() => conceptualData.value?.metric2Multiplier !== undefined && conceptualData.value?.metric2Multiplier !== '' ? Number(conceptualData.value.metric2Multiplier) : 1.5)
+const m2Base = computed(() => conceptualData.value?.metric2Base !== undefined && conceptualData.value?.metric2Base !== '' ? Number(conceptualData.value.metric2Base) : 0)
 
-// Initialize sliders when variables change
-watch(
-  variables,
-  (newVars) => {
-    if (newVars) {
-      newVars.forEach((v, idx) => {
-        if (sliderValues[idx] === undefined) {
-          sliderValues[idx] = 1;
-        }
-      });
-    }
-  },
-  { immediate: true, deep: true }
-)
+const metric1Value = computed(() => Math.round(sliderValue.value * m1Mult.value) + m1Base.value)
+const metric2Value = computed(() => Math.round(sliderValue.value * m2Mult.value) + m2Base.value)
 
-const dangerScore = computed(() => {
-  let sum = 0;
-  for (let key in sliderValues) {
-    sum += sliderValues[key];
-  }
-  return sum;
-});
-
-const currentLevelData = computed(() => {
-  if (!levels.value || levels.value.length === 0) return null;
-  const maxPossibleScore = variables.value.length * 3;
-  const minPossibleScore = variables.value.length * 1;
-  if (maxPossibleScore === 0) return levels.value[0];
-  let normalized = (dangerScore.value - minPossibleScore) / (maxPossibleScore - minPossibleScore || 1);
-  let maxIndex = levels.value.length - 1;
-  let index = Math.round(normalized * maxIndex);
-  return levels.value[index];
-});
-
-const isDanger = computed(() => currentLevelData.value?.status === 'bahaya');
-const isWarning = computed(() => currentLevelData.value?.status === 'waspada');
-
-const statusColor = computed(() => {
-  if (isDanger.value) return "text-red-600";
-  if (isWarning.value) return "text-yellow-600";
-  return "text-green-600";
-});
-const statusBg = computed(() => {
-  if (isDanger.value) return "bg-red-100 border-red-300";
-  if (isWarning.value) return "bg-yellow-100 border-yellow-300";
-  return "bg-green-100 border-green-300";
-});
-const statusText = computed(() => {
-  if (isDanger.value) return "BAHAYA";
-  if (isWarning.value) return "WASPADA";
-  return "AMAN / NORMAL";
-});
-
-const effectTranslations = {
-    'none': '',
-    'rain_light': 'Gerimis',
-    'rain_heavy': 'Hujan Deras',
-    'snow': 'Salju',
-    'bubbles': 'Gelembung Air',
-    'fire_sparks': 'Percikan Api',
-    'wind_leaves': 'Daun Berterbangan',
-    'dust': 'Debu / Polusi',
-    'sunbeams': 'Cerah',
-    'earthquake': 'Gempa'
-};
-
-const translatedEffect = computed(() => {
-    const effect = currentLevelData.value?.animation_effect;
-    if (!effect || effect === 'none') return '';
-    return effectTranslations[effect] || effect;
-});
-
-const levelImage = computed(() => {
-  if (currentLevelData.value?.image) {
-    return `/storage/${currentLevelData.value.image}`;
-  }
-  // Fallback to main material image
-  return imageUrl(props.question.image);
-});
+const sliderLeftIcon = computed(() => conceptualData.value?.sliderIconLeft || 'CloudRain')
+const sliderRightIcon = computed(() => conceptualData.value?.sliderIconRight || 'Droplets')
 
 const isVideo = (path) => {
   if (!path) return false
@@ -250,28 +177,8 @@ onUnmounted(() => {
       </div>
 
       <!-- Center Image -->
-      <div 
-        class="cs-image-wrap relative"
-        :class="{ 
-            'animate-shake': currentLevelData?.animation_effect === 'earthquake'
-        }"
-      >
-        <img v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10 relative" />
-        
-        <!-- Dynamic Effects Overlay -->
-        <SimulationEffects :effect="currentLevelData?.animation_effect" />
-
-        <!-- Status Badge Overlay -->
-        <div
-            v-if="currentLevelData"
-            class="absolute top-4 right-4 z-30 px-3 py-1.5 rounded-xl font-bold border-2 shadow-lg backdrop-blur-md text-xs"
-            :class="statusBg + ' ' + statusColor"
-        >
-            <span :class="statusColor">
-                {{ statusText }}
-                <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
-            </span>
-        </div>
+      <div class="cs-image-wrap">
+        <img :src="imageUrl(props.question.image)" alt="Concept" class="cs-center-img" />
       </div>
 
       <!-- Right Texts -->
@@ -287,57 +194,39 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Sliders Controls Area -->
-    <div class="cs-slider-area flex flex-col gap-6 w-full max-w-xl mx-auto mb-6">
-      <div v-if="variables.length === 0" class="text-center text-slate-500 font-bold bg-white/40 p-4 rounded-xl w-full">
-        Belum ada variabel penggeser.
-      </div>
-      
-      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="cs-slider-group bg-white/50 backdrop-blur p-4 rounded-2xl border border-white/40 shadow-sm w-full">
-        <div class="flex justify-between items-center mb-3">
-          <span class="font-extrabold text-blue-900 bg-blue-100/60 px-3 py-1 rounded-lg text-sm">
-            {{ v.name || `Variabel ${idx + 1}` }}
-          </span>
-          <span class="font-bold text-slate-600 text-xs">
-            {{
-                sliderValues[idx] === 1
-                    ? v.min_label
-                    : sliderValues[idx] === 3
-                      ? v.max_label
-                      : "Sedang"
-            }}
-          </span>
+    <!-- Slider Area -->
+    <div class="cs-slider-area">
+      <div class="cs-slider-wrap">
+        <div class="cs-slider-icon bg-blue-500">
+            <component :is="LucideIcons[sliderLeftIcon] || LucideIcons.CloudRain" class="w-5 h-5 text-white" />
         </div>
-        <div class="relative w-full px-1 flex items-center gap-4">
-          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-right">{{ v.min_label || "Min" }}</span>
-          <input
-              type="range"
-              min="1"
-              max="3"
-              step="1"
-              v-model.number="sliderValues[idx]"
-              class="cs-slider-custom w-full h-3 rounded-full appearance-none outline-none focus:ring-2 focus:ring-blue-300"
-              :class="idx % 2 === 0 ? 'bg-blue-200 thumb-blue' : 'bg-green-200 thumb-green'"
-          />
-          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-left">{{ v.max_label || "Max" }}</span>
+        <span class="cs-slider-label">{{ conceptualData?.sliderMin || 'Ringan' }}</span>
+        <input type="range" min="0" max="100" v-model="sliderValue" class="cs-slider" />
+        <span class="cs-slider-label">{{ conceptualData?.sliderMax || 'Deras' }}</span>
+        <div class="cs-slider-icon bg-blue-700">
+            <component :is="LucideIcons[sliderRightIcon] || LucideIcons.Droplets" class="w-5 h-5 text-white" />
         </div>
       </div>
     </div>
 
-    <!-- Narration Box / Metrics Area -->
-    <div v-if="currentLevelData" class="cs-metrics-area">
-      <h3 class="font-extrabold text-blue-950 text-lg mb-1">
-        {{ currentLevelData.level_name || "Amati Perubahan" }}
-      </h3>
-      <p class="text-slate-700 font-medium text-sm leading-relaxed mb-4 max-w-xl mx-auto">
-        {{ currentLevelData.narration || "Ayo ubah penggeser di atas untuk melihat perbedaan dampaknya!" }}
-      </p>
+    <!-- Metrics Area -->
+    <div class="cs-metrics-area">
+      <p class="cs-instruction">Geser intensitas dan amati perubahan pada indikator</p>
       
-      <div
-          v-if="currentLevelData.metric_value"
-          class="inline-block px-4 py-1.5 bg-blue-50 text-blue-800 font-bold rounded-full border border-blue-200 text-xs shadow-sm"
-      >
-          {{ currentLevelData.metric_value }}
+      <div class="cs-metrics-grid">
+        <!-- Metric 1 -->
+        <div class="cs-metric-box metric-green" :style="{ transform: `scale(${1 + sliderValue/500})` }">
+          <h4 class="cs-metric-title">{{ conceptualData?.metric1Title }}</h4>
+          <p class="cs-metric-desc">{{ conceptualData?.metric1Desc }}</p>
+          <div class="cs-metric-value">{{ metric1Value }} {{ conceptualData?.metric1Unit || 'L/s' }}</div>
+        </div>
+        
+        <!-- Metric 2 -->
+        <div class="cs-metric-box metric-blue" :style="{ transform: `scale(${1 + sliderValue/300})` }">
+          <h4 class="cs-metric-title">{{ conceptualData?.metric2Title }}</h4>
+          <p class="cs-metric-desc">{{ conceptualData?.metric2Desc }}</p>
+          <div class="cs-metric-value">{{ metric2Value }} {{ conceptualData?.metric2Unit || 'm³' }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -890,40 +779,4 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 1rem 0 0;
 }
-
-/* ── Earthquake & Slider Styles ── */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) translateY(-2px) rotate(-1deg); }
-    20%, 40%, 60%, 80% { transform: translateX(5px) translateY(2px) rotate(1deg); }
-}
-.animate-shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) infinite;
-}
-
-.cs-slider-custom {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 12px;
-  background: #e2e8f0;
-  border-radius: 10px;
-  outline: none;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.cs-slider-custom::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
-  transition: transform 0.1s;
-}
-.cs-slider-custom::-webkit-slider-thumb:active { transform: scale(1.1); }
-
-.thumb-blue::-webkit-slider-thumb { background: #3b82f6; }
-.thumb-green::-webkit-slider-thumb { background: #10b981; }
 </style>

@@ -19,7 +19,6 @@ import {
     Pencil,
     Loader2,
     Hash,
-    FileSpreadsheet,
 } from "lucide-vue-next";
 
 const page = usePage();
@@ -264,40 +263,6 @@ const deleteMission = () => {
         },
     );
 };
-
-const showDeleteQuizDialog = ref(false);
-const selectedQuizToDelete = ref(null);
-
-const goToEditQuiz = (quizId) => {
-    router.visit(route("admin.modules.quizzes.edit", [props.module.id, quizId]));
-};
-
-const confirmDeleteQuiz = (quiz) => {
-    selectedQuizToDelete.value = quiz;
-    showDeleteQuizDialog.value = true;
-};
-
-const deleteQuiz = () => {
-    if (!selectedQuizToDelete.value) return;
-
-    router.delete(
-        route("admin.modules.quizzes.destroy", [
-            props.module.id,
-            selectedQuizToDelete.value.id,
-        ]),
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                showDeleteQuizDialog.value = false;
-                selectedQuizToDelete.value = null;
-                triggerToast("Kuis berhasil dihapus.", "success");
-            },
-            onError: () => {
-                triggerToast("Gagal menghapus kuis.", "error");
-            },
-        },
-    );
-};
 </script>
 
 <template>
@@ -347,8 +312,6 @@ const deleteQuiz = () => {
                     <div class="w-full sm:w-auto mt-4 sm:mt-0 sm:self-end">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <Button
-                                v-slot:default
-                                v-if="!pretest || !pretest.length"
                                 class="w-full"
                                 variant="warning"
                                 size="md"
@@ -367,7 +330,6 @@ const deleteQuiz = () => {
                                 Tambah Misi
                             </Button>
                             <Button
-                                v-if="!posttest || !posttest.length"
                                 class="w-full"
                                 variant="light"
                                 size="md"
@@ -377,7 +339,6 @@ const deleteQuiz = () => {
                                 Tambah Tes Akhir
                             </Button>
                             <Button
-                                v-if="!pretest || !pretest.length"
                                 class="w-full"
                                 variant="ghost"
                                 size="md"
@@ -387,7 +348,6 @@ const deleteQuiz = () => {
                                 Import Tes Awal (Pretest)
                             </Button>
                             <Button
-                                v-if="!posttest || !posttest.length"
                                 class="w-full"
                                 variant="ghost"
                                 size="md"
@@ -428,47 +388,22 @@ const deleteQuiz = () => {
                         @click="goToShowQuiz(quiz.id)"
                         class="cursor-pointer hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between h-full"
                     >
-                        <div>
-                            <div
-                                class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center"
-                            >
-                                <Flag class="w-12 h-12 text-blue-400" />
-                            </div>
-
-                            <h3
-                                class="font-heading font-bold text-gray-800 text-lg"
-                            >
-                                {{ quiz.title }}
-                            </h3>
-
-                            <p class="text-sm text-gray-500 mt-2">
-                                {{ quiz.questions_count }} Soal •
-                                {{ quiz.time_limit }} menit
-                            </p>
+                        <div
+                            class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center"
+                        >
+                            <Flag class="w-12 h-12 text-blue-400" />
                         </div>
 
-                        <!-- Footer Actions -->
-                        <template #footer>
-                            <div
-                                class="flex justify-end items-center gap-2 pt-3 mt-3 border-t border-gray-100"
-                                @click.stop
-                            >
-                                <button
-                                    @click="goToEditQuiz(quiz.id)"
-                                    title="Edit Kuis"
-                                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all border border-yellow-200"
-                                >
-                                    <Pencil class="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                    @click="confirmDeleteQuiz(quiz)"
-                                    title="Hapus Kuis"
-                                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all border border-red-200"
-                                >
-                                    <Trash2 class="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        </template>
+                        <h3
+                            class="font-heading font-bold text-gray-800 text-lg"
+                        >
+                            {{ quiz.title }}
+                        </h3>
+
+                        <p class="text-sm text-gray-500 mt-2">
+                            {{ quiz.questions_count }} Soal •
+                            {{ quiz.time_limit }} menit
+                        </p>
                     </Card>
                 </div>
             </div>
@@ -592,47 +527,22 @@ const deleteQuiz = () => {
                             @click="goToShowQuiz(quiz.id)"
                             class="cursor-pointer hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between h-full"
                         >
-                            <div>
-                                <div
-                                    class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center"
-                                >
-                                    <Flag class="w-12 h-12 text-green-400" />
-                                </div>
-
-                                <h3
-                                    class="font-heading font-bold text-gray-800 text-lg"
-                                >
-                                    {{ quiz.title }}
-                                </h3>
-
-                                <p class="text-sm text-gray-500 mt-2">
-                                    {{ quiz.questions_count }} Soal •
-                                    {{ quiz.time_limit }} menit
-                                </p>
+                            <div
+                                class="w-full h-32 rounded-2xl mb-4 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center"
+                            >
+                                <Flag class="w-12 h-12 text-green-400" />
                             </div>
 
-                            <!-- Footer Actions -->
-                            <template #footer>
-                                <div
-                                    class="flex justify-end items-center gap-2 pt-3 mt-3 border-t border-gray-100"
-                                    @click.stop
-                                >
-                                    <button
-                                        @click="goToEditQuiz(quiz.id)"
-                                        title="Edit Kuis"
-                                        class="w-9 h-9 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all border border-yellow-200"
-                                    >
-                                        <Pencil class="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                        @click="confirmDeleteQuiz(quiz)"
-                                        title="Hapus Kuis"
-                                        class="w-9 h-9 flex items-center justify-center rounded-xl bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 transition-all border border-red-200"
-                                    >
-                                        <Trash2 class="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            </template>
+                            <h3
+                                class="font-heading font-bold text-gray-800 text-lg"
+                            >
+                                {{ quiz.title }}
+                            </h3>
+
+                            <p class="text-sm text-gray-500 mt-2">
+                                {{ quiz.questions_count }} Soal •
+                                {{ quiz.time_limit }} menit
+                            </p>
                         </Card>
                     </div>
                 </div>
@@ -815,15 +725,6 @@ const deleteQuiz = () => {
             @cancel="showDeleteDialog = false"
         />
 
-        <!-- Delete Quiz Confirmation Dialog -->
-        <ConfirmDialog
-            :show="showDeleteQuizDialog"
-            title="Hapus kuis ini?"
-            :message="`Kuis '${selectedQuizToDelete?.title}' beserta semua pertanyaan di dalamnya akan dihapus selamanya.`"
-            @confirm="deleteQuiz"
-            @cancel="showDeleteQuizDialog = false"
-        />
-
         <!-- Import Module-level Pretest/Posttest Modal -->
         <Modal
             :show="showModuleImportModal"
@@ -833,25 +734,15 @@ const deleteQuiz = () => {
         >
             <div class="py-4 space-y-4">
                 <p class="text-sm text-gray-600">
-                    Unggah file CSV atau XLSX yang berisi kuis untuk kategori
+                    Unggah file CSV atau XLSX yang berisi quiz untuk kategori
                     <strong>{{ moduleImport.category }}</strong>. Kolom minimal pada setiap baris:
                     <strong
-                        >quiz_title, time_limit, quiz_description, question_text, option_1,
+                        >quiz_title, question_text, option_1,
                         option_1_is_correct, option_2, option_2_is_correct,
                         ...</strong
                     >. File maksimal 10 MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
-                <div class="flex items-center gap-2">
-                    <a
-                        :href="route('admin.quizzes.template', { category: moduleImport.category })"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-xs font-semibold"
-                        download
-                    >
-                        <FileSpreadsheet class="w-3.5 h-3.5" />
-                        Unduh Template Excel {{ moduleImport.category === 'pretest' ? 'Pretest' : 'Posttest' }}
-                    </a>
-                </div>
                 <FileDropzone
                     v-model:modelValue="moduleImport.file"
                     accept=".csv,.xlsx,.xls"

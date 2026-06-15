@@ -21,9 +21,10 @@ use App\Http\Controllers\Admin\SimulationConfigController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('admin.dashboard');
+    return redirect()->route('dashboard');
 });
 
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -79,18 +80,14 @@ Route::name('playground.')->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-    // Templates for imports
-    Route::get('/quizzes/template', [QuizController::class, 'downloadTemplate'])->name('quizzes.template');
-    Route::get('/materials/template', [MaterialController::class, 'downloadTemplate'])->name('materials.template');
-
+    // Panduan
+    Route::get('/guide', [DashboardController::class, 'guide'])->name('guide');
 
     // Kelas
     Route::name('classes.')->group(function () {
         Route::get('/classes', [ClassesController::class, 'index'])->name('index');
         Route::post('/classes', [ClassesController::class, 'store'])->name('store');
-        Route::get('/classes/{class}/details', [ClassesController::class, 'getDetails'])->name('details');
         Route::put('/classes/{class}', [ClassesController::class, 'update'])->name('update');
         Route::delete('/classes/{class}', [ClassesController::class, 'destroy'])->name('destroy');
     });
@@ -156,9 +153,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             // Import module-level quizzes (CSV)
             Route::post('/import', [QuizController::class, 'importModule'])->name('import');
             Route::get('/{quizzes}', [QuizController::class, 'showModule'])->name('show');
-            Route::get('/{quizzes}/edit', [QuizController::class, 'editModule'])->name('edit');
-            Route::put('/{quizzes}', [QuizController::class, 'updateModule'])->name('update');
-            Route::delete('/{quizzes}', [QuizController::class, 'destroyModule'])->name('destroy');
+            // Note: creation of quizzes for pretest/posttest is available here
         });
 
         // Mission Routes (nested under modules)

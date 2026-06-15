@@ -31,7 +31,7 @@ import {
 
 const props = defineProps({
     module: { type: Object, required: true },
-    mission: { type: Object, required: false, default: null },
+    mission: { type: Object, required: true },
     quiz: { type: Object, required: true },
     mascots: { type: Array, default: () => [] },
 });
@@ -497,19 +497,12 @@ const finalSave = () => {
         formData.append("questions", JSON.stringify(questions));
     }
 
-    const updateRoute = props.mission
-        ? route("admin.modules.missions.quizzes.update", [
-              props.module.id,
-              props.mission.id,
-              props.quiz.id,
-          ])
-        : route("admin.modules.quizzes.update", [
-              props.module.id,
-              props.quiz.id,
-          ]);
-
     router.post(
-        updateRoute,
+        route("admin.modules.missions.quizzes.update", [
+            props.module.id,
+            props.mission.id,
+            props.quiz.id,
+        ]),
         formData,
         {
             onSuccess: (page) => {
@@ -519,20 +512,12 @@ const finalSave = () => {
                 }
                 showToast("Kuis berhasil diperbarui.", "success");
                 setTimeout(() => {
-                    if (props.mission) {
-                        router.visit(
-                            route("admin.modules.missions.show", [
-                                props.module.id,
-                                props.mission.id,
-                            ]),
-                        );
-                    } else {
-                        router.visit(
-                            route("admin.modules.show", [
-                                props.module.id,
-                            ]),
-                        );
-                    }
+                    router.visit(
+                        route("admin.modules.missions.show", [
+                            props.module.id,
+                            props.mission.id,
+                        ]),
+                    );
                 }, 1500);
             },
             onError: (errors) => {
@@ -580,10 +565,8 @@ const toggleCardVariant = () => {
                                 Edit Kuis: {{ quiz.title }}
                             </h1>
                             <p class="text-sm text-gray-500">
-                                Modul: {{ module.name }}
-                                <template v-if="mission">
-                                    | Misi: {{ mission.name }}
-                                </template>
+                                Modul: {{ module.name }} | Misi:
+                                {{ mission.name }}
                             </p>
                         </div>
                     </div>
@@ -804,18 +787,12 @@ const toggleCardVariant = () => {
                                 variant="light"
                                 size="md"
                                 @click="
-                                    mission
-                                        ? router.visit(
-                                              route(
-                                                  'admin.modules.missions.show',
-                                                  [module.id, mission.id],
-                                              ),
-                                          )
-                                        : router.visit(
-                                              route('admin.modules.show', [
-                                                  module.id,
-                                              ]),
-                                          )
+                                    router.visit(
+                                        route('admin.modules.missions.show', [
+                                            module.id,
+                                            mission.id,
+                                        ]),
+                                    )
                                 "
                                 >Batal</Button
                             >

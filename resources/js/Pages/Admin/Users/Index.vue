@@ -160,7 +160,7 @@ const saveUser = () => {
     if (
         !form.name.trim() ||
         !form.username.trim() ||
-        (form.role !== 'siswa' && !form.email.trim()) ||
+        !form.email.trim() ||
         !form.role
     ) {
         showToast("Semua kolom wajib diisi.", "error");
@@ -331,23 +331,22 @@ onUnmounted(() => {
             @close="showDialog = false"
         >
             <div class="space-y-4">
-                <SelectField
-                    v-model="form.role"
-                    :options="roleOptions"
-                    label="Role"
-                    placeholder="Pilih Role"
-                    :icon="Shield"
-                    required
-                    :disabled="isGuru"
-                    border-color="blue"
-                />
-
                 <InputField
                     v-model="form.name"
                     type="text"
                     label="Nama Lengkap"
                     placeholder="Nama Lengkap"
                     :icon="User"
+                    required
+                    border-color="blue"
+                />
+
+                <InputField
+                    v-model="form.email"
+                    type="email"
+                    label="Email"
+                    placeholder="Email"
+                    :icon="Mail"
                     required
                     border-color="blue"
                 />
@@ -363,24 +362,24 @@ onUnmounted(() => {
                 />
 
                 <InputField
-                    v-if="form.role !== 'siswa'"
-                    v-model="form.email"
-                    type="email"
-                    label="Email"
-                    placeholder="Email"
-                    :icon="Mail"
-                    required
-                    border-color="blue"
-                />
-
-                <InputField
-                    v-if="!isEdit && form.role !== 'siswa'"
+                    v-if="!isEdit"
                     v-model="form.password"
                     type="password"
                     label="Password"
                     placeholder="Password"
                     :icon="LockIcon"
                     required
+                    border-color="blue"
+                />
+
+                <SelectField
+                    v-model="form.role"
+                    :options="roleOptions"
+                    label="Role"
+                    placeholder="Pilih Role"
+                    :icon="Shield"
+                    required
+                    :disabled="isGuru"
                     border-color="blue"
                 />
 
