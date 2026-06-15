@@ -547,18 +547,8 @@ onUnmounted(() => {
                     </Transition>
                 </div>
 
-                <!-- Right: Music + Timer -->
+                <!-- Right: Timer -->
                 <div class="nav-right">
-                    <!-- Music btn -->
-                    <button
-                        class="music-nav-btn"
-                        @click="toggleMusic(props.backsound ?? null)"
-                        :class="{ 'music-on': musicOn }"
-                    >
-                        <Music2 v-if="musicOn" :size="16" :stroke-width="2.5" />
-                        <VolumeX v-else :size="16" :stroke-width="2.5" />
-                    </button>
-
                     <!-- Timer (only on quiz phase) -->
                     <Transition name="nav-swap">
                         <div
@@ -731,16 +721,25 @@ onUnmounted(() => {
         <!-- ░░ FIXED FOOTER ACTION BAR ░░ -->
         <div class="footer-bar" v-show="phase === 'quiz'">
             <div class="footer-inner">
-                <!-- Left: Sebelumnya -->
+                <!-- Left: Sebelumnya & Music (mobile) -->
                 <div class="footer-left">
                     <button
+                        class="music-footer-btn"
+                        @click="toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': musicOn }"
+                    >
+                        <Music2 v-if="musicOn" :size="18" :stroke-width="2.5" />
+                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                    </button>
+
+                    <button
                         v-if="!isFirst"
-                        class="btn-duo btn-duo-secondary"
+                        class="btn-duo btn-duo-secondary btn-icon-mobile"
                         @click="goPrev"
                         :disabled="isSubmitting"
                     >
                         <ArrowLeft :size="18" :stroke-width="3" />
-                        <span>Sebelumnya</span>
+                        <span class="hide-mobile">Sebelumnya</span>
                     </button>
                 </div>
 
@@ -748,21 +747,21 @@ onUnmounted(() => {
                 <div class="footer-right">
                     <button
                         v-if="isLast"
-                        class="btn-duo btn-duo-success"
+                        class="btn-duo btn-duo-success btn-icon-mobile"
                         @click="openConfirm"
                         :disabled="isSubmitting || (!canGoNext && !step?.isMaterial)"
                     >
-                        <span v-if="!isSubmitting">Selesaikan Misi</span>
+                        <span v-if="!isSubmitting" class="hide-mobile">Selesaikan Misi</span>
                         <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
                         <CheckCircle2 v-if="!isSubmitting" :size="18" :stroke-width="3" />
                     </button>
                     <button
                         v-else
-                        class="btn-duo btn-duo-primary"
+                        class="btn-duo btn-duo-primary btn-icon-mobile"
                         @click="goNext"
                         :disabled="(!canGoNext && !step?.isMaterial) || isSubmitting"
                     >
-                        <span>Selanjutnya</span>
+                        <span class="hide-mobile">Selanjutnya</span>
                         <ArrowRight :size="18" :stroke-width="3" />
                     </button>
                 </div>
@@ -991,23 +990,24 @@ onUnmounted(() => {
 }
 @keyframes tipPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(28,176,246,0.4); } 50% { box-shadow: 0 0 0 6px rgba(28,176,246,0); } }
 
-/* ─── MUSIC NAV BUTTON (mobile only) ─── */
-.music-nav-btn {
+/* ─── MUSIC BUTTON (Mobile Footer) ─── */
+.music-footer-btn {
     display: none;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
-    border-radius: 10px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
     border: 2px solid #e5e5e5;
-    border-bottom: 3px solid #cbd5e1;
-    background: rgba(255,255,255,0.9);
-    cursor: pointer;
+    border-bottom: 4px solid #cbd5e1;
+    background: #ffffff;
     color: #94a3b8;
+    margin-right: 12px;
+    cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
 }
-.music-nav-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
-.music-nav-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+.music-footer-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-footer-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
 
 /* ─── TIMER ─── */
 .timer-badge {
@@ -1416,7 +1416,7 @@ onUnmounted(() => {
     .timer-badge { font-size: 13px; padding: 5px 8px; gap: 4px; }
     .timer-badge .timer-icon-wrap svg { width: 13px; height: 13px; }
     .music-fab { display: none; }
-    .music-nav-btn { display: flex; }
+    .music-footer-btn { display: flex; }
     .prog-track { height: 14px; }
     .prog-tip { width: 18px; height: 18px; }
     .main-wrapper { padding: 10px 16px 110px; }
@@ -1430,23 +1430,18 @@ onUnmounted(() => {
     .btn-duo-primary:active:not(:disabled),
     .btn-duo-success:active:not(:disabled),
     .btn-duo-secondary:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
-    .btn-back { padding: 8px 12px; font-size: 12px; }
+    .btn-back span { display: none; }
+    .btn-back { padding: 10px; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; border-radius: 12px; border-bottom-width: 4px; }
+    .btn-back:active:not(:disabled) { border-bottom-width: 2px; transform: translateY(2px); }
+    .hide-mobile { display: none; }
+    .btn-icon-mobile { padding: 10px !important; width: 48px; min-width: 48px; height: 48px; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; }
 }
 
 @media (max-width: 480px) {
     .nav-inner { gap: 6px; }
     .timer-badge { font-size: 12px; padding: 4px 7px; }
-    /* Icon-only minimalist buttons on mobile */
-    .btn-duo span:not(.desktop-only) { display: none; }
-    .btn-duo {
-        padding: 12px;
-        border-radius: 50%;
-        min-width: 48px;
-        width: 48px;
-        height: 48px;
-        gap: 0;
-    }
     .footer-bar { height: 76px; }
+    /* Tombol footer tetap persegi panjang seperti desktop karena lebih jelas terbaca */
 }
 
 /* ─── CELEBRATION (same style as Pretest) ─── */

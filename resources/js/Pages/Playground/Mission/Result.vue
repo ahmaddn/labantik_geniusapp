@@ -194,16 +194,43 @@ const MASCOT_SPEECHES = computed(() => {
 
 <template>
     <div class="app-layout">
-        <!-- Particles background (behind everything) -->
-        <div class="particles-bg" aria-hidden="true">
-            <span class="particle p1"></span>
-            <span class="particle p2"></span>
-            <span class="particle p3"></span>
-            <span class="particle p4"></span>
-            <span class="particle p5"></span>
-            <span class="particle p6"></span>
-            <span class="particle p7"></span>
-            <span class="particle p8"></span>
+        <!-- ░░ BACKGROUND ░░ -->
+        <div class="bg-scene">
+            <div class="sky-gradient"></div>
+            <div class="bg-particles">
+                <div class="particle p-1"></div>
+                <div class="particle p-2"></div>
+                <div class="particle p-3"></div>
+                <div class="particle p-4"></div>
+                <div class="particle p-5"></div>
+            </div>
+            <!-- Educational floating icons -->
+            <div class="edu-particles">
+                <svg class="edu-p ep-1" style="top: 10%; left: 8%; color: #1cb0f6" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                <svg class="edu-p ep-2" style="top: 18%; right: 10%; color: #ffc800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" />
+                </svg>
+                <svg class="edu-p ep-3" style="top: 35%; left: 12%; color: #78c257" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" /><path d="M6 6h10M6 10h10" />
+                </svg>
+                <svg class="edu-p ep-4" style="top: 40%; right: 12%; color: #ff847c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6M10 22h4" />
+                </svg>
+                <svg class="edu-p ep-5" style="top: 65%; left: 8%; color: #845ef7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <svg class="edu-p ep-6" style="top: 72%; right: 14%; color: #00bcd4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
+                    <line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" />
+                </svg>
+                <svg class="edu-p ep-7" style="top: 85%; left: 22%; color: #e91e63" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="7" /><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12" />
+                </svg>
+                <svg class="edu-p ep-8" style="top: 25%; left: 26%; color: #1cb0f6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+                </svg>
+            </div>
         </div>
 
         <main class="main-scroll">
@@ -515,41 +542,128 @@ const MASCOT_SPEECHES = computed(() => {
     width: 100vw;
     min-height: 100vh;
     font-family: "Nunito", sans-serif;
-    background-color: #ffffff;
     overflow-x: hidden;
 }
 
-/* ─── PARTICLES ─── */
-.particles-bg {
+/* ─── BG SCENE ─── */
+.bg-scene {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
+}
+
+.sky-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 40%, #f0fdf4 100%);
+}
+
+.bg-particles {
+    position: absolute;
+    inset: 0;
     overflow: hidden;
 }
 
-.particle {
+.bg-particles .particle {
     position: absolute;
     border-radius: 50%;
-    opacity: 0;
-    animation: particleFloat 8s ease-in-out infinite;
+    filter: blur(60px);
+    opacity: 0.35;
 }
 
-.p1 { width: 14px; height: 14px; background: #1cb0f6; top: 10%; left: 8%;  animation-delay: 0s;   animation-duration: 7s; }
-.p2 { width: 10px; height: 10px; background: #58cc02; top: 25%; left: 90%; animation-delay: 1.2s; animation-duration: 9s; }
-.p3 { width: 18px; height: 18px; background: #ff9600; top: 60%; left: 5%;  animation-delay: 2.4s; animation-duration: 8s; }
-.p4 { width: 8px;  height: 8px;  background: #a855f7; top: 80%; left: 85%; animation-delay: 0.6s; animation-duration: 6s; }
-.p5 { width: 12px; height: 12px; background: #ffc800; top: 45%; left: 95%; animation-delay: 3s;   animation-duration: 10s; }
-.p6 { width: 16px; height: 16px; background: #1cb0f6; top: 15%; left: 50%; animation-delay: 1.8s; animation-duration: 7.5s; }
-.p7 { width: 10px; height: 10px; background: #58cc02; top: 70%; left: 40%; animation-delay: 0.9s; animation-duration: 8.5s; }
-.p8 { width: 6px;  height: 6px;  background: #ff4b4b; top: 35%; left: 15%; animation-delay: 2s;   animation-duration: 6.5s; }
+.bg-particles .p-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #bfdbfe, #93c5fd);
+    top: -100px; left: -150px;
+    animation: blobDrift1 18s ease-in-out infinite;
+}
+.bg-particles .p-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, #d1fae5, #6ee7b7);
+    top: 30%; right: -100px;
+    animation: blobDrift2 22s ease-in-out infinite;
+}
+.bg-particles .p-3 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, #fce7f3, #f9a8d4);
+    bottom: 10%; left: 20%;
+    animation: blobDrift3 16s ease-in-out infinite;
+}
+.bg-particles .p-4 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, #ede9fe, #c4b5fd);
+    top: 50%; left: 40%;
+    animation: blobDrift1 20s ease-in-out infinite reverse;
+}
+.bg-particles .p-5 {
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, #fef3c7, #fde68a);
+    bottom: 20%; right: 20%;
+    animation: blobDrift2 14s ease-in-out infinite reverse;
+}
 
-@keyframes particleFloat {
-    0%   { opacity: 0;    transform: translateY(0) scale(0.8); }
-    20%  { opacity: 0.6;  }
-    50%  { opacity: 0.4;  transform: translateY(-30px) scale(1.1); }
-    80%  { opacity: 0.5;  }
-    100% { opacity: 0;    transform: translateY(10px) scale(0.8); }
+@keyframes blobDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -40px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+@keyframes blobDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-35px, 25px) scale(1.08); }
+}
+@keyframes blobDrift3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    40% { transform: translate(20px, -30px) scale(0.92); }
+    80% { transform: translate(-10px, 15px) scale(1.04); }
+}
+
+/* Educational floating icons */
+.edu-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.edu-p {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    opacity: 0.18;
+    transform-origin: center;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+}
+
+.ep-1, .ep-4, .ep-7 { animation: eduFloat1 15s ease-in-out infinite; }
+.ep-2, .ep-5, .ep-8 { animation: eduFloat2 19s ease-in-out infinite; }
+.ep-3, .ep-6 { animation: eduFloat3 23s ease-in-out infinite; }
+
+.ep-1 { animation-delay: 0s; }
+.ep-2 { animation-delay: -3s; }
+.ep-3 { animation-delay: -6s; }
+.ep-4 { animation-delay: -9s; }
+.ep-5 { animation-delay: -12s; }
+.ep-6 { animation-delay: -2s; }
+.ep-7 { animation-delay: -5s; }
+.ep-8 { animation-delay: -8s; }
+
+@keyframes eduFloat1 {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    25%  { transform: translate(12px, -20px) rotate(45deg) scale(1.1); }
+    50%  { transform: translate(18px, -8px) rotate(90deg) scale(0.95); }
+    75%  { transform: translate(5px, -25px) rotate(135deg) scale(1.05); }
+    100% { transform: translate(0, 0) rotate(180deg) scale(1); }
+}
+@keyframes eduFloat2 {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    33%  { transform: translate(-16px, -18px) rotate(-60deg); }
+    66%  { transform: translate(10px, -30px) rotate(30deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes eduFloat3 {
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50%  { transform: translate(22px, -12px) scale(1.12) rotate(90deg); }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); }
 }
 
 .main-scroll {
