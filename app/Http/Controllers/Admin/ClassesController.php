@@ -72,4 +72,17 @@ class ClassesController extends Controller
         $class->delete();
         return redirect()->back()->with('success', 'Kelas berhasil dihapus');
     }
+
+    public function getDetails(Classes $class)
+    {
+        $class->load(['teacher', 'users' => function($query) {
+            $query->where('role', 'siswa')->orderBy('name');
+        }]);
+
+        return response()->json([
+            'class' => $class,
+            'teacher' => $class->teacher,
+            'students' => $class->users,
+        ]);
+    }
 }

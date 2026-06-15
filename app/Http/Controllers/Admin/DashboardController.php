@@ -160,9 +160,4 @@ class DashboardController extends Controller
             'score_distribution' => $scoreDistribution,
         ]);
     }
-
-    public function guide()
-    {
-        return Inertia::render('Admin/Guide');
-    }
 }

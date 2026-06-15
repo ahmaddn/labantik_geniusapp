@@ -184,6 +184,19 @@ class QuizController extends Controller
                 ? trim((string)$first['category'])
                 : $defaultCategory;
 
+            // Jika masih null/empty, berikan fallback default 'mission' jika diimpor di level misi
+            if (empty($category) && $missionId !== null) {
+                $category = 'mission';
+            }
+
+            if (empty($category)) {
+                return ['error' => "Kategori quiz '{$quizTitle}' tidak boleh kosong. Harap tentukan kolom 'category' di Excel/CSV (pretest/posttest/mission)."];
+            }
+
+            if (!in_array($category, ['pretest', 'mission', 'posttest'], true)) {
+                return ['error' => "Kategori quiz '{$quizTitle}' tidak valid. Harus salah satu dari: pretest, mission, posttest. Ditemukan: '{$category}'."];
+            }
+
             if ($requireCategory && !in_array($category, ['pretest', 'posttest'], true)) {
                 return ['error' => "Kategori quiz '{$quizTitle}' harus 'pretest' atau 'posttest'. Ditemukan: '{$category}'."];
             }
@@ -195,7 +208,7 @@ class QuizController extends Controller
                 'description' => isset($first['quiz_description']) ? trim((string)$first['quiz_description']) : null,
                 'type'        => 'multiple_choices',
                 'time_limit'  => $timeLimit,
-                'category'    => $category ?: null,
+                'category'    => $category,
                 'created_by'  => Auth::id(),
             ]);
 
@@ -843,6 +856,9 @@ class QuizController extends Controller
     /**
      * Show edit form
      */
+    /**
+     * Show edit form
+     */
     public function edit(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
         if ($quizzes->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
@@ -875,12 +891,62 @@ class QuizController extends Controller
     }
 
     /**
+     * Show edit form for module-level quizzes
+     */
+    public function editModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $quizzes->load([
+            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions.mascot',
+            'questions.options',
+            'questions.dragDropGroups',
+            'questions.dragDropItems.dragDropGroups',
+        ]);
+
+        $mascots = $modules->template?->mascots ?? [];
+
+        return Inertia::render('Admin/Modules/Quizzes/Edit', [
+            'module' => [
+                'id'       => $modules->id,
+                'name'     => $modules->name,
+                'template' => $modules->template,
+            ],
+            'mission' => null,
+            'quiz'    => $quizzes,
+            'mascots' => $mascots,
+        ]);
+    }
+
+    /**
      * Update quiz
      */
     public function update(Learning_modules $modules, Missions $missions, Quizzes $quizzes, Request $request)
     {
-        if ($quizzes->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
-            abort(404);
+        return $this->performUpdate($modules, $missions, $quizzes, $request);
+    }
+
+    /**
+     * Update module-level quiz
+     */
+    public function updateModule(Learning_modules $modules, Quizzes $quizzes, Request $request)
+    {
+        return $this->performUpdate($modules, null, $quizzes, $request);
+    }
+
+    protected function performUpdate(Learning_modules $modules, ?Missions $missions, Quizzes $quizzes, Request $request)
+    {
+        if ($missions) {
+            if ($quizzes->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
+                abort(404);
+            }
+        } else {
+            if ($quizzes->module_id !== $modules->id) {
+                abort(404);
+            }
         }
 
         $validated = $request->validate([
@@ -1048,9 +1114,15 @@ class QuizController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route('admin.modules.missions.show', [$modules->id, $missions->id])
-                ->with('success', 'Quiz berhasil diperbarui.');
+            if ($missions) {
+                return redirect()
+                    ->route('admin.modules.missions.show', [$modules->id, $missions->id])
+                    ->with('success', 'Quiz berhasil diperbarui.');
+            } else {
+                return redirect()
+                    ->route('admin.modules.show', [$modules->id])
+                    ->with('success', 'Quiz berhasil diperbarui.');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal memperbarui quiz: ' . $e->getMessage());
@@ -1062,8 +1134,24 @@ class QuizController extends Controller
      */
     public function destroy(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
-        if ($quizzes->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
-            abort(404);
+        return $this->performDestroy($modules, $missions, $quizzes);
+    }
+
+    public function destroyModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        return $this->performDestroy($modules, null, $quizzes);
+    }
+
+    protected function performDestroy(Learning_modules $modules, ?Missions $missions, Quizzes $quizzes)
+    {
+        if ($missions) {
+            if ($quizzes->mission_id !== $missions->id || $missions->module_id !== $modules->id) {
+                abort(404);
+            }
+        } else {
+            if ($quizzes->module_id !== $modules->id) {
+                abort(404);
+            }
         }
 
         DB::beginTransaction();
@@ -1083,12 +1171,77 @@ class QuizController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route('admin.modules.missions.show', [$modules->id, $missions->id])
-                ->with('success', 'Quiz berhasil dihapus.');
+            if ($missions) {
+                return redirect()
+                    ->route('admin.modules.missions.show', [$modules->id, $missions->id])
+                    ->with('success', 'Quiz berhasil dihapus.');
+            } else {
+                return redirect()
+                    ->route('admin.modules.show', [$modules->id])
+                    ->with('success', 'Quiz berhasil dihapus.');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
         }
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $category = $request->query('category', 'mission');
+        if (!in_array($category, ['pretest', 'mission', 'posttest'], true)) {
+            $category = 'mission';
+        }
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header (Tanpa kolom category karena sudah di-handle otomatis oleh sistem)
+        $headers = [
+            'quiz_title', 'time_limit', 'quiz_description',
+            'question_text', 'mascot_id',
+            'option_1', 'option_1_is_correct',
+            'option_2', 'option_2_is_correct',
+            'option_3', 'option_3_is_correct',
+            'option_4', 'option_4_is_correct'
+        ];
+
+        foreach ($headers as $colIndex => $header) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+            $sheet->setCellValue($colLetter . '1', $header);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        // Contoh baris data
+        $sheet->setCellValue('A2', 'Kuis Pengenalan');
+        $sheet->setCellValue('B2', '10');
+        $sheet->setCellValue('C2', 'Deskripsi kuis pengenalan');
+        $sheet->setCellValue('D2', 'Berapakah hasil dari 1 + 1?');
+        $sheet->setCellValue('E2', ''); // mascot_id
+        $sheet->setCellValue('F2', '1');
+        $sheet->setCellValue('G2', '0');
+        $sheet->setCellValue('H2', '2');
+        $sheet->setCellValue('I2', '1');
+        $sheet->setCellValue('J2', '3');
+        $sheet->setCellValue('K2', '0');
+        $sheet->setCellValue('L2', '4');
+        $sheet->setCellValue('M2', '0');
+
+        $sheet->getStyle('A1:M1')->getFont()->setBold(true);
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        if ($category === 'pretest') {
+            $fileName = 'Template_Import_Pretest.xlsx';
+        } elseif ($category === 'posttest') {
+            $fileName = 'Template_Import_Posttest.xlsx';
+        } else {
+            $fileName = 'Template_Import_Kuis_Misi.xlsx';
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit;
     }
 }

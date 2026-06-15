@@ -210,13 +210,27 @@ const conceptualData = computed(() => {
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Atas</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.topRight || '-' }}</p></div>
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kiri Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomLeft || '-' }}</p></div>
                             <div><strong class="text-xs text-gray-500 uppercase">Teks Kanan Bawah</strong><p class="text-sm bg-white p-2 border rounded">{{ conceptualData.bottomRight || '-' }}</p></div>
-                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
-                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kiri</strong><p class="text-sm">{{ conceptualData.sliderMin || '-' }}</p></div>
-                                <div><strong class="text-xs text-gray-500 uppercase">Slider Kanan</strong><p class="text-sm">{{ conceptualData.sliderMax || '-' }}</p></div>
+                            <div v-if="conceptualData.variables && conceptualData.variables.length" class="md:col-span-2 border-t pt-4">
+                                <h4 class="font-bold text-xs text-gray-500 uppercase mb-2">Variabel Slider</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div v-for="(v, vIdx) in conceptualData.variables" :key="vIdx" class="bg-white p-3 border rounded-xl">
+                                        <p class="font-bold text-sm text-gray-800">{{ v.name || '-' }}</p>
+                                        <p class="text-xs text-gray-500">Label: {{ v.min_label || 'Min' }} - {{ v.max_label || 'Max' }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2 border-t pt-4">
-                                <div><strong class="text-xs text-green-600 uppercase">Metrik 1</strong><p class="font-bold text-sm">{{ conceptualData.metric1Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric1Desc || '-' }}</p></div>
-                                <div><strong class="text-xs text-blue-600 uppercase">Metrik 2</strong><p class="font-bold text-sm">{{ conceptualData.metric2Title || '-' }}</p><p class="text-xs text-gray-500">{{ conceptualData.metric2Desc || '-' }}</p></div>
+                            <div v-if="conceptualData.levels && conceptualData.levels.length" class="md:col-span-2 border-t pt-4">
+                                <h4 class="font-bold text-xs text-gray-500 uppercase mb-2">Level / Tahapan</h4>
+                                <div class="space-y-3">
+                                    <div v-for="(lvl, lIdx) in conceptualData.levels" :key="lIdx" class="bg-white p-3 border rounded-xl flex gap-3 items-center">
+                                        <img v-if="lvl.image" :src="`/storage/${lvl.image}`" class="w-12 h-12 object-cover rounded-lg border" />
+                                        <div class="flex-1">
+                                            <p class="font-bold text-sm text-blue-800">{{ lvl.level_name || '-' }} <span class="ml-2 text-xs px-2 py-0.5 rounded-full capitalize font-bold" :class="lvl.status === 'bahaya' ? 'bg-red-100 text-red-700' : lvl.status === 'waspada' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'">{{ lvl.status }}</span></p>
+                                            <p class="text-xs text-gray-600 line-clamp-1 italic">"{{ lvl.narration || '-' }}"</p>
+                                            <p class="text-[10px] text-gray-400">Efek: {{ lvl.animation_effect || 'none' }} | Metrik: {{ lvl.metric_value || '-' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div v-else>

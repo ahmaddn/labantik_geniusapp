@@ -31,6 +31,7 @@ import {
     Settings,
     Settings2,
     Workflow,
+    FileSpreadsheet,
 } from "lucide-vue-next";
 import draggable from "vuedraggable";
 
@@ -1291,10 +1292,20 @@ const formatDate = (dateString) => {
             <div class="py-4 space-y-4">
                 <p class="text-sm text-gray-600">
                     Unggah file CSV atau XLSX dengan header:
-                    <strong>title,description,content</strong>. File maksimal 10
+                    <strong>title,description,content,mascot_id</strong>. File maksimal 10
                     MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
+                <div class="flex items-center gap-2">
+                    <a
+                        :href="route('admin.materials.template')"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-xs font-semibold"
+                        download
+                    >
+                        <FileSpreadsheet class="w-3.5 h-3.5" />
+                        Unduh Template Excel Materi
+                    </a>
+                </div>
                 <FileDropzone
                     v-model:modelValue="materialImport.file"
                     accept=".csv,.xlsx,.xls"
@@ -1334,10 +1345,10 @@ const formatDate = (dateString) => {
         >
             <div class="py-4 space-y-4">
                 <p class="text-sm text-gray-600">
-                    Unggah file CSV atau XLSX yang berisi data multiple-choice.
+                    Unggah file CSV atau XLSX yang berisi data kuis multiple-choice.
                     Kolom minimal pada setiap baris:
                     <strong
-                        >quiz_title, question_text, option_1,
+                        >quiz_title, time_limit, quiz_description, question_text, option_1,
                         option_1_is_correct, option_2, option_2_is_correct,
                         option_3, option_3_is_correct, option_4,
                         option_4_is_correct, dan seterusnya</strong
@@ -1347,6 +1358,16 @@ const formatDate = (dateString) => {
                     10 MB. Tipe file yang diterima:
                     <strong>.csv, .xlsx, .xls</strong>.
                 </p>
+                <div class="flex items-center gap-2">
+                    <a
+                        :href="route('admin.quizzes.template', { category: 'mission' })"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-xs font-semibold"
+                        download
+                    >
+                        <FileSpreadsheet class="w-3.5 h-3.5" />
+                        Unduh Template Excel Kuis Misi
+                    </a>
+                </div>
                 <FileDropzone
                     v-model:modelValue="quizImport.file"
                     accept=".csv,.xlsx,.xls"

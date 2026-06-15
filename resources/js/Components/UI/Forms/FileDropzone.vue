@@ -4,6 +4,7 @@ import { UploadCloud } from "lucide-vue-next";
 
 const props = defineProps({
     modelValue: { type: [File, String, Object, null], default: null },
+    previewUrl: { type: String, default: null },
     accept: { type: String, default: "*/*" },
     label: { type: String, default: "Pilih file" },
     error: { type: String, default: "" },
@@ -83,7 +84,10 @@ const clear = (e) => {
                 @change="onFileChange"
             />
 
-            <div class="flex flex-col items-center text-center text-gray-500">
+            <div v-if="previewUrl" class="w-full h-40 flex items-center justify-center p-2">
+                <img :src="previewUrl" class="max-w-full max-h-full object-contain rounded-xl shadow-sm" />
+            </div>
+            <div v-else class="flex flex-col items-center text-center text-gray-500">
                 <UploadCloud class="w-12 h-12 mb-3 text-blue-500" />
                 <p class="font-bold text-gray-800 truncate max-w-xs mb-1">
                     {{
@@ -97,7 +101,7 @@ const clear = (e) => {
             </div>
 
             <button
-                v-if="props.allowClear && modelValue"
+                v-if="props.allowClear && (modelValue || previewUrl)"
                 @click.stop="clear"
                 type="button"
                 class="absolute top-3 right-3 text-sm text-red-600 bg-red-50 px-3 py-1 rounded-xl border border-red-100"
