@@ -90,10 +90,6 @@ class SimulationConfigController extends Controller
             'variables.*.min_label' => 'nullable|string|max:255',
             'variables.*.max_label' => 'nullable|string|max:255',
             'conclusion_text' => 'nullable|string',
-            'case_study_scenario' => 'nullable|string',
-            'case_study_options' => 'nullable|array',
-            'case_study_answer' => 'nullable|string',
-            'case_study_feedback' => 'nullable|string',
             'levels' => 'nullable|array',
             'levels.*.id' => 'nullable|string',
             'levels.*.level_name' => 'required|string|max:255',
@@ -114,10 +110,6 @@ class SimulationConfigController extends Controller
                 'title' => $validated['title'] ?? null,
                 'variables' => $validated['variables'] ?? [],
                 'conclusion_text' => $validated['conclusion_text'] ?? null,
-                'case_study_scenario' => $validated['case_study_scenario'] ?? null,
-                'case_study_options' => isset($validated['case_study_options']) ? json_encode($validated['case_study_options']) : null,
-                'case_study_answer' => $validated['case_study_answer'] ?? null,
-                'case_study_feedback' => $validated['case_study_feedback'] ?? null,
             ]
         );
 
@@ -126,10 +118,6 @@ class SimulationConfigController extends Controller
             'title' => $validated['title'] ?? null,
             'variables' => $validated['variables'] ?? [],
             'conclusion_text' => $validated['conclusion_text'] ?? null,
-            'case_study_scenario' => $validated['case_study_scenario'] ?? null,
-            'case_study_options' => isset($validated['case_study_options']) ? json_encode($validated['case_study_options']) : null,
-            'case_study_answer' => $validated['case_study_answer'] ?? null,
-            'case_study_feedback' => $validated['case_study_feedback'] ?? null,
         ]);
 
         // Process levels

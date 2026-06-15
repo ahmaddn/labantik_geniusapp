@@ -17,6 +17,9 @@ class Simulation_slider_levels extends Model
         'narration',
         'metric_value',
         'image',
+        'status',
+        'animation_effect',
+        'image_transition',
     ];
 
     protected static function booted(): void

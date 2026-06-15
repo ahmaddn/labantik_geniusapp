@@ -16,16 +16,11 @@ class Simulation_sliders extends Model
         'title',
         'x_axis_label',
         'conclusion_text',
-        'case_study_scenario',
-        'case_study_options',
-        'case_study_answer',
-        'case_study_feedback',
         'order_number',
         'variables',
     ];
 
     protected $casts = [
-        'case_study_options' => 'array',
         'variables' => 'array',
     ];
 
