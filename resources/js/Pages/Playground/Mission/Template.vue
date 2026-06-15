@@ -520,16 +520,16 @@ onUnmounted(() => {
             <div class="nav-inner">
                 <!-- Left: back button -->
                 <div class="nav-left">
-                    <button class="btn-duo btn-duo-secondary btn-back" @click="tryGoBack" :disabled="isSubmitting">
-                        <ArrowLeft :size="16" :stroke-width="3" />
-                        <span class="desktop-only">Kembali</span>
+                    <button class="btn-back-nav" @click="tryGoBack" :disabled="isSubmitting" title="Kembali">
+                        <ArrowLeft :size="18" :stroke-width="2.5" />
+                        <span class="btn-back-label">Kembali</span>
                     </button>
                 </div>
 
-                <!-- Center: Progress Bar OR Mission name (on celebration) -->
+                <!-- Center: Progress Bar OR Mission name (on celebration/material) -->
                 <div class="nav-center">
                     <Transition name="nav-swap" mode="out-in">
-                        <div v-if="phase === 'quiz'" class="prog-wrapper" key="progress">
+                        <div v-if="phase === 'quiz' && !step?.isMaterial" class="prog-wrapper" key="progress">
                             <div class="prog-track">
                                 <div class="prog-fill" :style="{ width: progressPct + '%' }">
                                     <div class="prog-shine"></div>
@@ -547,18 +547,8 @@ onUnmounted(() => {
                     </Transition>
                 </div>
 
-                <!-- Right: Music + Timer -->
+                <!-- Right: Timer -->
                 <div class="nav-right">
-                    <!-- Music btn -->
-                    <button
-                        class="music-nav-btn"
-                        @click="toggleMusic(props.backsound ?? null)"
-                        :class="{ 'music-on': musicOn }"
-                    >
-                        <Music2 v-if="musicOn" :size="16" :stroke-width="2.5" />
-                        <VolumeX v-else :size="16" :stroke-width="2.5" />
-                    </button>
-
                     <!-- Timer (only on quiz phase) -->
                     <Transition name="nav-swap">
                         <div
@@ -717,22 +707,23 @@ onUnmounted(() => {
             </div>
         </main>
 
-        <!-- ░░ MUSIC FAB (desktop) ░░ -->
-        <button
-            class="music-fab"
-            @click="toggleMusic(props.backsound ?? null)"
-            :class="{ 'music-on': musicOn }"
-            title="Musik Latar"
-        >
-            <Music2 v-if="musicOn" :size="22" :stroke-width="2.5" />
-            <VolumeX v-else :size="22" :stroke-width="2.5" />
-        </button>
 
         <!-- ░░ FIXED FOOTER ACTION BAR ░░ -->
         <div class="footer-bar" v-show="phase === 'quiz'">
             <div class="footer-inner">
-                <!-- Left: Sebelumnya -->
+                <!-- Left: Music + Sebelumnya -->
                 <div class="footer-left">
+                    <!-- Music btn (mobile only) -->
+                    <button
+                        class="music-footer-btn"
+                        @click="toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': musicOn }"
+                        title="Musik Latar"
+                    >
+                        <Music2 v-if="musicOn" :size="18" :stroke-width="2.5" />
+                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                    </button>
+
                     <button
                         v-if="!isFirst"
                         class="btn-duo btn-duo-secondary"
@@ -740,7 +731,7 @@ onUnmounted(() => {
                         :disabled="isSubmitting"
                     >
                         <ArrowLeft :size="18" :stroke-width="3" />
-                        <span>Sebelumnya</span>
+                        <span class="btn-label">Sebelumnya</span>
                     </button>
                 </div>
 
@@ -752,7 +743,7 @@ onUnmounted(() => {
                         @click="openConfirm"
                         :disabled="isSubmitting || (!canGoNext && !step?.isMaterial)"
                     >
-                        <span v-if="!isSubmitting">Selesaikan Misi</span>
+                        <span v-if="!isSubmitting" class="btn-label">Selesaikan Misi</span>
                         <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
                         <CheckCircle2 v-if="!isSubmitting" :size="18" :stroke-width="3" />
                     </button>
@@ -762,7 +753,7 @@ onUnmounted(() => {
                         @click="goNext"
                         :disabled="(!canGoNext && !step?.isMaterial) || isSubmitting"
                     >
-                        <span>Selanjutnya</span>
+                        <span class="btn-label">Selanjutnya</span>
                         <ArrowRight :size="18" :stroke-width="3" />
                     </button>
                 </div>
@@ -907,6 +898,31 @@ onUnmounted(() => {
     height: 100%;
 }
 .nav-left { display: flex; align-items: center; flex-shrink: 0; }
+
+/* ─── BACK BUTTON (nav) ─── */
+.btn-back-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #94a3b8;
+    background: transparent;
+    border: 2px solid #e5e5e5;
+    border-bottom: 3px solid #d1d5db;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+.btn-back-nav:hover:not(:disabled) { background: #f8fafc; color: #64748b; border-color: #d1d5db; }
+.btn-back-nav:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 1px; }
+.btn-back-nav:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-back-label { display: inline; }
 .nav-center {
     flex: 1;
     display: flex;
@@ -919,16 +935,17 @@ onUnmounted(() => {
 
 /* ─── MISSION NAME (shown on celebration) ─── */
 .nav-mission-name {
-    font-family: "Baloo 2", cursive;
-    font-size: 16px;
-    font-weight: 800;
+    font-family: "Nunito", sans-serif;
+    font-size: 22px;
+    font-weight: 900;
     color: #3c3c3c;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 /* ─── NAV SWAP TRANSITION ─── */
@@ -991,25 +1008,25 @@ onUnmounted(() => {
 }
 @keyframes tipPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(28,176,246,0.4); } 50% { box-shadow: 0 0 0 6px rgba(28,176,246,0); } }
 
-/* ─── MUSIC NAV BUTTON (mobile only) ─── */
-.music-nav-btn {
-    display: none;
+
+/* ─── MUSIC BUTTON (footer — always visible) ─── */
+.music-footer-btn {
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
-    border-radius: 10px;
+    width: 42px; height: 42px;
+    border-radius: 12px;
     border: 2px solid #e5e5e5;
-    border-bottom: 3px solid #cbd5e1;
-    background: rgba(255,255,255,0.9);
-    cursor: pointer;
+    border-bottom: 4px solid #cbd5e1;
+    background: #ffffff;
     color: #94a3b8;
+    cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
 }
-.music-nav-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
-.music-nav-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
-
-/* ─── TIMER ─── */
+.music-footer-btn:hover { background: #f8fafc; border-color: #d1d5db; }
+.music-footer-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-footer-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
 .timer-badge {
     display: flex;
     align-items: center;
@@ -1052,21 +1069,22 @@ onUnmounted(() => {
     flex: 1;
     display: flex;
     justify-content: center;
-    padding: 20px 24px 130px;
+    padding: 16px 20px 100px;
     opacity: 0;
     transition: opacity 0.45s;
+    overflow-y: auto;
 }
 .main--on { opacity: 1; }
 
 /* ─── TWO COLUMN GRID ─── */
 .pretest-layout-cols {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 40px;
+    grid-template-columns: 240px 1fr;
+    gap: 32px;
     width: 100%;
-    max-width: 1000px;
-    margin: 30px auto 0;
-    align-items: flex-start;
+    max-width: 900px;
+    margin: 24px auto 0;
+    align-items: start;
 }
 
 /* ─── MASCOT COLUMN ─── */
@@ -1075,12 +1093,13 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     position: sticky;
-    top: 100px;
+    top: 120px;
     z-index: 20;
+    padding-top: 0;
 }
 .mascot-bubble-wrap {
     position: relative;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05));
     width: 100%;
     animation: floatBubble 4s ease-in-out infinite;
@@ -1099,7 +1118,7 @@ onUnmounted(() => {
 }
 .bubble-arrow {
     position: absolute;
-    bottom: -9px;
+    bottom: -8px;
     left: 50%;
     transform: translateX(-50%) rotate(45deg);
     width: 16px; height: 16px;
@@ -1108,17 +1127,17 @@ onUnmounted(() => {
     border-bottom: 2px solid #e5e5e5;
     z-index: 1;
 }
-@keyframes floatBubble { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes floatBubble { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 .mascot-image-container {
-    width: 260px;
+    width: 200px;
     display: flex;
     flex-direction: column;
     align-items: center;
     user-select: none;
 }
 .mascot-avatar-img {
-    height: 290px;
+    height: 250px;
     width: auto;
     object-fit: contain;
     animation: mascotIdle 4s ease-in-out infinite;
@@ -1126,13 +1145,13 @@ onUnmounted(() => {
     transform-origin: bottom center;
 }
 .mascot-avatar-shadow {
-    width: 130px; height: 10px;
+    width: 110px; height: 8px;
     background: radial-gradient(ellipse, rgba(0,0,0,0.12) 0%, transparent 80%);
     border-radius: 50%;
     margin-top: 6px;
     animation: shadowScale 4s ease-in-out infinite;
 }
-@keyframes mascotIdle { 0%, 100% { transform: translateY(0) scale(1) rotate(0deg); } 30% { transform: translateY(-10px) scaleX(1.04) scaleY(0.96) rotate(-2deg); } 65% { transform: translateY(-4px) scaleX(0.97) scaleY(1.03) rotate(2deg); } }
+@keyframes mascotIdle { 0%, 100% { transform: translateY(0) scale(1) rotate(0deg); } 30% { transform: translateY(-8px) scaleX(1.03) scaleY(0.97) rotate(-1.5deg); } 65% { transform: translateY(-3px) scaleX(0.98) scaleY(1.02) rotate(1.5deg); } }
 @keyframes shadowScale { 0%, 100% { transform: scale(1); opacity: 0.9; } 30% { transform: scale(0.8); opacity: 0.4; } 65% { transform: scale(0.95); opacity: 0.7; } }
 
 /* ─── BUBBLE TRANSITIONS ─── */
@@ -1148,24 +1167,26 @@ onUnmounted(() => {
 .title-pill {
     font-family: "Nunito", sans-serif;
     font-weight: 800;
-    font-size: 14px;
+    font-size: 12px;
     color: #1cb0f6;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     text-align: left;
 }
 
 .question-bubble {
     font-family: "Baloo 2", cursive;
     font-weight: 800;
-    font-size: 26px;
+    font-size: 20px;
     color: #3c3c3c;
     padding: 0;
     text-align: left;
     width: 100%;
-    margin-bottom: 28px;
+    margin-bottom: 16px;
     line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .component-box {
@@ -1222,12 +1243,12 @@ onUnmounted(() => {
 .footer-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 94px;
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1.5px solid rgba(255,255,255,0.2);
-    box-shadow: 0 -4px 30px rgba(0,0,0,0.03);
+    height: 84px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 2px solid rgba(229,233,240,0.8);
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
     z-index: 60;
@@ -1240,26 +1261,42 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
 }
-.footer-left, .footer-right { display: flex; align-items: center; }
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    min-width: 160px;  /* reserve space so right btn doesn't shift */
+}
+.footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    min-width: 160px;  /* mirror left side width */
+}
 
 /* ─── DUOLINGO FLAT 3D BUTTONS ─── */
 .btn-duo {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 13px 26px;
-    border-radius: 16px;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
     font-family: "Nunito", "Baloo 2", sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     cursor: pointer;
     transition: filter 0.15s, transform 0.1s, border-bottom-width 0.1s;
     user-select: none;
     outline: none;
+    white-space: nowrap;
 }
 .btn-duo-primary {
     background-color: #1cb0f6;
@@ -1306,7 +1343,7 @@ onUnmounted(() => {
     transform: none !important;
 }
 
-.btn-back { padding: 10px 18px; font-size: 13px; }
+.btn-label { display: inline; }
 
 /* ─── MODALS ─── */
 .modal-overlay {
@@ -1376,6 +1413,10 @@ onUnmounted(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ─── TRANSITIONS ─── */
+.nav-swap-enter-active, .nav-swap-leave-active { transition: all 0.35s ease; }
+.nav-swap-enter-from { opacity: 0; transform: scale(0.95); }
+.nav-swap-leave-to { opacity: 0; transform: scale(0.95); }
+
 .slide-fade-enter-active { transition: all 0.45s cubic-bezier(0.34,1.56,0.64,1); }
 .slide-fade-leave-active { transition: all 0.28s cubic-bezier(0.4,0,1,1); }
 .slide-fade-enter-from { opacity: 0; transform: translateY(12px) scale(0.94); }
@@ -1413,40 +1454,41 @@ onUnmounted(() => {
 /* ─── MOBILE RESPONSIVE ─── */
 @media (max-width: 768px) {
     .nav-inner { padding: 0 12px; gap: 8px; }
-    .timer-badge { font-size: 13px; padding: 5px 8px; gap: 4px; }
-    .timer-badge .timer-icon-wrap svg { width: 13px; height: 13px; }
+    .timer-badge { font-size: 12px; padding: 5px 8px; gap: 4px; }
+    .timer-badge .timer-icon-wrap svg { width: 12px; height: 12px; }
     .music-fab { display: none; }
-    .music-nav-btn { display: flex; }
     .prog-track { height: 14px; }
     .prog-tip { width: 18px; height: 18px; }
-    .main-wrapper { padding: 10px 16px 110px; }
+    .main-wrapper { padding: 10px 16px 100px; }
     .pretest-layout-cols { grid-template-columns: 1fr; gap: 0; margin: 15px auto 0; }
     .mascot-column { display: none !important; }
-    .question-bubble { font-size: 20px; margin-bottom: 20px; }
+    .question-bubble { font-size: 20px; margin-bottom: 16px; }
     .title-pill { font-size: 12px; margin-bottom: 6px; }
-    .footer-bar { height: 80px; }
-    .footer-inner { padding: 0 16px; }
-    .btn-duo { padding: 10px 20px; font-size: 13px; border-radius: 12px; border-bottom-width: 4px; }
-    .btn-duo-primary:active:not(:disabled),
-    .btn-duo-success:active:not(:disabled),
-    .btn-duo-secondary:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
-    .btn-back { padding: 8px 12px; font-size: 12px; }
+    .footer-bar { height: 76px; }
+    .footer-inner { padding: 0 14px; }
+    .footer-left { min-width: 0; }
+    .footer-right { min-width: 0; }
+    .btn-duo { padding: 10px 18px; font-size: 13px; }
+    .btn-back-label { display: none; }
+    .btn-back-nav { padding: 8px 10px; gap: 0; }
 }
 
 @media (max-width: 480px) {
-    .nav-inner { gap: 6px; }
-    .timer-badge { font-size: 12px; padding: 4px 7px; }
-    /* Icon-only minimalist buttons on mobile */
-    .btn-duo span:not(.desktop-only) { display: none; }
+    .nav-inner { gap: 6px; padding: 0 10px; }
+    .timer-badge { font-size: 11px; padding: 4px 7px; }
+    .btn-label { display: none; }
     .btn-duo {
-        padding: 12px;
-        border-radius: 50%;
-        min-width: 48px;
-        width: 48px;
-        height: 48px;
+        padding: 10px;
+        min-width: 42px;
+        height: 42px;
         gap: 0;
+        border-radius: 12px;
     }
-    .footer-bar { height: 76px; }
+    .footer-bar { height: 70px; }
+    .footer-inner { padding: 0 12px; }
+    .music-footer-btn { width: 38px; height: 38px; }
+    .footer-left { min-width: 0; }
+    .footer-right { min-width: 0; }
 }
 
 /* ─── CELEBRATION (same style as Pretest) ─── */

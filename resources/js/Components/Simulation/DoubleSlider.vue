@@ -321,9 +321,12 @@ onMounted(() => {
     transition: background 0.3s;
 }
 
-/* Mobile */
+/* Mobile Responsive */
 @media (max-width: 640px) {
     .ds-main { flex-direction: column; }
-    .ds-visual { min-height: 180px; }
+    .ds-visual { min-height: 160px; border-radius: 16px; }
+    .ds-sliders-grid { display: flex; flex-direction: column; gap: 12px; }
+    .ds-slider-row { grid-template-columns: 1fr; gap: 8px; }
+    .ds-slider-label-col { text-align: left; }
 }
 </style>

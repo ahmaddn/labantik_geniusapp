@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
 });
 
 // ── Expose ──
-defineExpose({ musicOn });
+defineExpose({ musicOn, toggleMusic });
 </script>
 
 <template>
@@ -206,18 +206,8 @@ defineExpose({ musicOn });
                     </Transition>
                 </div>
 
-                <!-- Right: Music (mobile only) + Timer -->
+                <!-- Right: Timer -->
                 <div class="nav-right">
-                    <!-- 🎵 Tombol Musik — hanya tampil di mobile, di desktop pakai FAB -->
-                    <button
-                        class="music-nav-btn"
-                        @click="toggleMusic(props.backsound ?? null)"
-                        :class="{ 'music-on': musicOn }"
-                        title="Musik Latar"
-                    >
-                        <Music2 v-if="musicOn" :size="16" :stroke-width="2.5" />
-                        <VolumeX v-else :size="16" :stroke-width="2.5" />
-                    </button>
 
                     <!-- Timer -->
                     <Transition name="slide-fade">
@@ -802,14 +792,9 @@ defineExpose({ musicOn });
         height: 13px;
     }
 
-    /* FAB disembunyikan di mobile — diganti tombol di navbar */
+    /* FAB disembunyikan di mobile */
     .music-fab {
         display: none;
-    }
-
-    /* Tombol musik di navbar muncul saat mobile */
-    .music-nav-btn {
-        display: flex;
     }
 
     .title-pretest {

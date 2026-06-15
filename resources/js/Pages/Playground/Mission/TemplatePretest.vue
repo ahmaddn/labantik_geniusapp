@@ -24,6 +24,8 @@ import {
     ChevronRight,
     CheckCircle2,
     MousePointerClick,
+    Music2,
+    VolumeX,
 } from "lucide-vue-next";
 
 import Multiple_choice from "@/Components/Quiz/Multiple_choice.vue";
@@ -33,6 +35,8 @@ import Drag_drop from "@/Components/Quiz/Drag_drop.vue";
 import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import PretestLayout from "@/Layouts/PretestLayout.vue";
+
+const layoutRef = ref(null);
 
 const props = defineProps({
     quiz: { type: Object, required: true },
@@ -339,6 +343,7 @@ onUnmounted(() => {
 
 <template>
     <PretestLayout
+        ref="layoutRef"
         :timerDisplay="timerDisplay"
         :isWarning="timerWarning"
         :progressPercent="progressPct"
@@ -563,15 +568,25 @@ onUnmounted(() => {
         <!-- ══ FIXED FOOTER ACTION BAR (DUOLINGO STYLE) ══ -->
         <div class="footer-bar" v-if="phase !== 'celebration'">
             <div class="footer-inner">
-                <!-- Left actions (Kembali / Sebelumnya) -->
+                <!-- Left actions (Music + Kembali / Sebelumnya) -->
                 <div class="footer-left">
+                    <button
+                        class="music-footer-btn"
+                        @click="layoutRef?.toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': layoutRef?.musicOn }"
+                        title="Musik Latar"
+                    >
+                        <Music2 v-if="layoutRef?.musicOn" :size="18" :stroke-width="2.5" />
+                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                    </button>
+
                     <template v-if="phase === 'intro'">
                         <button
-                            class="btn-duo btn-duo-secondary"
+                            class="btn-duo btn-duo-secondary btn-back"
                             @click="goBack"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Kembali</span>
+                            <span class="desktop-only">Kembali</span>
                         </button>
                     </template>
 
@@ -583,7 +598,7 @@ onUnmounted(() => {
                             :disabled="submitting"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Sebelumnya</span>
+                            <span class="desktop-only">Sebelumnya</span>
                         </button>
                     </template>
                 </div>
@@ -595,7 +610,7 @@ onUnmounted(() => {
                             class="btn-duo btn-duo-success"
                             @click="startQuiz"
                         >
-                            <span>Mulai Pretest</span>
+                            <span class="desktop-only">Mulai Pretest</span>
                             <Rocket :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -607,13 +622,9 @@ onUnmounted(() => {
                             @click="submitQuiz"
                             :disabled="submitting || !canGoNext"
                         >
-                            <span v-if="!submitting">Selesaikan Pretest</span>
-                            <Loader2 v-else :size="18" class="spin" />
-                            <CheckCircle2
-                                v-if="!submitting"
-                                :size="18"
-                                :stroke-width="3"
-                            />
+                            <span v-if="!submitting" class="desktop-only">Selesaikan Pretest</span>
+                            <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
+                            <CheckCircle2 v-if="!submitting" :size="18" :stroke-width="3" />
                         </button>
                         <button
                             v-else
@@ -621,7 +632,7 @@ onUnmounted(() => {
                             @click="goNext"
                             :disabled="!canGoNext || submitting"
                         >
-                            <span>Selanjutnya</span>
+                            <span class="desktop-only">Selanjutnya</span>
                             <ArrowRight :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -1277,7 +1288,26 @@ onUnmounted(() => {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── MOBILE RESPONSIVE ─── */
+/* ─── MUSIC BUTTON (Mobile Footer) ─── */
+.music-footer-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    background: #ffffff;
+    color: #94a3b8;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.music-footer-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-footer-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+
+/* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
     .main-wrapper {
         padding: 10px 16px 110px;
@@ -1309,6 +1339,11 @@ onUnmounted(() => {
 
     .footer-inner {
         padding: 0 16px;
+    }
+
+    /* Show music btn on mobile */
+    .music-footer-btn {
+        display: flex;
     }
 
     .btn-duo {
@@ -1427,16 +1462,23 @@ onUnmounted(() => {
 
 /* ── Icon-only minimalist footer buttons on small mobile ── */
 @media (max-width: 480px) {
-    .btn-duo span { display: none; }
+    .desktop-only { display: none !important; }
     .btn-duo {
-        padding: 12px;
-        border-radius: 50%;
-        min-width: 48px;
-        width: 48px;
-        height: 48px;
-        gap: 0;
+        padding: 10px;
+        border-radius: 14px;
+        min-width: 44px;
+        height: 44px;
     }
     .footer-bar { height: 76px; }
-    .footer-inner { padding: 0 20px; }
+    .footer-inner { padding: 0 14px; }
+    .btn-back {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 8px !important;
+        min-width: auto;
+        height: auto;
+        color: #94a3b8 !important;
+    }
 }
 </style>
