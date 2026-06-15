@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, watch, onMounted, reactive } from 'vue';
+import { ref, computed, watch, onMounted, reactive } from "vue";
+import SimulationEffects from "./SimulationEffects.vue";
 
 const props = defineProps({
     quiz: Object,
