@@ -541,9 +541,7 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="nav-mission-name" key="mission-name">
-                            {{ mission.name }}
-                        </div>
+                        <div v-else key="mission-name-empty"></div>
                     </Transition>
                 </div>
 
@@ -615,10 +613,10 @@ onUnmounted(() => {
             </Transition>
 
             <div class="main-wrapper" :class="{ 'main--on': ready }" v-show="phase === 'quiz'">
-                <div class="pretest-layout-cols">
+                <div class="pretest-layout-cols" :class="{ 'layout-full': step?.isReflection }">
 
                     <!-- LEFT COLUMN: MASCOT (DESKTOP ONLY) -->
-                    <div class="mascot-column">
+                    <div class="mascot-column" v-if="!step?.isReflection">
                         <Transition name="bbl">
                             <div v-if="bubbleVisible" class="mascot-bubble-wrap">
                                 <div class="mascot-speech-bubble">
@@ -885,12 +883,12 @@ onUnmounted(() => {
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 50;
-    height: 70px;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1.5px solid rgba(203,213,225,0.35);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    height: 60px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1.5px solid rgba(203, 213, 225, 0.5);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
 }
@@ -906,6 +904,14 @@ onUnmounted(() => {
     height: 100%;
 }
 .nav-left { display: flex; align-items: center; flex-shrink: 0; }
+.btn-back {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+    border-bottom-width: 3px !important;
+    gap: 6px !important;
+    letter-spacing: 0.4px !important;
+}
 .nav-center {
     flex: 1;
     display: flex;
@@ -950,27 +956,25 @@ onUnmounted(() => {
 .prog-wrapper { width: 100%; }
 .prog-track {
     width: 100%;
-    height: 18px;
-    background: rgba(229,229,229,0.7);
+    height: 16px;
+    background: #e5e5e5;
     border-radius: 99px;
     position: relative;
     overflow: visible;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
 }
 .prog-fill {
     height: 100%;
-    background: linear-gradient(90deg, #1cb0f6, #0ea5e9, #38bdf8);
+    background: #58cc02;
     border-radius: 99px;
     transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
     position: relative;
-    min-width: 18px;
-    box-shadow: 0 2px 8px rgba(28,176,246,0.4);
+    min-width: 16px;
 }
 .prog-shine {
     position: absolute;
-    top: 3px; left: 8px; right: 8px;
-    height: 5px;
-    background: rgba(255,255,255,0.4);
+    top: 4px; left: 10px; right: 10px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
     border-radius: 99px;
 }
 .prog-tip {
@@ -1041,7 +1045,7 @@ onUnmounted(() => {
 .main-scroll {
     position: relative;
     z-index: 10;
-    padding-top: 70px;
+    padding-top: 60px;
     min-height: 100vh;
 }
 
@@ -1052,7 +1056,7 @@ onUnmounted(() => {
     flex: 1;
     display: flex;
     justify-content: center;
-    padding: 20px 24px 130px;
+    padding: 20px 24px 90px;
     opacity: 0;
     transition: opacity 0.45s;
 }
@@ -1067,6 +1071,10 @@ onUnmounted(() => {
     max-width: 1000px;
     margin: 30px auto 0;
     align-items: flex-start;
+}
+.pretest-layout-cols.layout-full {
+    grid-template-columns: 1fr;
+    max-width: 1200px;
 }
 
 /* ─── MASCOT COLUMN ─── */
@@ -1088,12 +1096,12 @@ onUnmounted(() => {
 .mascot-speech-bubble {
     background-color: #ffffff;
     border: 2px solid #e5e5e5;
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 16px 20px;
     text-align: center;
     font-size: 15px;
     font-weight: 800;
-    color: #3c3c3c;
+    color: #4b4b4b;
     line-height: 1.45;
     word-break: break-word;
 }
@@ -1222,15 +1230,13 @@ onUnmounted(() => {
 .footer-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 94px;
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1.5px solid rgba(255,255,255,0.2);
-    box-shadow: 0 -4px 30px rgba(0,0,0,0.03);
+    background: #fff;
+    border-top: 2px solid #e5e5e5;
+    height: 90px;
     display: flex;
     align-items: center;
-    z-index: 60;
+    z-index: 50;
+    transition: all 0.3s ease;
 }
 .footer-inner {
     width: 100%;
@@ -1238,75 +1244,53 @@ onUnmounted(() => {
     margin: 0 auto;
     padding: 0 24px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-}
-.footer-left, .footer-right { display: flex; align-items: center; }
-
-/* ─── DUOLINGO FLAT 3D BUTTONS ─── */
-.btn-duo {
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 13px 26px;
-    border-radius: 16px;
-    font-family: "Nunito", "Baloo 2", sans-serif;
-    font-size: 15px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    cursor: pointer;
-    transition: filter 0.15s, transform 0.1s, border-bottom-width 0.1s;
-    user-select: none;
-    outline: none;
 }
-.btn-duo-primary {
-    background-color: #1cb0f6;
-    border: 2px solid #1cb0f6;
-    border-bottom: 5px solid #1899d6;
-    color: #ffffff;
-}
-.btn-duo-primary:hover:not(:disabled) { filter: brightness(1.04); }
-.btn-duo-primary:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+.footer-left { display: flex; align-items: center; gap: 12px; }
+.footer-right { display: flex; align-items: center; gap: 12px; }
 
-.btn-duo-success {
-    background-color: #58cc02;
-    border: 2px solid #58cc02;
-    border-bottom: 5px solid #58a700;
-    color: #ffffff;
+/* ─── BUTTONS ─── */
+.btn-duo {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; font-family: "Nunito", sans-serif;
+    font-size: 16px; font-weight: 800;
+    padding: 14px 28px;
+    border-radius: 16px; cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    border: 2px solid transparent; border-bottom-width: 4px;
 }
-.btn-duo-success:hover:not(:disabled) { filter: brightness(1.04); }
-.btn-duo-success:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
-
-.btn-duo-secondary {
-    background-color: #ffffff;
-    border: 2px solid #e5e5e5;
-    border-bottom: 5px solid #cbd5e1;
-    color: #afafaf;
-}
-.btn-duo-secondary:hover:not(:disabled) { background-color: #f7f7f7; color: #777777; }
-.btn-duo-secondary:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
-
-.btn-duo-leave {
-    background-color: #ff4b4b;
-    border: 2px solid #ff4b4b;
-    border-bottom: 5px solid #ea2b2b;
-    color: #ffffff;
-}
-.btn-duo-leave:hover:not(:disabled) { filter: brightness(1.04); }
-.btn-duo-leave:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
-
+.btn-duo:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
 .btn-duo:disabled {
-    background-color: #e5e5e5 !important;
-    border-color: #e5e5e5 !important;
-    border-bottom: 2px solid #cbd5e1 !important;
+    background: #e5e5e5 !important;
     color: #afafaf !important;
+    border-color: #e5e5e5 !important;
+    border-bottom-color: #e5e5e5 !important;
     cursor: not-allowed;
     transform: none !important;
 }
 
-.btn-back { padding: 10px 18px; font-size: 13px; }
+/* Primary = Selanjutnya / Continue */
+.btn-duo-primary {
+    background: #58cc02; color: #fff;
+    border-color: #58cc02; border-bottom-color: #46a302;
+}
+.btn-duo-primary:hover:not(:disabled) { background: #61df02; }
+
+/* Secondary = Batal / Back */
+.btn-duo-secondary {
+    background: #fff; color: #afafaf;
+    border-color: #e5e5e5; border-bottom-color: #cbd5e1;
+}
+.btn-duo-secondary:hover:not(:disabled) { background: #f7f7f7; color: #4b4b4b; }
+
+/* Success = Selesaikan */
+.btn-duo-success {
+    background: #1cb0f6; color: #fff;
+    border-color: #1cb0f6; border-bottom-color: #1899d6;
+}
+.btn-duo-success:hover:not(:disabled) { background: #20c2ff; }
 
 /* ─── MODALS ─── */
 .modal-overlay {
@@ -1407,8 +1391,8 @@ onUnmounted(() => {
 :deep(.tf-inner) { padding: 14px 20px !important; width: 100% !important; justify-content: space-between !important; }
 :deep(.tf-label) { text-align: left !important; font-family: "Nunito", sans-serif !important; font-weight: 800 !important; color: #3c3c3c !important; font-size: 16px !important; }
 :deep(.drag-item), :deep(.dd-item) { border: 2px solid #e5e5e5 !important; border-bottom: 4px solid #cbd5e1 !important; border-radius: 12px !important; background-color: #ffffff !important; font-family: "Nunito", sans-serif !important; font-weight: 800 !important; color: #3c3c3c !important; padding: 10px 16px !important; }
-:deep(.sa-input), :deep(.short-answer-input), :deep(textarea) { border: 2px solid #e5e5e5 !important; border-radius: 16px !important; padding: 14px 18px !important; font-family: "Nunito", sans-serif !important; font-weight: 700 !important; font-size: 16px !important; color: #3c3c3c !important; outline: none !important; transition: border-color 0.2s !important; box-shadow: none !important; width: 100% !important; }
-:deep(.sa-input:focus), :deep(.short-answer-input:focus), :deep(textarea:focus) { border-color: #1cb0f6 !important; }
+:deep(.sa-input), :deep(.short-answer-input) { border: 2px solid #e5e5e5 !important; border-radius: 16px !important; padding: 14px 18px !important; font-family: "Nunito", sans-serif !important; font-weight: 700 !important; font-size: 16px !important; color: #3c3c3c !important; outline: none !important; transition: border-color 0.2s !important; box-shadow: none !important; width: 100% !important; }
+:deep(.sa-input:focus), :deep(.short-answer-input:focus) { border-color: #1cb0f6 !important; }
 
 /* ─── MOBILE RESPONSIVE ─── */
 @media (max-width: 768px) {

@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { CheckCircle2, XCircle } from 'lucide-vue-next';
 
 const props = defineProps({
     quiz: { type: Object, required: true },
@@ -10,62 +9,52 @@ const clickedObjects = ref(new Set());
 
 const toggleObject = (id) => {
     const newSet = new Set(clickedObjects.value);
-    if (!newSet.has(id)) {
-        newSet.add(id);
-    }
+    newSet.add(id);
     clickedObjects.value = newSet;
 };
 
 const getImageUrl = (path) => {
     if (!path) return '';
-    return path.startsWith('http') || path.startsWith('/') ? path : `/storage/${path}`;
+    return (path.startsWith('http') || path.startsWith('/')) ? path : `/storage/${path}`;
 };
 </script>
 
 <template>
-    <div class="simulation-clickable-container p-4 w-full h-full flex flex-col items-center justify-center">
-        <!-- Title is handled by Template.vue's question-bubble, but we can render the grid nicely -->
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-6xl mt-4">
-            <div 
-                v-for="(obj, index) in quiz.objects" 
+    <div class="co-wrap">
+        <div class="co-grid">
+            <div
+                v-for="(obj, index) in quiz.objects"
                 :key="obj.id"
-                class="clickable-card-wrapper perspective-1000 cursor-pointer"
+                class="co-card-wrap"
+                :class="{ 'co-flipped': clickedObjects.has(obj.id) }"
                 @click="toggleObject(obj.id)"
             >
-                <div class="clickable-card w-full h-[280px] md:h-[340px] relative preserve-3d transition-transform duration-700"
-                     :class="{ 'rotate-y-180': clickedObjects.has(obj.id) }">
-                     
-                    <!-- Front (Before Click) -->
-                    <div class="card-front absolute inset-0 backface-hidden bg-white rounded-3xl border-[6px] shadow-playful flex flex-col items-center justify-center p-6"
-                         :class="obj.is_positive ? 'border-green-400' : 'border-red-400'">
-                        <div class="flex-1 w-full flex items-center justify-center mb-4">
-                            <img v-if="obj.image" :src="getImageUrl(obj.image)" class="max-w-[140px] max-h-[140px] object-contain drop-shadow-md" />
-                            <div v-else class="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 font-bold">
-                                Tanpa Gambar
+                <div class="co-card">
+                    <!-- FRONT -->
+                    <div class="co-front" :class="obj.is_positive ? 'co-front-green' : 'co-front-red'">
+                        <div class="co-img-wrap">
+                            <img v-if="obj.image" :src="getImageUrl(obj.image)" class="co-img" :alt="obj.name" />
+                            <div v-else class="co-img-placeholder">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                             </div>
                         </div>
-                        <h3 class="text-xl md:text-2xl font-bold text-center text-gray-800 font-heading mb-2 leading-tight">
-                            {{ obj.name }}
-                        </h3>
-                        <div class="mt-auto px-5 py-2 bg-blue-50 text-blue-600 rounded-full font-bold text-sm animate-pulse border-2 border-blue-200">
-                            Pilih untuk melihat dampak
+                        <h3 class="co-name">{{ obj.name }}</h3>
+                        <div class="co-tap-hint">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                            </svg>
+                            Ketuk untuk lihat dampak
                         </div>
                     </div>
-                    
-                    <!-- Back (After Click) -->
-                    <div class="card-back absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-3xl border-[6px] shadow-playful flex flex-col items-center justify-center p-6 text-center"
-                         :class="obj.is_positive ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'">
-                        <div class="mb-4 bg-white p-3 rounded-full shadow-sm">
-                            <CheckCircle2 v-if="obj.is_positive" class="w-16 h-16 text-green-500" />
-                            <XCircle v-else class="w-16 h-16 text-red-500" />
+
+                    <!-- BACK -->
+                    <div class="co-back" :class="obj.is_positive ? 'co-back-green' : 'co-back-red'">
+                        <div class="co-back-icon">
+                            <svg v-if="obj.is_positive" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg v-else width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </div>
-                        <h3 class="text-xl md:text-2xl font-heading font-bold mb-3" :class="obj.is_positive ? 'text-green-700' : 'text-red-700'">
-                            {{ obj.name }}
-                        </h3>
-                        <p class="text-gray-700 font-bold text-sm md:text-base leading-relaxed bg-white/70 p-4 rounded-xl shadow-inner flex-1 overflow-y-auto">
-                            {{ obj.impact_text }}
-                        </p>
+                        <h3 class="co-back-name" :class="obj.is_positive ? 'co-back-name-green' : 'co-back-name-red'">{{ obj.name }}</h3>
+                        <p class="co-impact">{{ obj.impact_text }}</p>
                     </div>
                 </div>
             </div>
@@ -74,28 +63,149 @@ const getImageUrl = (path) => {
 </template>
 
 <style scoped>
-.perspective-1000 { perspective: 1000px; }
-.preserve-3d { transform-style: preserve-3d; }
-.backface-hidden { backface-visibility: hidden; }
-.rotate-y-180 { transform: rotateY(180deg); }
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 
-.shadow-playful {
-    box-shadow: 0 10px 0 rgba(0,0,0,0.08);
-}
-.clickable-card-wrapper {
-    transition: all 0.2s ease;
-}
-.clickable-card-wrapper:hover .card-front {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 0 rgba(0,0,0,0.12);
-}
-.clickable-card-wrapper:active .card-front {
-    transform: translateY(2px);
-    box-shadow: 0 6px 0 rgba(0,0,0,0.1);
-}
-
-.font-heading {
+.co-wrap {
     font-family: 'Nunito', sans-serif;
+    width: 100%;
+    padding: 4px 0;
+}
+
+/* Grid */
+.co-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+/* 3D card flip */
+.co-card-wrap {
+    perspective: 900px;
+    cursor: pointer;
+    height: 260px;
+}
+.co-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 18px;
+}
+.co-flipped .co-card { transform: rotateY(180deg); }
+
+/* Shared face styles */
+.co-front, .co-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 12px 12px;
+    border: 3px solid transparent;
+    border-bottom: 5px solid transparent;
+    transition: box-shadow 0.2s;
+}
+
+/* Front */
+.co-front-green {
+    border-color: #58cc02;
+    border-bottom-color: #46a302;
+    background: #fff;
+    box-shadow: 0 4px 0 #46a302;
+}
+.co-front-red {
+    border-color: #ff4b4b;
+    border-bottom-color: #ea2b2b;
+    background: #fff;
+    box-shadow: 0 4px 0 #ea2b2b;
+}
+.co-card-wrap:hover .co-front { filter: brightness(0.97); transform: translateY(-2px); }
+.co-card-wrap:active .co-front { transform: translateY(2px); box-shadow: none !important; }
+
+.co-img-wrap {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.co-img { max-width: 110px; max-height: 110px; object-fit: contain; }
+.co-img-placeholder {
+    width: 80px; height: 80px;
+    background: #f7f7f7;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+}
+.co-name {
+    font-size: 15px;
     font-weight: 800;
+    color: #3c3c3c;
+    text-align: center;
+    margin: 6px 0 4px;
+}
+.co-tap-hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1cb0f6;
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 99px;
+    padding: 4px 10px;
+    animation: pulseBorder 1.8s ease-in-out infinite;
+}
+@keyframes pulseBorder { 0%,100%{border-color:#bae6fd} 50%{border-color:#1cb0f6} }
+
+/* Back */
+.co-back { transform: rotateY(180deg); }
+.co-back-green {
+    background: #f0fff0;
+    border-color: #58cc02;
+    border-bottom-color: #46a302;
+    box-shadow: 0 4px 0 #46a302;
+}
+.co-back-red {
+    background: #fff5f5;
+    border-color: #ff4b4b;
+    border-bottom-color: #ea2b2b;
+    box-shadow: 0 4px 0 #ea2b2b;
+}
+.co-back-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+.co-back-icon svg { display: block; }
+.co-back-icon .co-back-green .co-back-icon svg { stroke: #58cc02; }
+.co-back-name { font-size: 14px; font-weight: 800; text-align: center; }
+.co-back-name-green { color: #46a302; }
+.co-back-name-red { color: #ea2b2b; }
+.co-impact {
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+    text-align: center;
+    line-height: 1.5;
+    background: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 8px;
+    overflow-y: auto;
+    max-height: 90px;
+    width: 100%;
+}
+
+/* Mobile: 2-col */
+@media (max-width: 480px) {
+    .co-grid { grid-template-columns: repeat(2, 1fr); }
+    .co-card-wrap { height: 230px; }
 }
 </style>
