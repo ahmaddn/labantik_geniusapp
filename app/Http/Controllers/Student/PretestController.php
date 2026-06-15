@@ -69,7 +69,9 @@ class PretestController extends Controller
                     'mascot'        => $question->mascot ? [
                         'id'        => $question->mascot->id,
                         'name_pose' => $question->mascot->name_pose,
-                        'image'     => $question->mascot->image,
+                        'image'     => $question->mascot->image
+                            ? asset('storage/' . $question->mascot->image)
+                            : null,
                     ] : null,
                 ];
 

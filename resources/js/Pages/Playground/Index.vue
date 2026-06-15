@@ -160,7 +160,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                                 {{ user.name.charAt(0).toUpperCase() }}
                             </div>
                             <div class="dd-text">
-                                <div class="dd-name">{{ user.name }}</div>
+                                <div class="dd-name">{{ user.name?.name }}</div>
                                 <div class="dd-class">
                                     Kelas {{ user.class?.name }}
                                 </div>

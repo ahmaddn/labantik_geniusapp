@@ -201,7 +201,7 @@ defineExpose({ musicOn });
                             </div>
                         </div>
                         <div v-else class="nav-title-text" key="title">
-                            <span class="title-pretest">PRETEST</span>
+                            <span class="title-pretest">POSTTEST</span>
                         </div>
                     </Transition>
                 </div>
