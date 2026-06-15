@@ -128,7 +128,7 @@ const setActiveItem = (index) => {
 }
 .cmp-card {
     flex: 1;
-    min-width: 240px;
+    min-width: 140px;
     background: #ffffff;
     border: 2px solid #cbd5e1;
     border-bottom-width: 5px;
@@ -310,7 +310,7 @@ const setActiveItem = (index) => {
 
 /* Mobile */
 @media (max-width: 640px) {
-    .cmp-card { min-width: 100%; }
+    .cmp-card { min-width: 120px; }
     .cmp-bottom-area { flex-direction: column; }
     .cmp-toggles { min-width: 100%; }
 }

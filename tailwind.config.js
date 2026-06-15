@@ -10,6 +10,11 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                heading: ['Nunito', 'sans-serif'],
+                baloo: ['"Baloo 2"', 'cursive'],
+            },
             boxShadow: {
                 playful: "0 8px 16px rgba(0, 0, 0, 0.1)",
             },

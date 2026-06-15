@@ -34,6 +34,8 @@ import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import PretestLayout from "@/Layouts/PosttestLayout.vue";
 
+const layoutRef = ref(null);
+
 const props = defineProps({
     quiz: { type: Object, required: true },
     module: { type: Object, default: () => ({ id: null, name: "Modul" }) },
@@ -344,6 +346,7 @@ onUnmounted(() => {
 
 <template>
     <PretestLayout
+        ref="layoutRef"
         :timerDisplay="timerDisplay"
         :isWarning="timerWarning"
         :progressPercent="progressPct"
@@ -568,13 +571,23 @@ onUnmounted(() => {
         <div class="footer-bar" v-if="phase !== 'celebration'">
             <div class="footer-inner">
                 <div class="footer-left">
+                    <button
+                        class="music-footer-btn"
+                        @click="layoutRef?.toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': layoutRef?.musicOn }"
+                        title="Musik Latar"
+                    >
+                        <Music2 v-if="layoutRef?.musicOn" :size="18" :stroke-width="2.5" />
+                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                    </button>
+
                     <template v-if="phase === 'intro'">
                         <button
-                            class="btn-duo btn-duo-secondary"
+                            class="btn-duo btn-duo-secondary btn-back"
                             @click="goBack"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Kembali</span>
+                            <span class="desktop-only">Kembali</span>
                         </button>
                     </template>
 
@@ -586,7 +599,7 @@ onUnmounted(() => {
                             :disabled="submitting"
                         >
                             <ArrowLeft :size="18" :stroke-width="3" />
-                            <span>Sebelumnya</span>
+                            <span class="desktop-only">Sebelumnya</span>
                         </button>
                     </template>
                 </div>
@@ -597,7 +610,7 @@ onUnmounted(() => {
                             class="btn-duo btn-duo-success"
                             @click="startQuiz"
                         >
-                            <span>Mulai Posttest</span>
+                            <span class="desktop-only">Mulai Posttest</span>
                             <Rocket :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -609,13 +622,9 @@ onUnmounted(() => {
                             @click="submitQuiz"
                             :disabled="submitting || !canGoNext"
                         >
-                            <span v-if="!submitting">Selesaikan Posttest</span>
-                            <Loader2 v-else :size="18" class="spin" />
-                            <CheckCircle2
-                                v-if="!submitting"
-                                :size="18"
-                                :stroke-width="3"
-                            />
+                            <span v-if="!submitting" class="desktop-only">Selesaikan Posttest</span>
+                            <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
+                            <CheckCircle2 v-if="!submitting" :size="18" :stroke-width="3" />
                         </button>
                         <button
                             v-else
@@ -623,7 +632,7 @@ onUnmounted(() => {
                             @click="goNext"
                             :disabled="!canGoNext || submitting"
                         >
-                            <span>Selanjutnya</span>
+                            <span class="desktop-only">Selanjutnya</span>
                             <ArrowRight :size="18" :stroke-width="3" />
                         </button>
                     </template>
@@ -835,7 +844,6 @@ onUnmounted(() => {
 
 /* ─── DEEP OVERRIDES FOR NESTED QUIZ OPTIONS ─── */
 
-/* Hanya normalisasi TF option, biarkan .opt dari Multiple_choice bebas */
 :deep(.tf-option) {
     border: 2px solid #e5e5e5 !important;
     border-bottom: 5px solid #cbd5e1 !important;
@@ -873,7 +881,6 @@ onUnmounted(() => {
     font-size: 16px !important;
 }
 
-/* Drag drop & short answer tetap dinormalisasi */
 :deep(.drag-item),
 :deep(.dd-item) {
     border: 2px solid #e5e5e5 !important;
@@ -1230,6 +1237,25 @@ onUnmounted(() => {
     animation: celebLoad 3s linear forwards;
 }
 
+/* ─── MUSIC BUTTON (Mobile Footer) ─── */
+.music-footer-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    background: #ffffff;
+    color: #94a3b8;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.music-footer-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-footer-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+
 /* ─── MOBILE RESPONSIVE ─── */
 @media (max-width: 768px) {
     .main-wrapper {
@@ -1281,20 +1307,36 @@ onUnmounted(() => {
     .istat-lbl {
         font-size: 10px;
     }
+    .music-footer-btn { display: flex; }
+    .icard-stats { flex-direction: column; }
+    .component-box { padding: 16px; }
 }
 
-/* ── Icon-only minimalist footer buttons on small mobile ── */
 @media (max-width: 480px) {
-    .btn-duo span { display: none; }
+    /* Icon-only minimalist buttons on mobile */
+    .desktop-only { display: none !important; }
     .btn-duo {
-        padding: 12px;
-        border-radius: 50%;
-        min-width: 48px;
-        width: 48px;
-        height: 48px;
-        gap: 0;
+        padding: 10px;
+        border-radius: 14px;
+        min-width: 44px;
+        height: 44px;
     }
     .footer-bar { height: 76px; }
+    .btn-back {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 8px !important;
+        min-width: auto;
+        height: auto;
+        color: #94a3b8 !important;
+    }
+    .btn-back:active:not(:disabled) {
+        transform: scale(0.95) !important;
+    }
+
+    .question-bubble { font-size: 14px; padding: 14px; }
+    .instr-txt { font-size: 13px; }
     .footer-inner { padding: 0 20px; }
 }
 </style>

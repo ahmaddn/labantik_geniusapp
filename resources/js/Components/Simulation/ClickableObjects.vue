@@ -222,7 +222,7 @@ const getImageUrl = (path) => {
 
 /* Mobile */
 @media (max-width: 500px) {
-    .co-card-wrap { max-width: 100%; height: 260px; }
+    .co-card-wrap { max-width: calc(50% - 8px); height: 260px; }
     .co-img { max-width: 100px; max-height: 100px; }
     .co-name, .co-back-name { font-size: 16px; }
     .co-impact { font-size: 13px; }

@@ -259,6 +259,10 @@ onUnmounted(() => {
       >
         <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
             <img :key="levelImage" v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10" />
+            <div v-else class="cs-center-placeholder z-10 flex flex-col items-center justify-center">
+                <ImageIcon class="w-16 h-16 text-slate-300 mb-2" />
+                <span class="font-bold text-slate-400">Gambar Utama</span>
+            </div>
         </transition>
         
         <!-- Dynamic Effects Overlay -->
@@ -291,17 +295,17 @@ onUnmounted(() => {
     </div>
 
     <!-- Sliders Controls Area -->
-    <div class="cs-slider-area flex flex-col gap-6 w-full max-w-xl mx-auto mb-6 mt-6">
+    <div class="cs-slider-area">
       <div v-if="variables.length === 0" class="text-center text-slate-500 font-bold bg-white/40 p-4 rounded-xl w-full">
         Belum ada variabel penggeser.
       </div>
       
-      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="cs-slider-group bg-white/50 backdrop-blur p-4 rounded-2xl border border-white/40 shadow-sm w-full">
-        <div class="flex justify-between items-center mb-3">
-          <span class="font-extrabold text-blue-900 bg-blue-100/60 px-3 py-1 rounded-lg text-sm">
+      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="cs-slider-group">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+          <span class="font-extrabold text-blue-900 bg-blue-100/60 px-3 py-1 rounded-lg text-xs sm:text-sm uppercase text-center sm:text-left break-words">
             {{ v.name || `Variabel ${idx + 1}` }}
           </span>
-          <span class="font-bold text-slate-600 text-xs">
+          <span class="font-bold text-slate-600 text-[10px] sm:text-xs uppercase tracking-wide text-center sm:text-right break-words">
             {{
                 sliderValues[idx] === 1
                     ? v.min_label
@@ -311,18 +315,19 @@ onUnmounted(() => {
             }}
           </span>
         </div>
-        <div class="relative w-full px-1 flex items-center gap-4">
-          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-right">{{ v.min_label || "Min" }}</span>
-          <input
+        <div class="relative w-full flex items-center gap-2 sm:gap-4">
+          <span class="text-[10px] sm:text-xs font-bold text-slate-500 flex-1 text-right uppercase break-words leading-tight">{{ v.min_label || "Min" }}</span>
+          <div class="w-1/2 sm:w-2/3 flex-shrink-0">
+            <input
               type="range"
               min="1"
               max="3"
               step="1"
               v-model.number="sliderValues[idx]"
-              class="cs-slider-custom w-full h-3 rounded-full appearance-none outline-none focus:ring-2 focus:ring-blue-300"
-              :class="idx % 2 === 0 ? 'bg-blue-200 thumb-blue' : 'bg-green-200 thumb-green'"
-          />
-          <span class="text-xs font-bold text-slate-500 min-w-[40px] text-left">{{ v.max_label || "Max" }}</span>
+              class="cs-slider"
+            />
+          </div>
+          <span class="text-[10px] sm:text-xs font-bold text-slate-500 flex-1 text-left uppercase break-words leading-tight">{{ v.max_label || "Max" }}</span>
         </div>
       </div>
     </div>
@@ -365,64 +370,64 @@ onUnmounted(() => {
   </div>
 
   <!-- Learning Objectives -->
-  <div v-else-if="props.question?.layout_type === 'learning_objectives'" class="w-full max-w-4xl mx-auto p-4 md:p-8 bg-blue-50/50 rounded-3xl min-h-[60vh] flex flex-col justify-center">
-    <div class="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-blue-100/50 border-4 border-blue-200 relative overflow-hidden">
+  <div v-else-if="props.question?.layout_type === 'learning_objectives'" class="w-full mx-auto p-4 bg-blue-50/50 rounded-2xl flex flex-col justify-center">
+    <div class="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-200 relative overflow-hidden">
         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
         <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-100 rounded-full opacity-50"></div>
         
-        <h2 class="text-3xl md:text-5xl font-black text-blue-900 mb-8 text-center relative z-10 font-heading tracking-wide uppercase drop-shadow-sm">Tujuan Pembelajaran</h2>
+        <h2 class="text-xl md:text-2xl font-black text-blue-900 mb-6 text-center relative z-10 font-heading tracking-wide uppercase drop-shadow-sm">Tujuan Pembelajaran</h2>
         
-        <ul class="space-y-4 md:space-y-6 relative z-10">
-            <li v-for="(item, idx) in conceptualData" :key="idx" class="flex gap-4 md:gap-6 items-start bg-blue-50/80 p-4 md:p-6 rounded-2xl border-2 border-blue-100 hover:border-blue-300 transition-all hover:-translate-y-1">
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-blue-500 text-white font-black text-xl md:text-2xl rounded-full flex items-center justify-center shadow-md border-4 border-blue-200">
+        <ul class="space-y-3 relative z-10">
+            <li v-for="(item, idx) in conceptualData" :key="idx" class="flex gap-4 items-start bg-blue-50/80 p-4 rounded-xl border border-blue-100 hover:border-blue-300 transition-all hover:-translate-y-1">
+                <div class="w-8 h-8 flex-shrink-0 bg-blue-500 text-white font-black text-lg rounded-full flex items-center justify-center shadow-md border-2 border-blue-200">
                     {{ idx + 1 }}
                 </div>
-                <p class="text-lg md:text-xl font-bold text-slate-700 leading-relaxed pt-1 md:pt-2">{{ item }}</p>
+                <p class="text-base md:text-lg font-bold text-slate-700 leading-relaxed pt-1">{{ item }}</p>
             </li>
         </ul>
     </div>
   </div>
 
   <!-- Cover Page -->
-  <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full max-w-5xl mx-auto min-h-[70vh] flex items-center justify-center relative">
-    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-[3rem] p-8 md:p-16 shadow-2xl shadow-indigo-200 overflow-hidden relative border-8 border-white">
+  <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full mx-auto flex items-center justify-center relative my-4">
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-3xl p-6 shadow-xl overflow-hidden relative border-4 border-white">
         <!-- Deco elements -->
-        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-        <div class="absolute bottom-0 left-0 w-96 h-96 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-3xl"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl"></div>
         
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-            <div class="flex-1 text-center md:text-left text-white space-y-6">
-                <div class="inline-block px-6 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white font-bold text-sm md:text-base tracking-widest uppercase shadow-inner">
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex-1 text-center md:text-left text-white space-y-4">
+                <div class="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white font-bold text-xs uppercase shadow-inner">
                     {{ conceptualData?.subtitle || 'Misi Pembelajaran' }}
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black font-heading leading-tight drop-shadow-xl text-yellow-300" style="-webkit-text-stroke: 2px rgba(0,0,0,0.1);">
+                <h1 class="text-2xl md:text-4xl font-black font-heading leading-tight drop-shadow-md text-yellow-300" style="-webkit-text-stroke: 1px rgba(0,0,0,0.1);">
                     {{ props.question.title }}
                 </h1>
             </div>
             
-            <div class="w-64 h-64 md:w-96 md:h-96 flex-shrink-0 relative flex items-center justify-center">
+            <div class="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative flex items-center justify-center">
                 <!-- Glowing circle behind mascot -->
-                <div class="absolute w-4/5 h-4/5 bg-white rounded-full opacity-20 blur-xl animate-pulse"></div>
-                <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain relative z-10 filter drop-shadow-2xl animate-float" />
-                <img v-else src="/images/mascot.png" class="w-full h-full object-contain relative z-10 filter drop-shadow-2xl animate-float" />
+                <div class="absolute w-4/5 h-4/5 bg-white rounded-full opacity-20 blur-md animate-pulse"></div>
+                <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain relative z-10 filter drop-shadow-lg animate-float" />
+                <img v-else src="/images/mascot.png" class="w-full h-full object-contain relative z-10 filter drop-shadow-lg animate-float" />
             </div>
         </div>
     </div>
   </div>
 
   <!-- Initial Questions -->
-  <div v-else-if="props.question?.layout_type === 'initial_questions'" class="w-full max-w-4xl mx-auto min-h-[60vh] flex flex-col items-center justify-center">
-    <div class="w-full flex flex-col md:flex-row items-center gap-8 md:gap-16">
-        <div class="w-48 h-48 md:w-72 md:h-72 flex-shrink-0">
-            <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain filter drop-shadow-xl animate-bounce-slow" />
-            <img v-else src="/images/mascot.png" class="w-full h-full object-contain filter drop-shadow-xl animate-bounce-slow" />
+  <div v-else-if="props.question?.layout_type === 'initial_questions'" class="w-full mx-auto flex flex-col items-center justify-center my-4">
+    <div class="w-full flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0">
+            <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain filter drop-shadow-md animate-bounce-slow" />
+            <img v-else src="/images/mascot.png" class="w-full h-full object-contain filter drop-shadow-md animate-bounce-slow" />
         </div>
         
-        <div class="flex-1 w-full space-y-6">
+        <div class="flex-1 w-full space-y-4">
             <!-- Chat bubble style -->
-            <div v-for="(q, idx) in conceptualData" :key="idx" class="relative bg-white p-6 md:p-8 rounded-3xl rounded-tl-none shadow-xl border-4 border-purple-200 transform transition-transform hover:-translate-y-2">
-                <div class="absolute -left-4 top-0 w-8 h-8 bg-white border-t-4 border-l-4 border-purple-200 transform -skew-x-12"></div>
-                <p class="text-xl md:text-2xl font-bold text-purple-900 leading-relaxed font-heading relative z-10">
+            <div v-for="(q, idx) in conceptualData" :key="idx" class="relative bg-white p-4 sm:p-5 rounded-2xl rounded-tl-none shadow-md border-2 border-purple-200 transform transition-transform hover:-translate-y-1">
+                <div class="absolute -left-3 top-0 w-6 h-6 bg-white border-t-2 border-l-2 border-purple-200 transform -skew-x-12"></div>
+                <p class="text-base sm:text-lg font-bold text-purple-900 leading-relaxed font-heading relative z-10">
                     {{ q }}
                 </p>
             </div>
@@ -431,47 +436,46 @@ onUnmounted(() => {
   </div>
 
   <!-- Image Comparison -->
-  <div v-else-if="props.question?.layout_type === 'image_comparison'" class="w-full max-w-6xl mx-auto bg-green-50/50 p-6 md:p-10 rounded-3xl min-h-[60vh] flex flex-col justify-center">
-    <h2 class="text-3xl md:text-5xl font-black text-green-900 text-center font-heading uppercase mb-10 drop-shadow-sm tracking-wide">
+  <div v-else-if="props.question?.layout_type === 'image_comparison'" class="w-full mx-auto bg-green-50/50 p-4 md:p-6 rounded-2xl flex flex-col justify-center">
+    <h2 class="text-xl md:text-2xl font-black text-green-900 text-center font-heading uppercase mb-6 drop-shadow-sm tracking-wide">
         {{ props.question.title }}
     </h2>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        <div class="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-green-200 transform transition-transform hover:scale-[1.02]">
-            <div class="h-64 md:h-96 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+        <div class="bg-white p-3 md:p-4 rounded-2xl shadow-md border-4 border-green-200 transform transition-transform hover:scale-[1.02]">
+            <div class="aspect-[4/3] w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
                 <img v-if="conceptualData?.image_left" :src="`/storage/${conceptualData.image_left}`" class="w-full h-full object-cover" />
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kiri</div>
             </div>
-            <div class="bg-green-100 py-3 px-6 rounded-xl border-2 border-green-300 text-center">
-                <h3 class="text-xl md:text-2xl font-black text-green-800 uppercase tracking-widest">{{ conceptualData?.left_label || 'Gambar 1' }}</h3>
+            <div class="bg-green-100 py-2 px-4 rounded-xl border-2 border-green-300 text-center">
+                <h3 class="text-base md:text-lg font-black text-green-800 uppercase tracking-widest">{{ conceptualData?.left_label || 'Gambar 1' }}</h3>
             </div>
         </div>
         
-        <div class="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-blue-200 transform transition-transform hover:scale-[1.02]">
-            <div class="h-64 md:h-96 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100">
+        <div class="bg-white p-3 md:p-4 rounded-2xl shadow-md border-4 border-blue-200 transform transition-transform hover:scale-[1.02]">
+            <div class="aspect-[4/3] w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
                 <img v-if="conceptualData?.image_right" :src="`/storage/${conceptualData.image_right}`" class="w-full h-full object-cover" />
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kanan</div>
             </div>
-            <div class="bg-blue-100 py-3 px-6 rounded-xl border-2 border-blue-300 text-center">
-                <h3 class="text-xl md:text-2xl font-black text-blue-800 uppercase tracking-widest">{{ conceptualData?.right_label || 'Gambar 2' }}</h3>
+            <div class="bg-blue-100 py-2 px-4 rounded-xl border-2 border-blue-300 text-center">
+                <h3 class="text-base md:text-lg font-black text-blue-800 uppercase tracking-widest">{{ conceptualData?.right_label || 'Gambar 2' }}</h3>
             </div>
         </div>
     </div>
   </div>
 
   <!-- Process List -->
-  <div v-else-if="props.question?.layout_type === 'process_list'" class="w-full max-w-6xl mx-auto min-h-[60vh] flex flex-col justify-center py-8">
-    <div class="bg-gradient-to-b from-sky-100 to-green-100 rounded-[3rem] p-6 md:p-12 border-8 border-white shadow-2xl relative overflow-hidden">
+  <div v-else-if="props.question?.layout_type === 'process_list'" class="w-full mx-auto flex flex-col justify-center py-4">
+    <div class="bg-gradient-to-b from-sky-100 to-green-100 rounded-2xl p-4 md:p-8 border-4 border-white shadow-lg relative overflow-hidden">
         <!-- Deco elements -->
-        <div class="absolute bottom-0 left-0 w-full h-32 bg-[url('/images/grass-pattern.png')] bg-repeat-x bg-bottom opacity-50 z-0"></div>
-        <div class="absolute top-10 right-10 w-32 h-32 bg-white rounded-full opacity-30 blur-xl"></div>
+        <div class="absolute top-6 right-6 w-20 h-20 bg-white rounded-full opacity-30 blur-xl"></div>
         
-        <div class="flex flex-col md:flex-row gap-8 md:gap-12 relative z-10">
+        <div class="flex flex-col sm:flex-row gap-6 relative z-10">
             <!-- Left Side: Image / Polaroid -->
-            <div class="w-full md:w-5/12 flex-shrink-0 flex items-center justify-center transform -rotate-2 hover:rotate-0 transition-transform duration-300">
-                <div class="bg-white p-4 pb-12 rounded-lg shadow-xl border border-gray-200 relative w-full max-w-sm">
+            <div class="w-full sm:w-5/12 flex-shrink-0 flex items-center justify-center">
+                <div class="bg-white p-3 pb-8 rounded-lg shadow-lg border border-gray-200 relative w-full max-w-xs">
                     <!-- Paper clip -->
-                    <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-16 border-4 border-gray-400 rounded-full bg-transparent transform rotate-12 z-20"></div>
+                    <div class="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-12 border-4 border-gray-400 rounded-full bg-transparent transform rotate-12 z-20"></div>
                     <div class="w-full aspect-square bg-blue-50 overflow-hidden border border-gray-100">
                         <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
                         <div v-else class="w-full h-full flex items-center justify-center text-gray-400">Gambar</div>
@@ -480,18 +484,18 @@ onUnmounted(() => {
             </div>
             
             <!-- Right Side: List -->
-            <div class="w-full md:w-7/12 flex flex-col justify-center">
-                <h2 class="text-3xl md:text-5xl font-black text-slate-700 font-heading uppercase mb-8 drop-shadow-sm leading-tight" style="-webkit-text-stroke: 1px rgba(255,255,255,0.5);">
+            <div class="w-full sm:w-7/12 flex flex-col justify-center">
+                <h2 class="text-xl md:text-2xl font-black text-slate-700 font-heading uppercase mb-4 leading-tight">
                     {{ props.question.title }}
                 </h2>
                 
-                <div class="space-y-4">
-                    <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-center gap-4 group">
-                        <div class="w-12 h-12 rounded-full bg-white border-4 border-slate-400 text-slate-700 font-black text-xl flex items-center justify-center shadow-md group-hover:border-blue-500 group-hover:text-blue-500 transition-colors flex-shrink-0">
+                <div class="space-y-3">
+                    <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-center gap-3 group">
+                        <div class="w-9 h-9 rounded-full bg-white border-4 border-slate-400 text-slate-700 font-black text-base flex items-center justify-center shadow-md group-hover:border-blue-500 group-hover:text-blue-500 transition-colors flex-shrink-0">
                             {{ idx + 1 }}.
                         </div>
-                        <div class="bg-white px-6 py-3 rounded-full shadow-md border-2 border-white group-hover:border-blue-200 w-full transition-all">
-                            <span class="font-bold text-slate-700 text-lg md:text-xl uppercase tracking-wide group-hover:text-blue-800">{{ item }}</span>
+                        <div class="bg-white px-4 py-2 rounded-full shadow-md border-2 border-white group-hover:border-blue-200 w-full transition-all">
+                            <span class="font-bold text-slate-700 text-sm md:text-base uppercase tracking-wide group-hover:text-blue-800">{{ item }}</span>
                         </div>
                     </div>
                 </div>
@@ -620,10 +624,12 @@ onUnmounted(() => {
 <style scoped>
 /* ── Conceptual Systematic Styles ── */
 .cs-container {
-  background: linear-gradient(180deg, #d3e9ff 0%, #b5dbff 100%);
-  border-radius: 24px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 10px 30px rgba(0, 100, 200, 0.15);
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px solid #cbd5e1;
+  border-bottom-width: 5px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   font-family: 'Nunito', 'Inter', sans-serif;
   overflow: hidden;
   position: relative;
@@ -632,27 +638,37 @@ onUnmounted(() => {
 
 .cs-title {
   text-align: center;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 900;
-  color: #1e3a5f;
-  margin-bottom: 2.5rem;
-  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+  color: #1cb0f6;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .cs-title {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+  }
 }
 
 .cs-grid {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .cs-grid {
     flex-direction: row;
     justify-content: center;
-    align-items: stretch;
+    align-items: center;
     gap: 1.5rem;
   }
 }
@@ -664,25 +680,29 @@ onUnmounted(() => {
   gap: 1.5rem;
   flex: 1;
   max-width: 280px;
+  width: 100%;
 }
 
 .cs-text-box {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px);
+  background: #f8fafc;
   border-radius: 16px;
   padding: 1.25rem;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #334155;
+  font-weight: 700;
+  color: #475569;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 2px solid #e2e8f0;
+  border-bottom-width: 4px;
   position: relative;
-  transition: transform 0.3s ease;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .cs-text-box:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.8);
+  border-color: #cbd5e1;
 }
 
 .cs-arrow {
@@ -694,37 +714,53 @@ onUnmounted(() => {
   background: #64748b;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .cs-arrow { display: block; }
-  .cs-arrow.right { right: -30px; }
-  .cs-arrow.left { left: -30px; }
+  .cs-arrow.right { right: -32px; }
+  .cs-arrow.left { left: -32px; }
   .cs-arrow::after {
     content: '';
     position: absolute;
-    top: -4px;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
+    top: -5px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
   }
-  .cs-arrow.right::after { right: -5px; border-left: 6px solid #64748b; }
-  .cs-arrow.left::after { left: -5px; border-right: 6px solid #64748b; }
+  .cs-arrow.right::after { right: -6px; border-left: 8px solid #64748b; }
+  .cs-arrow.left::after { left: -6px; border-right: 8px solid #64748b; }
 }
 
 .cs-image-wrap {
   flex: 0 0 auto;
+  position: relative;
+  width: 280px;
+  height: 280px;
+  background: #f1f5f9;
+  border-radius: 24px;
+  border: 2px solid #cbd5e1;
+  border-bottom-width: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .cs-center-img {
   width: 100%;
-  max-width: 280px;
-  height: auto;
+  height: 100%;
   object-fit: contain;
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-  background: #fff;
-  padding: 10px;
+  position: absolute;
+  top: 0; left: 0;
+  padding: 1rem;
+}
+
+.cs-center-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #f1f5f9;
 }
 
 /* ── Slider Area ── */
@@ -740,51 +776,54 @@ onUnmounted(() => {
   gap: 1rem;
   width: 100%;
   max-width: 600px;
-  background: rgba(255, 255, 255, 0.4);
+  background: #ffffff;
   padding: 1rem 1.5rem;
-  border-radius: 100px;
+  border-radius: 20px;
+  border: 2px solid #cbd5e1;
+  border-bottom-width: 4px;
 }
 
 .cs-slider-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: #f0f9ff;
+  border: 2px solid #bae6fd;
 }
 
 .cs-slider-label {
   font-weight: 800;
-  color: #1e3a5f;
+  color: #475569;
   font-size: 0.95rem;
 }
 
 .cs-slider {
-  flex: 1;
   -webkit-appearance: none;
   appearance: none;
   height: 12px;
   background: #e2e8f0;
   border-radius: 10px;
   outline: none;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  width: 100%;
 }
 
 .cs-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #1cb0f6;
   cursor: pointer;
-  box-shadow: 0 0 0 4px #fff, 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
   transition: transform 0.1s;
 }
-.cs-slider::-webkit-slider-thumb:active { transform: scale(1.1); }
+.cs-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
 
 /* ── Metrics Area ── */
 .cs-metrics-area {
@@ -904,13 +943,15 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.mat-title-section { flex: 1; text-align: left; }
+.mat-title-section { flex: 1; text-align: left; min-width: 0; }
 
 .mat-title {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
   color: #1e293b;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .mat-subtitle {
@@ -981,13 +1022,6 @@ onUnmounted(() => {
   transform: scale(1.12);
   pointer-events: none;
   z-index: 0;
-}
-
-.cs-center-img {
-  width: 100%; height: 100%;
-  object-fit: contain;
-  position: absolute;
-  top: 0; left: 0;
 }
 
 /* Magic Transitions */

@@ -184,9 +184,9 @@ watch(studentAnswer, (newVal) => {
 .ref-textarea::placeholder { color: #94a3b8; font-weight: 600; }
 
 /* Mobile */
-@media (max-width: 768px) {
-    .ref-bottom { flex-direction: column; }
-    .ref-card { width: 160px; padding: 12px; }
-    .ref-card-text { font-size: 13px; }
+@media (max-width: 640px) {
+    .ref-bottom { flex-direction: column; align-items: center; }
+    .ref-card { width: 100%; max-width: 280px; padding: 12px; }
+    .ref-card-text { font-size: 14px; }
 }
 </style>

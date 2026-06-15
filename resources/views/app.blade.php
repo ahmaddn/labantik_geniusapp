@@ -14,10 +14,10 @@
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/png" href="/images/geniuss-logo.png">
 
-    <!-- Google Fonts - Roboto untuk Bootstrap Template -->
+    <!-- Google Fonts - Nunito untuk gaya Duolingo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
     {{-- Template CSS --}}
 
@@ -28,7 +28,7 @@
     @inertiaHead
 </head>
 
-<body>
+<body class="font-sans antialiased text-slate-800">
     @inertia
 </body>
 

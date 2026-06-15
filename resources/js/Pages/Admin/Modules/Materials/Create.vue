@@ -746,7 +746,7 @@ const toggleCardVariant = () => {
                         </template>
 
                         <!-- ===== MEDIA UPLOAD ===== -->
-                        <div v-if="['default', 'learning_objectives', 'process_list'].includes(materialForm.layout_type)">
+                        <div v-if="['default', 'learning_objectives', 'process_list', 'conceptual_systematic'].includes(materialForm.layout_type)">
                             <label
                                 class="block text-sm font-bold text-gray-700 mb-3"
                                 >Media Pembelajaran / Background</label
