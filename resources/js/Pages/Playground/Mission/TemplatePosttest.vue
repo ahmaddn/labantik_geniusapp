@@ -1282,4 +1282,19 @@ onUnmounted(() => {
         font-size: 10px;
     }
 }
+
+/* ── Icon-only minimalist footer buttons on small mobile ── */
+@media (max-width: 480px) {
+    .btn-duo span { display: none; }
+    .btn-duo {
+        padding: 12px;
+        border-radius: 50%;
+        min-width: 48px;
+        width: 48px;
+        height: 48px;
+        gap: 0;
+    }
+    .footer-bar { height: 76px; }
+    .footer-inner { padding: 0 20px; }
+}
 </style>

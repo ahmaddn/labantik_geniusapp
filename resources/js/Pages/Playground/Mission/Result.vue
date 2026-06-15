@@ -85,7 +85,7 @@ const formatTime = (sec) => {
 
 const score = computed(() => {
     if (props.is_overall) {
-        return Math.round(props.results.overall_score || 0);
+        return Math.round(props.results.overall_score || props.results.score || 0);
     }
     return Math.round(props.results.score || 0);
 });
@@ -100,18 +100,49 @@ const accuracy = computed(() => {
 
 const correctCount = computed(() => {
     if (props.is_overall) {
-        return props.results.overall_correct || 0;
+        return props.results.overall_correct || props.results.correct_answers || 0;
     }
     return props.results.correct_answers || 0;
 });
 
 const incorrectCount = computed(() => {
     if (props.is_overall) {
-        const total = props.results.overall_total || 0;
-        return total - (props.results.overall_correct || 0);
+        const total = props.results.overall_total || props.results.total_questions || 0;
+        return total - (props.results.overall_correct || props.results.correct_answers || 0);
     }
     const total = props.results.total_questions || 0;
     return total - (props.results.correct_answers || 0);
+});
+
+// Breakdown per bagian (untuk is_overall)
+const breakdownSections = computed(() => {
+    if (!props.is_overall) return [];
+    return [
+        {
+            key: 'pretest',
+            label: 'Pretest',
+            icon: BookOpen,
+            color: '#1cb0f6',
+            bg: '#ddf4ff',
+            data: props.results.pretest || { correct: 0, incorrect: 0, total: 0, score: 0 },
+        },
+        {
+            key: 'missions',
+            label: 'Misi',
+            icon: Target,
+            color: '#58cc02',
+            bg: '#eefdf0',
+            data: props.results.missions || { correct: 0, incorrect: 0, total: 0, score: 0 },
+        },
+        {
+            key: 'posttest',
+            label: 'Posttest',
+            icon: Zap,
+            color: '#ff9600',
+            bg: '#fff4e5',
+            data: props.results.posttest || { correct: 0, incorrect: 0, total: 0, score: 0 },
+        },
+    ];
 });
 
 const gradeData = computed(() => {
@@ -152,10 +183,29 @@ const isAnswerCorrect = (detail, ans) => {
 const getQuizExplanation = (detail) => {
     return detail.question?.explanation || null;
 };
+const MASCOT_SPEECHES = computed(() => {
+    const s = score.value;
+    if (s >= 90) return "Luar biasa! Nilaimu sempurna!";
+    if (s >= 75) return "Kerja bagus! Terus pertahankan!";
+    if (s >= 60) return "Cukup baik! Masih bisa lebih bagus!";
+    return "Jangan menyerah! Terus belajar ya!";
+});
 </script>
 
 <template>
     <div class="app-layout">
+        <!-- Particles background (behind everything) -->
+        <div class="particles-bg" aria-hidden="true">
+            <span class="particle p1"></span>
+            <span class="particle p2"></span>
+            <span class="particle p3"></span>
+            <span class="particle p4"></span>
+            <span class="particle p5"></span>
+            <span class="particle p6"></span>
+            <span class="particle p7"></span>
+            <span class="particle p8"></span>
+        </div>
+
         <main class="main-scroll">
             <div class="result-container">
                 <div class="header-section">
@@ -171,8 +221,16 @@ const getQuizExplanation = (detail) => {
                     </p>
                 </div>
 
+
                 <div class="score-mascot-section">
+                    <!-- Mascot with speech bubble -->
                     <div class="mascot-wrap">
+                        <div class="mascot-speech-bubble-wrap">
+                            <div class="mascot-speech">
+                                {{ MASCOT_SPEECHES }}
+                            </div>
+                            <div class="mascot-speech-arrow"></div>
+                        </div>
                         <img
                             src="/images/templates/pose_jempol.png"
                             alt="Mascot"
@@ -232,6 +290,57 @@ const getQuizExplanation = (detail) => {
                         </div>
                         <span class="istat-val">{{ score }}</span>
                         <span class="istat-lbl">Nilai</span>
+                    </div>
+                </div>
+
+                <!-- ══ BREAKDOWN PER BAGIAN (is_overall only) ══ -->
+                <div v-if="is_overall" class="breakdown-section">
+                    <div class="breakdown-title">Rincian Per Bagian</div>
+                    <div class="breakdown-cards">
+                        <div
+                            v-for="section in breakdownSections"
+                            :key="section.key"
+                            class="breakdown-card"
+                            :style="{ borderColor: section.color, '--bc': section.color, '--bg': section.bg }"
+                        >
+                            <div class="bk-header" :style="{ backgroundColor: section.bg }">
+                                <div class="bk-icon" :style="{ backgroundColor: section.color }">
+                                    <component :is="section.icon" :size="16" :stroke-width="2.5" color="white" />
+                                </div>
+                                <span class="bk-label" :style="{ color: section.color }">{{ section.label }}</span>
+                            </div>
+                            <div class="bk-stats">
+                                <div class="bk-stat">
+                                    <span class="bk-val bk-correct">{{ section.data.correct }}</span>
+                                    <span class="bk-lbl">Benar</span>
+                                </div>
+                                <div class="bk-divider"></div>
+                                <div class="bk-stat">
+                                    <span class="bk-val bk-wrong">{{ section.data.incorrect }}</span>
+                                    <span class="bk-lbl">Salah</span>
+                                </div>
+                                <div class="bk-divider"></div>
+                                <div class="bk-stat">
+                                    <span class="bk-val" :style="{ color: section.color }">{{ section.data.score }}</span>
+                                    <span class="bk-lbl">Nilai</span>
+                                </div>
+                            </div>
+                            <div class="bk-progress">
+                                <div
+                                    class="bk-progress-fill"
+                                    :style="{ width: section.data.score + '%', backgroundColor: section.color }"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Total Keseluruhan -->
+                    <div class="total-row">
+                        <span class="total-label">Total Keseluruhan</span>
+                        <div class="total-pills">
+                            <span class="pill pill-green">{{ correctCount }} Benar</span>
+                            <span class="pill pill-red">{{ incorrectCount }} Salah</span>
+                            <span class="pill pill-blue">Nilai: {{ score }}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -410,6 +519,39 @@ const getQuizExplanation = (detail) => {
     overflow-x: hidden;
 }
 
+/* ─── PARTICLES ─── */
+.particles-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particleFloat 8s ease-in-out infinite;
+}
+
+.p1 { width: 14px; height: 14px; background: #1cb0f6; top: 10%; left: 8%;  animation-delay: 0s;   animation-duration: 7s; }
+.p2 { width: 10px; height: 10px; background: #58cc02; top: 25%; left: 90%; animation-delay: 1.2s; animation-duration: 9s; }
+.p3 { width: 18px; height: 18px; background: #ff9600; top: 60%; left: 5%;  animation-delay: 2.4s; animation-duration: 8s; }
+.p4 { width: 8px;  height: 8px;  background: #a855f7; top: 80%; left: 85%; animation-delay: 0.6s; animation-duration: 6s; }
+.p5 { width: 12px; height: 12px; background: #ffc800; top: 45%; left: 95%; animation-delay: 3s;   animation-duration: 10s; }
+.p6 { width: 16px; height: 16px; background: #1cb0f6; top: 15%; left: 50%; animation-delay: 1.8s; animation-duration: 7.5s; }
+.p7 { width: 10px; height: 10px; background: #58cc02; top: 70%; left: 40%; animation-delay: 0.9s; animation-duration: 8.5s; }
+.p8 { width: 6px;  height: 6px;  background: #ff4b4b; top: 35%; left: 15%; animation-delay: 2s;   animation-duration: 6.5s; }
+
+@keyframes particleFloat {
+    0%   { opacity: 0;    transform: translateY(0) scale(0.8); }
+    20%  { opacity: 0.6;  }
+    50%  { opacity: 0.4;  transform: translateY(-30px) scale(1.1); }
+    80%  { opacity: 0.5;  }
+    100% { opacity: 0;    transform: translateY(10px) scale(0.8); }
+}
+
 .main-scroll {
     position: relative;
     z-index: 10;
@@ -464,6 +606,50 @@ const getQuizExplanation = (detail) => {
 
 .mascot-wrap {
     width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* Speech bubble above mascot */
+.mascot-speech-bubble-wrap {
+    position: relative;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.07));
+    animation: floatBubble 4s ease-in-out infinite;
+}
+
+.mascot-speech {
+    background: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 18px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #3c3c3c;
+    line-height: 1.4;
+    text-align: center;
+    max-width: 180px;
+    word-break: break-word;
+}
+
+.mascot-speech-arrow {
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-right: 2px solid #e5e5e5;
+    border-bottom: 2px solid #e5e5e5;
+    z-index: 1;
+}
+
+@keyframes floatBubble {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
 }
 
 .mascot-img {
@@ -551,6 +737,9 @@ const getQuizExplanation = (detail) => {
 }
 .istat--green .istat-icon {
     background-color: #58cc02;
+}
+.istat--red .istat-icon {
+    background-color: #ff4b4b;
 }
 .istat--blue .istat-icon {
     background-color: #1cb0f6;
@@ -923,21 +1112,178 @@ const getQuizExplanation = (detail) => {
 
 @media (max-width: 480px) {
     .mascot-wrap {
-        display: none; /* Hide mascot on very small screens to focus on score */
+        display: none;
     }
     .score-mascot-section {
+        gap: 16px;
         justify-content: center;
     }
 
     .footer-inner {
         gap: 8px;
+        padding: 0 20px;
     }
-    .btn-duo span {
-        display: none; /* Hide text, only show icons on very small screens */
-    }
+    .btn-duo span { display: none; }
     .btn-duo {
         padding: 12px;
         border-radius: 50%;
+        min-width: 48px;
+        width: 48px;
+        height: 48px;
+        gap: 0;
     }
+    .footer-bar { height: 76px; }
+}
+
+/* ─── BREAKDOWN PER BAGIAN ─── */
+.breakdown-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.breakdown-title {
+    font-family: "Baloo 2", cursive;
+    font-size: 18px;
+    font-weight: 800;
+    color: #3c3c3c;
+    text-align: center;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.breakdown-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.breakdown-card {
+    background: #ffffff;
+    border: 2px solid;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.bk-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+}
+
+.bk-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bk-label {
+    font-family: "Baloo 2", cursive;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.bk-stats {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.bk-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.bk-divider {
+    width: 1px;
+    height: 40px;
+    background: #e5e7eb;
+}
+
+.bk-val {
+    font-family: "Baloo 2", cursive;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: #3c3c3c;
+}
+
+.bk-correct { color: #58cc02 !important; }
+.bk-wrong   { color: #ff4b4b !important; }
+
+.bk-lbl {
+    font-size: 11px;
+    font-weight: 800;
+    color: #afafaf;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bk-progress {
+    height: 6px;
+    background: #f1f5f9;
+    width: 100%;
+}
+
+.bk-progress-fill {
+    height: 100%;
+    border-radius: 0 3px 3px 0;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+}
+
+.total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 14px 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.total-label {
+    font-family: "Baloo 2", cursive;
+    font-size: 16px;
+    font-weight: 800;
+    color: #3c3c3c;
+}
+
+.total-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.pill-green { background: #eefdf0; color: #58cc02; border: 1px solid #c2f5cc; }
+.pill-red   { background: #ffe5e5; color: #ff4b4b; border: 1px solid #fecaca; }
+.pill-blue  { background: #ddf4ff; color: #1cb0f6; border: 1px solid #bae6fd; }
+
+@media (max-width: 600px) {
+    .bk-val { font-size: 18px; }
+    .total-row { flex-direction: column; align-items: flex-start; }
 }
 </style>

@@ -1,4 +1,3 @@
-<!-- ini te-->
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import {
@@ -50,6 +49,7 @@ import Comparisons from "@/Components/Simulation/Comparisons.vue";
 import Decisions from "@/Components/Simulation/Decisions.vue";
 import Reflection from "@/Components/Simulation/Reflection.vue";
 import { useMusic } from "@/Composable/useMusic";
+
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
     multiple_choices: Multiple_choice,
@@ -64,20 +64,13 @@ const COMPONENT_MAP = {
     simulation_decision: Decisions,
     reflection: Reflection,
 };
+
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
-const brandMoved = ref(false);
+
 const TYPE_META = {
-    multiple_choices: {
-        label: "PILIHAN GANDA",
-        color: "#3b82f6",
-        bg: "#dbeafe",
-    },
-    true_false: {
-        label: "Pilih Gambar Yang Benar",
-        color: "#8b5cf6",
-        bg: "#ede9fe",
-    },
+    multiple_choices: { label: "PILIHAN GANDA", color: "#3b82f6", bg: "#dbeafe" },
+    true_false: { label: "Pilih Gambar Yang Benar", color: "#8b5cf6", bg: "#ede9fe" },
     case_study: { label: "Studi Kasus", color: "#0891b2", bg: "#cffafe" },
     drag_drop: { label: "Seret & Letakkan", color: "#f59e0b", bg: "#fef3c7" },
     short_answer: { label: "Isian Singkat", color: "#6366f1", bg: "#e0e7ff" },
@@ -103,19 +96,20 @@ const props = defineProps({
 });
 
 // ── Steps — 1 question per page ───────────────────────────────
-// Setiap question dalam setiap quiz menjadi 1 step tersendiri.
-// Material tetap 1 step penuh (tidak dipecah per question).
 const steps = computed(() => {
     const result = [];
     props.mission.quizzes.forEach((quiz, quizIdx) => {
         const isMaterial = quiz.type === "materials";
-        const isSimulation = quiz.type === "simulation_clickable" || quiz.type === "simulation_slider" || quiz.type === "simulation_comparison" || quiz.type === "simulation_decision";
+        const isSimulation =
+            quiz.type === "simulation_clickable" ||
+            quiz.type === "simulation_slider" ||
+            quiz.type === "simulation_comparison" ||
+            quiz.type === "simulation_decision";
         const isReflection = quiz.type === "reflection";
         const isDragDrop = quiz.type === "drag_drop";
         const questions = quiz.questions || [];
 
         if (isMaterial || isSimulation) {
-            // Material/Simulation: 1 step, tampilkan question pertama sebagai konten
             result.push({
                 quizIndex: quizIdx,
                 quiz,
@@ -127,7 +121,6 @@ const steps = computed(() => {
                 isDragDrop: false,
             });
         } else if (isReflection) {
-            // Reflection: 1 step utuh, tapi wajib dijawab (isMaterial = false)
             result.push({
                 quizIndex: quizIdx,
                 quiz,
@@ -139,7 +132,6 @@ const steps = computed(() => {
                 isDragDrop: false,
             });
         } else if (questions.length === 0) {
-            // Quiz kosong → 1 step placeholder
             result.push({
                 quizIndex: quizIdx,
                 quiz,
@@ -151,7 +143,6 @@ const steps = computed(() => {
                 isDragDrop,
             });
         } else {
-            // ✅ Tiap question = 1 step
             questions.forEach((question, qIdx) => {
                 result.push({
                     quizIndex: quizIdx,
@@ -171,7 +162,10 @@ const steps = computed(() => {
         result.push({
             isConclusion: true,
             quizIndex: props.mission.quizzes.length,
-            quiz: { type: 'conclusion', title: `KESIMPULAN ${props.mission.name.toUpperCase()}` },
+            quiz: {
+                type: "conclusion",
+                title: `KESIMPULAN ${props.mission.name.toUpperCase()}`,
+            },
             question: null,
             questionIndex: 0,
             totalInQuiz: 1,
@@ -190,37 +184,26 @@ const answers = reactive({});
 const isSubmitting = ref(false);
 const ready = ref(false);
 const shakeActive = ref(false);
+const phase = ref('quiz'); // 'quiz' | 'celebration'
 
-// Music
-
-const audioRef = ref(null);
-
+// ── Step helpers (harus dideklarasikan sebelum timer & computed lain) ──
 const step = computed(() => steps.value[currentStep.value]);
 const isFirst = computed(() => currentStep.value === 0);
 const isLast = computed(() => currentStep.value === steps.value.length - 1);
 
 // ── Timer ─────────────────────────────────────────────────────
-// sessionStorage keys — scoped per mission agar tidak tabrakan antar misi
 const SS_TIME_KEY = `geniuss_timer_time_${props.mission.id}`;
 const SS_TIMEOUT_KEY = `geniuss_timer_out_${props.mission.id}`;
 
-// Helpers baca/tulis sessionStorage
 function ssGetMap(key) {
-    try {
-        return JSON.parse(sessionStorage.getItem(key) || "{}");
-    } catch {
-        return {};
-    }
+    try { return JSON.parse(sessionStorage.getItem(key) || "{}"); } catch { return {}; }
 }
 function ssSetMap(key, val) {
-    try {
-        sessionStorage.setItem(key, JSON.stringify(val));
-    } catch {}
+    try { sessionStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-// Load state dari sessionStorage (bertahan saat reload)
-const _savedTime = ssGetMap(SS_TIME_KEY); // { [quizId]: secondsRemaining }
-const _savedTimeout = ssGetMap(SS_TIMEOUT_KEY); // { [quizId]: true }
+const _savedTime = ssGetMap(SS_TIME_KEY);
+const _savedTimeout = ssGetMap(SS_TIMEOUT_KEY);
 
 const timeRemaining = ref(0);
 const timedOutQuizzes = ref(
@@ -234,9 +217,7 @@ const timerDisplay = computed(() => {
     const s = String(timeRemaining.value % 60).padStart(2, "0");
     return `${m}:${s}`;
 });
-const timerWarning = computed(
-    () => timeRemaining.value > 0 && timeRemaining.value <= 60,
-);
+const timerWarning = computed(() => timeRemaining.value > 0 && timeRemaining.value <= 60);
 const showTimer = computed(() => {
     const s = step.value;
     return s && !s.isMaterial && s.quiz?.time_limit > 0;
@@ -247,45 +228,32 @@ function saveTimerState(quizId, seconds) {
     map[quizId] = seconds;
     ssSetMap(SS_TIME_KEY, map);
 }
-
 function markTimeout(quizId) {
     const map = ssGetMap(SS_TIMEOUT_KEY);
     map[quizId] = true;
     ssSetMap(SS_TIMEOUT_KEY, map);
     timedOutQuizzes.value = new Set([...timedOutQuizzes.value, quizId]);
 }
-
 function pauseActiveTimer() {
-    if (activeQuizId !== null) {
-        saveTimerState(activeQuizId, timeRemaining.value);
-    }
+    if (activeQuizId !== null) saveTimerState(activeQuizId, timeRemaining.value);
     clearInterval(timerInt);
     timerInt = null;
 }
-
 function startQuizTimer(quiz) {
     pauseActiveTimer();
-
     if (!quiz || !quiz.time_limit || quiz.time_limit <= 0) {
         timeRemaining.value = 0;
         activeQuizId = null;
         return;
     }
-    brandMoved.value = true;
-
-    // Sudah timeout → tampilkan 0, tidak perlu interval
     if (timedOutQuizzes.value.has(quiz.id)) {
         timeRemaining.value = 0;
         activeQuizId = quiz.id;
         return;
     }
-
-    // Ambil sisa waktu dari sessionStorage, atau mulai dari awal
     const saved = ssGetMap(SS_TIME_KEY);
-    timeRemaining.value =
-        saved[quiz.id] !== undefined ? saved[quiz.id] : quiz.time_limit;
+    timeRemaining.value = saved[quiz.id] !== undefined ? saved[quiz.id] : quiz.time_limit;
     activeQuizId = quiz.id;
-
     timerInt = setInterval(() => {
         if (timeRemaining.value <= 0) {
             clearInterval(timerInt);
@@ -296,18 +264,14 @@ function startQuizTimer(quiz) {
             return;
         }
         timeRemaining.value--;
-        // Simpan ke sessionStorage tiap detik supaya reload tetap lanjut
         saveTimerState(quiz.id, timeRemaining.value);
     }, 1000);
 }
 
-// Ganti timer saat pindah ke quiz yang berbeda
 watch(
     () => step.value?.quiz?.id,
     (newId, oldId) => {
-        if (newId !== oldId) {
-            startQuizTimer(step.value?.quiz ?? null);
-        }
+        if (newId !== oldId) startQuizTimer(step.value?.quiz ?? null);
     },
 );
 
@@ -327,26 +291,19 @@ const isStepAnswered = (s) => {
     if (!s || s.isMaterial) return true;
     if (s.isReflection) {
         if (!s.quiz?.questions || s.quiz.questions.length === 0) return true;
-        return s.quiz.questions.every(q => isQuestionAnswered(q, s.quiz.type));
+        return s.quiz.questions.every((q) => isQuestionAnswered(q, s.quiz.type));
     }
     if (!s.question) return true;
-    // Quiz yang sudah timeout → dianggap selesai (bisa next/submit)
     if (timedOutQuizzes.value.has(s.quiz?.id)) return true;
     return isQuestionAnswered(s.question, s.quiz.type);
 };
 
 const canGoNext = computed(() => isStepAnswered(step.value));
-const allStepsAnswered = computed(() =>
-    steps.value.filter((s) => !s.isMaterial).every((s) => isStepAnswered(s)),
-);
 
 // ── Progress ───────────────────────────────────────────────────
-// Hitung berdasarkan jumlah question steps yang sudah dijawab
-const totalQuizSteps = computed(
-    () => steps.value.filter((s) => !s.isMaterial).length,
-);
-const answeredQuizSteps = computed(
-    () => steps.value.filter((s) => !s.isMaterial && isStepAnswered(s)).length,
+const totalQuizSteps = computed(() => steps.value.filter((s) => !s.isMaterial).length);
+const answeredQuizSteps = computed(() =>
+    steps.value.filter((s) => !s.isMaterial && isStepAnswered(s)).length,
 );
 const progressPct = computed(() =>
     totalQuizSteps.value === 0
@@ -356,7 +313,6 @@ const progressPct = computed(() =>
 
 // ── Mascot ────────────────────────────────────────────────────
 const DEFAULT_MASCOT = "/images/templates/pose_nunjuk.png";
-
 const mascotUrl = computed(() => {
     const questions = step.value?.quiz?.questions ?? [];
     for (const q of questions) {
@@ -378,33 +334,56 @@ const mascotUrl = computed(() => {
     return DEFAULT_MASCOT;
 });
 
-// ── Sidebar speech bubble ──────────────────────────────────────
-const BUBBLES = [
-    "Ayo semangat! 💪",
-    "Baca dengan teliti 👀",
-    "Kamu pasti bisa! 🔥",
-    "Pikirkan baik-baik 🤔",
-    "Hampir selesai! ✨",
-    "Fokus ya! 🎯",
+// ── Speech bubble ──────────────────────────────────────────────
+const BUBBLES_UNANSWERED = [
+    "Ayo dibaca dulu soalnya!",
+    "Pikirkan baik-baik ya!",
+    "Fokus dan tenang, kamu pasti bisa!",
+    "Membaca soal membantu menemukan jawaban!",
 ];
+const BUBBLES_ANSWERED = [
+    "Pilihan yang bagus! Ayo klik Selanjutnya.",
+    "Jawaban terpilih! Yakin dengan pilihanmu?",
+    "Luar biasa! Mari lanjut ke pertanyaan berikut.",
+    "Bagus sekali! Mari lanjutkan!",
+];
+const BUBBLES_MATERIAL = [
+    "Yuk pelajari materinya dulu!",
+    "Baca dengan seksama ya!",
+    "Materi ini penting untuk soal berikutnya!",
+];
+
 const bubbleIdx = ref(0);
 const bubbleVisible = ref(true);
 let bubbleTimer = null;
 
+const activeSpeechText = computed(() => {
+    const s = step.value;
+    if (!s) return "Semangat ya!";
+    if (s.isMaterial) return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
+    if (s.question && isQuestionAnswered(s.question, s.quiz?.type)) {
+        return BUBBLES_ANSWERED[bubbleIdx.value % BUBBLES_ANSWERED.length];
+    }
+    return BUBBLES_UNANSWERED[bubbleIdx.value % BUBBLES_UNANSWERED.length];
+});
+
 const rotateBubble = () => {
     bubbleVisible.value = false;
     setTimeout(() => {
-        bubbleIdx.value = (bubbleIdx.value + 1) % BUBBLES.length;
+        bubbleIdx.value = bubbleIdx.value + 1;
         bubbleVisible.value = true;
     }, 300);
 };
 
-// ── Music ─────────────────────────────────────────────────────
+watch(currentStep, () => {
+    bubbleIdx.value = 0;
+    bubbleVisible.value = false;
+    setTimeout(() => { bubbleVisible.value = true; }, 200);
+});
 
 // ── Navigation ─────────────────────────────────────────────────
 const updateAnswer = (payload) => {
-    if (payload?.questionId !== undefined)
-        answers[payload.questionId] = payload.value;
+    if (payload?.questionId !== undefined) answers[payload.questionId] = payload.value;
 };
 
 const goNext = () => {
@@ -416,13 +395,7 @@ const goNext = () => {
     if (!isLast.value) currentStep.value++;
     else openConfirm();
 };
-
-const goPrev = () => {
-    if (!isFirst.value) currentStep.value--;
-};
-const goToStep = (idx) => {
-    currentStep.value = idx;
-};
+const goPrev = () => { if (!isFirst.value) currentStep.value--; };
 
 const goBack = () => {
     router.visit(route("playground.missions.index", props.module.id), {
@@ -431,43 +404,23 @@ const goBack = () => {
         preserveScroll: false,
     });
 };
-
 const goHome = () => router.visit(route("playground.index"));
-
-const stepStatus = (idx) => {
-    const s = steps.value[idx];
-    if (s.isMaterial) return "material";
-    if (idx === currentStep.value) return "active";
-    return isStepAnswered(s) ? "done" : "pending";
-};
 
 // ── Confirm modal ──────────────────────────────────────────────
 const showConfirm = ref(false);
-const openConfirm = () => {
-    showConfirm.value = true;
-};
-const closeConfirm = () => {
-    showConfirm.value = false;
-};
+const openConfirm = () => { showConfirm.value = true; };
+const closeConfirm = () => { showConfirm.value = false; };
 
 // ── Leave confirm ─────────────────────────────────────────────
 const showLeaveConfirm = ref(false);
 const hasAnswers = computed(() => Object.keys(answers).length > 0);
 
 const tryGoBack = () => {
-    if (hasAnswers.value) {
-        showLeaveConfirm.value = true;
-    } else {
-        goBack();
-    }
+    if (hasAnswers.value) showLeaveConfirm.value = true;
+    else goBack();
 };
-const confirmLeave = () => {
-    showLeaveConfirm.value = false;
-    goBack();
-};
-const cancelLeave = () => {
-    showLeaveConfirm.value = false;
-};
+const confirmLeave = () => { showLeaveConfirm.value = false; goBack(); };
+const cancelLeave = () => { showLeaveConfirm.value = false; };
 
 // ── Submit ─────────────────────────────────────────────────────
 const submit = async () => {
@@ -479,22 +432,23 @@ const submit = async () => {
             {
                 answers,
                 quiz_ids: props.mission.quizzes
-                    .filter((q) => !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison", "simulation_decision"].includes(q.type))
+                    .filter((q) =>
+                        !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison", "simulation_decision"].includes(q.type)
+                    )
                     .map((q) => q.id),
             }
         );
         const data = res.data;
         if (data.success) {
-            // Bersihkan timer state supaya sesi berikutnya mulai fresh
             try {
                 sessionStorage.removeItem(SS_TIME_KEY);
                 sessionStorage.removeItem(SS_TIMEOUT_KEY);
             } catch {}
-            router.visit(route("playground.missions.result", props.mission.id));
-        } else
-            alert(
-                "Gagal menyimpan jawaban: " + (data.error || "Unknown error"),
-            );
+            // Tampilkan phase celebration, bukan redirect langsung
+            phase.value = 'celebration';
+        } else {
+            alert("Gagal menyimpan jawaban: " + (data.error || "Unknown error"));
+        }
     } catch (e) {
         console.error(e);
         alert("Terjadi kesalahan saat menyimpan jawaban");
@@ -503,16 +457,20 @@ const submit = async () => {
     }
 };
 
+// ── Celebration navigation ─────────────────────────────────────
+const goToMissionsIndex = () => {
+    router.visit(route("playground.missions.index", props.module.id));
+};
+const goToPosttest = () => {
+    router.visit(route("playground.posttest.show", props.module.id));
+};
+
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
     document.addEventListener("visibilitychange", handleVisibility);
     setTimeout(() => initAutoMusic(props.backsound), 100);
-
-    // Mulai timer untuk quiz pertama
-    if (step.value?.quiz) {
-        startQuizTimer(step.value.quiz);
-    }
+    if (step.value?.quiz) startQuizTimer(step.value.quiz);
 });
 onUnmounted(() => {
     clearInterval(bubbleTimer);
@@ -520,230 +478,314 @@ onUnmounted(() => {
     document.removeEventListener("visibilitychange", handleVisibility);
     destroyAudio();
 });
-
-const TYPE_ICON_MAP = {
-    drag_drop: GripHorizontal,
-    materials: BookOpen,
-    multiple_choices: ClipboardList,
-    true_false: ToggleLeft,
-    case_study: FileSearch,
-};
-const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 </script>
 
 <template>
-    <div style="display: none">
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
-            rel="stylesheet"
-        />
-    </div>
-
-    <div class="root">
-        <!-- ══ BG ══ -->
-        <div class="bg">
-            <div
-                class="bg-img"
-                :style="{ backgroundImage: `url(${props.background})` }"
-            ></div>
-            <div class="bg-tint"></div>
-            <!-- Blobs -->
-            <div class="blob b1"></div>
-            <div class="blob b2"></div>
-            <div class="blob b3"></div>
-            <div class="sh sh-circle c1"></div>
-            <div class="sh sh-circle c2"></div>
-            <div class="sh sh-ring r1"></div>
-            <div class="sh sh-ring r2"></div>
-            <div class="sh sh-ring r3"></div>
-            <div class="sh sh-dot d1"></div>
-            <div class="sh sh-dot d2"></div>
-            <div class="sh sh-dot d3"></div>
-            <div class="sh sh-dot d4"></div>
-            <div class="sh sh-dot d5"></div>
-            <div class="bg-dots"></div>
+    <div class="app-layout">
+        <!-- ░░ FONT LOAD ░░ -->
+        <div style="display: none">
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+            <link
+                href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=Righteous&display=swap"
+                rel="stylesheet"
+            />
         </div>
 
-        <!-- ══ TOP NAV (Minimal) ══ -->
-        <header class="topbar">
-            <!-- Brand -->
-            <div class="brand" style="position: absolute; left: 18px; display: flex; align-items: center; gap: 8px; z-index: 2;">
-                <div style="width: 28px; height: 28px; border-radius: 8px; background: #2563eb; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="white" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                </div>
-                <span style="font-family: 'Righteous', cursive; font-size: 18px; color: #fff;">{{ $page.props.global_settings?.platform_name || 'Geniuss' }}</span>
+        <!-- ░░ BACKGROUND ░░ -->
+        <div class="bg-scene">
+            <div class="sky-gradient"></div>
+            <div class="bg-particles">
+                <div class="particle p-1"></div>
+                <div class="particle p-2"></div>
+                <div class="particle p-3"></div>
+                <div class="particle p-4"></div>
+                <div class="particle p-5"></div>
             </div>
+            <!-- Educational floating icons -->
+            <div class="edu-particles">
+                <svg class="edu-p ep-1" style="top:10%;left:8%;color:#1cb0f6" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg class="edu-p ep-2" style="top:18%;right:10%;color:#ffc800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                <svg class="edu-p ep-3" style="top:35%;left:12%;color:#78c257" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+                <svg class="edu-p ep-4" style="top:40%;right:12%;color:#ff847c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg>
+                <svg class="edu-p ep-5" style="top:65%;left:8%;color:#845ef7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg class="edu-p ep-6" style="top:72%;right:14%;color:#00bcd4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+                <svg class="edu-p ep-7" style="top:85%;left:22%;color:#e91e63" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
+                <svg class="edu-p ep-8" style="top:25%;left:26%;color:#1cb0f6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
+            </div>
+        </div>
 
-            <!-- Progress Bar inside Topbar -->
-            <div class="prog-wrapper">
-                <div class="prog-text">
-                    {{ answeredQuizSteps }} / {{ totalQuizSteps }} Terjawab
+        <!-- ░░ TOP NAV ░░ -->
+        <header class="top-nav">
+            <div class="nav-inner">
+                <!-- Left: back button -->
+                <div class="nav-left">
+                    <button class="btn-duo btn-duo-secondary btn-back" @click="tryGoBack" :disabled="isSubmitting">
+                        <ArrowLeft :size="16" :stroke-width="3" />
+                        <span class="desktop-only">Kembali</span>
+                    </button>
                 </div>
-                <div class="prog-track">
-                    <div class="prog-fill" :style="{ width: progressPct + '%' }">
-                        <span class="prog-shine"></span>
-                    </div>
+
+                <!-- Center: Progress Bar OR Mission name (on celebration) -->
+                <div class="nav-center">
+                    <Transition name="nav-swap" mode="out-in">
+                        <div v-if="phase === 'quiz'" class="prog-wrapper" key="progress">
+                            <div class="prog-track">
+                                <div class="prog-fill" :style="{ width: progressPct + '%' }">
+                                    <div class="prog-shine"></div>
+                                    <div class="prog-tip" v-if="progressPct > 5">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="nav-mission-name" key="mission-name">
+                            {{ mission.name }}
+                        </div>
+                    </Transition>
+                </div>
+
+                <!-- Right: Music + Timer -->
+                <div class="nav-right">
+                    <!-- Music btn -->
+                    <button
+                        class="music-nav-btn"
+                        @click="toggleMusic(props.backsound ?? null)"
+                        :class="{ 'music-on': musicOn }"
+                    >
+                        <Music2 v-if="musicOn" :size="16" :stroke-width="2.5" />
+                        <VolumeX v-else :size="16" :stroke-width="2.5" />
+                    </button>
+
+                    <!-- Timer (only on quiz phase) -->
+                    <Transition name="nav-swap">
+                        <div
+                            v-if="showTimer && phase === 'quiz'"
+                            class="timer-badge"
+                            :class="{
+                                'timer-warning': timerWarning,
+                                'timer-out': timedOutQuizzes.has(step?.quiz?.id),
+                            }"
+                        >
+                            <div class="timer-icon-wrap">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <span class="timer-val">{{
+                                timedOutQuizzes.has(step?.quiz?.id) ? "Waktu Habis" : timerDisplay
+                            }}</span>
+                        </div>
+                    </Transition>
                 </div>
             </div>
-
-            <!-- Timer (if any) -->
-            <Transition name="t-timer">
-                <div
-                    v-if="showTimer"
-                    class="timer"
-                    :class="{
-                        'timer--warn': timerWarning,
-                        'timer--out': timedOutQuizzes.has(step?.quiz?.id),
-                    }"
-                >
-                    <div class="timer-row">
-                        <Clock :size="14" :stroke-width="2.5" />
-                        <span class="timer-val">{{
-                            timedOutQuizzes.has(step?.quiz?.id)
-                                ? "Waktu Habis"
-                                : timerDisplay
-                        }}</span>
-                    </div>
-                </div>
-            </Transition>
-            <div class="topbar-r"></div>
         </header>
 
-        <!-- ══ MAIN CENTRIC CONTENT ══ -->
-        <main class="main-wrapper" :class="{ 'main--on': ready }">
-            <template v-if="step?.isConclusion">
-                <div class="mission-container">
-                    <div class="title-pill">{{ step.quiz.title }}</div>
-                    
-                    <!-- Question Bubble (Speech) -->
-                    <div class="question-bubble">
-                        {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
-                    </div>
-                    
-                    <!-- Component Container (Body) -->
-                    <div class="component-box min-h-[150px] font-medium text-gray-800 flex items-center justify-center text-center p-8 leading-relaxed">
-                        {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
-                    </div>
-                </div>
-            </template>
-
-            <template v-else>
-                <div class="mission-container">
-                    <!-- Title Pill -->
-                    <div class="title-pill">
-                        {{ module.name.toUpperCase() }}
-                    </div>
-
-                    <!-- Question Bubble -->
-                    <div class="question-bubble" v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer'" v-html="step.question.question_text"></div>
-                    <div class="question-bubble" v-else-if="step?.isMaterial" v-html="step.quiz.title"></div>
-                    <div class="question-bubble empty-qs" v-else-if="step.quiz.type !== 'short_answer'">
-                        Tidak ada soal
-                    </div>
-
-                    <!-- Component Container -->
-                    <div class="component-box" v-if="step" :class="{ 'opts--shake': shakeActive, 'box-locked': timedOutQuizzes.has(step.quiz?.id) }">
-                        <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
-                            <Timer :size="28" :stroke-width="2" />
-                            <span>Waktu Habis</span>
-                        </div>
-                        
-                        <component
-                            v-if="step.question || step.isMaterial || step.isReflection"
-                            :is="COMPONENT_MAP[step.quiz.type]"
-                            :question="step.question"
-                            :quiz="step.quiz"
-                            :modelValue="answers[step.question?.id]"
-                            @update-answer="updateAnswer"
+        <!-- ░░ MAIN SCROLL CONTENT ░░ -->
+        <main class="main-scroll">
+            <!-- ══ PHASE: CELEBRATION ══ -->
+            <Transition name="celeb-fade">
+                <div v-if="phase === 'celebration'" class="celeb-overlay">
+                    <!-- Mascot + bubble -->
+                    <div class="celeb-mascot-container">
+                        <Transition name="bbl">
+                            <div v-if="bubbleVisible" class="celeb-bubble-wrap">
+                                <div class="mascot-speech-bubble">
+                                    <span>Luar biasa! Kamu telah menyelesaikan misi ini dengan sangat baik!</span>
+                                </div>
+                                <div class="bubble-arrow"></div>
+                            </div>
+                        </Transition>
+                        <img
+                            src="/images/templates/pose_jempol.png"
+                            alt="Maskot"
+                            class="celeb-mascot-img"
                         />
                     </div>
-                </div>
-            </template>
-        </main>
 
-        <!-- ══ ABSOLUTE ELEMENTS (Mascot & Buttons) ══ -->
-        <div class="mascot-absolute" @click="rotateBubble" v-if="!['simulation_decision'].includes(step?.quiz?.type)">
-            <Transition name="bbl">
-                <div v-if="bubbleVisible" class="mascot-speech">
-                    <span>{{ BUBBLES[bubbleIdx] }}</span>
-                    <i class="bbl-arrow-out"></i>
-                    <i class="bbl-arrow-in"></i>
+                    <!-- Label & sub -->
+                    <div class="celeb-label">Misi Selesai!</div>
+                    <div class="celeb-sub">Apa yang ingin kamu lakukan selanjutnya?</div>
+
+                    <!-- Actions -->
+                    <div class="celeb-actions">
+                        <button class="btn-duo btn-duo-secondary" @click="goToMissionsIndex">
+                            <Home :size="18" :stroke-width="3" />
+                            <span>Ke Beranda Misi</span>
+                        </button>
+                        <button class="btn-duo btn-duo-success" @click="goToPosttest">
+                            <span>Lanjut ke Posttest</span>
+                            <Rocket :size="18" :stroke-width="3" />
+                        </button>
+                    </div>
                 </div>
             </Transition>
-            <img :src="mascotUrl" alt="Maskot" class="mascot-img" />
-            <div class="mascot-shadow"></div>
-        </div>
 
-        <div class="action-btn-absolute">
-            <template v-if="isLast">
-                <button
-                    class="pill-btn pill-btn-finish"
-                    @click="openConfirm"
-                    :disabled="isSubmitting || (!canGoNext && !step?.isMaterial)"
-                >
-                    <span v-if="!isSubmitting">Selesaikan Misi</span>
-                    <Loader2 v-else :size="20" class="spin" />
-                    <CheckCircle2 v-if="!isSubmitting" :size="20" :stroke-width="2.5" />
-                </button>
-            </template>
-            <template v-else>
-                <button
-                    class="pill-btn pill-btn-next"
-                    @click="goNext"
-                    :disabled="(!canGoNext && !step?.isMaterial) || isSubmitting"
-                >
-                    <span>Selanjutnya</span>
-                    <ArrowRight :size="20" :stroke-width="2.5" />
-                </button>
-            </template>
-        </div>
+            <div class="main-wrapper" :class="{ 'main--on': ready }" v-show="phase === 'quiz'">
+                <div class="pretest-layout-cols">
 
-        <div class="utils-absolute">
-            <button class="util-btn" @click="toggleMusic(props.backsound)">
-                <Music2 v-if="musicOn" :size="16" :stroke-width="2" />
-                <VolumeX v-else :size="16" :stroke-width="2" />
-            </button>
-            <button class="util-btn util-btn-back" @click="tryGoBack" :disabled="isSubmitting">
-                <span>Back</span>
-            </button>
+                    <!-- LEFT COLUMN: MASCOT (DESKTOP ONLY) -->
+                    <div class="mascot-column">
+                        <Transition name="bbl">
+                            <div v-if="bubbleVisible" class="mascot-bubble-wrap">
+                                <div class="mascot-speech-bubble">
+                                    <span>{{ activeSpeechText }}</span>
+                                </div>
+                                <div class="bubble-arrow"></div>
+                            </div>
+                        </Transition>
+                        <div class="mascot-image-container">
+                            <img :src="mascotUrl" alt="Maskot" class="mascot-avatar-img" />
+                            <div class="mascot-avatar-shadow"></div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: QUIZ CONTENT -->
+                    <div class="quiz-content-column">
+                        <div class="mission-container">
+
+                            <!-- ══ CONCLUSION ══ -->
+                            <template v-if="step?.isConclusion">
+                                <div class="title-pill">{{ step.quiz.title }}</div>
+                                <div class="question-bubble">
+                                    {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
+                                </div>
+                                <div class="component-box">
+                                    <p style="font-size:16px;font-weight:700;color:#3c3c3c;line-height:1.7;text-align:center;padding:20px 0;">
+                                        {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- ══ NORMAL STEP ══ -->
+                            <template v-else>
+                                <!-- Title pill -->
+                                <div class="title-pill">
+                                    <span v-if="step?.isMaterial">{{ typeMeta(step?.quiz?.type).label }}</span>
+                                    <span v-else>
+                                        SOAL {{ currentStep + 1 }} DARI {{ steps.length }}
+                                    </span>
+                                </div>
+
+                                <!-- Question bubble -->
+                                <div
+                                    v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer'"
+                                    class="question-bubble"
+                                    v-html="step.question.question_text"
+                                ></div>
+                                <div
+                                    v-else-if="step?.isMaterial"
+                                    class="question-bubble"
+                                    v-html="step.quiz.title"
+                                ></div>
+                                <div v-else-if="step?.quiz?.type !== 'short_answer'" class="question-bubble" style="color:#94a3b8;">
+                                    Tidak ada soal
+                                </div>
+
+                                <!-- Component box -->
+                                <div
+                                    v-if="step"
+                                    class="component-box"
+                                    :class="{
+                                        'opts--shake': shakeActive,
+                                        'box-locked': timedOutQuizzes.has(step.quiz?.id),
+                                    }"
+                                >
+                                    <!-- Timeout overlay -->
+                                    <div v-if="timedOutQuizzes.has(step.quiz?.id)" class="timeout-overlay">
+                                        <Timer :size="28" :stroke-width="2" />
+                                        <span>Waktu Habis</span>
+                                    </div>
+
+                                    <component
+                                        v-if="step.question || step.isMaterial || step.isReflection"
+                                        :is="COMPONENT_MAP[step.quiz.type]"
+                                        :question="step.question"
+                                        :quiz="step.quiz"
+                                        :modelValue="answers[step.question?.id]"
+                                        @update-answer="updateAnswer"
+                                    />
+                                </div>
+                            </template>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ░░ MUSIC FAB (desktop) ░░ -->
+        <button
+            class="music-fab"
+            @click="toggleMusic(props.backsound ?? null)"
+            :class="{ 'music-on': musicOn }"
+            title="Musik Latar"
+        >
+            <Music2 v-if="musicOn" :size="22" :stroke-width="2.5" />
+            <VolumeX v-else :size="22" :stroke-width="2.5" />
+        </button>
+
+        <!-- ░░ FIXED FOOTER ACTION BAR ░░ -->
+        <div class="footer-bar" v-show="phase === 'quiz'">
+            <div class="footer-inner">
+                <!-- Left: Sebelumnya -->
+                <div class="footer-left">
+                    <button
+                        v-if="!isFirst"
+                        class="btn-duo btn-duo-secondary"
+                        @click="goPrev"
+                        :disabled="isSubmitting"
+                    >
+                        <ArrowLeft :size="18" :stroke-width="3" />
+                        <span>Sebelumnya</span>
+                    </button>
+                </div>
+
+                <!-- Right: Selanjutnya / Selesaikan -->
+                <div class="footer-right">
+                    <button
+                        v-if="isLast"
+                        class="btn-duo btn-duo-success"
+                        @click="openConfirm"
+                        :disabled="isSubmitting || (!canGoNext && !step?.isMaterial)"
+                    >
+                        <span v-if="!isSubmitting">Selesaikan Misi</span>
+                        <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
+                        <CheckCircle2 v-if="!isSubmitting" :size="18" :stroke-width="3" />
+                    </button>
+                    <button
+                        v-else
+                        class="btn-duo btn-duo-primary"
+                        @click="goNext"
+                        :disabled="(!canGoNext && !step?.isMaterial) || isSubmitting"
+                    >
+                        <span>Selanjutnya</span>
+                        <ArrowRight :size="18" :stroke-width="3" />
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- ══ CONFIRM SUBMIT MODAL ══ -->
         <Transition name="overlay-fade">
-            <div
-                v-if="showConfirm"
-                class="modal-overlay"
-                @click.self="closeConfirm"
-            >
+            <div v-if="showConfirm" class="modal-overlay" @click.self="closeConfirm">
                 <Transition name="modal-pop" appear>
                     <div v-if="showConfirm" class="modal">
                         <div class="modal-icon">
-                            <Trophy
-                                :size="32"
-                                color="#34D399"
-                                :stroke-width="1.5"
-                            />
+                            <Trophy :size="32" color="#58cc02" :stroke-width="1.5" />
                         </div>
                         <h2 class="modal-title">Apakah kamu yakin?</h2>
                         <p class="modal-desc">
-                            Jawaban <strong>tidak bisa diubah</strong> setelah
-                            dikirim.
+                            Jawaban <strong>tidak bisa diubah</strong> setelah dikirim.
                         </p>
                         <div class="modal-actions">
-                            <button
-                                class="modal-btn modal-btn--cancel"
-                                @click="closeConfirm"
-                                :disabled="isSubmitting"
-                            >
+                            <button class="btn-duo btn-duo-secondary" @click="closeConfirm" :disabled="isSubmitting">
                                 Batal
                             </button>
-                            <button
-                                class="modal-btn modal-btn--confirm"
-                                @click="submit"
-                                :disabled="isSubmitting"
-                            >
+                            <button class="btn-duo btn-duo-success" @click="submit" :disabled="isSubmitting">
                                 <span v-if="!isSubmitting">Ya, Kumpulkan!</span>
                                 <span v-else>Menyimpan…</span>
                             </button>
@@ -755,37 +797,22 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 
         <!-- ══ CONFIRM LEAVE MODAL ══ -->
         <Transition name="overlay-fade">
-            <div
-                v-if="showLeaveConfirm"
-                class="modal-overlay"
-                @click.self="cancelLeave"
-            >
+            <div v-if="showLeaveConfirm" class="modal-overlay" @click.self="cancelLeave">
                 <Transition name="modal-pop" appear>
                     <div v-if="showLeaveConfirm" class="modal">
                         <div class="modal-icon modal-icon--warn">
-                            <Flag
-                                :size="28"
-                                color="#F59E0B"
-                                :stroke-width="1.8"
-                            />
+                            <Flag :size="28" color="#F59E0B" :stroke-width="1.8" />
                         </div>
                         <h2 class="modal-title">Keluar dari misi?</h2>
                         <p class="modal-desc">
                             Jawaban yang sudah kamu isi
-                            <strong>tidak akan disimpan</strong> jika kamu
-                            keluar sekarang.
+                            <strong>tidak akan disimpan</strong> jika kamu keluar sekarang.
                         </p>
                         <div class="modal-actions">
-                            <button
-                                class="modal-btn modal-btn--cancel"
-                                @click="cancelLeave"
-                            >
+                            <button class="btn-duo btn-duo-secondary" @click="cancelLeave">
                                 Lanjut Ngerjain
                             </button>
-                            <button
-                                class="modal-btn modal-btn--leave"
-                                @click="confirmLeave"
-                            >
+                            <button class="btn-duo btn-duo-leave" @click="confirmLeave">
                                 Ya, Keluar
                             </button>
                         </div>
@@ -797,205 +824,356 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 </template>
 
 <style scoped>
-:root {
-    --blue: #2563eb;
-    --blue-mid: #1d4ed8;
-    --blue-deep: #1e3a8a;
-    --blue-soft: #bfdbfe;
-    --blue-pale: #eff6ff;
-    --mint: #34d399;
-    --mint-deep: #059669;
-    --mint-soft: #d1fae5;
-    --red: #ef4444;
-    --red-soft: #fee2e2;
-    --yellow: #f59e0b;
-    --yellow-soft: #fef3c7;
-    --gray-2: #e2e8f0;
-    --gray-3: #94a3b8;
-    --text: #1e293b;
-    --text-mid: #475569;
-}
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=Righteous&display=swap");
 
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-.root {
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    font-family: "Nunito", sans-serif;
+/* ─── BASE ─── */
+.app-layout {
     position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    font-family: "Nunito", "Baloo 2", sans-serif;
     overflow-x: hidden;
 }
 
-/* ─── BG ─── */
-.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
-.bg-img { position: absolute; inset: 0; background: url("/images/templates/background_misi.png") center/cover no-repeat; }
-.bg-tint { position: absolute; inset: 0; background: #90cdf4; opacity: 0.5; }
-.blob { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
-.b1 { width: 480px; height: 480px; top: -140px; left: -100px; background: #63b3ed; opacity: 0.35; animation: bDrift 20s ease-in-out infinite alternate; }
-.b2 { width: 380px; height: 380px; bottom: -100px; right: -80px; background: #90cdf4; opacity: 0.22; animation: bDrift2 24s ease-in-out infinite alternate; }
-.b3 { width: 260px; height: 260px; top: 38%; left: 52%; background: #bee3f8; opacity: 0.18; animation: bDrift 28s ease-in-out 6s infinite alternate; }
-@keyframes bDrift { 0% { transform: translate(0, 0); } 50% { transform: translate(30px, 20px) scale(1.05); } 100% { transform: translate(-15px, 35px); } }
-@keyframes bDrift2 { 0% { transform: translate(0, 0); } 50% { transform: translate(-28px, -18px) scale(1.06); } 100% { transform: translate(22px, -40px); } }
-.sh { position: absolute; pointer-events: none; }
-.sh-circle { border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.1); animation: sDrift ease-in-out infinite alternate; }
-.c1 { width: 150px; height: 150px; top: -30px; left: -25px; animation-duration: 22s; }
-.c2 { width: 90px; height: 90px; bottom: 70px; right: 50px; animation-duration: 28s; animation-delay: 4s; }
-.sh-ring { border-radius: 50%; background: transparent; border: 1.5px solid rgba(255,255,255, 0.2); animation: rPulse ease-out infinite; }
-.r1 { width: 300px; height: 300px; top: -60px; left: -60px; animation-duration: 9s; }
-.r2 { width: 240px; height: 240px; bottom: -50px; right: -50px; animation-duration: 12s; animation-delay: 2s; }
-.r3 { width: 180px; height: 180px; top: 38%; left: 58%; animation-duration: 10s; animation-delay: 5s; }
-.sh-dot { border-radius: 50%; background: rgba(255, 255, 255, 0.45); animation: dFloat linear infinite; }
-.d1 { width: 5px; height: 5px; top: 12%; left: 9%; animation-duration: 14s; }
-.d2 { width: 3px; height: 3px; top: 32%; left: 22%; animation-duration: 18s; animation-delay: 2s; }
-.d3 { width: 6px; height: 6px; top: 58%; left: 7%; animation-duration: 12s; animation-delay: 5s; }
-.d4 { width: 4px; height: 4px; top: 18%; right: 11%; animation-duration: 16s; animation-delay: 1s; }
-.d5 { width: 5px; height: 5px; top: 72%; right: 16%; animation-duration: 20s; animation-delay: 3.5s; }
-@keyframes sDrift { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -10px) rotate(6deg); } 100% { transform: translate(-10px, 18px) rotate(-4deg); } }
-@keyframes rPulse { 0% { transform: scale(1); opacity: 0.38; } 70% { transform: scale(1.38); opacity: 0.06; } 100% { transform: scale(1.65); opacity: 0; } }
-@keyframes dFloat { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 0.55; } 90% { opacity: 0.25; } 100% { transform: translateY(-150px); opacity: 0; } }
-.bg-dots { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px); background-size: 34px 34px; }
+/* ─── BG SCENE ─── */
+.bg-scene {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+.sky-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 40%, #f0fdf4 100%);
+}
+.bg-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+.bg-particles .particle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.35;
+}
+.bg-particles .p-1 { width: 500px; height: 500px; background: radial-gradient(circle, #bfdbfe, #93c5fd); top: -100px; left: -150px; animation: blobDrift1 18s ease-in-out infinite; }
+.bg-particles .p-2 { width: 400px; height: 400px; background: radial-gradient(circle, #d1fae5, #6ee7b7); top: 30%; right: -100px; animation: blobDrift2 22s ease-in-out infinite; }
+.bg-particles .p-3 { width: 300px; height: 300px; background: radial-gradient(circle, #fce7f3, #f9a8d4); bottom: 10%; left: 20%; animation: blobDrift3 16s ease-in-out infinite; }
+.bg-particles .p-4 { width: 350px; height: 350px; background: radial-gradient(circle, #ede9fe, #c4b5fd); top: 50%; left: 40%; animation: blobDrift1 20s ease-in-out infinite reverse; }
+.bg-particles .p-5 { width: 250px; height: 250px; background: radial-gradient(circle, #fef3c7, #fde68a); bottom: 20%; right: 20%; animation: blobDrift2 14s ease-in-out infinite reverse; }
 
-/* ─── TOP NAV (Minimal) ─── */
-.topbar {
-    position: relative;
+@keyframes blobDrift1 { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-40px) scale(1.05); } 66% { transform: translate(-20px,20px) scale(0.95); } }
+@keyframes blobDrift2 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-35px,25px) scale(1.08); } }
+@keyframes blobDrift3 { 0%, 100% { transform: translate(0,0) scale(1); } 40% { transform: translate(20px,-30px) scale(0.92); } 80% { transform: translate(-10px,15px) scale(1.04); } }
+
+.edu-particles { position: absolute; inset: 0; overflow: hidden; }
+.edu-p { position: absolute; width: 28px; height: 28px; opacity: 0.18; transform-origin: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06)); }
+.ep-1, .ep-4, .ep-7 { animation: eduFloat1 15s ease-in-out infinite; }
+.ep-2, .ep-5, .ep-8 { animation: eduFloat2 19s ease-in-out infinite; }
+.ep-3, .ep-6 { animation: eduFloat3 23s ease-in-out infinite; }
+.ep-1 { animation-delay: 0s; } .ep-2 { animation-delay: -3s; } .ep-3 { animation-delay: -6s; }
+.ep-4 { animation-delay: -9s; } .ep-5 { animation-delay: -12s; } .ep-6 { animation-delay: -2s; }
+.ep-7 { animation-delay: -5s; } .ep-8 { animation-delay: -8s; }
+
+@keyframes eduFloat1 { 0% { transform: translate(0,0) rotate(0deg) scale(1); } 25% { transform: translate(12px,-20px) rotate(45deg) scale(1.1); } 50% { transform: translate(18px,-8px) rotate(90deg) scale(0.95); } 75% { transform: translate(5px,-25px) rotate(135deg) scale(1.05); } 100% { transform: translate(0,0) rotate(180deg) scale(1); } }
+@keyframes eduFloat2 { 0% { transform: translate(0,0) rotate(0deg); } 33% { transform: translate(-16px,-18px) rotate(-60deg); } 66% { transform: translate(10px,-30px) rotate(30deg); } 100% { transform: translate(0,0) rotate(0deg); } }
+@keyframes eduFloat3 { 0% { transform: translate(0,0) scale(1) rotate(0deg); } 50% { transform: translate(22px,-12px) scale(1.12) rotate(90deg); } 100% { transform: translate(0,0) scale(1) rotate(0deg); } }
+
+/* ─── TOP NAV ─── */
+.top-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
     z-index: 50;
-    height: 56px;
-    flex-shrink: 0;
+    height: 70px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1.5px solid rgba(203,213,225,0.35);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
     display: flex;
     align-items: center;
-    padding: 0 18px;
-    justify-content: center; /* Center the progress bar */
 }
-.prog-wrapper {
+.nav-inner {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    min-width: 150px;
-    background: rgba(255, 255, 255, 0.3);
-    padding: 6px 12px;
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
+    justify-content: space-between;
+    gap: 16px;
+    height: 100%;
 }
-.prog-text {
-    font-size: 11px;
+.nav-left { display: flex; align-items: center; flex-shrink: 0; }
+.nav-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 560px;
+    overflow: hidden;
+}
+.nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* ─── MISSION NAME (shown on celebration) ─── */
+.nav-mission-name {
+    font-family: "Baloo 2", cursive;
+    font-size: 16px;
     font-weight: 800;
-    color: #1e3a8a;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #3c3c3c;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    letter-spacing: 0.3px;
 }
+
+/* ─── NAV SWAP TRANSITION ─── */
+.nav-swap-enter-active {
+    transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-swap-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.nav-swap-enter-from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+}
+.nav-swap-leave-to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+}
+
+/* ─── PROGRESS BAR ─── */
+.prog-wrapper { width: 100%; }
 .prog-track {
     width: 100%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.4);
+    height: 18px;
+    background: rgba(229,229,229,0.7);
     border-radius: 99px;
-    overflow: hidden;
+    position: relative;
+    overflow: visible;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
 }
 .prog-fill {
     height: 100%;
-    background: #3b82f6;
+    background: linear-gradient(90deg, #1cb0f6, #0ea5e9, #38bdf8);
     border-radius: 99px;
+    transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
     position: relative;
-    transition: width 0.5s ease;
+    min-width: 18px;
+    box-shadow: 0 2px 8px rgba(28,176,246,0.4);
 }
 .prog-shine {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: shine 2.2s infinite;
+    top: 3px; left: 8px; right: 8px;
+    height: 5px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 99px;
 }
-@keyframes shine { 0%, 100% { transform: translateX(-100%); } 60% { transform: translateX(200%); } }
-
-.timer {
+.prog-tip {
     position: absolute;
-    right: 20px; /* Instead of center */
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px; height: 22px;
+    background: #1cb0f6;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(28,176,246,0.5);
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    background: rgba(255,255,255,0.8);
-    padding: 6px 12px;
-    border-radius: 20px;
-    color: #ef4444;
+    justify-content: center;
+    animation: tipPulse 1.5s ease-in-out infinite;
 }
-.timer-row {
+@keyframes tipPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(28,176,246,0.4); } 50% { box-shadow: 0 0 0 6px rgba(28,176,246,0); } }
+
+/* ─── MUSIC NAV BUTTON (mobile only) ─── */
+.music-nav-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 3px solid #cbd5e1;
+    background: rgba(255,255,255,0.9);
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.music-nav-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+.music-nav-btn.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+
+/* ─── TIMER ─── */
+.timer-badge {
     display: flex;
     align-items: center;
     gap: 6px;
-}
-.timer-val {
+    background: rgba(255,255,255,0.85);
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    color: #ff9600;
+    padding: 6px 12px;
+    border-radius: 12px;
     font-family: "Righteous", cursive;
-    font-size: 16px;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    flex-shrink: 0;
+}
+.timer-icon-wrap { display: flex; align-items: center; animation: timerTick 1s ease-in-out infinite; }
+@keyframes timerTick { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+.timer-warning {
+    border-color: #ff4b4b !important;
+    border-bottom-color: #ea2b2b !important;
+    color: #ff4b4b !important;
+    background: rgba(255,75,75,0.08) !important;
+    animation: pulseWarn 0.8s ease infinite !important;
+}
+.timer-out { border-color: #94a3b8 !important; color: #94a3b8 !important; }
+@keyframes pulseWarn { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+/* ─── MAIN SCROLL ─── */
+.main-scroll {
+    position: relative;
+    z-index: 10;
+    padding-top: 70px;
+    min-height: 100vh;
 }
 
-/* ─── MAIN CENTRIC CONTENT ─── */
+/* ─── MAIN WRAPPER ─── */
 .main-wrapper {
     position: relative;
     z-index: 10;
     flex: 1;
     display: flex;
-    align-items: flex-start; /* start instead of center to allow scrolling if tall */
     justify-content: center;
-    padding: 10px 20px 140px; /* padding bottom for mascot & buttons */
+    padding: 20px 24px 130px;
     opacity: 0;
     transition: opacity 0.45s;
-    overflow-y: auto;
-    overflow-x: hidden;
 }
 .main--on { opacity: 1; }
 
-.mission-container {
+/* ─── TWO COLUMN GRID ─── */
+.pretest-layout-cols {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 40px;
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
+    margin: 30px auto 0;
+    align-items: flex-start;
+}
+
+/* ─── MASCOT COLUMN ─── */
+.mascot-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px;
+    position: sticky;
+    top: 100px;
+    z-index: 20;
 }
+.mascot-bubble-wrap {
+    position: relative;
+    margin-bottom: 22px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05));
+    width: 100%;
+    animation: floatBubble 4s ease-in-out infinite;
+}
+.mascot-speech-bubble {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 20px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #3c3c3c;
+    line-height: 1.45;
+    word-break: break-word;
+}
+.bubble-arrow {
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 16px; height: 16px;
+    background-color: #ffffff;
+    border-right: 2px solid #e5e5e5;
+    border-bottom: 2px solid #e5e5e5;
+    z-index: 1;
+}
+@keyframes floatBubble { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+.mascot-image-container {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+}
+.mascot-avatar-img {
+    height: 290px;
+    width: auto;
+    object-fit: contain;
+    animation: mascotIdle 4s ease-in-out infinite;
+    filter: drop-shadow(0 8px 20px rgba(28,176,246,0.15));
+    transform-origin: bottom center;
+}
+.mascot-avatar-shadow {
+    width: 130px; height: 10px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.12) 0%, transparent 80%);
+    border-radius: 50%;
+    margin-top: 6px;
+    animation: shadowScale 4s ease-in-out infinite;
+}
+@keyframes mascotIdle { 0%, 100% { transform: translateY(0) scale(1) rotate(0deg); } 30% { transform: translateY(-10px) scaleX(1.04) scaleY(0.96) rotate(-2deg); } 65% { transform: translateY(-4px) scaleX(0.97) scaleY(1.03) rotate(2deg); } }
+@keyframes shadowScale { 0%, 100% { transform: scale(1); opacity: 0.9; } 30% { transform: scale(0.8); opacity: 0.4; } 65% { transform: scale(0.95); opacity: 0.7; } }
+
+/* ─── BUBBLE TRANSITIONS ─── */
+.bbl-enter-active { transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.bbl-leave-active { transition: opacity 0.2s; }
+.bbl-enter-from { opacity: 0; transform: translateY(10px) scale(0.9); }
+.bbl-leave-to { opacity: 0; }
+
+/* ─── QUIZ CONTENT COLUMN ─── */
+.quiz-content-column { min-width: 0; flex: 1; }
+.mission-container { width: 100%; display: flex; flex-direction: column; }
 
 .title-pill {
-    background: #1e62d0;
-    color: #fff;
     font-family: "Nunito", sans-serif;
-    font-weight: 900;
-    font-size: 18px;
-    padding: 8px 32px;
-    border-radius: 30px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #1cb0f6;
     text-transform: uppercase;
-    box-shadow: 0 4px 15px rgba(30, 98, 208, 0.4);
-    margin-bottom: -16px; /* overlap with bubble */
-    z-index: 2;
-    border: 3px solid #6cb2f9;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    text-align: left;
 }
 
 .question-bubble {
-    background: #a3d9f9;
-    color: #fff;
-    font-family: "Nunito", sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    padding: 24px 40px 16px;
-    border-radius: 30px;
-    text-align: center;
+    font-family: "Baloo 2", cursive;
+    font-weight: 800;
+    font-size: 26px;
+    color: #3c3c3c;
+    padding: 0;
+    text-align: left;
     width: 100%;
-    max-width: 700px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 15px rgba(163, 217, 249, 0.4);
+    margin-bottom: 28px;
+    line-height: 1.35;
 }
 
 .component-box {
     width: 100%;
-    background: #fff;
-    border-radius: 24px;
-    padding: 24px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
     position: relative;
-    overflow: hidden;
 }
 .box-locked {
     filter: grayscale(0.4);
@@ -1006,163 +1184,137 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
     position: absolute;
     inset: 0;
     z-index: 20;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.85);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #ef4444;
     font-family: "Righteous", cursive;
-    font-size: 24px;
+    font-size: 20px;
+    gap: 8px;
+    border-radius: 16px;
 }
 
-.empty-qs {
-    color: #fff;
-    font-size: 14px;
-}
-
-/* ─── ABSOLUTE ELEMENTS ─── */
-.mascot-absolute {
+/* ─── MUSIC FAB (desktop only) ─── */
+.music-fab {
     position: fixed;
-    bottom: 20px;
-    left: 40px;
-    z-index: 60;
-    display: flex;
-    align-items: flex-end;
+    bottom: 24px; left: 24px;
+    z-index: 100;
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
     cursor: pointer;
-}
-.mascot-img {
-    height: 200px;
-    width: auto;
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
-    animation: mBob 3.5s ease-in-out infinite;
-    transform-origin: bottom center;
-}
-@keyframes mBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-8px) rotate(1deg); } }
-
-.mascot-speech {
-    position: absolute;
-    bottom: 50%;
-    left: 85%;
-    margin-bottom: -10px;
-    background: #fff;
-    border: 4px solid #fff;
-    border-radius: 24px;
-    padding: 12px 20px;
-    min-width: 140px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    animation: bblFloat 3.5s ease-in-out infinite;
-    z-index: 61;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #afafaf;
+    transition: all 0.15s ease;
 }
-.mascot-speech span {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e3a8a;
-    text-align: center;
-}
-.bbl-arrow-out, .bbl-arrow-in {
-    position: absolute;
-    width: 0;
-    height: 0;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.bbl-arrow-out { border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 14px solid rgba(0,0,0,0.05); left: -14px; }
-.bbl-arrow-in { border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #fff; left: -12px; }
+.music-fab:hover { background: #f7f7f7; transform: translateY(-2px); border-bottom-width: 5px; }
+.music-fab:active { transform: translateY(2px); border-bottom-width: 2px; }
+.music-fab.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
 
-@keyframes bblFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.bbl-enter-active { transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.bbl-leave-active { transition: opacity 0.2s; }
-.bbl-enter-from { opacity: 0; transform: translateY(10px) scale(0.9); }
-.bbl-leave-to { opacity: 0; }
-
-.action-btn-absolute {
+/* ─── FIXED FOOTER BAR ─── */
+.footer-bar {
     position: fixed;
-    bottom: 50px;
-    right: 40px;
+    bottom: 0; left: 0; right: 0;
+    height: 94px;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1.5px solid rgba(255,255,255,0.2);
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: center;
     z-index: 60;
 }
-.pill-btn {
+.footer-inner {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.footer-left, .footer-right { display: flex; align-items: center; }
+
+/* ─── DUOLINGO FLAT 3D BUTTONS ─── */
+.btn-duo {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    background: #1e62d0;
-    color: #fff;
-    font-family: "Nunito", sans-serif;
-    font-size: 18px;
-    font-weight: 900;
-    padding: 12px 32px;
-    border-radius: 99px;
-    border: 3px solid #6cb2f9;
-    cursor: pointer;
-    box-shadow: 0 8px 25px rgba(30, 98, 208, 0.4);
-    transition: all 0.2s;
-}
-.pill-btn:hover:not(:disabled) {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(30, 98, 208, 0.5);
-}
-.pill-btn:disabled {
-    background: #94a3b8;
-    border-color: #cbd5e1;
-    box-shadow: none;
-    cursor: not-allowed;
-    opacity: 0.8;
-}
-.pill-btn-finish {
-    background: #059669;
-    border-color: #6ee7b7;
-    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
-}
-.pill-btn-finish:hover:not(:disabled) {
-    box-shadow: 0 12px 30px rgba(5, 150, 105, 0.5);
-}
-.opts--shake { animation: optShake 0.5s ease; }
-@keyframes optShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
-.spin { animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.utils-absolute {
-    position: fixed;
-    bottom: 12px;
-    right: 40px;
-    z-index: 60;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.util-btn {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.4);
-    color: #1e3a8a;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.util-btn:hover { background: rgba(255,255,255,0.8); }
-.util-btn-back {
-    width: auto;
-    border-radius: 12px;
-    padding: 0 12px;
+    gap: 10px;
+    padding: 13px 26px;
+    border-radius: 16px;
+    font-family: "Nunito", "Baloo 2", sans-serif;
+    font-size: 15px;
     font-weight: 800;
-    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s, border-bottom-width 0.1s;
+    user-select: none;
+    outline: none;
+}
+.btn-duo-primary {
+    background-color: #1cb0f6;
+    border: 2px solid #1cb0f6;
+    border-bottom: 5px solid #1899d6;
+    color: #ffffff;
+}
+.btn-duo-primary:hover:not(:disabled) { filter: brightness(1.04); }
+.btn-duo-primary:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+
+.btn-duo-success {
+    background-color: #58cc02;
+    border: 2px solid #58cc02;
+    border-bottom: 5px solid #58a700;
+    color: #ffffff;
+}
+.btn-duo-success:hover:not(:disabled) { filter: brightness(1.04); }
+.btn-duo-success:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+
+.btn-duo-secondary {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-bottom: 5px solid #cbd5e1;
+    color: #afafaf;
+}
+.btn-duo-secondary:hover:not(:disabled) { background-color: #f7f7f7; color: #777777; }
+.btn-duo-secondary:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+
+.btn-duo-leave {
+    background-color: #ff4b4b;
+    border: 2px solid #ff4b4b;
+    border-bottom: 5px solid #ea2b2b;
+    color: #ffffff;
+}
+.btn-duo-leave:hover:not(:disabled) { filter: brightness(1.04); }
+.btn-duo-leave:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+
+.btn-duo:disabled {
+    background-color: #e5e5e5 !important;
+    border-color: #e5e5e5 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    color: #afafaf !important;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
-/* ── MODALS ── */
+.btn-back { padding: 10px 18px; font-size: 13px; }
+
+/* ─── MODALS ─── */
 .modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 200;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1170,51 +1322,301 @@ const typeIcon = (t) => TYPE_ICON_MAP[t] || LayoutGrid;
 }
 .modal {
     background: #fff;
-    border-radius: 22px;
-    padding: 28px 24px 22px;
+    border-radius: 24px;
+    padding: 32px 28px 24px;
     width: 100%;
-    max-width: 360px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+    max-width: 380px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     text-align: center;
 }
-.modal-icon { width: 68px; height: 68px; border-radius: 50%; background: #d1fae5; border: 2.5px solid #6ee7b7; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 18px rgba(52,211,153,0.22); }
+.modal-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #d1fae5;
+    border: 3px solid #6ee7b7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 18px rgba(52,211,153,0.22);
+}
 .modal-icon--warn { background: #fef3c7; border-color: #fcd34d; }
-.modal-title { font-family: "Righteous", cursive; font-size: 20px; color: #1e3a8a; margin: 0; }
-.modal-desc { font-size: 13px; font-weight: 600; color: #475569; line-height: 1.65; margin: 0; }
-.modal-desc strong { color: #dc2626; }
-.modal-actions { display: flex; gap: 9px; width: 100%; margin-top: 4px; }
-.modal-btn { flex: 1; height: 42px; border: none; border-radius: 12px; font-family: "Righteous", cursive; font-size: 13.5px; cursor: pointer; transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.modal-btn--cancel { background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
-.modal-btn--cancel:hover { background: #e2e8f0; transform: translateY(-1px); }
-.modal-btn--confirm { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
-.modal-btn--confirm:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,185,129,0.45); }
-.modal-btn--leave { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,0.3); }
-.modal-btn--leave:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(220,38,38,0.4); }
+.modal-title {
+    font-family: "Baloo 2", cursive;
+    font-size: 22px;
+    font-weight: 800;
+    color: #3c3c3c;
+    margin: 0;
+}
+.modal-desc {
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #777777;
+    line-height: 1.65;
+    margin: 0;
+}
+.modal-desc strong { color: #ff4b4b; }
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 6px;
+    justify-content: center;
+}
+.modal-actions .btn-duo { flex: 1; padding: 12px 16px; font-size: 13px; }
+
+/* ─── SHAKE ─── */
+.opts--shake { animation: optShake 0.5s ease; }
+@keyframes optShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── TRANSITIONS ─── */
+.slide-fade-enter-active { transition: all 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+.slide-fade-leave-active { transition: all 0.28s cubic-bezier(0.4,0,1,1); }
+.slide-fade-enter-from { opacity: 0; transform: translateY(12px) scale(0.94); }
+.slide-fade-leave-to { opacity: 0; transform: translateY(-10px) scale(0.94); }
 
 .overlay-fade-enter-active { transition: opacity 0.25s ease; }
 .overlay-fade-leave-active { transition: opacity 0.2s ease; }
 .overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
-.modal-pop-enter-active { transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-pop-enter-active { transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1); }
 .modal-pop-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .modal-pop-enter-from { opacity: 0; transform: scale(0.82) translateY(24px); }
 .modal-pop-leave-to { opacity: 0; transform: scale(0.94); }
 
-/* MOBILE RESPONSIVE */
-@media (max-width: 820px) {
-    .main-wrapper { padding: 0 12px 100px; }
-    .title-pill { font-size: 14px; padding: 6px 20px; }
-    .question-bubble { font-size: 14px; padding: 20px 20px 12px; }
-    .component-box { padding: 16px; border-radius: 16px; }
-    .mascot-img { height: 120px; }
-    .mascot-speech { padding: 10px 16px; min-width: 120px; margin-bottom: -5px; }
-    .mascot-speech span { font-size: 13px; }
-    .mascot-absolute { bottom: 10px; left: 10px; }
-    .action-btn-absolute { bottom: 40px; right: 20px; }
-    .pill-btn { padding: 8px 20px; font-size: 14px; }
-    .utils-absolute { bottom: 10px; right: 20px; }
+/* ─── DEEP OVERRIDES ─── */
+:deep(.tf-option) {
+    border: 2px solid #e5e5e5 !important;
+    border-bottom: 5px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 56px !important;
+}
+:deep(.tf-option:hover:not(.selected)) { background-color: #f7f7f7 !important; }
+:deep(.tf-option.selected) { background-color: #ddf4ff !important; border-color: #1cb0f6 !important; border-bottom-color: #1899d6 !important; }
+:deep(.tf-option.selected .tf-label) { color: #1cb0f6 !important; }
+:deep(.tf-options) { gap: 16px !important; }
+:deep(.tf-inner) { padding: 14px 20px !important; width: 100% !important; justify-content: space-between !important; }
+:deep(.tf-label) { text-align: left !important; font-family: "Nunito", sans-serif !important; font-weight: 800 !important; color: #3c3c3c !important; font-size: 16px !important; }
+:deep(.drag-item), :deep(.dd-item) { border: 2px solid #e5e5e5 !important; border-bottom: 4px solid #cbd5e1 !important; border-radius: 12px !important; background-color: #ffffff !important; font-family: "Nunito", sans-serif !important; font-weight: 800 !important; color: #3c3c3c !important; padding: 10px 16px !important; }
+:deep(.sa-input), :deep(.short-answer-input), :deep(textarea) { border: 2px solid #e5e5e5 !important; border-radius: 16px !important; padding: 14px 18px !important; font-family: "Nunito", sans-serif !important; font-weight: 700 !important; font-size: 16px !important; color: #3c3c3c !important; outline: none !important; transition: border-color 0.2s !important; box-shadow: none !important; width: 100% !important; }
+:deep(.sa-input:focus), :deep(.short-answer-input:focus), :deep(textarea:focus) { border-color: #1cb0f6 !important; }
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .nav-inner { padding: 0 12px; gap: 8px; }
+    .timer-badge { font-size: 13px; padding: 5px 8px; gap: 4px; }
+    .timer-badge .timer-icon-wrap svg { width: 13px; height: 13px; }
+    .music-fab { display: none; }
+    .music-nav-btn { display: flex; }
+    .prog-track { height: 14px; }
+    .prog-tip { width: 18px; height: 18px; }
+    .main-wrapper { padding: 10px 16px 110px; }
+    .pretest-layout-cols { grid-template-columns: 1fr; gap: 0; margin: 15px auto 0; }
+    .mascot-column { display: none !important; }
+    .question-bubble { font-size: 20px; margin-bottom: 20px; }
+    .title-pill { font-size: 12px; margin-bottom: 6px; }
+    .footer-bar { height: 80px; }
+    .footer-inner { padding: 0 16px; }
+    .btn-duo { padding: 10px 20px; font-size: 13px; border-radius: 12px; border-bottom-width: 4px; }
+    .btn-duo-primary:active:not(:disabled),
+    .btn-duo-success:active:not(:disabled),
+    .btn-duo-secondary:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
+    .btn-back { padding: 8px 12px; font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+    .nav-inner { gap: 6px; }
+    .timer-badge { font-size: 12px; padding: 4px 7px; }
+    /* Icon-only minimalist buttons on mobile */
+    .btn-duo span:not(.desktop-only) { display: none; }
+    .btn-duo {
+        padding: 12px;
+        border-radius: 50%;
+        min-width: 48px;
+        width: 48px;
+        height: 48px;
+        gap: 0;
+    }
+    .footer-bar { height: 76px; }
+}
+
+/* ─── CELEBRATION (same style as Pretest) ─── */
+.celeb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 20px;
+    overflow-y: auto;
+    gap: 0;
+    animation: celebFadeIn 0.5s ease both;
+}
+
+@keyframes celebFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.celeb-mascot-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: celebPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+@keyframes celebPop {
+    from { opacity: 0; transform: scale(0.8) translateY(16px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.celeb-bubble-wrap {
+    position: relative;
+    width: 260px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05));
+    animation: floatBubble 4s ease-in-out infinite;
+}
+
+@keyframes floatBubble {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+}
+
+/* Speech bubble appearance */
+.celeb-bubble-wrap .mascot-speech-bubble {
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 20px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #3c3c3c;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.celeb-bubble-wrap .bubble-arrow {
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    border-right: 2px solid #e5e5e5;
+    border-bottom: 2px solid #e5e5e5;
+    z-index: 1;
+}
+
+.celeb-mascot-img {
+    height: 180px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 16px rgba(28,176,246,0.15));
+}
+
+.celeb-label {
+    font-family: "Baloo 2", cursive;
+    font-size: 32px;
+    font-weight: 800;
+    color: #3c3c3c;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    animation: slideUp 0.5s ease 0.3s both;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.celeb-sub {
+    font-size: 15px;
+    color: #777777;
+    font-weight: 700;
+    margin-bottom: 20px;
+    animation: slideUp 0.5s ease 0.4s both;
+}
+
+.celeb-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: slideUp 0.5s ease 0.5s both;
+}
+
+.celeb-actions .btn-duo {
+    min-width: 160px;
+}
+
+.celeb-fade-enter-active {
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.celeb-fade-enter-from {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* ─── CELEBRATION MOBILE ─── */
+@media (max-width: 768px) {
+    .celeb-overlay {
+        padding: 16px 16px;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .celeb-mascot-img {
+        height: 130px;
+    }
+
+    .celeb-bubble-wrap {
+        width: 220px;
+        margin-bottom: 10px;
+    }
+
+    .mascot-speech-bubble {
+        font-size: 13px;
+        padding: 12px 14px;
+    }
+
+    .celeb-label {
+        font-size: 24px;
+        margin-top: 10px;
+        margin-bottom: 4px;
+    }
+
+    .celeb-sub {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .celeb-actions {
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .celeb-actions .btn-duo {
+        min-width: 0;
+        width: 100%;
+        max-width: 280px;
+    }
 }
 </style>

@@ -171,39 +171,30 @@ function startQuiz() {
 
 function submitQuiz() {
     if (submitting.value) return;
+    submitting.value = true;
     clearInterval(timerInt);
     ssDel(SS_KEY);
+    phase.value = "celebration"; // tampilkan celebration dulu
 
-    const total =
-        questions.value.filter((q) => q.quiz_type !== "material").length ||
-        questions.value.length;
-    const correct = questions.value.filter((q) => isQuestionAnswered(q)).length;
-    celebScore.value = total > 0 ? Math.round((correct / total) * 100) : 0;
-    phase.value = "celebration";
-}
-
-function goToMissions() {
-    submitting.value = true;
-    const payload = {
-        quiz_id: props.quiz?.id,
-        module_id: props.module?.id,
-        time_taken: timeLimit.value - remaining.value,
-        answers: Object.entries(answers.value).map(([question_id, value]) => ({
-            question_id,
-            value,
-        })),
-    };
-    router.post(route("playground.pretest.submit"), payload, {
-        preserveState: false,
-        onError: () => {
-            submitting.value = false;
-            phase.value = "quiz";
-        },
-    });
-}
-
-function goBackToDashboard() {
-    router.visit(route("playground.index"));
+    // Tunggu 2.5 detik baru kirim ke server
+    setTimeout(() => {
+        const payload = {
+            quiz_id: props.quiz?.id,
+            module_id: props.module?.id,
+            time_taken: timeLimit.value - remaining.value,
+            answers: Object.entries(answers.value).map(([question_id, value]) => ({
+                question_id,
+                value,
+            })),
+        };
+        router.post(route("playground.pretest.submit"), payload, {
+            preserveState: false,
+            onError: () => {
+                submitting.value = false;
+                phase.value = "quiz";
+            },
+        });
+    }, 2500);
 }
 
 function goBack() {
@@ -531,18 +522,14 @@ onUnmounted(() => {
                             </div>
                         </template>
 
-                        <!-- ══ PHASE: CELEBRATION ══ -->
+                        <!-- ══ PHASE: CELEBRATION (loading while submitting) ══ -->
                         <template v-else-if="phase === 'celebration'">
                             <div class="celeb-overlay">
                                 <div class="celeb-mascot-container">
                                     <Transition name="bbl">
                                         <div class="mascot-bubble-wrap">
                                             <div class="mascot-speech-bubble">
-                                                <span
-                                                    >Luar biasa! Kamu telah
-                                                    menyelesaikan pretest dengan
-                                                    sangat baik!</span
-                                                >
+                                                <span>Luar biasa! Kamu telah menyelesaikan pretest dengan sangat baik!</span>
                                             </div>
                                             <div class="bubble-arrow"></div>
                                         </div>
@@ -558,57 +545,13 @@ onUnmounted(() => {
                                     </div>
                                 </div>
 
-                                <div
-                                    class="celeb-label"
-                                    style="margin-top: 20px"
-                                >
+                                <div class="celeb-label" style="margin-top: 20px">
                                     Pretest Selesai!
                                 </div>
-                                <div class="celeb-sub">
-                                    Apa yang ingin kamu lakukan selanjutnya?
-                                </div>
+                                <div class="celeb-sub">Menuju halaman misi...</div>
 
-                                <div
-                                    class="celeb-actions"
-                                    style="
-                                        margin-top: 32px;
-                                        display: flex;
-                                        gap: 16px;
-                                        justify-content: center;
-                                        flex-wrap: wrap;
-                                    "
-                                >
-                                    <button
-                                        class="btn-duo btn-duo-secondary"
-                                        @click="goBackToDashboard"
-                                        :disabled="submitting"
-                                        style="min-width: 180px"
-                                    >
-                                        <Home :size="18" :stroke-width="3" />
-                                        <span>Ke Beranda</span>
-                                    </button>
-                                    <button
-                                        class="btn-duo btn-duo-success"
-                                        @click="goToMissions"
-                                        :disabled="submitting"
-                                        style="min-width: 180px"
-                                    >
-                                        <span v-if="!submitting"
-                                            >Lanjut ke Misi</span
-                                        >
-                                        <span v-else>Mengirim...</span>
-                                        <Rocket
-                                            v-if="!submitting"
-                                            :size="18"
-                                            :stroke-width="3"
-                                        />
-                                        <Loader2
-                                            v-else
-                                            :size="18"
-                                            class="spin"
-                                            :stroke-width="3"
-                                        />
-                                    </button>
+                                <div class="celeb-loader">
+                                    <div class="celeb-loader-bar"></div>
                                 </div>
                             </div>
                         </template>
@@ -1261,7 +1204,7 @@ onUnmounted(() => {
     }
 }
 
-/* ─── CELEBRATION Redesain ─── */
+/* ─── CELEBRATION ─── */
 .celeb-overlay {
     position: fixed;
     inset: 0;
@@ -1274,68 +1217,20 @@ onUnmounted(() => {
     text-align: center;
     animation: celebFadeIn 0.5s ease both;
 }
-
-.celeb-confetti {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.celeb-ring-wrap {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    margin-bottom: 24px;
+.celeb-mascot-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 80px;
     animation: celebPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
 }
-
-.celeb-ring-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
+.mascot-bubble-wrap {
+    margin-bottom: 20px;
+    width: 280px;
 }
-
-.celeb-track {
-    fill: none;
-    stroke: #f1f5f9;
-    stroke-width: 12;
+.mascot-image-container img {
+    max-height: 250px;
 }
-
-.celeb-prog {
-    fill: none;
-    stroke-width: 12;
-    stroke-linecap: round;
-    stroke-dasharray: 364;
-    transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
-    stroke: #58cc02;
-}
-
-.celeb-ring-inner {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-}
-
-.celeb-score {
-    font-family: "Baloo 2", cursive;
-    font-size: 52px;
-    font-weight: 800;
-    color: #58cc02;
-    line-height: 1;
-}
-
-.celeb-pct {
-    font-size: 22px;
-    font-weight: 900;
-    color: #94a3b8;
-    align-self: flex-end;
-    margin-bottom: 10px;
-}
-
 .celeb-label {
     font-family: "Baloo 2", cursive;
     font-size: 36px;
@@ -1344,7 +1239,6 @@ onUnmounted(() => {
     margin-bottom: 8px;
     animation: slideUp 0.5s ease 0.4s both;
 }
-
 .celeb-sub {
     font-size: 16px;
     color: #777777;
@@ -1352,7 +1246,6 @@ onUnmounted(() => {
     margin-bottom: 28px;
     animation: slideUp 0.5s ease 0.5s both;
 }
-
 .celeb-loader {
     width: 220px;
     height: 8px;
@@ -1361,12 +1254,27 @@ onUnmounted(() => {
     overflow: hidden;
     animation: slideUp 0.5s ease 0.6s both;
 }
-
 .celeb-loader-bar {
     height: 100%;
     background-color: #1cb0f6;
     width: 0%;
-    animation: celebLoad 3s linear forwards;
+    animation: celebLoad 3s linear 2.5s forwards;
+}
+@keyframes celebLoad {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+@keyframes celebFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes celebPop {
+    from { opacity: 0; transform: scale(0.8) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── MOBILE RESPONSIVE ─── */
@@ -1451,25 +1359,51 @@ onUnmounted(() => {
         font-size: 18px;
         margin-bottom: 20px;
     }
-}
 
-/* Tambahkan atau perbarui CSS berikut */
-.celeb-mascot-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 80px; /* Memberi jarak dari navbar (turun ke bawah) */
-    animation: celebPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
-}
+    /* Celebration mobile */
+    .celeb-overlay {
+        padding: 16px 16px;
+        justify-content: center;
+        gap: 0;
+    }
 
-.mascot-bubble-wrap {
-    margin-bottom: 20px;
-    width: 280px; /* Batasi lebar agar tidak terlalu lebar */
-}
+    .celeb-mascot-img {
+        height: 130px;
+    }
 
-/* Memastikan maskot tidak terlalu besar di layar */
-.mascot-image-container img {
-    max-height: 250px;
+    .celeb-bubble-wrap {
+        width: 220px;
+        margin-bottom: 10px;
+    }
+
+    .mascot-speech-bubble {
+        font-size: 13px;
+        padding: 12px 14px;
+    }
+
+    .celeb-label {
+        font-size: 24px;
+        margin-top: 10px;
+        margin-bottom: 4px;
+    }
+
+    .celeb-sub {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .celeb-actions {
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .celeb-actions .btn-duo {
+        min-width: 0;
+        width: 100%;
+        max-width: 280px;
+    }
 }
 
 /* ── Mobile ── */
@@ -1489,5 +1423,20 @@ onUnmounted(() => {
     .opt-body {
         padding: 9px 9px 9px 10px;
     }
+}
+
+/* ── Icon-only minimalist footer buttons on small mobile ── */
+@media (max-width: 480px) {
+    .btn-duo span { display: none; }
+    .btn-duo {
+        padding: 12px;
+        border-radius: 50%;
+        min-width: 48px;
+        width: 48px;
+        height: 48px;
+        gap: 0;
+    }
+    .footer-bar { height: 76px; }
+    .footer-inner { padding: 0 20px; }
 }
 </style>

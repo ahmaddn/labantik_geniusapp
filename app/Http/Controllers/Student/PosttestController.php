@@ -213,39 +213,80 @@ class PosttestController extends Controller
             return redirect()->route('playground.login');
         }
 
-        // Skor Pretest
-        $pretestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'pretest')->first();
-        $pretestScore = $pretestQuiz ? Quiz_attempts::where('quiz_id', $pretestQuiz->id)
-            ->where('student_id', $player['id'])->value('score') : 0;
-        
-        // Skor Misi (Rata-rata)
-        $missionQuizzes = Quizzes::where('module_id', $module->id)->where('category', 'mission')->pluck('id');
-        $missionScore = 0;
-        if($missionQuizzes->count() > 0) {
-            $missionScore = Quiz_attempts::whereIn('quiz_id', $missionQuizzes)
-                ->where('student_id', $player['id'])
-                ->avg('score') ?? 0;
-            $missionScore = round($missionScore);
+        $studentId = $player['id'] ?? null;
+
+        // ── Helper: hitung correct/incorrect/total dari satu quiz ──────────
+        $calcQuizStats = function (Quizzes $quiz) use ($studentId): array {
+            $attempt = Quiz_attempts::where('quiz_id', $quiz->id)
+                ->where('student_id', $studentId)
+                ->latest()->first();
+
+            if (! $attempt) {
+                return ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
+            }
+
+            $quiz->loadMissing(['questions.options', 'questions.dragDropGroups.items']);
+            $answersByQuestion = $attempt->answers()->get()->keyBy('question_id');
+
+            $correct = 0;
+            $total   = 0;
+            foreach ($quiz->questions as $question) {
+                $answer = $answersByQuestion->get($question->id);
+                if (! $answer) continue;
+                $total++;
+                [$isCorrect] = $this->checkAnswer($answer, $question);
+                if ($isCorrect) $correct++;
+            }
+
+            return [
+                'correct'   => $correct,
+                'incorrect' => $total - $correct,
+                'total'     => $total,
+                'score'     => $total > 0 ? (int) round(($correct / $total) * 100) : 0,
+            ];
+        };
+
+        // ── Pretest ────────────────────────────────────────────────────────
+        $pretestQuiz  = Quizzes::where('module_id', $module->id)->where('category', 'pretest')->first();
+        $pretestStats = $pretestQuiz ? $calcQuizStats($pretestQuiz) : ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
+
+        // ── Misi (gabungan semua quiz category=mission di modul ini) ───────
+        $missionQuizzes = Quizzes::where('module_id', $module->id)->where('category', 'mission')->get();
+        $missionStats   = ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
+        foreach ($missionQuizzes as $mQuiz) {
+            $s = $calcQuizStats($mQuiz);
+            $missionStats['correct']   += $s['correct'];
+            $missionStats['incorrect'] += $s['incorrect'];
+            $missionStats['total']     += $s['total'];
         }
+        $missionStats['score'] = $missionStats['total'] > 0
+            ? (int) round(($missionStats['correct'] / $missionStats['total']) * 100)
+            : 0;
 
-        // Skor Posttest
-        $posttestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
-        $posttestScore = $posttestQuiz ? Quiz_attempts::where('quiz_id', $posttestQuiz->id)
-            ->where('student_id', $player['id'])->value('score') : 0;
+        // ── Posttest ───────────────────────────────────────────────────────
+        $posttestQuiz  = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
+        $posttestStats = $posttestQuiz ? $calcQuizStats($posttestQuiz) : ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
 
-        // Skor Akhir
-        $finalScore = round(($pretestScore + $missionScore + $posttestScore) / 3);
+        // ── Skor akhir (rata-rata ketiga bagian) ───────────────────────────
+        $totalAll   = $pretestStats['total'] + $missionStats['total'] + $posttestStats['total'];
+        $correctAll = $pretestStats['correct'] + $missionStats['correct'] + $posttestStats['correct'];
+        $finalScore = $totalAll > 0 ? (int) round(($correctAll / $totalAll) * 100) : 0;
 
         return Inertia::render('Playground/Mission/Result', [
             'is_overall' => true,
-            'module' => ['id' => $module->id, 'name' => $module->name],
-            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'mission' => ['name' => 'Hasil Akhir Modul'],
-            'results' => [
-                'score' => $finalScore,
-                'pretest' => $pretestScore,
-                'missions' => $missionScore,
-                'posttest' => $posttestScore
+            'module'     => ['id' => $module->id, 'name' => $module->name],
+            'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'mission'    => ['id' => null, 'name' => 'Hasil Akhir Modul'],
+            'results'    => [
+                'score'           => $finalScore,
+                'correct_answers' => $correctAll,
+                'total_questions' => $totalAll,
+                'overall_score'   => $finalScore,
+                'overall_correct' => $correctAll,
+                'overall_total'   => $totalAll,
+                'pretest'  => $pretestStats,
+                'missions' => $missionStats,
+                'posttest' => $posttestStats,
             ],
             'all_missions_done' => true,
         ]);
