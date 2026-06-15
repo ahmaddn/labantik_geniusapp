@@ -20,7 +20,10 @@ import {
     Pencil,
     X,
     Loader2,
+    Plus,
+    Trash2,
 } from "lucide-vue-next";
+import FileDropzone from "@/Components/UI/Forms/FileDropzone.vue";
 
 const props = defineProps({
     module: { type: Object, required: true },
@@ -52,18 +55,28 @@ let initialConceptualData = {
     topRight: "",
     bottomLeft: "",
     bottomRight: "",
-    sliderMin: "Ringan",
-    sliderMax: "Deras",
-    metric1Title: "Curah Hujan",
-    metric1Desc: "Input Air",
-    metric2Title: "Debit Sungai",
-    metric2Desc: "Jumlah Debit"
+    variables: [],
+    levels: []
 };
 if (initialLayoutType === 'conceptual_systematic' && props.material.content) {
     try {
         initialConceptualData = JSON.parse(props.material.content);
+        if (initialConceptualData.levels) {
+            initialConceptualData.levels = initialConceptualData.levels.map(level => ({
+                level_name: level.level_name || '',
+                status: level.status || 'aman',
+                animation_effect: level.animation_effect || 'none',
+                narration: level.narration || '',
+                metric_value: level.metric_value || '',
+                existing_image: level.image || null,
+                image: null,
+                _preview: level.image ? `/storage/${level.image}` : null
+            }));
+        }
     } catch(e) {}
 }
+if (!initialConceptualData.variables) initialConceptualData.variables = [];
+if (!initialConceptualData.levels) initialConceptualData.levels = [];
 
 const materialForm = ref({
     title: props.material.title || "",
@@ -76,6 +89,35 @@ const materialForm = ref({
     layout_type: initialLayoutType,
     conceptual_data: initialConceptualData
 });
+
+// Helper methods for Variables & Levels
+const addVariable = () => {
+    materialForm.value.conceptual_data.variables.push({
+        name: '',
+        min_label: '',
+        max_label: ''
+    });
+};
+
+const removeVariable = (index) => {
+    materialForm.value.conceptual_data.variables.splice(index, 1);
+};
+
+const addSliderLevel = () => {
+    materialForm.value.conceptual_data.levels.push({
+        level_name: '',
+        status: 'aman',
+        animation_effect: 'none',
+        narration: '',
+        metric_value: '',
+        image: null,
+        _preview: null
+    });
+};
+
+const removeSliderLevel = (index) => {
+    materialForm.value.conceptual_data.levels.splice(index, 1);
+};
 
 // Preview
 const mediaPreview = ref(
@@ -156,6 +198,18 @@ const handleSubmit = () => {
     );
     if (materialForm.value.image) {
         formData.append("image", materialForm.value.image);
+    }
+
+    // Append level images
+    if (materialForm.value.layout_type === 'conceptual_systematic') {
+        materialForm.value.conceptual_data.levels.forEach((lvl, idx) => {
+            if (lvl.image) {
+                formData.append(`conceptual_levels_images[${idx}]`, lvl.image);
+            }
+            if (lvl.remove_image) {
+                formData.append(`conceptual_levels_remove[${idx}]`, "1");
+            }
+        });
     }
 
     router.post(
@@ -340,37 +394,96 @@ const toggleCardVariant = () => {
                                 <TextareaField label="Teks Kanan Bawah" v-model="materialForm.conceptual_data.bottomRight" :rows="2" placeholder="Contoh: Banyaknya air mengalir..." />
                             </div>
                             
+                            <!-- Variables list (Sliders) -->
                             <div class="border-t pt-4">
-                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Slider</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <InputField label="Label Slider Kiri (Min)" v-model="materialForm.conceptual_data.sliderMin" placeholder="Contoh: Ringan" />
-                                    <InputField label="Label Slider Kanan (Max)" v-model="materialForm.conceptual_data.sliderMax" placeholder="Contoh: Deras" />
-                                    <InputField label="Ikon Slider Kiri (Lucide)" v-model="materialForm.conceptual_data.sliderIconLeft" placeholder="Contoh: CloudRain" />
-                                    <InputField label="Ikon Slider Kanan (Lucide)" v-model="materialForm.conceptual_data.sliderIconRight" placeholder="Contoh: Droplets" />
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-700">Variabel Penggeser (Slider)</h4>
+                                    <Button variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
+                                </div>
+                                
+                                <div v-if="materialForm.conceptual_data.variables.length === 0" class="text-center py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl text-gray-500 mb-4">
+                                    Belum ada variabel penggeser. Klik "Tambah Variabel" untuk menambahkan.
+                                </div>
+
+                                <div v-for="(variable, vIdx) in materialForm.conceptual_data.variables" :key="'v-'+vIdx" class="p-4 border-2 border-indigo-100 bg-white rounded-xl relative mb-4">
+                                    <button @click="removeVariable(vIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700" title="Hapus Variabel"><Trash2 class="w-5 h-5"/></button>
+                                    <h5 class="font-bold text-indigo-800 mb-3">Variabel {{ vIdx + 1 }}</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <InputField label="Nama Variabel" v-model="variable.name" placeholder="Misal: Intensitas Suhu" />
+                                        <InputField label="Label Kiri (Minimal)" v-model="variable.min_label" placeholder="Misal: Dingin" />
+                                        <InputField label="Label Kanan (Maksimal)" v-model="variable.max_label" placeholder="Misal: Panas" />
+                                    </div>
                                 </div>
                             </div>
 
+                            <!-- Levels list -->
                             <div class="border-t pt-4">
-                                <h4 class="font-bold text-gray-700 mb-3">Konfigurasi Metrik (Kotak Bawah)</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-white p-4 rounded-xl border space-y-3">
-                                        <h5 class="font-bold text-sm text-green-600 mb-2">Metrik 1 (Kiri)</h5>
-                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric1Title" placeholder="Contoh: Curah Hujan" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric1Desc" placeholder="Contoh: Input Air" />
-                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric1Unit" placeholder="Contoh: L/s" />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric1Multiplier" type="number" step="0.01" placeholder="0.8" />
-                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric1Base" type="number" step="0.01" placeholder="20" />
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-700">Level / Tahapan</h4>
+                                    <Button variant="primary" size="sm" :icon="Plus" @click="addSliderLevel">Tambah Level</Button>
+                                </div>
+
+                                <div v-if="materialForm.conceptual_data.levels.length === 0" class="text-center py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl text-gray-500 mb-4">
+                                    Belum ada level. Klik "Tambah Level" untuk menambahkan.
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div v-for="(level, idx) in materialForm.conceptual_data.levels" :key="'lvl-'+idx" class="p-4 border-2 border-blue-100 bg-white rounded-2xl relative">
+                                        <button @click="removeSliderLevel(idx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 class="w-5 h-5"/></button>
+                                        <h5 class="font-bold text-blue-800 mb-4">Level {{ idx + 1 }}</h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputField label="Nama Level (contoh: Tahap Awal, Level 1)" v-model="level.level_name" required placeholder="Misal: Level 1" />
+                                            <InputField label="Keterangan Tambahan Level (opsional)" v-model="level.metric_value" placeholder="Misal: Suhu 30C / Kelembaban 80%" />
                                         </div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl border space-y-3">
-                                        <h5 class="font-bold text-sm text-blue-600 mb-2">Metrik 2 (Kanan)</h5>
-                                        <InputField label="Judul Metrik" v-model="materialForm.conceptual_data.metric2Title" placeholder="Contoh: Debit Sungai" />
-                                        <InputField label="Sub-teks Metrik" v-model="materialForm.conceptual_data.metric2Desc" placeholder="Contoh: Jumlah Debit" />
-                                        <InputField label="Satuan" v-model="materialForm.conceptual_data.metric2Unit" placeholder="Contoh: m³" />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <InputField label="Pengali (Multiplier)" v-model="materialForm.conceptual_data.metric2Multiplier" type="number" step="0.01" placeholder="1.5" />
-                                            <InputField label="Nilai Dasar (Base)" v-model="materialForm.conceptual_data.metric2Base" type="number" step="0.01" placeholder="0" />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <label class="block text-sm font-bold text-gray-700 mb-2">Status Level</label>
+                                                <select v-model="level.status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <option value="aman">Aman / Normal</option>
+                                                    <option value="waspada">Waspada</option>
+                                                    <option value="bahaya">Bahaya</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-bold text-gray-700 mb-2">Efek Animasi Overlay</label>
+                                                <select v-model="level.animation_effect" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <option value="none">Tidak ada efek</option>
+                                                    <option value="rain_light">Gerimis</option>
+                                                    <option value="rain_heavy">Hujan Deras</option>
+                                                    <option value="snow">Salju</option>
+                                                    <option value="bubbles">Gelembung Air</option>
+                                                    <option value="fire_sparks">Percikan Api</option>
+                                                    <option value="wind_leaves">Daun Berterbangan</option>
+                                                    <option value="dust">Polusi / Debu</option>
+                                                    <option value="sunbeams">Cahaya Cerah (Sunbeams)</option>
+                                                    <option value="earthquake">Guncangan Layar (Gempa)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <TextareaField label="Narasi" v-model="level.narration" class="mt-4" placeholder="Misal: Pada level ini, matahari bersinar sangat terik..." />
+                                        
+                                        <div class="mt-4">
+                                            <FileDropzone 
+                                                label="Gambar Background Level (Opsional - Fallback ke Gambar Utama)" 
+                                                accept="image/*" 
+                                                v-model="level.image"
+                                                @update:modelValue="(file) => { 
+                                                    if(file) {
+                                                        level._preview = URL.createObjectURL(file); 
+                                                        level.remove_image = false;
+                                                    } else {
+                                                        level._preview = null; 
+                                                        level.remove_image = true;
+                                                    }
+                                                }" 
+                                            />
+                                            <div v-if="level._preview || (level.existing_image && !level.remove_image)" class="mt-3 relative inline-block">
+                                                <p class="text-xs text-gray-500 mb-1 font-bold">Preview Gambar:</p>
+                                                <img :src="level._preview || `/storage/${level.existing_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
+                                                <button type="button" @click="level.image = null; level._preview = null; level.existing_image = null; level.remove_image = true;" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow">
+                                                    <X class="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

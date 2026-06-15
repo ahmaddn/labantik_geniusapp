@@ -71,6 +71,23 @@ class MaterialController extends Controller
                 $data['image'] = $file->store($folder, 'public');
             }
 
+            // Handle level images for conceptual_systematic
+            if ($data['layout_type'] === 'conceptual_systematic' && !empty($data['content'])) {
+                $conceptualData = json_decode($data['content'], true);
+                if (is_array($conceptualData) && isset($conceptualData['levels']) && is_array($conceptualData['levels'])) {
+                    foreach ($conceptualData['levels'] as $lvlIdx => &$level) {
+                        if ($request->hasFile("materials_levels_images.{$index}.{$lvlIdx}")) {
+                            $file = $request->file("materials_levels_images.{$index}.{$lvlIdx}");
+                            $path = $file->store('materials/conceptual_levels', 'public');
+                            $level['image'] = $path;
+                        } else {
+                            $level['image'] = null;
+                        }
+                    }
+                    $data['content'] = json_encode($conceptualData);
+                }
+            }
+
             Materials::create($data);
         }
 
@@ -262,6 +279,68 @@ class MaterialController extends Controller
             'layout_type' => $validated['layout_type'] ?? null,
         ];
 
+        // Clean up deleted level images if layout_type was and is conceptual_systematic
+        if ($materials->layout_type === 'conceptual_systematic' && !empty($materials->content)) {
+            $oldData = json_decode($materials->content, true);
+            if (is_array($oldData) && isset($oldData['levels']) && is_array($oldData['levels'])) {
+                $oldImages = [];
+                foreach ($oldData['levels'] as $level) {
+                    if (!empty($level['image'])) {
+                        $oldImages[] = $level['image'];
+                    }
+                }
+                
+                $newImages = [];
+                if ($validated['layout_type'] === 'conceptual_systematic' && !empty($data['content'])) {
+                    $newData = json_decode($data['content'], true);
+                    if (is_array($newData) && isset($newData['levels']) && is_array($newData['levels'])) {
+                        foreach ($newData['levels'] as $level) {
+                            $img = $level['image'] ?? $level['existing_image'] ?? null;
+                            if ($img) {
+                                $newImages[] = $img;
+                            }
+                        }
+                    }
+                }
+                
+                $deletedImages = array_diff($oldImages, $newImages);
+                foreach ($deletedImages as $delImg) {
+                    Storage::disk('public')->delete($delImg);
+                }
+            }
+        }
+
+        // Handle level images for conceptual_systematic
+        if ($validated['layout_type'] === 'conceptual_systematic' && !empty($data['content'])) {
+            $conceptualData = json_decode($data['content'], true);
+            if (is_array($conceptualData) && isset($conceptualData['levels']) && is_array($conceptualData['levels'])) {
+                foreach ($conceptualData['levels'] as $index => &$level) {
+                    if (!empty($level['remove_image']) && !empty($level['existing_image'])) {
+                        Storage::disk('public')->delete($level['existing_image']);
+                        $level['image'] = null;
+                        unset($level['existing_image']);
+                    }
+                    
+                    if ($request->hasFile("conceptual_levels_images.{$index}")) {
+                        $oldImage = $level['image'] ?? $level['existing_image'] ?? null;
+                        if ($oldImage) {
+                            Storage::disk('public')->delete($oldImage);
+                        }
+                        $file = $request->file("conceptual_levels_images.{$index}");
+                        $path = $file->store('materials/conceptual_levels', 'public');
+                        $level['image'] = $path;
+                        unset($level['existing_image']);
+                    } else {
+                        if (isset($level['existing_image'])) {
+                            $level['image'] = $level['existing_image'];
+                            unset($level['existing_image']);
+                        }
+                    }
+                }
+                $data['content'] = json_encode($conceptualData);
+            }
+        }
+
         // Handle remove / replace image or video
         if ($request->input('remove_image')) {
             if ($materials->image) {
@@ -296,10 +375,52 @@ class MaterialController extends Controller
             Storage::disk('public')->delete($materials->image);
         }
 
+        if ($materials->layout_type === 'conceptual_systematic' && $materials->content) {
+            $conceptualData = json_decode($materials->content, true);
+            if (is_array($conceptualData) && isset($conceptualData['levels']) && is_array($conceptualData['levels'])) {
+                foreach ($conceptualData['levels'] as $level) {
+                    if (!empty($level['image'])) {
+                        Storage::disk('public')->delete($level['image']);
+                    }
+                }
+            }
+        }
+
         $materials->delete();
 
         return redirect()
             ->route('admin.modules.missions.show', [$modules->id, $missions->id])
             ->with('success', 'Material berhasil dihapus.');
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $headers = ['title', 'description', 'content', 'mascot_id'];
+
+        foreach ($headers as $colIndex => $header) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+            $sheet->setCellValue($colLetter . '1', $header);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        // Contoh baris data
+        $sheet->setCellValue('A2', 'Pengenalan Larutan');
+        $sheet->setCellValue('B2', 'Deskripsi materi pengenalan larutan');
+        $sheet->setCellValue('C2', 'Materi lengkap mengenai larutan asam dan basa...');
+        $sheet->setCellValue('D2', ''); // mascot_id
+
+        $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'Template_Import_Materi.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit;
     }
 }

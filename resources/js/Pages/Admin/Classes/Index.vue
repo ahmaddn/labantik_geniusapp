@@ -35,8 +35,14 @@ const props = defineProps({
 
 const page = usePage();
 
+import axios from "axios";
+
 const showDialog = ref(false);
 const showDeleteDialog = ref(false);
+const showDetailsModal = ref(false);
+const selectedClassDetails = ref(null);
+const loadingDetails = ref(false);
+
 const isEdit = ref(false);
 const selectedId = ref(null);
 const successMessage = ref("");
@@ -49,6 +55,24 @@ const form = useForm({
     description: "",
     teacher_id: "",
 });
+
+const showClassDetails = async (classItem) => {
+    selectedClassDetails.value = {
+        class: classItem,
+        teacher: classItem.teacher || null,
+        students: []
+    };
+    showDetailsModal.value = true;
+    loadingDetails.value = true;
+    try {
+        const response = await axios.get(route("admin.classes.details", classItem.id));
+        selectedClassDetails.value = response.data;
+    } catch (error) {
+        showToast("Gagal memuat detail kelas.", "error");
+    } finally {
+        loadingDetails.value = false;
+    }
+};
 
 const showToast = (message, type = "success") => {
     successMessage.value = message;
@@ -139,6 +163,7 @@ const handlePageChange = (pageNumber) => {
 
 watch(showDialog, (val) => lockScroll(val));
 watch(showDeleteDialog, (val) => lockScroll(val));
+watch(showDetailsModal, (val) => lockScroll(val));
 watch(
     () => page.props.flash,
     (flash) => {
@@ -156,6 +181,7 @@ const handleEsc = (e) => {
     if (e.key === "Escape") {
         showDialog.value = false;
         showDeleteDialog.value = false;
+        showDetailsModal.value = false;
     }
 };
 
@@ -228,6 +254,8 @@ onUnmounted(() => {
                     :icon="BookOpen"
                     icon-color="blue"
                     border-color="blue"
+                    @click="showClassDetails(classItem)"
+                    class="cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                 >
                     <template #default>
                         <div class="flex items-center gap-1.5 mt-2">
@@ -248,14 +276,14 @@ onUnmounted(() => {
                                 variant="warning"
                                 size="md"
                                 :icon="Pencil"
-                                @click="openEdit(classItem)"
+                                @click.stop="openEdit(classItem)"
                             />
 
                             <Button
                                 variant="danger"
                                 size="md"
                                 :icon="Trash2"
-                                @click="confirmDelete(classItem.id)"
+                                @click.stop="confirmDelete(classItem.id)"
                             />
                         </div>
                     </template>
@@ -385,6 +413,94 @@ onUnmounted(() => {
             @confirm="deleteClass"
             @cancel="showDeleteDialog = false"
         />
+
+        <!-- Detail Kelas Modal -->
+        <Modal
+            :show="showDetailsModal"
+            :title="selectedClassDetails?.class?.name ? `Detail Kelas: ${selectedClassDetails.class.name}` : 'Detail Kelas'"
+            @close="showDetailsModal = false"
+            max-width="lg"
+        >
+            <div v-if="loadingDetails" class="flex flex-col items-center justify-center py-12">
+                <Loader2 class="w-10 h-10 text-blue-500 animate-spin mb-4" />
+                <p class="text-sm font-semibold text-gray-500">Memuat data kelas...</p>
+            </div>
+            
+            <div v-else-if="selectedClassDetails" class="space-y-6">
+                <!-- Wali Kelas Section -->
+                <div class="bg-blue-50/70 rounded-3xl p-5 border-2 border-blue-100 flex items-center gap-4">
+                    <div class="bg-blue-100 p-3 rounded-2xl border-2 border-blue-200">
+                        <UserRound class="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-xs text-blue-600 font-extrabold uppercase tracking-wide">Wali Kelas</span>
+                        <h4 class="text-lg font-heading font-extrabold text-blue-900 leading-tight">
+                            {{ selectedClassDetails.teacher?.name ?? "Belum ditugaskan" }}
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ selectedClassDetails.teacher ? "Wali kelas penanggung jawab" : "Silakan tugaskan wali kelas" }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Deskripsi Kelas -->
+                <div class="space-y-1">
+                    <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Deskripsi</span>
+                    <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-2xl border leading-relaxed">
+                        {{ selectedClassDetails.class?.description || "Tidak ada deskripsi untuk kelas ini." }}
+                    </p>
+                </div>
+
+                <!-- Students Section -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <span class="text-xs text-gray-500 font-extrabold uppercase tracking-wider">Daftar Siswa</span>
+                        <span class="bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-bold">
+                            {{ selectedClassDetails.students?.length || 0 }} Siswa
+                        </span>
+                    </div>
+
+                    <!-- Students List -->
+                    <div v-if="selectedClassDetails.students && selectedClassDetails.students.length > 0" class="max-h-60 overflow-y-auto pr-1 space-y-2">
+                        <div v-for="(student, idx) in selectedClassDetails.students" :key="student.id" class="flex items-center justify-between p-3 bg-white border rounded-2xl shadow-sm hover:border-blue-200 transition-all">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-gray-400 min-w-[20px] text-right">
+                                    {{ idx + 1 }}.
+                                </span>
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-600 border">
+                                    {{ student.name.substring(0, 1).toUpperCase() }}
+                                </div>
+                                <span class="text-sm font-bold text-gray-700">
+                                    {{ student.name }}
+                                </span>
+                            </div>
+                            <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                                Siswa
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Empty state students -->
+                    <div v-else class="text-center py-8 bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-3xl">
+                        <UserRound class="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <h5 class="text-sm font-bold text-gray-500">Belum ada siswa</h5>
+                        <p class="text-xs text-gray-400 mt-0.5">Daftarkan siswa ke kelas ini melalui menu Pengguna.</p>
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end">
+                    <Button
+                        variant="light"
+                        size="md"
+                        @click="showDetailsModal = false"
+                    >
+                        Tutup
+                    </Button>
+                </div>
+            </template>
+        </Modal>
 
         <!-- Toast Notification -->
         <Toast
