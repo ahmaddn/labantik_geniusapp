@@ -1,231 +1,281 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { ArrowLeft, ArrowRight } from "lucide-vue-next";
 
 const props = defineProps({
-    quiz: {
-        type: Object,
-        required: true,
-    },
+    quiz: { type: Object, required: true },
 });
 
-// data `quiz` di sini berisi referensi ke `simulation_decision`
-// Namun di Template.vue, data `configs.decisions` dilempar ke `mission.simulation_decisions`
-// Tapi `Template.vue` saat ini belum meload itu dari Controller/Resource untuk playground.
-// Wait, Template.vue mendapatkan data mission, lalu di steps di generate dari mission.quizzes
-// Jika "Simulasi Keputusan" menggunakan tabel sendiri dan bukan "quizzes", kita butuh menyuntikkannya ke `mission.quizzes` di Controller atau menggunakannya sebagai komponen khusus.
-// Mari asumsikan bahwa PlaygroundMissionController menyuntikkan `simulation_decisions` ke dalam `mission.quizzes` sebagai tipe 'simulation_decision', 
-// ATAU data aslinya ada di `props.quiz` di mana `quiz.items` menyimpan opsi-opsinya.
-// Kita perlu menyesuaikan dengan data format yang masuk.
-
-// Anggap data masuk melalui `props.quiz` yang sudah dibentuk oleh resource/controller.
-const simulation = computed(() => {
-    // Apabila data dikemas di dalam `quiz.data` atau properties sejenis.
-    return props.quiz || {};
-});
-
+const simulation = computed(() => props.quiz || {});
 const activeOptionIndex = ref(null);
-const mascotImgDefault = "/images/templates/pose_nunjuk.png";
-
-const currentMascotImg = computed(() => {
-    if (simulation.value.character_image) {
-        return `/storage/${simulation.value.character_image}`;
-    }
-    return mascotImgDefault;
-});
 
 const currentFutureImage = computed(() => {
-    if (activeOptionIndex.value !== null && simulation.value.options && simulation.value.options[activeOptionIndex.value]) {
+    if (activeOptionIndex.value !== null && simulation.value.options?.[activeOptionIndex.value]) {
         return `/storage/${simulation.value.options[activeOptionIndex.value].future_state_image}`;
     }
     return null;
 });
 
 const currentFeedbackMessage = computed(() => {
-    if (activeOptionIndex.value !== null && simulation.value.options && simulation.value.options[activeOptionIndex.value]) {
+    if (activeOptionIndex.value !== null && simulation.value.options?.[activeOptionIndex.value]) {
         return simulation.value.options[activeOptionIndex.value].feedback_message;
     }
-    return "Pilih salah satu tindakan di bawah untuk melihat apa yang akan terjadi di masa depan.";
+    return 'Pilih salah satu tindakan di bawah untuk melihat apa yang akan terjadi!';
 });
 
-const displayedFeedback = ref("");
+const displayedFeedback = ref('');
 let typingInterval = null;
-
 const startTyping = (text) => {
     if (typingInterval) clearInterval(typingInterval);
-    displayedFeedback.value = "";
+    displayedFeedback.value = '';
     if (!text) return;
-
-    let index = 0;
+    let i = 0;
     typingInterval = setInterval(() => {
-        displayedFeedback.value += text.charAt(index);
-        index++;
-        if (index >= text.length) {
-            clearInterval(typingInterval);
-        }
-    }, 30);
+        displayedFeedback.value += text.charAt(i++);
+        if (i >= text.length) clearInterval(typingInterval);
+    }, 28);
 };
 
-watch(currentFeedbackMessage, (newVal) => {
-    startTyping(newVal);
-}, { immediate: true });
+watch(currentFeedbackMessage, (v) => startTyping(v), { immediate: true });
 
 const selectOption = (index) => {
     activeOptionIndex.value = index;
-    
-    // Create a subtle vibration effect on the mascot container if supported
-    if (navigator.vibrate) {
-        navigator.vibrate(50);
-    }
+    if (navigator.vibrate) navigator.vibrate(40);
 };
 
-// Map button colors
-const getColorClass = (colorStr) => {
-    switch (colorStr) {
-        case 'green': return 'bg-green-500 hover:bg-green-600 border-green-600 text-white';
-        case 'yellow': return 'bg-yellow-400 hover:bg-yellow-500 border-yellow-500 text-gray-800';
-        case 'red': return 'bg-red-500 hover:bg-red-600 border-red-600 text-white';
-        case 'blue': return 'bg-blue-500 hover:bg-blue-600 border-blue-600 text-white';
-        default: return 'bg-gray-500 hover:bg-gray-600 border-gray-600 text-white';
-    }
+const colorMap = {
+    green:  { bg: '#58cc02', border: '#46a302', text: '#fff' },
+    yellow: { bg: '#ffc800', border: '#e6b400', text: '#3c3c3c' },
+    red:    { bg: '#ff4b4b', border: '#ea2b2b', text: '#fff' },
+    blue:   { bg: '#1cb0f6', border: '#1899d6', text: '#fff' },
 };
-
+const getColor = (c) => colorMap[c] || colorMap.blue;
 </script>
 
 <template>
-    <div class="decision-container w-full h-full flex flex-col p-4 md:p-8" v-if="simulation">
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <h2 class="text-xl md:text-3xl font-heading font-black text-blue-900 drop-shadow-sm uppercase tracking-wide">
-                {{ simulation.title || 'SIMULASI KEPUTUSAN' }}
-            </h2>
+    <div class="dec-wrap" v-if="simulation">
+        <!-- Title -->
+        <div class="dec-title-row">
+            <h2 class="dec-title">{{ simulation.title || 'Simulasi Keputusan' }}</h2>
         </div>
 
-        <!-- Images Grid -->
-        <div class="flex-1 flex flex-col max-w-6xl mx-auto w-full">
-            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-center justify-center mb-6 w-full flex-1">
-                
-                <!-- Initial State (Left) -->
-                <div class="flex flex-col items-center w-full h-full">
-                    <h3 class="font-bold text-gray-800 text-lg md:text-xl mb-3 bg-white px-6 py-2 rounded-full shadow-sm border-2 border-gray-200">
-                        {{ simulation.initial_state_title || 'HARI INI' }}
-                    </h3>
-                    <div class="relative rounded-3xl overflow-hidden border-4 border-white bg-gray-100 shadow-xl w-full flex-1 min-h-[250px] flex items-center justify-center">
-                        <img 
-                            v-if="simulation.initial_state_image"
-                            :src="`/storage/${simulation.initial_state_image}`" 
-                            alt="Status Awal"
-                            class="absolute inset-0 w-full h-full object-cover"
-                        />
-                        <div v-else class="text-gray-400 font-bold">Gambar Tidak Tersedia</div>
+        <!-- Images: before → after -->
+        <div class="dec-scenes">
+            <!-- Before -->
+            <div class="dec-scene">
+                <div class="dec-scene-label">{{ simulation.initial_state_title || 'Hari Ini' }}</div>
+                <div class="dec-scene-img-wrap">
+                    <img v-if="simulation.initial_state_image" :src="`/storage/${simulation.initial_state_image}`" class="dec-scene-img" alt="Kondisi Awal" />
+                    <div v-else class="dec-scene-placeholder">
+                        <span>Gambar Belum Tersedia</span>
                     </div>
                 </div>
-
-                <!-- Animated Arrow Middle -->
-                <div class="hidden md:flex flex-col items-center justify-center z-10 px-2">
-                    <div class="bg-white p-3 rounded-full shadow-lg border-4 border-blue-100 animate-bounce transition-all duration-300">
-                        <ArrowRight class="w-8 h-8 text-blue-500" />
-                    </div>
-                </div>
-
-                <!-- Future State (Right) -->
-                <div class="flex flex-col items-center w-full h-full relative">
-                    <h3 class="font-bold text-gray-800 text-lg md:text-xl mb-3 bg-white px-6 py-2 rounded-full shadow-sm border-2 border-gray-200">
-                        {{ simulation.future_state_title || 'MASA DEPAN' }}
-                    </h3>
-                    <div class="relative rounded-3xl overflow-hidden border-4 border-white bg-gray-100 shadow-xl w-full flex-1 min-h-[250px] flex items-center justify-center transition-all duration-500 transform" :class="activeOptionIndex !== null ? 'ring-4 ring-blue-300 scale-[1.02]' : ''">
-                        <transition name="fade" mode="out-in">
-                            <img 
-                                v-if="currentFutureImage"
-                                :key="currentFutureImage"
-                                :src="currentFutureImage" 
-                                alt="Status Masa Depan"
-                                class="absolute inset-0 w-full h-full object-cover"
-                            />
-                            <div v-else class="absolute inset-0 w-full h-full object-cover backdrop-blur-md bg-white/50 flex flex-col items-center justify-center p-6 text-center text-gray-500">
-                                <div class="w-16 h-16 mb-4 rounded-full bg-blue-100 flex items-center justify-center animate-pulse">
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full animate-ping"></div>
-                                </div>
-                                <span class="font-bold text-lg animate-pulse">Menunggu Keputusanmu...</span>
-                            </div>
-                        </transition>
-                    </div>
-                </div>
-
             </div>
 
-            <!-- Bottom Section: Mascot & Buttons -->
-            <div class="mt-4 md:mt-8 relative w-full flex flex-col lg:flex-row items-end lg:items-center justify-between gap-4 z-20">
-                
-                <!-- Mascot & Bubble Positioned -->
-                <div class="flex flex-row items-center z-10 flex-1 w-full lg:w-auto relative mb-4 lg:mb-0 gap-3">
-                    <img :src="currentMascotImg" class="w-20 md:w-28 lg:w-32 object-contain drop-shadow-xl animate-float z-20" alt="Mascot" />
-                    
-                    <div class="narration-bubble relative bg-white border-4 border-blue-300 rounded-3xl p-4 md:p-5 shadow-xl w-full max-w-[280px] md:max-w-[340px] z-10">
-                        <!-- Left Arrow / Tail -->
-                        <div class="absolute top-1/2 -left-3 w-5 h-5 bg-white border-l-4 border-b-4 border-blue-300 transform rotate-45 -translate-y-1/2 rounded-sm"></div>
-                        <p class="text-gray-700 font-bold text-sm md:text-base leading-relaxed whitespace-pre-wrap relative z-20">
-                            {{ displayedFeedback }}<span class="animate-ping font-black text-blue-500 ml-1">_</span>
-                        </p>
-                    </div>
-                </div>
+            <!-- Arrow -->
+            <div class="dec-arrow">
+                <svg viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12H36M28 4l10 8-10 8" stroke="#1cb0f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
 
-                <!-- Action Buttons -->
-                <div class="flex-1 flex flex-wrap justify-center lg:justify-end gap-3 md:gap-4 items-center z-20 w-full lg:w-auto">
-                    <button 
-                        v-for="(opt, idx) in simulation.options" 
-                        :key="'opt-'+idx"
-                        @click="selectOption(idx)"
-                        class="action-btn px-4 py-2 md:px-6 md:py-3 rounded-2xl border-b-4 font-bold text-sm md:text-base lg:text-lg transition-all shadow-md active:border-b-0 active:translate-y-1"
-                        :class="[
-                            getColorClass(opt.button_color),
-                            activeOptionIndex === idx ? 'ring-4 ring-offset-2 ring-blue-300 scale-105' : 'hover:scale-105 opacity-90 hover:opacity-100'
-                        ]"
-                    >
-                        {{ opt.button_label }}
-                    </button>
+            <!-- After -->
+            <div class="dec-scene">
+                <div class="dec-scene-label">{{ simulation.future_state_title || 'Masa Depan' }}</div>
+                <div class="dec-scene-img-wrap" :class="{ 'dec-scene-active': activeOptionIndex !== null }">
+                    <Transition name="fade" mode="out-in">
+                        <img v-if="currentFutureImage" :key="currentFutureImage" :src="currentFutureImage" class="dec-scene-img" alt="Dampak" />
+                        <div v-else class="dec-scene-placeholder">
+                            <div class="dec-waiting-dot"></div>
+                            <span>Menunggu Pilihanmu…</span>
+                        </div>
+                    </Transition>
                 </div>
             </div>
         </div>
+
+        <!-- Feedback bubble -->
+        <div class="dec-bubble-row">
+            <div class="dec-bubble">
+                <svg class="dec-bubble-icon" viewBox="0 0 24 24" fill="none" stroke="#1cb0f6" stroke-width="2.5" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p class="dec-bubble-text">{{ displayedFeedback }}<span class="dec-cursor" v-if="displayedFeedback">|</span></p>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="dec-btns">
+            <button
+                v-for="(opt, idx) in simulation.options"
+                :key="'btn-'+idx"
+                class="dec-btn"
+                :class="{ 'dec-btn-active': activeOptionIndex === idx }"
+                :style="{
+                    background: getColor(opt.button_color).bg,
+                    borderColor: getColor(opt.button_color).border,
+                    color: getColor(opt.button_color).text,
+                    boxShadow: `0 4px 0 ${getColor(opt.button_color).border}`
+                }"
+                @click="selectOption(idx)"
+            >
+                <svg v-if="activeOptionIndex === idx" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ opt.button_label }}
+            </button>
+        </div>
     </div>
-    <div v-else class="w-full h-full flex items-center justify-center">
-        <p class="text-gray-500 font-bold text-xl">Data simulasi belum tersedia.</p>
-    </div>
+
+    <div v-else class="dec-empty">Data simulasi belum tersedia.</div>
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.5s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
+.dec-wrap {
+    font-family: 'Nunito', sans-serif;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px 0;
 }
 
-.narration-bubble {
-    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+/* Title */
+.dec-title-row { text-align: center; }
+.dec-title {
+    font-size: clamp(1rem, 3vw, 1.35rem);
+    font-weight: 900;
+    color: #1cb0f6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-@keyframes bounceIn {
-    0% { opacity: 0; transform: scale(0.8) translateY(20px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
+/* Scenes */
+.dec-scenes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
 }
-
-.action-btn {
+.dec-scene { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dec-scene-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    background: #fff;
+    border: 2px solid #e5e5e5;
+    border-radius: 99px;
+    padding: 3px 14px;
+}
+.dec-scene-img-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    border: 3px solid #e5e5e5;
+    background: #f7f7f7;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
-
-.animate-float {
-    animation: float 3s ease-in-out infinite;
+.dec-scene-active {
+    border-color: #1cb0f6;
+    box-shadow: 0 0 0 3px rgba(28,176,246,0.2);
 }
+.dec-scene-img { width: 100%; height: 100%; object-fit: cover; }
+.dec-scene-placeholder {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: #bbb; font-weight: 700; font-size: 13px; text-align: center; padding: 12px;
+}
+.dec-waiting-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #dbeafe;
+    animation: ping 1.2s ease-in-out infinite;
+}
+@keyframes ping { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.4);opacity:0.3} }
 
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+/* Arrow */
+.dec-arrow {
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dec-arrow svg { width: 40px; height: 24px; animation: arrowBounce 1.4s ease-in-out infinite; }
+@keyframes arrowBounce { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
+
+/* Bubble */
+.dec-bubble-row { width: 100%; }
+.dec-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #f0f9ff;
+    border: 2px solid #bae6fd;
+    border-radius: 14px;
+    padding: 12px 16px;
+}
+.dec-bubble-icon { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+.dec-bubble-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0369a1;
+    line-height: 1.5;
+    min-height: 40px;
+}
+.dec-cursor {
+    display: inline-block;
+    animation: blink 0.7s step-start infinite;
+    margin-left: 2px;
+    font-weight: 900;
+    color: #1cb0f6;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* Buttons */
+.dec-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.dec-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    border-bottom-width: 4px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.12s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dec-btn:hover { filter: brightness(1.07); transform: translateY(-2px); }
+.dec-btn:active { transform: translateY(2px); box-shadow: none !important; }
+.dec-btn-active { transform: translateY(2px); box-shadow: none !important; filter: brightness(1.05); }
+
+/* Transitions */
+.fade-enter-active,.fade-leave-active { transition: opacity 0.4s ease; }
+.fade-enter-from,.fade-leave-to { opacity: 0; }
+
+/* Empty */
+.dec-empty { text-align: center; color: #aaa; font-weight: 700; padding: 40px; }
+
+/* Mobile */
+@media (max-width: 520px) {
+    .dec-scenes { flex-direction: column; gap: 8px; }
+    .dec-arrow { transform: rotate(90deg); }
+    .dec-scene { width: 100%; }
 }
 </style>
