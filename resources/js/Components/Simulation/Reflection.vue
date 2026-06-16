@@ -1,9 +1,11 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
-import { ArrowRight, Lightbulb, Edit3, MessageCircle } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
+import * as Icons from 'lucide-vue-next';
+import { ArrowRight, MessageCircle, Edit3 } from 'lucide-vue-next';
 
 const props = defineProps({
     quiz: { type: Object, required: true },
+    question: { type: Object, required: false },
     modelValue: [String, Number, Array],
 });
 
@@ -11,23 +13,35 @@ const emit = defineEmits(['update-answer']);
 const studentAnswer = ref(props.modelValue || '');
 
 watch(studentAnswer, (newVal) => {
-    emit('update-answer', { value: newVal });
+    emit('update-answer', { value: newVal, questionId: props.question?.id });
 });
+
+const getIcon = (name) => {
+    return Icons[name] || Icons.Lightbulb;
+};
+
+const getImageUrl = (path) => {
+    if (!path) return '';
+    if (typeof path !== 'string') return '';
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    return '/storage/' + path;
+};
 </script>
 
 <template>
     <div class="ref-wrap">
         <!-- Flowchart Horizontal Scroll -->
-        <div class="ref-flow-scroll" v-if="quiz.flowchart_steps && quiz.flowchart_steps.length > 0">
+        <div class="ref-flow-scroll" v-if="quiz.flowchart_data && quiz.flowchart_data.length > 0">
             <div class="ref-flow">
-                <div v-for="(step, idx) in quiz.flowchart_steps" :key="idx" class="ref-flow-item">
+                <div v-for="(step, idx) in quiz.flowchart_data" :key="idx" class="ref-flow-item">
                     <div class="ref-card">
-                        <div class="ref-card-icon">
-                            <Lightbulb :size="24" color="#ffc800" :stroke-width="2.5" />
+                        <div class="ref-card-icon" :style="step.image ? 'background:transparent; border:none;' : ''">
+                            <img v-if="step.image" :src="getImageUrl(step.image)" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+                            <component v-else :is="getIcon(step.fallback_icon)" :size="24" color="#ffc800" :stroke-width="2.5" />
                         </div>
-                        <p class="ref-card-text">{{ step }}</p>
+                        <p class="ref-card-text">{{ step.title }}</p>
                     </div>
-                    <ArrowRight v-if="idx < quiz.flowchart_steps.length - 1" class="ref-arrow" :size="32" color="#cbd5e1" :stroke-width="3" />
+                    <ArrowRight v-if="idx < quiz.flowchart_data.length - 1" class="ref-arrow" :size="32" color="#cbd5e1" :stroke-width="3" />
                 </div>
             </div>
         </div>
@@ -40,7 +54,7 @@ watch(studentAnswer, (newVal) => {
                 </div>
                 <div class="ref-bubble-content">
                     <h3 class="ref-q-title">Pertanyaan Refleksi</h3>
-                    <p class="ref-q-text">{{ quiz.question }}</p>
+                    <p class="ref-q-text">{{ question?.question_text }}</p>
                 </div>
             </div>
 

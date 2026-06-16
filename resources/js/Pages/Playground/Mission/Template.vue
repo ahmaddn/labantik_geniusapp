@@ -120,17 +120,6 @@ const steps = computed(() => {
                 isReflection: false,
                 isDragDrop: false,
             });
-        } else if (isReflection) {
-            result.push({
-                quizIndex: quizIdx,
-                quiz,
-                question: null,
-                questionIndex: 0,
-                totalInQuiz: questions.length,
-                isMaterial: false,
-                isReflection: true,
-                isDragDrop: false,
-            });
         } else if (questions.length === 0) {
             result.push({
                 quizIndex: quizIdx,
@@ -139,7 +128,7 @@ const steps = computed(() => {
                 questionIndex: 0,
                 totalInQuiz: 0,
                 isMaterial: false,
-                isReflection: false,
+                isReflection: isReflection,
                 isDragDrop,
             });
         } else {
@@ -151,7 +140,7 @@ const steps = computed(() => {
                     questionIndex: qIdx,
                     totalInQuiz: questions.length,
                     isMaterial: false,
-                    isReflection: false,
+                    isReflection: isReflection,
                     isDragDrop,
                 });
             });
@@ -289,10 +278,6 @@ const isQuestionAnswered = (question, quizType) => {
 };
 const isStepAnswered = (s) => {
     if (!s || s.isMaterial) return true;
-    if (s.isReflection) {
-        if (!s.quiz?.questions || s.quiz.questions.length === 0) return true;
-        return s.quiz.questions.every((q) => isQuestionAnswered(q, s.quiz.type));
-    }
     if (!s.question) return true;
     if (timedOutQuizzes.value.has(s.quiz?.id)) return true;
     return isQuestionAnswered(s.question, s.quiz.type);
@@ -657,7 +642,7 @@ onUnmounted(() => {
 
                                 <!-- Question bubble -->
                                 <div
-                                    v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer'"
+                                    v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer' && step.quiz.type !== 'reflection'"
                                     class="question-bubble"
                                     v-html="step.question.question_text"
                                 ></div>
@@ -666,7 +651,7 @@ onUnmounted(() => {
                                     class="question-bubble"
                                     v-html="step.quiz.title"
                                 ></div>
-                                <div v-else-if="step?.quiz?.type !== 'short_answer'" class="question-bubble" style="color:#94a3b8;">
+                                <div v-else-if="step?.quiz?.type !== 'short_answer' && step?.quiz?.type !== 'reflection'" class="question-bubble" style="color:#94a3b8;">
                                     Tidak ada soal
                                 </div>
 

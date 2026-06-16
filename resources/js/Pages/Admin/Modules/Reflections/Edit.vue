@@ -7,6 +7,27 @@ import Card from "@/Components/UI/Card.vue";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Info, GitMerge, MessageSquare } from "lucide-vue-next";
+import * as Icons from "lucide-vue-next";
+
+const getIcon = (name) => {
+    return Icons[name] || Icons.Circle;
+};
+
+const getImagePreview = (file) => {
+    if (file && typeof file === 'object') {
+        if (typeof URL !== 'undefined') {
+            return URL.createObjectURL(file);
+        }
+    }
+    return null;
+};
+
+const getImageUrl = (path) => {
+    if (!path) return '';
+    if (typeof path !== 'string') return '';
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    return '/storage/' + path;
+};
 
 const props = defineProps({
     module: { type: Object, required: true },
@@ -130,11 +151,27 @@ const goBack = () => {
                             />
                         </div>
                         <div class="w-full md:w-1/3 pt-2">
-                            <InputField 
-                                label="Icon Cadangan (Lucide)" 
-                                v-model="step.fallback_icon" 
-                                placeholder="Contoh: User, Droplet" 
-                            />
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Icon Cadangan</label>
+                            <div class="relative">
+                                <select v-model="step.fallback_icon" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm pl-10" style="height: 42px;">
+                                    <option value="User">User</option>
+                                    <option value="Settings">Settings</option>
+                                    <option value="AlertTriangle">AlertTriangle</option>
+                                    <option value="Droplet">Droplet</option>
+                                    <option value="Heart">Heart</option>
+                                    <option value="Star">Star</option>
+                                    <option value="Shield">Shield</option>
+                                    <option value="Zap">Zap</option>
+                                    <option value="Activity">Activity</option>
+                                    <option value="Book">Book</option>
+                                    <option value="Briefcase">Briefcase</option>
+                                    <option value="Camera">Camera</option>
+                                    <option value="Circle">Circle</option>
+                                </select>
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <component :is="getIcon(step.fallback_icon)" class="w-5 h-5 text-gray-500" />
+                                </div>
+                            </div>
                         </div>
                         <div class="w-full md:w-1/3 pt-2">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Gambar (Opsional)</label>
@@ -144,10 +181,14 @@ const goBack = () => {
                                     <span>Pilih File</span>
                                     <input type="file" class="sr-only" accept="image/*" @change="(e) => handleImageUpload(e, index)">
                                 </label>
-                                <span class="ml-3 text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap w-24">
-                                    <span v-if="step.image && step.image instanceof File">{{ step.image.name }}</span>
-                                    <span v-else-if="step.existing_image">Telah diunggah</span>
-                                    <span v-else>Tidak ada</span>
+                                <div v-if="step.image && typeof step.image === 'object'" class="ml-3 w-10 h-10 rounded overflow-hidden border border-gray-300 flex-shrink-0">
+                                    <img :src="getImagePreview(step.image)" class="w-full h-full object-cover" />
+                                </div>
+                                <div v-else-if="step.existing_image" class="ml-3 w-10 h-10 rounded overflow-hidden border border-gray-300 flex-shrink-0">
+                                    <img :src="getImageUrl(step.existing_image)" class="w-full h-full object-cover" />
+                                </div>
+                                <span v-else class="ml-3 text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap w-24">
+                                    Tidak ada
                                 </span>
                             </div>
                         </div>

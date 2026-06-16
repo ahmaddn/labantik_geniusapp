@@ -231,6 +231,7 @@ class MissionController extends Controller
                 'type'         => 'simulation_clickable',
                 'title'        => $first->title ?? 'Simulasi Objek Klik',
                 'order_number' => $first->order_number ?? 0,
+                'created_at'   => $first->created_at,
                 'objects'      => $mission->simulation_clickable_objects->map(fn($obj) => [
                     'id'          => $obj->id,
                     'name'        => $obj->name,
@@ -250,6 +251,7 @@ class MissionController extends Controller
                 'title'        => $firstSlider->title ?? 'Simulasi Interaktif',
                 'variables'    => $firstSlider->variables ?? [],
                 'order_number' => $firstSlider->order_number ?? 0,
+                'created_at'   => $firstSlider->created_at,
                 'levels'       => $firstSlider->levels->map(fn($lvl) => [
                     'id'          => $lvl->id,
                     'level_name'       => $lvl->level_name,
@@ -271,6 +273,7 @@ class MissionController extends Controller
                 'type'         => 'simulation_comparison',
                 'title'        => $firstComp->title ?? 'Simulasi Perbandingan',
                 'order_number' => $firstComp->order_number ?? 0,
+                'created_at'   => $firstComp->created_at,
                 'items'        => $mission->simulation_comparisons->sortBy('order_number')->map(fn($comp) => [
                     'id'          => $comp->id,
                     'explanation' => $comp->explanation,
@@ -292,6 +295,7 @@ class MissionController extends Controller
                 'future_state_title'  => $firstDec->future_state_title,
                 'character_image'     => $firstDec->character_image,
                 'order_number'        => $firstDec->order_number ?? 0,
+                'created_at'          => $firstDec->created_at,
                 'options'             => $firstDec->options->map(fn($opt) => [
                     'id'                 => $opt->id,
                     'button_label'       => $opt->button_label,
@@ -312,7 +316,8 @@ class MissionController extends Controller
                     'mascot_left_text'  => $reflection->mascot_left_text,
                     'mascot_right_text' => $reflection->mascot_right_text,
                     'flowchart_data'    => $reflection->flowchart_data,
-                    'order_number'      => 999, // Karena tidak ada order_number di tabel, tempatkan di akhir
+                    'created_at'        => $reflection->created_at,
+                    'order_number'      => $reflection->order_number ?? 0,
                     'questions'         => $reflection->questions->map(fn($q) => [
                         'id'            => $q->id,
                         'question_text' => $q->question_text,
@@ -322,9 +327,19 @@ class MissionController extends Controller
             }
         }
 
-        // Merge & sort by order_number
         $allItems = collect(array_merge($quizzes, $materials, $clickables, $sliders, $comparisons, $decisions, $reflections))
-            ->sortBy('order_number')
+            ->sort(function ($a, $b) {
+                $aOrder = $a['order_number'] ?? 0;
+                $bOrder = $b['order_number'] ?? 0;
+                
+                if ($aOrder !== 0 || $bOrder !== 0) {
+                    return $aOrder <=> $bOrder;
+                }
+                
+                $aTime = \Carbon\Carbon::parse($a['created_at'] ?? 'now')->timestamp;
+                $bTime = \Carbon\Carbon::parse($b['created_at'] ?? 'now')->timestamp;
+                return $bTime <=> $aTime;
+            })
             ->values()
             ->toArray();
 
