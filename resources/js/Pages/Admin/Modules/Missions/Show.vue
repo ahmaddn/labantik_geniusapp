@@ -458,6 +458,22 @@ const formatDate = (dateString) => {
         minute: "2-digit",
     });
 };
+
+const getLayoutTypeLabel = (type) => {
+    const labels = {
+        cover_page: "Halaman Cover",
+        learning_objectives: "Tujuan Pembelajaran",
+        initial_questions: "Pertanyaan Awal",
+        image_comparison: "Mengamati Gambar",
+        default: "Reguler (Teks/Video)",
+        process_list: "List Proses & Gambar",
+        conceptual_systematic: "Konseptual Sistematis",
+        interactive_examples: "Contoh Materi Dinamis",
+        summary_list: "Ringkasan Materi",
+        video_only: "Hanya Video YouTube",
+    };
+    return labels[type] || type;
+};
 </script>
 
 <template>
@@ -700,10 +716,19 @@ const formatDate = (dateString) => {
                                                 <div
                                                     class="flex items-center gap-2 mb-2"
                                                 >
-                                                    <span
-                                                        class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium"
-                                                        >MATERI</span
-                                                    >
+                                                    <div class="flex items-center gap-2">
+                                                        <span
+                                                            class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300 font-medium"
+                                                        >
+                                                            MATERI
+                                                        </span>
+                                                        <span
+                                                            v-if="item.layout_type"
+                                                            class="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-300 font-medium"
+                                                        >
+                                                            {{ getLayoutTypeLabel(item.layout_type) }}
+                                                        </span>
+                                                    </div>
                                                     <h3
                                                         class="text-xl font-bold text-gray-800 truncate"
                                                     >

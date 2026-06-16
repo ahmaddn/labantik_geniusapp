@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { ref, computed, watch } from "vue";
-import { router } from "@inertiajs/vue3";
+import { router, Link } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
@@ -29,6 +29,7 @@ import {
     CheckSquare,
     Loader2,
     Save,
+    ArrowLeft,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -575,6 +576,12 @@ const finalSave = () => {
             >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
+                        <Link
+                            :href="mission ? route('admin.modules.missions.show', [module.id, mission.id]) : route('admin.modules.show', module.id)"
+                            class="bg-white p-2 rounded-2xl border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors shadow-sm"
+                        >
+                            <ArrowLeft class="w-6 h-6 text-gray-600" />
+                        </Link>
                         <div
                             :class="[
                                 cardVariant === 'playful'

@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { ref, computed } from "vue";
-import { router } from "@inertiajs/vue3";
+import { router, Link } from "@inertiajs/vue3";
 import InputField from "@/Components/UI/Forms/InputField.vue";
 import TextareaField from "@/Components/UI/Forms/TextAreaField.vue";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
@@ -22,7 +22,8 @@ import {
     X,
     Loader2,
     Plus,
-    Trash2
+    Trash2,
+    ArrowLeft
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -321,6 +322,12 @@ const toggleCardVariant = () => {
             >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
+                        <Link
+                            :href="mission ? route('admin.modules.missions.show', [module.id, mission.id]) : route('admin.modules.show', module.id)"
+                            class="bg-white p-2 rounded-2xl border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors shadow-sm"
+                        >
+                            <ArrowLeft class="w-6 h-6 text-gray-600" />
+                        </Link>
                         <div
                             :class="[
                                 cardVariant === 'playful'

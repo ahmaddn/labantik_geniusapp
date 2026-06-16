@@ -62,6 +62,7 @@ class MissionController extends Controller
                     'title' => $material->title,
                     'description' => $material->description,
                     'content' => $material->content,
+                    'layout_type' => $material->layout_type,
                     'image' => $material->image,
                     'thumbnail' => $material->thumbnail,
                     'order_number' => $material->order_number,

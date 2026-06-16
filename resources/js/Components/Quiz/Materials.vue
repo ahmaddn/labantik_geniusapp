@@ -555,32 +555,31 @@ onUnmounted(() => {
       </div>
       
       <!-- Right: Content & List Stack -->
-      <div class="w-full md:w-7/12 flex flex-col justify-center gap-6 mt-6 md:mt-0">
+      <div class="w-full md:w-7/12 flex flex-col justify-center mt-6 md:mt-0">
           
-          <!-- Card 1: Description -->
+          <!-- Combined Card -->
           <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] shadow-sm relative pt-10 pb-6 px-6 md:px-8 mt-4 md:mt-6 w-full">
               <!-- Title Block Overlapping Top -->
-              <div class="absolute -top-5 left-1/2 -translate-x-1/2 w-[90%] bg-[#58cc02] rounded-[16px] border-2 border-white shadow-sm py-2 px-4 text-center flex items-center justify-center min-h-[48px]">
+              <div class="absolute -top-5 left-1/2 -translate-x-1/2 w-[90%] bg-[#58cc02] rounded-[16px] border-2 border-white shadow-sm py-2 px-4 text-center flex items-center justify-center min-h-[48px] z-10">
                   <h2 class="text-xl md:text-2xl font-black text-white uppercase tracking-wide drop-shadow-sm leading-tight" style="font-family: 'Nunito', sans-serif;">
                       {{ props.question.title }}
                   </h2>
               </div>
               
               <!-- Content Paragraph -->
-              <p class="text-[#5b738b] font-bold leading-relaxed text-[15px] md:text-lg text-justify mt-2 break-words" style="font-family: 'Nunito', sans-serif;">
+              <p class="text-[#5b738b] font-bold leading-relaxed text-[15px] md:text-lg text-center mt-2 mb-6 break-words" style="font-family: 'Nunito', sans-serif;">
                   {{ props.question.subtitle || 'Pelajari materi berikut ini:' }}
               </p>
-          </div>
-          
-          <!-- Card 2: Examples List -->
-          <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] shadow-sm p-6 md:p-8 self-end w-full md:w-11/12">
-              <h3 class="text-lg md:text-xl font-bold text-[#5b738b] mb-4" style="font-family: 'Nunito', sans-serif;">
-                  Contoh {{ props.question.title ? props.question.title.toLowerCase() : 'materi' }} :
-              </h3>
               
-              <div class="flex flex-col gap-3">
-                  <div v-for="(ex, idx) in conceptualData" :key="idx" class="w-full bg-white px-5 py-3 md:py-3.5 rounded-2xl md:rounded-full border-2 border-gray-200 shadow-sm cursor-default hover:border-[#1cb0f6] hover:bg-[#f0f9ff] transition-colors flex items-center min-h-[48px]">
-                      <span class="font-bold text-[#5b738b] text-[14px] md:text-[16px] break-words leading-snug w-full" style="font-family: 'Nunito', sans-serif; word-break: break-word;">{{ ex }}</span>
+              <div class="bg-blue-50/50 rounded-2xl p-4 md:p-6 border-2 border-blue-100">
+                  <h3 class="text-base md:text-lg font-black text-[#1cb0f6] mb-4 uppercase tracking-wider text-center" style="font-family: 'Nunito', sans-serif;">
+                      Contoh {{ props.question.title ? props.question.title : 'materi' }} :
+                  </h3>
+                  
+                  <div class="flex flex-col gap-3">
+                      <div v-for="(ex, idx) in conceptualData" :key="idx" class="w-full bg-white px-5 py-3 md:py-3.5 rounded-2xl md:rounded-full border-2 border-gray-200 shadow-sm cursor-default hover:border-[#1cb0f6] hover:bg-[#f0f9ff] transition-colors flex items-center min-h-[48px]">
+                          <span class="font-bold text-[#5b738b] text-[14px] md:text-[16px] break-words leading-snug w-full text-center md:text-left" style="font-family: 'Nunito', sans-serif; word-break: break-word;">{{ ex }}</span>
+                      </div>
                   </div>
               </div>
           </div>
@@ -600,12 +599,15 @@ onUnmounted(() => {
           <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-6 md:p-8 w-full shadow-sm max-w-3xl">
               <ul class="space-y-4 md:space-y-5">
                   <li v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start gap-3 md:gap-4 group cursor-default">
-                      <!-- Icon (Lucide checkmark instead of emoji) -->
-                      <LucideIcons.CheckCircle2 class="w-6 h-6 text-[#1cb0f6] shrink-0 mt-0.5 md:mt-1 group-hover:scale-110 transition-transform" />
+                      <!-- Icon -->
+                      <div class="flex-shrink-0 mt-0.5 md:mt-1 group-hover:scale-110 transition-transform">
+                          <span v-if="item.icon && item.icon.length <= 4" class="text-xl md:text-2xl">{{ item.icon }}</span>
+                          <LucideIcons.CheckCircle2 v-else class="w-6 h-6 text-[#1cb0f6]" />
+                      </div>
                       
                       <!-- Text -->
                       <span class="text-[15px] md:text-lg font-bold text-[#5b738b] leading-relaxed" style="font-family: 'Nunito', sans-serif;">
-                          {{ item.text || item }}
+                          {{ typeof item === 'object' ? (item.text || item.icon) : item }}
                       </span>
                   </li>
               </ul>
