@@ -336,21 +336,21 @@ const mascotUrl = computed(() => {
 
 // ── Speech bubble ──────────────────────────────────────────────
 const BUBBLES_UNANSWERED = [
-    "Ayo dibaca dulu soalnya!",
-    "Pikirkan baik-baik ya!",
-    "Fokus dan tenang, kamu pasti bisa!",
-    "Membaca soal membantu menemukan jawaban!",
+    "Gas baca soalnya dulu nih!",
+    "Slow aja bacanya, dipikirin mateng-mateng!",
+    "Fokus dong, kamu pasti bisa!",
+    "Cek ombak dulu, baca soalnya baik-baik!",
 ];
 const BUBBLES_ANSWERED = [
-    "Pilihan yang bagus! Ayo klik Selanjutnya.",
-    "Jawaban terpilih! Yakin dengan pilihanmu?",
-    "Luar biasa! Mari lanjut ke pertanyaan berikut.",
-    "Bagus sekali! Mari lanjutkan!",
+    "Cakep! Langsung gas klik Selanjutnya.",
+    "Udah yakin sama jawaban ini?",
+    "Kece badai! Lanjut ke soal berikutnya yuk.",
+    "Mantul! Gas terus pantang mundur!",
 ];
 const BUBBLES_MATERIAL = [
-    "Yuk pelajari materinya dulu!",
-    "Baca dengan seksama ya!",
-    "Materi ini penting untuk soal berikutnya!",
+    "Kuy kepoin materinya dulu!",
+    "Pahami pelan-pelan aja, chill!",
+    "Catet di otak ya, ini bekal buat soal nanti!",
 ];
 
 const bubbleIdx = ref(0);
@@ -533,11 +533,6 @@ onUnmounted(() => {
                             <div class="prog-track">
                                 <div class="prog-fill" :style="{ width: progressPct + '%' }">
                                     <div class="prog-shine"></div>
-                                    <div class="prog-tip" v-if="progressPct > 5">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                        </svg>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -690,14 +685,18 @@ onUnmounted(() => {
                                         <span>Waktu Habis</span>
                                     </div>
 
-                                    <component
-                                        v-if="step.question || step.isMaterial || step.isReflection"
-                                        :is="COMPONENT_MAP[step.quiz.type]"
-                                        :question="step.question"
-                                        :quiz="step.quiz"
-                                        :modelValue="answers[step.question?.id]"
-                                        @update-answer="updateAnswer"
-                                    />
+                                    <Transition name="slide-fade" mode="out-in">
+                                        <div :key="'step-' + currentStep" style="width: 100%;">
+                                            <component
+                                                v-if="step.question || step.isMaterial || step.isReflection"
+                                                :is="COMPONENT_MAP[step.quiz.type]"
+                                                :question="step.question"
+                                                :quiz="step.quiz"
+                                                :modelValue="answers[step.question?.id]"
+                                                @update-answer="updateAnswer"
+                                            />
+                                        </div>
+                                    </Transition>
                                 </div>
                             </template>
 
@@ -720,8 +719,8 @@ onUnmounted(() => {
                         :class="{ 'music-on': musicOn }"
                         title="Musik Latar"
                     >
-                        <Music2 v-if="musicOn" :size="18" :stroke-width="2.5" />
-                        <VolumeX v-else :size="18" :stroke-width="2.5" />
+                        <Music2 v-if="musicOn" :size="24" :stroke-width="2.5" />
+                        <VolumeX v-else :size="24" :stroke-width="2.5" />
                     </button>
 
                     <button
@@ -897,7 +896,7 @@ onUnmounted(() => {
     gap: 16px;
     height: 100%;
 }
-.nav-left { display: flex; align-items: center; flex-shrink: 0; }
+.nav-left { display: flex; align-items: center; width: 140px; flex-shrink: 0; }
 
 /* ─── BACK BUTTON (nav) ─── */
 .btn-back-nav {
@@ -909,29 +908,38 @@ onUnmounted(() => {
     font-family: "Nunito", sans-serif;
     font-size: 13px;
     font-weight: 800;
-    color: #94a3b8;
-    background: transparent;
-    border: 2px solid #e5e5e5;
-    border-bottom: 3px solid #d1d5db;
+    color: #ffffff;
+    background: #ff4b4b;
+    border: 2px solid #ff4b4b;
+    border-bottom: 3px solid #ea2b2b;
     cursor: pointer;
     transition: all 0.15s ease;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     white-space: nowrap;
 }
-.btn-back-nav:hover:not(:disabled) { background: #f8fafc; color: #64748b; border-color: #d1d5db; }
+.btn-back-nav:hover:not(:disabled) { filter: brightness(1.04); border-color: #ea2b2b; }
 .btn-back-nav:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 1px; }
 .btn-back-nav:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-back-label { display: inline; }
+
 .nav-center {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     max-width: 560px;
-    overflow: hidden;
+    margin: 0 auto;
 }
-.nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 140px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
 
 /* ─── MISSION NAME (shown on celebration) ─── */
 .nav-mission-name {
@@ -965,48 +973,36 @@ onUnmounted(() => {
 }
 
 /* ─── PROGRESS BAR ─── */
-.prog-wrapper { width: 100%; }
+.prog-wrapper { width: 100%; max-width: 560px; padding: 0 16px; }
 .prog-track {
     width: 100%;
-    height: 18px;
-    background: rgba(229,229,229,0.7);
-    border-radius: 99px;
+    height: 16px;
+    background: #e5e5e5;
+    border-radius: 12px;
     position: relative;
-    overflow: visible;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
 }
 .prog-fill {
     height: 100%;
-    background: linear-gradient(90deg, #1cb0f6, #0ea5e9, #38bdf8);
-    border-radius: 99px;
+    background: #58cc02;
+    border-radius: 12px;
     transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
     position: relative;
-    min-width: 18px;
-    box-shadow: 0 2px 8px rgba(28,176,246,0.4);
+    min-width: 16px;
 }
 .prog-shine {
     position: absolute;
     top: 3px; left: 8px; right: 8px;
-    height: 5px;
-    background: rgba(255,255,255,0.4);
-    border-radius: 99px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 12px;
 }
-.prog-tip {
-    position: absolute;
-    right: -4px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 22px; height: 22px;
-    background: #1cb0f6;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(28,176,246,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: tipPulse 1.5s ease-in-out infinite;
-}
-@keyframes tipPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(28,176,246,0.4); } 50% { box-shadow: 0 0 0 6px rgba(28,176,246,0); } }
+
+/* ─── CONTENT SLIDE FADE ─── */
+.slide-fade-enter-active { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.slide-fade-leave-active { transition: all 0.3s ease; }
+.slide-fade-enter-from { transform: translateX(30px); opacity: 0; }
+.slide-fade-leave-to { transform: translateX(-30px); opacity: 0; }
 
 
 /* ─── MUSIC BUTTON (footer — always visible) ─── */
@@ -1014,8 +1010,8 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px; height: 42px;
-    border-radius: 12px;
+    width: 52px; height: 52px;
+    border-radius: 14px;
     border: 2px solid #e5e5e5;
     border-bottom: 4px solid #cbd5e1;
     background: #ffffff;
@@ -1457,8 +1453,9 @@ onUnmounted(() => {
     .timer-badge { font-size: 12px; padding: 5px 8px; gap: 4px; }
     .timer-badge .timer-icon-wrap svg { width: 12px; height: 12px; }
     .music-fab { display: none; }
+    .music-footer-btn { width: 42px; height: 42px; position: static; }
+    .music-footer-btn svg { width: 18px; height: 18px; }
     .prog-track { height: 14px; }
-    .prog-tip { width: 18px; height: 18px; }
     .main-wrapper { padding: 10px 16px 100px; }
     .pretest-layout-cols { grid-template-columns: 1fr; gap: 0; margin: 15px auto 0; }
     .mascot-column { display: none !important; }
@@ -1487,8 +1484,14 @@ onUnmounted(() => {
     .footer-bar { height: 70px; }
     .footer-inner { padding: 0 12px; }
     .music-footer-btn { width: 38px; height: 38px; }
+    .music-footer-btn svg { width: 16px; height: 16px; }
     .footer-left { min-width: 0; }
     .footer-right { min-width: 0; }
+}
+
+@media (min-width: 769px) {
+    .music-footer-btn { position: absolute; left: 24px; }
+    .footer-left { padding-left: 64px; }
 }
 
 /* ─── CELEBRATION (same style as Pretest) ─── */

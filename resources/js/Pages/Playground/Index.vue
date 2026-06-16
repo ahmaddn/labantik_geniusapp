@@ -15,6 +15,7 @@ import {
     Target,
     Award,
     Image as ImageIcon,
+    RotateCcw,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
@@ -34,6 +35,37 @@ const props = defineProps({
 const ready = ref(false);
 const dropdownOpen = ref(false);
 const menuRef = ref(null);
+const showModal = ref(false);
+const modalVisible = ref(false);
+const selectedModule = ref(null);
+
+const openModal = (mod) => {
+    selectedModule.value = mod;
+    showModal.value = true;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalVisible.value = true;
+        });
+    });
+};
+
+const closeModal = () => {
+    modalVisible.value = false;
+    setTimeout(() => {
+        showModal.value = false;
+        selectedModule.value = null;
+    }, 320);
+};
+
+const goToModuleResult = () => {
+    if (!selectedModule.value) return;
+    router.visit(route("playground.posttest.result", selectedModule.value.id));
+};
+
+const restartModule = () => {
+    if (!selectedModule.value) return;
+    goToModule(selectedModule.value);
+};
 
 const handleClickOutside = (e) => {
     if (menuRef.value && !menuRef.value.contains(e.target))
@@ -88,7 +120,7 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap"
             rel="stylesheet"
         />
     </div>
@@ -351,16 +383,16 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                                         'btn-continue':
                                             mod.has_attempt &&
                                             !mod.fully_completed,
-                                        'btn-completed': mod.fully_completed,
+                                        'btn-restart': mod.fully_completed,
                                     }"
-                                    :disabled="mod.fully_completed"
                                     @click="
-                                        !mod.fully_completed && goToModule(mod)
+                                        mod.fully_completed ? openModal(mod) : goToModule(mod)
                                     "
                                 >
-                                    <span class="btn-circle-indicator"></span>
+                                    <RotateCcw v-if="mod.fully_completed" :size="20" :stroke-width="3" />
+                                    <span v-else class="btn-circle-indicator"></span>
                                     <span>{{
-                                        statusLabel(mod).toUpperCase()
+                                        mod.fully_completed ? 'MULAI ULANG' : statusLabel(mod).toUpperCase()
                                     }}</span>
                                 </button>
                             </div>
@@ -446,6 +478,38 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             </div>
         </aside>
     </div>
+
+    <Teleport to="body">
+        <div
+            v-if="showModal"
+            class="modal-overlay"
+            :class="{ 'modal-overlay-visible': modalVisible }"
+            @click.self="closeModal"
+        >
+            <div
+                class="modal-card"
+                :class="{ 'modal-card-visible': modalVisible }"
+            >
+                <div class="modal-icon-wrap mi-restart">
+                    <RotateCcw :size="48" color="#ffffff" :stroke-width="2.5" />
+                </div>
+                
+                <h2 class="modal-title">{{ selectedModule?.name }}</h2>
+                <p class="modal-desc">
+                    Modul ini sudah kamu selesaikan. Apakah kamu ingin berlatih lagi?
+                </p>
+
+                <div class="modal-stack-btn">
+                    <button class="mcta-primary mcta-restart" @click="restartModule">
+                        MULAI ULANG
+                    </button>
+                    <button class="mcta-secondary" @click="closeModal">
+                        NANTI SAJA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
 
 <style scoped>
@@ -919,15 +983,17 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     background: #ea580c;
 }
 
-.btn-completed {
-    background: #58cc02;
-    box-shadow: 0 4px 0 0 #3f9402;
+.btn-restart {
+    background: #a855f7;
+    box-shadow: 0 4px 0 0 #7e22ce;
     color: #ffffff;
-    cursor: not-allowed;
 }
-.btn-completed:active {
-    top: 0;
-    box-shadow: 0 4px 0 0 #3f9402 !important;
+.btn-restart:hover {
+    background: #9333ea;
+}
+.btn-restart:active {
+    top: 4px;
+    box-shadow: 0 0 0 0 #7e22ce !important;
 }
 
 .empty-path-card {
@@ -1295,5 +1361,152 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     .mission-box-desc {
         font-size: 13px;
     }
+}
+/* ════════════════════════════════
+   MODAL
+════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay-visible {
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .modal-overlay {
+        align-items: center;
+        padding: 24px;
+    }
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 32px 32px 0 0;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 24px;
+    position: relative;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (min-width: 768px) {
+    .modal-card {
+        border-radius: 32px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+        transform: scale(0.9) translateY(20px);
+    }
+}
+
+.modal-card-visible {
+    transform: translateY(0);
+}
+@media (min-width: 768px) {
+    .modal-card-visible {
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-icon-wrap {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 0 0 rgba(0,0,0,0.08);
+}
+.mi-restart {
+    background: #a855f7;
+    box-shadow: 0 8px 0 0 #7e22ce;
+}
+.mi-start {
+    background: #1cb0f6;
+    box-shadow: 0 8px 0 0 #0284c7;
+}
+
+.modal-title {
+    font-family: "Righteous", cursive;
+    font-size: 26px;
+    font-weight: 900;
+    color: #334155;
+    text-align: center;
+    margin-bottom: 12px;
+}
+.modal-desc {
+    font-size: 15px;
+    font-weight: 700;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 32px;
+}
+
+.modal-stack-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+.mcta-primary {
+    height: 52px;
+    border: none;
+    border-radius: 16px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    position: relative;
+    top: 0;
+    color: #fff;
+    transition: top 0.1s, box-shadow 0.1s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.mcta-primary:active {
+    top: 5px;
+    box-shadow: 0 0 0 0 transparent !important;
+}
+
+.mcta-restart {
+    background: #a855f7;
+    box-shadow: 0 5px 0 0 #7e22ce;
+}
+.mcta-start {
+    background: #1cb0f6;
+    box-shadow: 0 5px 0 0 #0284c7;
+}
+
+.mcta-secondary {
+    height: 52px;
+    background: transparent;
+    border: none;
+    color: #a855f7;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 100%;
+}
+.mcta-secondary:active {
+    opacity: 0.7;
 }
 </style>

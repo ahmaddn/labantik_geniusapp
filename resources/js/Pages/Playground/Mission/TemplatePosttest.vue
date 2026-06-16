@@ -244,26 +244,26 @@ const mascotUrl = computed(() => {
 });
 
 const BUBBLES_INTRO = [
-    "Yuk, baca petunjuknya dulu!",
-    "Siap mengukur akhir belajarmu?",
-    "Tunjukkan kemampuan terbaikmu!",
+    "Kuy, kepoin petunjuknya dulu!",
+    "Siap buat unjuk gigi di akhir misi ini?",
+    "Kasih paham! Tunjukin skill terbaikmu!",
 ];
 const BUBBLES_QUIZ_UNANSWERED = [
-    "Ayo dibaca dulu soalnya dengan teliti!",
-    "Pikirkan baik-baik ya!",
-    "Fokus dan tenang, kamu pasti bisa!",
-    "Membaca soal membantu menemukan jawaban!",
+    "Gas baca soalnya dulu nih!",
+    "Slow aja bacanya, dipikirin mateng-mateng!",
+    "Fokus dong, kamu pasti bisa!",
+    "Cek ombak dulu, baca soalnya baik-baik!",
 ];
 const BUBBLES_QUIZ_ANSWERED = [
-    "Pilihan yang bagus! Ayo klik Selanjutnya.",
-    "Jawaban terpilih! Yakin dengan pilihanmu?",
-    "Luar biasa! Mari lanjut ke pertanyaan berikut.",
-    "Bagus sekali! Mari lanjutkan!",
+    "Cakep! Langsung gas klik Selanjutnya.",
+    "Udah yakin sama jawaban ini?",
+    "Kece badai! Lanjut ke soal berikutnya yuk.",
+    "Mantul! Gas terus pantang mundur!",
 ];
 const BUBBLES_DONE = [
-    "Luar biasa! Kamu menyelesaikan posttest!",
-    "Hebat sekali! Saatnya melihat hasil!",
-    "Kerja bagus! Ayo kita lihat hasilnya!",
+    "Gokil abis! Kamu berhasil nyelesain posttest!",
+    "Kece parah! Penasaran kan sama hasilnya?",
+    "Mantap djiwa! Kuy kita cek hasilnya!",
 ];
 
 const bubbleIdx = ref(0);
@@ -730,10 +730,11 @@ onUnmounted(() => {
     align-items: center;
     cursor: default;
     user-select: none;
+    transform: translateX(-40px);
 }
 
 .mascot-avatar-img {
-    height: 290px;
+    height: 340px;
     width: auto;
     object-fit: contain;
     animation: mascotIdle 4s ease-in-out infinite;
@@ -742,7 +743,7 @@ onUnmounted(() => {
 }
 
 .mascot-avatar-shadow {
-    width: 130px;
+    width: 140px;
     height: 10px;
     background: radial-gradient(
         ellipse,

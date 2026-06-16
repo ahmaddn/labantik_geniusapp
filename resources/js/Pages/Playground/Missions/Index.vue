@@ -16,6 +16,7 @@ import {
     Home,
     Trophy,
     Check,
+    RotateCcw,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
@@ -91,11 +92,31 @@ const closeModal = () => {
 };
 
 const startMission = () => {
-    if (!selectedMission.value || selectedMission.value.status === "completed")
-        return;
+    if (!selectedMission.value) return;
+    proceedMission();
+};
+
+const proceedMission = () => {
     const id = selectedMission.value.id;
     closeModal();
     setTimeout(() => router.visit(route("playground.missions.show", id)), 150);
+};
+
+const goToMissionResult = () => {
+    if (!selectedMission.value) return;
+    router.visit(route("playground.missions.result", selectedMission.value.id));
+};
+
+const showLockedAlert = () => {
+    setTimeout(() => {
+        const stageBtns = document.querySelectorAll(".st-locked");
+        stageBtns.forEach((btn) => {
+            btn.style.transform = "translateX(5px)";
+            setTimeout(() => (btn.style.transform = "translateX(-5px)"), 100);
+            setTimeout(() => (btn.style.transform = "translateX(5px)"), 200);
+            setTimeout(() => (btn.style.transform = "translateX(0)"), 300);
+        });
+    }, 320);
 };
 
 const goToPosttest = () =>
@@ -353,17 +374,19 @@ const modalAccent = computed(() => {
                                     :style="
                                         isMissionLocked(i)
                                             ? {}
-                                            : {
-                                                  '--c': getColor(i).bg,
-                                                  '--s': getColor(i).sh,
-                                              }
+                                            : mission.status === 'completed'
+                                              ? { '--c': '#a855f7', '--s': '#7e22ce' }
+                                              : {
+                                                    '--c': getColor(i).bg,
+                                                    '--s': getColor(i).sh,
+                                                }
                                     "
                                     :disabled="isMissionLocked(i)"
                                     @click="openModal(mission, i)"
                                 >
-                                    <Check
+                                    <RotateCcw
                                         v-if="mission.status === 'completed'"
-                                        :size="42"
+                                        :size="36"
                                         color="white"
                                         :stroke-width="3"
                                     />
@@ -568,34 +591,18 @@ const modalAccent = computed(() => {
                 :class="{ 'modal-card-visible': modalVisible }"
             >
                 <div
-                    class="modal-strip"
-                    :style="{ background: modalAccent }"
-                ></div>
-                <div class="modal-hdr">
-                    <span
-                        class="modal-badge"
-                        :class="{
-                            'mbadge-done':
-                                selectedMission?.status === 'completed',
-                            'mbadge-prog':
-                                selectedMission?.status === 'in_progress',
-                            'mbadge-new':
-                                selectedMission?.status === 'not_started' ||
-                                !selectedMission?.status,
-                        }"
-                    >
-                        {{
-                            selectedMission?.status === "completed"
-                                ? "✓ Selesai"
-                                : selectedMission?.status === "in_progress"
-                                  ? "▶ Lanjutkan"
-                                  : "★ Mulai"
-                        }}
-                    </span>
-                    <button class="modal-close-btn" @click="closeModal">
-                        ✕
-                    </button>
+                    class="modal-icon-wrap"
+                    :class="{
+                        'mi-restart': selectedMission?.status === 'completed',
+                        'mi-prog': selectedMission?.status === 'in_progress',
+                        'mi-start': selectedMission?.status === 'not_started' || !selectedMission?.status
+                    }"
+                >
+                    <RotateCcw v-if="selectedMission?.status === 'completed'" :size="48" color="#ffffff" :stroke-width="2.5" />
+                    <Target v-else-if="selectedMission?.status === 'in_progress'" :size="48" color="#ffffff" :stroke-width="2.5" />
+                    <Target v-else :size="48" color="#ffffff" :stroke-width="2.5" />
                 </div>
+                
                 <h2 class="modal-title">{{ selectedMission?.name }}</h2>
                 <p class="modal-desc">
                     {{
@@ -631,28 +638,31 @@ const modalAccent = computed(() => {
                     </div>
                 </div>
 
-                <button
-                    class="modal-cta"
-                    :class="{
-                        'mcta-new':
-                            selectedMission?.status === 'not_started' ||
-                            !selectedMission?.status,
-                        'mcta-prog': selectedMission?.status === 'in_progress',
-                        'mcta-done': selectedMission?.status === 'completed',
-                    }"
-                    :disabled="selectedMission?.status === 'completed'"
-                    @click="startMission"
-                >
-                    {{
-                        selectedMission?.status === "completed"
-                            ? "✓ SUDAH SELESAI"
-                            : selectedMission?.status === "in_progress"
-                              ? "LANJUTKAN MISI"
-                              : "MULAI MISI"
-                    }}
-                </button>
+                <div class="modal-stack-btn">
+                    <button
+                        class="mcta-primary"
+                        :class="{
+                            'mcta-restart': selectedMission?.status === 'completed',
+                            'mcta-prog': selectedMission?.status === 'in_progress',
+                            'mcta-start': selectedMission?.status === 'not_started' || !selectedMission?.status
+                        }"
+                        @click="proceedMission"
+                    >
+                        {{
+                            selectedMission?.status === "completed"
+                                ? "MULAI ULANG"
+                                : selectedMission?.status === "in_progress"
+                                  ? "LANJUTKAN MISI"
+                                  : "MULAI MISI"
+                        }}
+                    </button>
+                    <button class="mcta-secondary" @click="closeModal">
+                        NANTI SAJA
+                    </button>
+                </div>
             </div>
         </div>
+
     </Teleport>
 </template>
 
@@ -1622,109 +1632,104 @@ const modalAccent = computed(() => {
     position: fixed;
     inset: 0;
     z-index: 500;
-    background: rgba(15, 23, 42, 0);
+    background: rgba(15, 23, 42, 0.5);
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 16px;
-    transition: background 0.28s;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 .modal-overlay-visible {
-    background: rgba(15, 23, 42, 0.5);
-}
-.modal-card {
-    background: #ffffff;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    transform: scale(0.8) translateY(20px);
-    transition:
-        opacity 0.3s,
-        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.modal-card-visible {
     opacity: 1;
-    transform: scale(1) translateY(0);
-}
-.modal-overlay:not(.modal-overlay-visible) .modal-card {
-    opacity: 0;
-    transform: scale(0.9) translateY(10px);
-    transition:
-        opacity 0.2s,
-        transform 0.2s;
 }
 
-.modal-strip {
-    height: 6px;
+@media (min-width: 768px) {
+    .modal-overlay {
+        align-items: center;
+        padding: 24px;
+    }
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 32px 32px 0 0;
     width: 100%;
-    flex-shrink: 0;
-}
-.modal-hdr {
+    max-width: 420px;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.12);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px 0;
+    padding: 40px 24px 24px;
+    position: relative;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.modal-badge {
-    font-size: 12px;
-    font-weight: 900;
-    border-radius: 12px;
-    padding: 6px 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+@media (min-width: 768px) {
+    .modal-card {
+        border-radius: 32px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
+        transform: scale(0.9) translateY(20px);
+    }
 }
-.mbadge-done {
-    background: #dcfce7;
-    color: #16a34a;
+
+.modal-card-visible {
+    transform: translateY(0);
 }
-.mbadge-prog {
-    background: #fff7ed;
-    color: #ea580c;
+@media (min-width: 768px) {
+    .modal-card-visible {
+        transform: scale(1) translateY(0);
+    }
 }
-.mbadge-new {
-    background: #ddf4ff;
-    color: #1cb0f6;
-}
-.modal-close-btn {
-    background: #f1f5f9;
-    border: none;
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 900;
-    color: #94a3b8;
+
+.modal-icon-wrap {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 0 0 rgba(0,0,0,0.08);
 }
+.mi-restart {
+    background: #a855f7;
+    box-shadow: 0 8px 0 0 #7e22ce;
+}
+.mi-prog {
+    background: #ff9600;
+    box-shadow: 0 8px 0 0 #cc7800;
+}
+.mi-start {
+    background: #1cb0f6;
+    box-shadow: 0 8px 0 0 #0284c7;
+}
+
 .modal-title {
     font-family: "Righteous", cursive;
-    font-size: 24px;
-    color: #1e293b;
-    padding: 16px 24px 0;
+    font-size: 26px;
+    font-weight: 900;
+    color: #334155;
+    text-align: center;
+    margin-bottom: 12px;
 }
 .modal-desc {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: #64748b;
+    text-align: center;
     line-height: 1.5;
-    padding: 8px 24px 0;
+    margin-bottom: 24px;
 }
 
 .modal-stats {
     display: flex;
     align-items: center;
-    margin: 20px 24px 0;
+    margin: 0 0 32px;
     background: #f8fafc;
     border: 2px solid #e2e8f0;
     border-radius: 16px;
+    width: 100%;
 }
 .mstat {
     flex: 1;
@@ -1753,47 +1758,63 @@ const modalAccent = computed(() => {
     background: #e2e8f0;
 }
 
-.modal-cta {
-    margin: 24px;
+.modal-stack-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+.mcta-primary {
     height: 52px;
-    width: calc(100% - 48px);
     border: none;
     border-radius: 16px;
     font-family: "Nunito", sans-serif;
     font-size: 15px;
     font-weight: 900;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     cursor: pointer;
     position: relative;
     top: 0;
-    transition:
-        top 0.1s,
-        box-shadow 0.1s;
-}
-.modal-cta:active {
-    top: 5px;
-}
-.mcta-new {
-    background: #1cb0f6;
     color: #fff;
-    box-shadow: 0 5px 0 0 #1899d6;
+    transition: top 0.1s, box-shadow 0.1s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
-.mcta-new:active {
-    box-shadow: 0 0 0 0 #1899d6;
+.mcta-primary:active {
+    top: 5px;
+    box-shadow: 0 0 0 0 transparent !important;
+}
+
+.mcta-restart {
+    background: #a855f7;
+    box-shadow: 0 5px 0 0 #7e22ce;
 }
 .mcta-prog {
     background: #ff9600;
-    color: #fff;
     box-shadow: 0 5px 0 0 #cc7800;
 }
-.mcta-prog:active {
-    box-shadow: 0 0 0 0 #cc7800;
+.mcta-start {
+    background: #1cb0f6;
+    box-shadow: 0 5px 0 0 #0284c7;
 }
-.mcta-done {
-    background: #e2e8f0;
-    color: #94a3b8;
-    box-shadow: 0 5px 0 0 #cbd5e1;
-    cursor: not-allowed;
+
+.mcta-secondary {
+    height: 52px;
+    background: transparent;
+    border: none;
+    color: #a855f7;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 100%;
+}
+.mcta-secondary:active {
+    opacity: 0.7;
 }
 
 /* Transitions */
