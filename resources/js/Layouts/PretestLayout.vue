@@ -182,21 +182,6 @@ defineExpose({ musicOn, toggleMusic });
                                     :style="{ width: progressPercent + '%' }"
                                 >
                                     <div class="prog-shine"></div>
-                                    <div
-                                        class="prog-tip"
-                                        v-if="progressPercent > 5"
-                                    >
-                                        <svg
-                                            width="12"
-                                            height="12"
-                                            viewBox="0 0 24 24"
-                                            fill="white"
-                                        >
-                                            <polygon
-                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                                            />
-                                        </svg>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -532,10 +517,12 @@ defineExpose({ musicOn, toggleMusic });
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center; /* Diubah menjadi center untuk penempatan yang lebih proporsional */
+    justify-content: center;
     max-width: 560px;
     overflow: hidden;
 }
+
+
 
 .nav-title-text {
     display: flex;
@@ -560,22 +547,20 @@ defineExpose({ musicOn, toggleMusic });
 
 .prog-track {
     width: 100%;
-    height: 18px;
-    background: rgba(229, 229, 229, 0.7);
-    border-radius: 99px;
+    height: 16px;
+    background: #e5e5e5;
+    border-radius: 12px;
     position: relative;
-    overflow: visible;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
 }
 
 .prog-fill {
     height: 100%;
-    background: linear-gradient(90deg, #1cb0f6, #0ea5e9, #38bdf8);
-    border-radius: 99px;
+    background: #58cc02;
+    border-radius: 12px;
     transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
-    min-width: 18px;
-    box-shadow: 0 2px 8px rgba(28, 176, 246, 0.4);
+    min-width: 16px;
 }
 
 .prog-shine {
@@ -583,36 +568,9 @@ defineExpose({ musicOn, toggleMusic });
     top: 3px;
     left: 8px;
     right: 8px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 99px;
-}
-
-.prog-tip {
-    position: absolute;
-    right: -4px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
-    background: #1cb0f6;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(28, 176, 246, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: tipPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes tipPulse {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(28, 176, 246, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 6px rgba(28, 176, 246, 0);
-    }
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
 }
 
 .nav-right {
