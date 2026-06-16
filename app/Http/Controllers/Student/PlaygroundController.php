@@ -76,15 +76,21 @@ $background = $template?->backgrounds->first()?->image
 
             // ── 2. Semua misi ───────────────────────────────────────
             $missions        = $module->missions;
-            $allMissionsDone = $missions->isNotEmpty() && $missions->every(function ($mission) use ($studentId) {
-                $quizzes = $mission->quizzes->where('category', 'mission');
-                if ($quizzes->isEmpty()) return false;
-                return $quizzes->every(fn ($quiz) =>
-                    Quiz_attempts::where('quiz_id', $quiz->id)
-                        ->where('student_id', $studentId)
-                        ->exists()
-                );
-            });
+            
+            if ($missions->isEmpty()) {
+                $allMissionsDone = true;
+            } else {
+                $allMissionsDone = $missions->every(function ($mission) use ($studentId) {
+                    $quizzes = $mission->quizzes->where('category', 'mission');
+                    if ($quizzes->isEmpty()) return true;
+                    
+                    return $quizzes->every(fn ($quiz) =>
+                        Quiz_attempts::where('quiz_id', $quiz->id)
+                            ->where('student_id', $studentId)
+                            ->exists()
+                    );
+                });
+            }
 
             // ── 3. Posttest ─────────────────────────────────────────
             $posttestQuiz = Quizzes::where('module_id', $module->id)
@@ -97,9 +103,6 @@ $background = $template?->backgrounds->first()?->image
                     ->exists()
                 : true; // kalau tidak ada posttest, anggap sudah lewat
 
-            // ── Fully completed ─────────────────────────────────────
-            $fullyCompleted = $pretestDone && $allMissionsDone && $posttestDone;
-
             // ── has_attempt & best_score (dari semua quiz di modul) ─
             $allQuizIds = Quizzes::where('module_id', $module->id)->pluck('id');
 
@@ -109,6 +112,9 @@ $background = $template?->backgrounds->first()?->image
 
             $hasAttempt = $attempts->isNotEmpty();
             $bestScore  = $hasAttempt ? (int) $attempts->max('score') : 0;
+
+            // ── Fully completed ─────────────────────────────────────
+            $fullyCompleted = $pretestDone && $allMissionsDone && $posttestDone && $hasAttempt;
 
             return [
                 'id'               => $module->id,
