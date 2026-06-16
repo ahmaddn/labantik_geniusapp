@@ -180,8 +180,10 @@ const modalAccent = computed(() => {
         <aside class="dsk-sidebar-left">
             <div class="dsk-sidebar-inner">
                 <div class="ds-brand">
-                    <div class="ds-brand-icon">
+                    <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }">
+                        <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;" />
                         <Zap
+                            v-else
                             :size="18"
                             color="#fff"
                             fill="white"
@@ -786,8 +788,8 @@ const modalAccent = computed(() => {
     border-bottom: 2px solid #f1f5f9;
 }
 .ds-brand-icon {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
     background: #1cb0f6;
     display: flex;
@@ -795,6 +797,10 @@ const modalAccent = computed(() => {
     justify-content: center;
     box-shadow: 0 3px 0 0 #1899d6;
     flex-shrink: 0;
+}
+.ds-brand-icon.has-logo {
+    background: transparent;
+    box-shadow: none;
 }
 .ds-brand-name {
     font-size: 20px;

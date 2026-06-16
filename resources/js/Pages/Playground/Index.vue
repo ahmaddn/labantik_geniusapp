@@ -134,77 +134,94 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             <div class="particle p-5"></div>
         </div>
 
-        <aside class="duo-sidebar-left">
-            <div class="sidebar-brand">
-                <div class="brand-icon-wrap">
+        <aside class="dsk-sidebar-left">
+            <div class="dsk-sidebar-inner">
+                <div class="ds-brand">
+                <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }">
+                    <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;" />
                     <Zap
+                        v-else
                         :size="22"
                         color="#fff"
                         fill="white"
                         :stroke-width="2"
                     />
                 </div>
-                <span class="brand-text">{{
-                    $page.props.global_settings?.platform_name || "Geniuss"
-                }}</span>
-            </div>
+                    <span class="ds-brand-name">{{
+                        $page.props.global_settings?.platform_name || "Geniuss"
+                    }}</span>
+                </div>
 
-            <nav class="sidebar-menu">
-                <div class="menu-item active">
-                    <BookOpen :size="20" :stroke-width="2.5" />
+                <div class="ds-sep"></div>
+                <p class="ds-label">NAVIGASI</p>
+
+                <div
+                    class="ds-nav-btn ds-nav-active"
+                    style="pointer-events: none"
+                >
+                    <BookOpen :size="17" :stroke-width="3" />
                     <span>MODUL</span>
                 </div>
 
+                <div class="ds-spacer"></div>
+
                 <button
-                    class="menu-item style-music-btn"
-                    :class="{ 'sidebar-music-on': musicOn }"
+                    class="ds-music-btn"
+                    :class="{ on: musicOn }"
                     @click="toggleMusic(null)"
                 >
-                    <Music2 v-if="musicOn" :size="20" :stroke-width="2.5" />
-                    <VolumeX v-else :size="20" :stroke-width="2.5" />
+                    <Music2 v-if="musicOn" :size="17" :stroke-width="3" />
+                    <VolumeX v-else :size="17" :stroke-width="3" />
                     <span>MUSIK: {{ musicOn ? "ON" : "OFF" }}</span>
                 </button>
-            </nav>
 
-            <div class="sidebar-user">
-                <button
-                    class="user-pill-chunky"
-                    :class="{ open: dropdownOpen }"
-                    @click="dropdownOpen = !dropdownOpen"
-                >
-                    <div class="avatar-chunky">
-                        {{ user.name.charAt(0).toUpperCase() }}
-                    </div>
-                    <span class="user-pill-name">{{
-                        user.name.split(" ")[0]
-                    }}</span>
-                    <ChevronDown
-                        :size="14"
-                        :stroke-width="3"
-                        class="pill-chev"
-                    />
-                </button>
+                <div class="ds-sep"></div>
 
-                <Transition name="dd">
-                    <div v-if="dropdownOpen" class="duo-dropdown">
-                        <div class="dd-profile-info">
-                            <div class="dd-avatar-big">
-                                {{ user.name.charAt(0).toUpperCase() }}
-                            </div>
-                            <div class="dd-text">
-                                <div class="dd-name">{{ user.name?.name }}</div>
-                                <div class="dd-class">
-                                    Kelas {{ user.class?.name }}
+                <div class="ds-user">
+                    <button
+                        class="ds-user-pill"
+                        :class="{ open: dropdownOpen }"
+                        @click="dropdownOpen = !dropdownOpen"
+                    >
+                        <div class="ds-avatar">
+                            {{ user.name.charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="ds-uname">{{
+                            user.name.split(" ")[0]
+                        }}</span>
+                        <ChevronDown
+                            :size="14"
+                            :stroke-width="3.5"
+                            :style="{
+                                marginLeft: 'auto',
+                                transform: dropdownOpen
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(0deg)',
+                                transition: 'transform .2s',
+                            }"
+                        />
+                    </button>
+
+                    <Transition name="t-dropdown">
+                        <div v-if="dropdownOpen" class="ds-dropdown">
+                            <div class="ds-dd-profile">
+                                <div class="ds-avatar ds-avatar-lg">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
+                                <div class="ds-dd-text">
+                                    <div class="ds-dd-name">{{ user.name }}</div>
+                                    <div class="ds-dd-class">
+                                        Kelas {{ user.class?.name || '-' }}
+                                    </div>
                                 </div>
                             </div>
+                            <div class="ds-dd-sep"></div>
+                            <button class="ds-dd-logout" @click="logout">
+                                <LogOut :size="16" :stroke-width="2.5" /> KELUAR
+                            </button>
                         </div>
-                        <div class="dd-divider"></div>
-                        <button class="dd-logout-btn" @click="logout">
-                            <LogOut :size="16" :stroke-width="2.5" />
-                            KELUAR
-                        </button>
-                    </div>
-                </Transition>
+                    </Transition>
+                </div>
             </div>
         </aside>
 
@@ -230,8 +247,10 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             <div class="learning-path-container">
                 <header class="mobile-top-bar">
                     <div class="mobile-brand">
-                        <div class="brand-icon-wrap mini">
+                        <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }" style="width: 28px; height: 28px; border-radius: 6px;">
+                            <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;" />
                             <Zap
+                                v-else
                                 :size="16"
                                 color="#fff"
                                 fill="white"
@@ -596,207 +615,251 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
     }
 }
 
-.duo-sidebar-left {
+.dsk-sidebar-left {
     position: fixed;
     top: 16px;
     left: 16px;
     bottom: 16px;
-    width: 240px;
-    border: 2px solid #cbd5e1;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 20px 14px;
+    width: 228px;
+    z-index: 50;
     display: flex;
     flex-direction: column;
-    z-index: 10;
-    box-shadow: 0 6px 0 0 #cbd5e1;
 }
-
-.sidebar-brand {
+.dsk-sidebar-inner {
+    height: 100%;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 0 0 #e2e8f0;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ds-brand {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 0 8px 24px;
+    padding: 0 4px 12px;
+    border-bottom: 2px solid #f1f5f9;
 }
-.brand-icon-wrap {
+.ds-brand-icon {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: #0ea5e9;
+    background: #1cb0f6;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 0 0 #0369a1;
+    box-shadow: 0 3px 0 0 #1899d6;
+    flex-shrink: 0;
 }
-.brand-icon-wrap.mini {
-    width: 28px;
-    height: 28px;
-    box-shadow: 0 2px 0 0 #0369a1;
+.ds-brand-icon.has-logo {
+    background: transparent;
+    box-shadow: none;
 }
-.brand-text {
-    font-size: 22px;
+.ds-brand-name {
+    font-size: 20px;
     font-weight: 900;
-    color: #0ea5e9;
-    letter-spacing: -0.5px;
+    color: #1cb0f6;
     text-transform: uppercase;
+    letter-spacing: -0.5px;
 }
-
-.sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
+.ds-sep {
+    height: 2px;
+    background: #f1f5f9;
+    border-radius: 2px;
+    margin: 4px 0;
 }
-.menu-item {
+.ds-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    padding: 0 6px;
+}
+.ds-nav-btn {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 14px;
+    padding: 12px 14px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 13px;
     font-weight: 800;
     color: #64748b;
     cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.1s ease;
     text-transform: uppercase;
-    background: transparent;
-    width: 100%;
-    text-align: left;
+    transition: background 0.15s;
 }
-.menu-item:hover {
-    background-color: #f1f5f9;
+.ds-nav-btn:hover {
+    background: #f8fafc;
+    border-color: #f1f5f9;
 }
-.menu-item.active {
-    background-color: #e0f2fe;
-    border: 2px solid #7dd3fc;
-    color: #0369a1;
+.ds-nav-active {
+    background: #ddf4ff !important;
+    border-color: #84d8ff !important;
+    color: #1cb0f6 !important;
+}
+.ds-spacer {
+    flex: 1;
 }
 
-/* Style Khusus Button Musik Baru di Sidebar */
-.style-music-btn {
+.ds-music-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
     font-family: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-bottom: 4px solid #cbd5e1;
+    color: #64748b;
 }
-.style-music-btn.sidebar-music-on {
-    background-color: #ffebd0;
-    border: 2px solid #ffb74d;
-    color: #e67e00;
+.ds-music-btn:hover {
+    filter: brightness(0.95);
 }
-.style-music-btn.sidebar-music-on:hover {
-    background-color: #ffd8a8;
+.ds-music-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+.ds-music-btn.on {
+    background: #fff7ed;
+    border-color: #fdba74;
+    border-bottom-color: #fb923c;
+    color: #ea580c;
 }
 
-.sidebar-user {
+.ds-user {
     position: relative;
 }
-.user-pill-chunky {
-    width: 100%;
+.ds-user-pill {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 10px;
+    padding: 8px;
+    width: 100%;
+    border-radius: 16px;
     background: #ffffff;
-    border: 2px solid #cbd5e1;
-    border-radius: 14px;
-    box-shadow: 0 4px 0 0 #cbd5e1;
+    border: 2px solid #e2e8f0;
+    border-bottom: 4px solid #cbd5e1;
     cursor: pointer;
-    font-family: inherit;
-    transition: all 0.05s ease;
+    text-align: left;
+    transition: all 0.15s;
 }
-.user-pill-chunky:hover,
-.user-pill-chunky.open {
+.ds-user-pill:hover {
     background: #f8fafc;
 }
-.user-pill-chunky:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 0 #cbd5e1;
+.ds-user-pill.open {
+    border-bottom-width: 2px;
+    transform: translateY(2px);
+    background: #f1f5f9;
 }
-
-.avatar-chunky {
+.ds-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
     background: #38bdf8;
-    color: #ffffff;
-    font-weight: 900;
-    font-size: 14px;
+    color: white;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #0284c7;
+    font-size: 15px;
 }
-.user-pill-name {
+.ds-avatar-lg {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+}
+.ds-uname {
     font-size: 14px;
     font-weight: 800;
     color: #334155;
-}
-.pill-chev {
-    margin-left: auto;
-    color: #94a3b8;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.duo-dropdown {
+.ds-dropdown {
     position: absolute;
     bottom: calc(100% + 10px);
     left: 0;
-    width: 100%;
+    width: 240px;
     background: #ffffff;
-    border: 2px solid #cbd5e1;
-    border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    z-index: 60;
+}
+.ds-dd-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ds-dd-text {
+    flex: 1;
+    min-width: 0;
+}
+.ds-dd-name {
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 15px;
+    white-space: nowrap;
     overflow: hidden;
-    z-index: 200;
+    text-overflow: ellipsis;
 }
-.dd-profile-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-}
-.dd-avatar-big {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #38bdf8;
-    color: #ffffff;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #0284c7;
-}
-.dd-name {
-    font-size: 14px;
-    font-weight: 800;
-    color: #334155;
-}
-.dd-class {
-    font-size: 12px;
-    font-weight: 700;
-    color: #94a3b8;
-}
-.dd-divider {
-    height: 2px;
-    background: #cbd5e1;
-}
-.dd-logout-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    font-family: inherit;
+.ds-dd-class {
     font-size: 13px;
-    font-weight: 800;
-    color: #ef4444;
-    cursor: pointer;
-    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
 }
-.dd-logout-btn:hover {
+.ds-dd-sep {
+    height: 2px;
+    background: #f1f5f9;
+    margin: 14px 0;
+}
+.ds-dd-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    background: transparent;
+    color: #ef4444;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ds-dd-logout:hover {
     background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.t-dropdown-enter-active,
+.t-dropdown-leave-active {
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.t-dropdown-enter-from,
+.t-dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
 }
 
 .duo-main-content {
