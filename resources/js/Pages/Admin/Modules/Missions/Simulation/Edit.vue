@@ -402,10 +402,13 @@ const saveDecision = () => {
                         <div v-if="sliderForm.variables.length === 0" class="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-gray-500">
                             Belum ada variabel penggeser. Klik "Tambah Variabel" untuk menambahkan.
                         </div>
+                        <div v-else class="mb-4 text-sm text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                            Maksimal 1 variabel untuk simulasi ini.
+                        </div>
 
                         <div v-for="(variable, vIdx) in sliderForm.variables" :key="vIdx" class="p-4 border-2 border-indigo-100 bg-indigo-50/50 rounded-xl relative mb-4">
                             <button @click="removeVariable(vIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700" title="Hapus Variabel"><Trash2 class="w-5 h-5"/></button>
-                            <h4 class="font-bold text-indigo-800 mb-3">Variabel {{ vIdx + 1 }}</h4>
+                            <h4 class="font-bold text-indigo-800 mb-3">Variabel Tunggal</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <InputField label="Nama Variabel" v-model="variable.name" placeholder="Misal: Intensitas Suhu" />
                                 <InputField label="Label Kiri (Minimal)" v-model="variable.min_label" placeholder="Misal: Dingin" />

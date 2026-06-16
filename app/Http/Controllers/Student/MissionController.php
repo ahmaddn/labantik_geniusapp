@@ -568,6 +568,25 @@ class MissionController extends Controller
                 ]);
             }
 
+            // Misi dianggap selesai ketika submitMissionAnswers dipanggil
+            if ($studentId) {
+                // Get current attempt number
+                $lastAttempt = \App\Models\StudentMissionLog::where('user_id', $studentId)
+                    ->where('mission_id', $mission->id)
+                    ->orderBy('attempt_number', 'desc')
+                    ->first();
+                
+                $attemptNum = $lastAttempt ? $lastAttempt->attempt_number + 1 : 1;
+
+                \App\Models\StudentMissionLog::create([
+                    'user_id' => $studentId,
+                    'mission_id' => $mission->id,
+                    'module_id' => $mission->module_id,
+                    'attempt_number' => $attemptNum,
+                    'completed_at' => now(),
+                ]);
+            }
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 422);

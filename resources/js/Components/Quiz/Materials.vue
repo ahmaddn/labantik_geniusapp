@@ -14,7 +14,7 @@ const props = defineProps({
 const sliderValues = reactive({})
 
 const conceptualData = computed(() => {
-  if (['conceptual_systematic', 'learning_objectives', 'initial_questions', 'cover_page', 'image_comparison', 'process_list'].includes(props.question?.layout_type)) {
+  if (['conceptual_systematic', 'learning_objectives', 'initial_questions', 'cover_page', 'image_comparison', 'process_list', 'interactive_examples', 'summary_list'].includes(props.question?.layout_type)) {
     try {
       return JSON.parse(props.question.content)
     } catch (e) {
@@ -502,6 +502,65 @@ onUnmounted(() => {
             </div>
         </div>
     </div>
+  </div>
+
+  <!-- Interactive Examples -->
+  <div v-else-if="props.question?.layout_type === 'interactive_examples'" class="w-full mx-auto flex flex-col md:flex-row gap-6 justify-center items-center py-4 px-2">
+      <!-- Left: Image -->
+      <div class="w-full md:w-5/12 flex-shrink-0">
+          <div class="bg-white p-4 rounded-3xl shadow-xl border-4 border-teal-200 aspect-[4/3] overflow-hidden flex items-center justify-center relative group">
+              <div class="absolute inset-0 bg-teal-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+              <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" />
+              <div v-else class="text-teal-300 font-bold text-xl flex flex-col items-center"><LucideIcons.Image class="w-12 h-12 mb-2"/>Gambar Materi</div>
+          </div>
+      </div>
+      <!-- Right: Content & List -->
+      <div class="w-full md:w-7/12 flex flex-col justify-center space-y-6">
+          <div class="bg-teal-50 p-6 rounded-3xl border-2 border-teal-100 shadow-sm relative overflow-hidden">
+              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white opacity-40 rounded-full blur-xl"></div>
+              <h2 class="text-2xl md:text-3xl font-black text-teal-800 font-heading uppercase mb-3 relative z-10 leading-tight">
+                  {{ props.question.title }}
+              </h2>
+              <p class="text-teal-700 font-bold leading-relaxed text-sm md:text-base relative z-10">
+                  {{ props.question.subtitle || 'Pelajari contoh-contoh berikut ini:' }}
+              </p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+              <div v-for="(ex, idx) in conceptualData" :key="idx" class="bg-white py-4 px-3 rounded-2xl shadow-sm border-2 border-teal-100 border-b-4 border-b-teal-400 flex items-center justify-center transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:border-teal-300 hover:border-b-teal-500 group cursor-default">
+                  <span class="font-black text-teal-700 text-base md:text-lg uppercase tracking-wide text-center group-hover:text-teal-900 transition-colors">{{ ex }}</span>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Summary List -->
+  <div v-else-if="props.question?.layout_type === 'summary_list'" class="w-full min-h-[400px] flex flex-col justify-center items-center p-6 relative overflow-hidden rounded-3xl shadow-lg border-2 border-gray-200" style="min-height: 500px;">
+      <!-- Background Image -->
+      <div v-if="props.question.image" class="absolute inset-0 z-0">
+          <img :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
+      </div>
+      <div v-else class="absolute inset-0 z-0 bg-gradient-to-b from-blue-50 to-green-100"></div>
+
+      <div class="relative z-10 w-full max-w-4xl flex flex-col items-center py-10">
+          <!-- Title Box -->
+          <div class="bg-[#e9e3cf] border border-[#a855f7] px-16 py-3 mb-8 shadow-sm" style="box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+              <h2 class="text-3xl md:text-5xl text-black" style="font-family: 'Caveat', cursive, sans-serif;">
+                  {{ props.question.title || 'Ringkasan' }}
+              </h2>
+          </div>
+
+          <!-- Content Box -->
+          <div class="bg-white/95 rounded-[30px] border-2 border-dashed border-black p-8 md:p-12 w-full shadow-md max-w-3xl">
+              <ul class="space-y-4">
+                  <li v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start gap-4 group">
+                      <div class="w-2 h-2 rounded-full bg-black mt-3 shrink-0"></div>
+                      <span class="text-3xl shrink-0 group-hover:scale-110 transition-transform">{{ item.icon || '📌' }}</span>
+                      <span class="text-lg md:text-xl font-bold text-gray-800 leading-relaxed font-heading">{{ item.text }}</span>
+                  </li>
+              </ul>
+          </div>
+      </div>
   </div>
 
   <div v-else class="mat-container">

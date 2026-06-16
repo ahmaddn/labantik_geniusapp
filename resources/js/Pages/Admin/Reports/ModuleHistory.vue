@@ -10,16 +10,20 @@ import {
     Eye,
     Star,
     CheckCircle,
-    AlertTriangle,
     Download
 } from "lucide-vue-next";
+import { ref } from "vue";
 import { h } from "vue";
 
 const props = defineProps({
     module: Object,
     students: Array,
     module_summary: Object,
+    mission_logs: Array,
 });
+
+const activeTab = ref("summary"); // "summary" atau "history"
+
 
 const goBack = () => {
     router.visit(route("admin.reports.index"));
@@ -108,7 +112,26 @@ const handleAction = ({ action, data }) => {
                 </div>
             </div>
 
-            <!-- Summary Cards -->
+            <!-- Tabs -->
+            <div class="flex gap-4 border-b border-gray-200">
+                <button
+                    @click="activeTab = 'summary'"
+                    class="pb-3 px-2 font-bold text-lg transition-colors border-b-4"
+                    :class="activeTab === 'summary' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                >
+                    Ringkasan & Siswa
+                </button>
+                <button
+                    @click="activeTab = 'history'"
+                    class="pb-3 px-2 font-bold text-lg transition-colors border-b-4"
+                    :class="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                >
+                    Riwayat Penyelesaian Misi
+                </button>
+            </div>
+
+            <div v-if="activeTab === 'summary'" class="space-y-6">
+                <!-- Summary Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div
                     class="bg-white rounded-3xl border-4 border-blue-200 shadow-playful p-5 flex items-center gap-4"
@@ -238,6 +261,50 @@ const handleAction = ({ action, data }) => {
                         </div>
                     </template>
                 </DataTable>
+            </div>
+            </div>
+
+            <!-- History Tab -->
+            <div v-if="activeTab === 'history'" class="space-y-6">
+                <div class="bg-blue-100 rounded-2xl p-4 flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Riwayat Misi Selesai</h2>
+                    <span class="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold">
+                        {{ mission_logs.length }} Catatan
+                    </span>
+                </div>
+
+                <div v-if="mission_logs.length === 0" class="bg-white p-8 rounded-3xl border-2 border-gray-200 text-center">
+                    <p class="text-gray-500 font-medium">Belum ada riwayat penyelesaian misi.</p>
+                </div>
+
+                <div v-else class="space-y-4">
+                    <details v-for="log in mission_logs" :key="log.id" class="group bg-white rounded-2xl border-2 border-blue-100 shadow-sm overflow-hidden open:border-blue-300 transition-all">
+                        <summary class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 cursor-pointer bg-blue-50/50 hover:bg-blue-50 list-none gap-4">
+                            <div class="flex items-center gap-4 w-full">
+                                <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0">
+                                    {{ log.attempt_number }}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-gray-800 text-lg">{{ log.student_name }}</h3>
+                                    <p class="text-sm text-gray-500 font-medium">{{ log.mission_name }}</p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="text-sm font-bold text-gray-700">{{ log.completed_at }}</p>
+                                    <p class="text-xs text-blue-600 font-semibold uppercase">Selesai</p>
+                                </div>
+                                <div class="shrink-0 text-blue-400 group-open:rotate-180 transition-transform">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </div>
+                            </div>
+                        </summary>
+                        <div class="p-4 border-t border-blue-100 bg-white">
+                            <p class="text-gray-600 text-sm">
+                                Siswa ini telah menyelesaikan seluruh tahapan materi dan soal yang ada pada <b>{{ log.mission_name }}</b> (Percobaan ke-{{ log.attempt_number }}).
+                                Detail skor dapat dilihat di tombol <b>Lihat Detail</b> pada tab Ringkasan & Siswa.
+                            </p>
+                        </div>
+                    </details>
+                </div>
             </div>
         </div>
     </AppLayout>

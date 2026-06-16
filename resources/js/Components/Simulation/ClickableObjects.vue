@@ -6,12 +6,14 @@ const props = defineProps({
     quiz: { type: Object, required: true },
 });
 
-const clickedObjects = ref(new Set());
+const clickedObjects = ref([]);
 
 const toggleObject = (id) => {
-    const newSet = new Set(clickedObjects.value);
-    newSet.add(id);
-    clickedObjects.value = newSet;
+    if (clickedObjects.value.includes(id)) {
+        clickedObjects.value = clickedObjects.value.filter(itemId => itemId !== id);
+    } else {
+        clickedObjects.value.push(id);
+    }
 };
 
 const getImageUrl = (path) => {
@@ -25,10 +27,10 @@ const getImageUrl = (path) => {
         <div class="co-grid">
             <div
                 v-for="(obj, index) in quiz.objects"
-                :key="obj.id"
+                :key="'co-'+index"
                 class="co-card-wrap"
-                :class="{ 'co-flipped': clickedObjects.has(obj.id) }"
-                @click="toggleObject(obj.id)"
+                :class="{ 'co-flipped': clickedObjects.includes(index) }"
+                @click="toggleObject(index)"
             >
                 <div class="co-card">
                     <!-- FRONT -->

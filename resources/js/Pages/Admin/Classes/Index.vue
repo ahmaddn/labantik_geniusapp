@@ -21,6 +21,7 @@ import {
     PackageOpen,
     Loader2,
     UserRound,
+    Users,
 } from "lucide-vue-next";
 import SelectField from "@/Components/UI/Forms/SelectField.vue";
 
@@ -44,6 +45,10 @@ const showSuccess = ref(false);
 const toastType = ref("success");
 const editingClass = ref(null);
 const editId = ref(null);
+
+const showDetailDialog = ref(false);
+const detailClass = ref(null);
+
 const form = useForm({
     name: "",
     description: "",
@@ -77,6 +82,11 @@ const openEdit = (classItem) => {
 const confirmDelete = (id) => {
     selectedId.value = id;
     showDeleteDialog.value = true;
+};
+
+const openDetail = (classItem) => {
+    detailClass.value = classItem;
+    showDetailDialog.value = true;
 };
 
 const getFirstError = (errors) => {
@@ -139,6 +149,7 @@ const handlePageChange = (pageNumber) => {
 
 watch(showDialog, (val) => lockScroll(val));
 watch(showDeleteDialog, (val) => lockScroll(val));
+watch(showDetailDialog, (val) => lockScroll(val));
 watch(
     () => page.props.flash,
     (flash) => {
@@ -156,6 +167,7 @@ const handleEsc = (e) => {
     if (e.key === "Escape") {
         showDialog.value = false;
         showDeleteDialog.value = false;
+        showDetailDialog.value = false;
     }
 };
 
@@ -228,6 +240,8 @@ onUnmounted(() => {
                     :icon="BookOpen"
                     icon-color="blue"
                     border-color="blue"
+                    class="cursor-pointer hover:shadow-lg transition-shadow"
+                    @click="openDetail(classItem)"
                 >
                     <template #default>
                         <div class="flex items-center gap-1.5 mt-2">
@@ -248,14 +262,14 @@ onUnmounted(() => {
                                 variant="warning"
                                 size="md"
                                 :icon="Pencil"
-                                @click="openEdit(classItem)"
+                                @click.stop="openEdit(classItem)"
                             />
 
                             <Button
                                 variant="danger"
                                 size="md"
                                 :icon="Trash2"
-                                @click="confirmDelete(classItem.id)"
+                                @click.stop="confirmDelete(classItem.id)"
                             />
                         </div>
                     </template>
@@ -385,6 +399,49 @@ onUnmounted(() => {
             @confirm="deleteClass"
             @cancel="showDeleteDialog = false"
         />
+
+        <!-- Detail Modal -->
+        <Modal
+            :show="showDetailDialog"
+            title="Detail Kelas"
+            @close="showDetailDialog = false"
+        >
+            <div v-if="detailClass" class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
+                    <h3 class="font-bold text-blue-800 text-lg">{{ detailClass.name }}</h3>
+                    <p class="text-sm text-blue-600">{{ detailClass.description }}</p>
+                    <div class="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                        <UserRound class="w-4 h-4 text-gray-500" />
+                        <strong>Wali Kelas:</strong> {{ detailClass.teacher?.name ?? 'Belum ada' }}
+                    </div>
+                    <div class="mt-1 flex items-center gap-2 text-sm text-gray-700">
+                        <Users class="w-4 h-4 text-gray-500" />
+                        <strong>Total Siswa:</strong> {{ detailClass.users?.length || 0 }} Siswa
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-700 mb-3 border-b pb-2">Daftar Siswa</h4>
+                    <div v-if="detailClass.users && detailClass.users.length > 0" class="max-h-60 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                        <div v-for="(student, idx) in detailClass.users" :key="student.id" class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-300 transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                {{ idx + 1 }}
+                            </div>
+                            <span class="text-sm font-semibold text-gray-700 truncate">{{ student.name }}</span>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-gray-500 text-sm">
+                        Belum ada siswa di kelas ini.
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end">
+                    <Button variant="light" size="md" @click="showDetailDialog = false">Tutup</Button>
+                </div>
+            </template>
+        </Modal>
 
         <!-- Toast Notification -->
         <Toast

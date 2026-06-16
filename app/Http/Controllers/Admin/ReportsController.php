@@ -155,10 +155,26 @@ class ReportsController extends Controller
             'total_quizzes'  => $totalQuizzes,
         ];
 
+        $missionLogsRaw = \App\Models\StudentMissionLog::where('module_id', $modules->id)
+            ->with(['user', 'mission'])
+            ->orderBy('completed_at', 'desc')
+            ->get();
+
+        $missionLogs = $missionLogsRaw->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'student_name' => $log->user ? $log->user->name : '-',
+                'mission_name' => $log->mission ? $log->mission->name : '-',
+                'attempt_number' => $log->attempt_number,
+                'completed_at' => $log->completed_at ? $log->completed_at->format('d M Y H:i') : '-',
+            ];
+        });
+
         return Inertia::render('Admin/Reports/ModuleHistory', [
             'module'        => ['id' => $modules->id, 'name' => $modules->name],
             'students'      => $students,
             'module_summary' => $moduleSummary,
+            'mission_logs'  => $missionLogs,
         ]);
     }
 

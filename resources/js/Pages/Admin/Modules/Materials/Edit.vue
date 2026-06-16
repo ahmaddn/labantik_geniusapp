@@ -62,6 +62,8 @@ let initialLearningObjectives = [''];
 let initialInitialQuestions = [''];
 let initialProcessList = [''];
 let initialCoverData = { subtitle: '' };
+let initialInteractiveExamples = [''];
+let initialSummaryList = [{ text: '', icon: '🌲' }];
 let initialImageComparison = {
     left_label: 'MUSIM KEMARAU',
     right_label: 'MUSIM HUJAN',
@@ -91,6 +93,8 @@ if (props.material.content) {
         else if (initialLayoutType === 'initial_questions') initialInitialQuestions = parsed;
         else if (initialLayoutType === 'process_list') initialProcessList = parsed;
         else if (initialLayoutType === 'cover_page') initialCoverData = parsed;
+        else if (initialLayoutType === 'interactive_examples') initialInteractiveExamples = parsed;
+        else if (initialLayoutType === 'summary_list') initialSummaryList = parsed;
         else if (initialLayoutType === 'image_comparison') {
             initialImageComparison.left_label = parsed.left_label || 'KIRI';
             initialImageComparison.right_label = parsed.right_label || 'KANAN';
@@ -116,7 +120,9 @@ const materialForm = ref({
     initial_questions: initialInitialQuestions,
     process_list: initialProcessList,
     cover_data: initialCoverData,
-    image_comparison: initialImageComparison
+    image_comparison: initialImageComparison,
+    interactive_examples: typeof initialInteractiveExamples !== 'undefined' ? initialInteractiveExamples : [''],
+    summary_list: typeof initialSummaryList !== 'undefined' ? initialSummaryList : [{ text: '', icon: '🌲' }]
 });
 
 const addVariable = () => {
@@ -222,6 +228,10 @@ const handleSubmit = () => {
         finalContent = JSON.stringify(materialForm.value.process_list);
     } else if (materialForm.value.layout_type === 'cover_page') {
         finalContent = JSON.stringify(materialForm.value.cover_data);
+    } else if (materialForm.value.layout_type === 'interactive_examples') {
+        finalContent = JSON.stringify(materialForm.value.interactive_examples);
+    } else if (materialForm.value.layout_type === 'summary_list') {
+        finalContent = JSON.stringify(materialForm.value.summary_list);
     } else if (materialForm.value.layout_type === 'image_comparison') {
         finalContent = JSON.stringify({
             left_label: materialForm.value.image_comparison.left_label,
@@ -431,6 +441,24 @@ const toggleCardVariant = () => {
                                 <span class="font-bold text-gray-700">Konseptual Sistematis</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'interactive_examples' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="interactive_examples" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'interactive_examples' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'interactive_examples'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Contoh Materi Dinamis</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
+                                   :class="materialForm.layout_type === 'summary_list' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" v-model="materialForm.layout_type" value="summary_list" class="hidden" />
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                                     :class="materialForm.layout_type === 'summary_list' ? 'border-blue-500' : 'border-gray-300'">
+                                    <div v-if="materialForm.layout_type === 'summary_list'" class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <span class="font-bold text-gray-700">Ringkasan Materi</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer p-3 border-2 rounded-xl transition-all"
                                    :class="materialForm.layout_type === 'video_only' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
                                 <input type="radio" v-model="materialForm.layout_type" value="video_only" class="hidden" />
                                 <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
@@ -492,16 +520,19 @@ const toggleCardVariant = () => {
                             <div class="border-t pt-4">
                                 <div class="flex justify-between items-center mt-6 mb-2">
                                     <h4 class="font-bold text-gray-700">Variabel Penggeser (Slider)</h4>
-                                    <Button v-if="materialForm.conceptual_data.variables.length < 10" variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
+                                    <Button v-if="materialForm.conceptual_data.variables.length < 1" variant="outline" size="sm" :icon="Plus" @click="addVariable">Tambah Variabel</Button>
                                 </div>
                                 
                                 <div v-if="materialForm.conceptual_data.variables.length === 0" class="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-gray-500">
                                     Belum ada variabel penggeser. Klik "Tambah Variabel" untuk menambahkan.
                                 </div>
+                                <div v-else class="mb-4 text-sm text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                                    Maksimal 1 variabel untuk tipe materi ini.
+                                </div>
 
                                 <div v-for="(variable, vIdx) in materialForm.conceptual_data.variables" :key="'var-'+vIdx" class="p-4 border-2 border-indigo-100 bg-indigo-50/50 rounded-xl relative mb-4">
                                     <button @click="removeVariable(vIdx)" class="absolute top-4 right-4 text-red-500 hover:text-red-700" title="Hapus Variabel"><Trash2 class="w-5 h-5"/></button>
-                                    <h5 class="font-bold text-indigo-800 mb-3">Variabel {{ vIdx + 1 }}</h5>
+                                    <h5 class="font-bold text-indigo-800 mb-3">Variabel Tunggal</h5>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <InputField label="Nama Variabel" v-model="variable.name" placeholder="Misal: Intensitas Suhu" />
                                         <InputField label="Label Kiri (Minimal)" v-model="variable.min_label" placeholder="Misal: Dingin" />
@@ -673,8 +704,39 @@ const toggleCardVariant = () => {
                         </div>
                     </template>
 
+                    <!-- Interactive Examples Content -->
+                    <template v-else-if="materialForm.layout_type === 'interactive_examples'">
+                        <div class="bg-teal-50 p-5 rounded-2xl border-2 border-teal-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Daftar Contoh Materi</h3>
+                            <div class="text-xs text-teal-800 mb-2">
+                                Masukkan contoh-contoh (seperti "Sungai", "Hutan") yang akan ditampilkan di dalam kotak-kotak pada halaman siswa.
+                            </div>
+                            <div v-for="(ex, idx) in materialForm.interactive_examples" :key="idx" class="flex gap-2 mb-2">
+                                <InputField :label="`Contoh ${idx+1}`" v-model="materialForm.interactive_examples[idx]" class="flex-1" placeholder="Masukkan contoh..." />
+                                <Button variant="danger" class="mt-7" @click="materialForm.interactive_examples.splice(idx, 1)" :icon="Trash2" />
+                            </div>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="materialForm.interactive_examples.push('')">Tambah Contoh</Button>
+                        </div>
+                    </template>
+
+                    <!-- Summary List Content -->
+                    <template v-else-if="materialForm.layout_type === 'summary_list'">
+                        <div class="bg-yellow-50 p-5 rounded-2xl border-2 border-yellow-200 space-y-4">
+                            <h3 class="font-bold text-gray-800 border-b pb-2">Daftar Ringkasan Materi</h3>
+                            <div class="text-xs text-yellow-800 mb-2">
+                                Masukkan poin ringkasan beserta emoji/ikon (contoh: 🌲, 💧, 🌱, 🏞️).
+                            </div>
+                            <div v-for="(item, idx) in materialForm.summary_list" :key="idx" class="flex gap-2 mb-2">
+                                <InputField label="Emoji" v-model="materialForm.summary_list[idx].icon" class="w-20" placeholder="🌲" />
+                                <InputField :label="`Poin Ringkasan ${idx+1}`" v-model="materialForm.summary_list[idx].text" class="flex-1" placeholder="Masukkan ringkasan..." />
+                                <Button variant="danger" class="mt-7" @click="materialForm.summary_list.splice(idx, 1)" :icon="Trash2" />
+                            </div>
+                            <Button variant="outline" size="sm" :icon="Plus" @click="materialForm.summary_list.push({ text: '', icon: '🌲' })">Tambah Poin</Button>
+                        </div>
+                    </template>
+
                     <!-- ===== MEDIA UPLOAD ===== -->
-                    <div v-if="['default', 'learning_objectives', 'process_list', 'conceptual_systematic'].includes(materialForm.layout_type)">
+                    <div v-if="['default', 'learning_objectives', 'process_list', 'conceptual_systematic', 'interactive_examples', 'summary_list'].includes(materialForm.layout_type)">
                         <label
                             class="block text-sm font-bold text-gray-700 mb-3"
                             >Media Pembelajaran / Background</label

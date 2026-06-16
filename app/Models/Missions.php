@@ -91,4 +91,9 @@ class Missions extends Model
         return $this->hasMany(Scientific_reflections::class, 'mission_id');
     }
 
+    public function student_mission_logs()
+    {
+        return $this->hasMany(StudentMissionLog::class, 'mission_id');
+    }
+
 }
