@@ -579,13 +579,13 @@ onUnmounted(() => {
                         <Transition name="bbl">
                             <div v-if="bubbleVisible" class="celeb-bubble-wrap">
                                 <div class="mascot-speech-bubble">
-                                    <span>Luar biasa! Kamu telah menyelesaikan misi ini dengan sangat baik!</span>
+                                    <span>{{ $page.props.global_settings?.platform_mascot_dialog || 'Luar biasa! Kamu telah menyelesaikan misi ini dengan sangat baik!' }}</span>
                                 </div>
                                 <div class="bubble-arrow"></div>
                             </div>
                         </Transition>
                         <img
-                            src="/images/templates/pose_jempol.png"
+                            :src="$page.props.global_settings?.platform_mascot || '/images/templates/pose_jempol.png'"
                             alt="Maskot"
                             class="celeb-mascot-img"
                         />

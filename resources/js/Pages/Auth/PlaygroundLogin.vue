@@ -137,7 +137,8 @@ onUnmounted(() => {
                 "
             >
                 <div class="logo-icon-wrap">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 32px; height: 32px; object-fit: contain; border-radius: 10px;" />
+                    <svg v-else width="32" height="32" viewBox="0 0 32 32" fill="none">
                         <rect width="32" height="32" rx="10" fill="#fff" />
                         <path
                             d="M10 16C10 12.686 12.686 10 16 10C19.314 10 22 12.686 22 16C22 19.314 19.314 22 16 22"
@@ -218,7 +219,7 @@ onUnmounted(() => {
                 </div>
 
                 <div class="hero-tagline">
-                    <h1 class="hero-title">Cara seru belajar interaktif!</h1>
+                    <h1 class="hero-title">{{ $page.props.global_settings?.platform_subtitle || 'Cara seru belajar interaktif!' }}</h1>
                     <p class="hero-sub">
                         Quiz, modul, dan materi lengkap untuk kamu
                     </p>

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 
 const STORAGE_KEY = 'geniuss_music_on'
 export const DEFAULT_MUSIC = '/backsound/intro-song.mp3'
@@ -8,6 +9,7 @@ const audioRef   = ref(null)
 const currentSrc = ref(null)
 
 export function useMusic() {
+    const page = usePage()
 
     const savePref = (val) => localStorage.setItem(STORAGE_KEY, String(val))
 
@@ -19,8 +21,9 @@ export function useMusic() {
     }
 
     const getCleanSrc = (src) => {
+        const bgmFile = page.props.global_settings?.bgm_file || DEFAULT_MUSIC
         if (!src || src === 'null' || String(src).trim() === '') {
-            return DEFAULT_MUSIC
+            return bgmFile
         }
         return src
     }
