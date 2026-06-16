@@ -16,6 +16,7 @@ import {
     Award,
     Image as ImageIcon,
     RotateCcw,
+    Eye,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
@@ -404,14 +405,12 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                                             !mod.fully_completed,
                                         'btn-restart': mod.fully_completed,
                                     }"
-                                    @click="
-                                        mod.fully_completed ? openModal(mod) : goToModule(mod)
-                                    "
+                                    @click="goToModule(mod)"
                                 >
-                                    <RotateCcw v-if="mod.fully_completed" :size="20" :stroke-width="3" />
+                                    <Eye v-if="mod.fully_completed" :size="20" :stroke-width="3" />
                                     <span v-else class="btn-circle-indicator"></span>
                                     <span>{{
-                                        mod.fully_completed ? 'MULAI ULANG' : statusLabel(mod).toUpperCase()
+                                        mod.fully_completed ? 'LIHAT' : statusLabel(mod).toUpperCase()
                                     }}</span>
                                 </button>
                             </div>

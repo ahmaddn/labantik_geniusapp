@@ -1119,7 +1119,7 @@ onUnmounted(() => {
 @keyframes floatBubble { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 .mascot-image-container {
-    width: 200px;
+    width: 400px;
     display: flex;
     flex-direction: column;
     align-items: center;

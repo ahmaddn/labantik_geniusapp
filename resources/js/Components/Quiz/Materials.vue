@@ -237,80 +237,90 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="props.question?.layout_type === 'conceptual_systematic'" class="cs-container">
-    <h2 class="cs-title uppercase">
+  <div v-if="props.question?.layout_type === 'conceptual_systematic'" class="w-full flex flex-col items-center py-6 px-2 gap-8">
+    <h2 class="text-2xl md:text-3xl font-black text-[#1cb0f6] uppercase tracking-wide drop-shadow-sm text-center" style="font-family: 'Nunito', sans-serif;">
         {{ props.question.title }}
     </h2>
 
-    <div class="cs-grid">
+    <div class="w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 relative z-10 mt-4 lg:mt-0">
+      
       <!-- Left Texts -->
-      <div class="cs-texts-left">
-        <div class="cs-text-box">
-          <p>{{ conceptualData?.topLeft }}</p>
-          <div class="cs-arrow right"></div>
+      <div class="flex flex-col gap-4 w-full lg:w-3/12 order-1 lg:order-1 items-center lg:items-end">
+        <div class="bg-white rounded-[20px] border-2 border-gray-200 border-b-[6px] p-4 text-center w-full max-w-[280px] shadow-sm transform transition-transform hover:-translate-y-1 relative">
+          <p class="font-bold text-[#5b738b] text-[14px] md:text-[15px] break-words leading-snug" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.topLeft }}</p>
+          <!-- Arrow pointing right (desktop) -->
+          <div class="hidden lg:block absolute top-1/2 -right-6 w-6 h-[3px] bg-gray-300 -translate-y-1/2 after:content-[''] after:absolute after:right-[-6px] after:top-[-4.5px] after:border-t-[6px] after:border-b-[6px] after:border-l-[8px] after:border-t-transparent after:border-b-transparent after:border-l-gray-300"></div>
         </div>
-        <div class="cs-text-box">
-          <p>{{ conceptualData?.bottomLeft }}</p>
-          <div class="cs-arrow right"></div>
+        <div class="bg-white rounded-[20px] border-2 border-gray-200 border-b-[6px] p-4 text-center w-full max-w-[280px] shadow-sm transform transition-transform hover:-translate-y-1 relative">
+          <p class="font-bold text-[#5b738b] text-[14px] md:text-[15px] break-words leading-snug" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.bottomLeft }}</p>
+          <div class="hidden lg:block absolute top-1/2 -right-6 w-6 h-[3px] bg-gray-300 -translate-y-1/2 after:content-[''] after:absolute after:right-[-6px] after:top-[-4.5px] after:border-t-[6px] after:border-b-[6px] after:border-l-[8px] after:border-t-transparent after:border-b-transparent after:border-l-gray-300"></div>
         </div>
       </div>
 
-      <!-- Center Image -->
-      <div 
-        class="cs-image-wrap relative"
-        :class="{ 
-            'animate-shake': currentLevelData?.animation_effect === 'earthquake'
-        }"
-      >
-        <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
-            <img :key="levelImage" v-if="levelImage" :src="levelImage" alt="Concept" class="cs-center-img z-10" />
-            <div v-else class="cs-center-placeholder z-10 flex flex-col items-center justify-center">
-                <ImageIcon class="w-16 h-16 text-slate-300 mb-2" />
-                <span class="font-bold text-slate-400">Gambar Utama</span>
-            </div>
-        </transition>
-        
-        <!-- Dynamic Effects Overlay -->
-        <SimulationEffects :effect="currentLevelData?.animation_effect" />
-
-        <!-- Status Badge Overlay -->
-        <div
-            v-if="currentLevelData"
-            class="absolute top-4 right-4 z-30 px-3 py-1.5 rounded-xl font-bold border-2 shadow-lg backdrop-blur-md text-xs"
-            :class="statusBg + ' ' + statusColor"
-        >
-            <span :class="statusColor">
-                {{ statusText }}
-                <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
-            </span>
-        </div>
+      <!-- Center Image (Polaroid Style) -->
+      <div class="w-10/12 sm:w-6/12 lg:w-4/12 max-w-[320px] flex-shrink-0 flex items-center justify-center relative order-2 lg:order-2 my-2 lg:my-0">
+          <!-- Background Polaroid -->
+          <div class="absolute w-full bg-white p-2.5 md:p-3.5 pb-8 md:pb-12 shadow-md border border-gray-200 transform -rotate-3 z-0 translate-y-2 translate-x-2">
+              <div class="w-full aspect-[4/5] bg-gray-50 border border-gray-100"></div>
+          </div>
+          
+          <!-- Foreground Polaroid -->
+          <div class="bg-white p-2.5 md:p-3.5 pb-8 md:pb-12 shadow-lg border border-gray-200 relative w-full z-10 transform rotate-1 transition-transform hover:rotate-0 duration-300"
+               :class="{'animate-shake': currentLevelData?.animation_effect === 'earthquake'}">
+               
+              <div class="w-full aspect-[4/5] bg-blue-50 overflow-hidden border border-gray-100 relative flex items-center justify-center">
+                  <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
+                      <img :key="levelImage" v-if="levelImage" :src="levelImage" alt="Concept" class="w-full h-full object-cover z-10 relative" />
+                      <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+                          <LucideIcons.Image class="w-12 h-12 mb-2 opacity-50" />
+                          <span class="text-sm font-bold" style="font-family: 'Nunito', sans-serif;">Gambar Utama</span>
+                      </div>
+                  </transition>
+                  
+                  <!-- Dynamic Effects Overlay -->
+                  <SimulationEffects :effect="currentLevelData?.animation_effect" />
+              </div>
+              
+              <!-- Status Badge Overlay (inside polaroid) -->
+              <div
+                  v-if="currentLevelData"
+                  class="absolute top-0 right-0 z-30 px-3 py-1.5 rounded-bl-xl font-black border-l-2 border-b-2 shadow-sm text-[10px] md:text-[11px] tracking-wider"
+                  :class="statusBg + ' ' + statusColor"
+                  style="font-family: 'Nunito', sans-serif;"
+              >
+                  <span :class="statusColor">
+                      {{ statusText }}
+                      <template v-if="translatedEffect">[{{ translatedEffect }}]</template>
+                  </span>
+              </div>
+          </div>
       </div>
 
       <!-- Right Texts -->
-      <div class="cs-texts-right">
-        <div class="cs-text-box">
-          <div class="cs-arrow left"></div>
-          <p>{{ conceptualData?.topRight }}</p>
+      <div class="flex flex-col gap-4 w-full lg:w-3/12 order-3 items-center lg:items-start">
+        <div class="bg-white rounded-[20px] border-2 border-gray-200 border-b-[6px] p-4 text-center w-full max-w-[280px] shadow-sm transform transition-transform hover:-translate-y-1 relative">
+          <div class="hidden lg:block absolute top-1/2 -left-6 w-6 h-[3px] bg-gray-300 -translate-y-1/2 after:content-[''] after:absolute after:left-[-6px] after:top-[-4.5px] after:border-t-[6px] after:border-b-[6px] after:border-r-[8px] after:border-t-transparent after:border-b-transparent after:border-r-gray-300"></div>
+          <p class="font-bold text-[#5b738b] text-[14px] md:text-[15px] break-words leading-snug" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.topRight }}</p>
         </div>
-        <div class="cs-text-box">
-          <div class="cs-arrow left"></div>
-          <p>{{ conceptualData?.bottomRight }}</p>
+        <div class="bg-white rounded-[20px] border-2 border-gray-200 border-b-[6px] p-4 text-center w-full max-w-[280px] shadow-sm transform transition-transform hover:-translate-y-1 relative">
+          <div class="hidden lg:block absolute top-1/2 -left-6 w-6 h-[3px] bg-gray-300 -translate-y-1/2 after:content-[''] after:absolute after:left-[-6px] after:top-[-4.5px] after:border-t-[6px] after:border-b-[6px] after:border-r-[8px] after:border-t-transparent after:border-b-transparent after:border-r-gray-300"></div>
+          <p class="font-bold text-[#5b738b] text-[14px] md:text-[15px] break-words leading-snug" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.bottomRight }}</p>
         </div>
       </div>
     </div>
 
     <!-- Sliders Controls Area -->
-    <div class="cs-slider-area">
-      <div v-if="variables.length === 0" class="text-center text-slate-500 font-bold bg-white/40 p-4 rounded-xl w-full">
+    <div class="w-full max-w-2xl mt-8 flex flex-col items-center gap-5">
+      <div v-if="variables.length === 0" class="text-center text-gray-400 font-bold bg-white/50 p-4 rounded-xl w-full border-2 border-dashed border-gray-200" style="font-family: 'Nunito', sans-serif;">
         Belum ada variabel penggeser.
       </div>
       
-      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="cs-slider-group">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
-          <span class="font-extrabold text-blue-900 bg-blue-100/60 px-3 py-1 rounded-lg text-xs sm:text-sm uppercase text-center sm:text-left break-words">
+      <div v-for="(v, idx) in variables" :key="'v-'+idx" class="w-full flex flex-col gap-2">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 px-2">
+          <span class="font-black text-[#1cb0f6] bg-[#f0f9ff] px-3 py-1.5 rounded-[12px] text-[11px] sm:text-[13px] uppercase tracking-wider text-center sm:text-left border-2 border-[#bae6fd]" style="font-family: 'Nunito', sans-serif;">
             {{ v.name || `Variabel ${idx + 1}` }}
           </span>
-          <span class="font-bold text-slate-600 text-[10px] sm:text-xs uppercase tracking-wide text-center sm:text-right break-words">
+          <span class="font-bold text-[#778ca3] text-[10px] sm:text-[12px] uppercase tracking-wide text-center sm:text-right" style="font-family: 'Nunito', sans-serif;">
             {{
                 sliderValues[idx] === 1
                     ? v.min_label
@@ -320,35 +330,40 @@ onUnmounted(() => {
             }}
           </span>
         </div>
-        <div class="relative w-full flex items-center gap-2 sm:gap-4">
-          <span class="text-[10px] sm:text-xs font-bold text-slate-500 flex-1 text-right uppercase break-words leading-tight">{{ v.min_label || "Min" }}</span>
-          <div class="w-1/2 sm:w-2/3 flex-shrink-0">
+        
+        <div class="relative w-full flex items-center gap-3 sm:gap-4 bg-white p-4 sm:p-5 rounded-[24px] border-2 border-gray-200 border-b-[6px] shadow-sm">
+          <span class="text-[10px] sm:text-[13px] font-bold text-[#afc3d8] flex-1 text-right uppercase break-words leading-tight" style="font-family: 'Nunito', sans-serif;">{{ v.min_label || "Min" }}</span>
+          
+          <div class="w-1/2 sm:w-2/3 flex-shrink-0 relative flex items-center">
+            <!-- Custom Slider Track handled by .cs-slider -->
             <input
               type="range"
               min="1"
               max="3"
               step="1"
               v-model.number="sliderValues[idx]"
-              class="cs-slider"
+              class="cs-slider w-full relative z-10"
             />
           </div>
-          <span class="text-[10px] sm:text-xs font-bold text-slate-500 flex-1 text-left uppercase break-words leading-tight">{{ v.max_label || "Max" }}</span>
+          
+          <span class="text-[10px] sm:text-[13px] font-bold text-[#afc3d8] flex-1 text-left uppercase break-words leading-tight" style="font-family: 'Nunito', sans-serif;">{{ v.max_label || "Max" }}</span>
         </div>
       </div>
     </div>
 
     <!-- Narration Box / Metrics Area -->
-    <div v-if="currentLevelData" class="cs-metrics-area">
-      <h3 class="font-extrabold text-blue-950 text-lg mb-1">
+    <div v-if="currentLevelData" class="w-full max-w-2xl bg-[#f0f9ff] rounded-[24px] border-2 border-[#bae6fd] border-b-[6px] p-6 text-center mt-6 shadow-sm flex flex-col items-center">
+      <h3 class="font-black text-[#1cb0f6] text-xl md:text-2xl mb-2 uppercase tracking-wide" style="font-family: 'Nunito', sans-serif;">
         {{ currentLevelData.level_name || "Amati Perubahan" }}
       </h3>
-      <p class="text-slate-700 font-medium text-sm leading-relaxed mb-4 max-w-xl mx-auto">
+      <p class="text-[#5b738b] font-bold text-[15px] md:text-[17px] leading-relaxed mb-5 max-w-xl mx-auto break-words" style="font-family: 'Nunito', sans-serif;">
         {{ currentLevelData.narration || "Ayo ubah penggeser di atas untuk melihat perbedaan dampaknya!" }}
       </p>
       
       <div
           v-if="currentLevelData.metric_value"
-          class="inline-block px-4 py-1.5 bg-blue-50 text-blue-800 font-bold rounded-full border border-blue-200 text-xs shadow-sm"
+          class="inline-block px-5 py-2.5 bg-white text-[#1cb0f6] font-black rounded-[16px] border-[3px] border-[#1cb0f6] text-[13px] md:text-[15px] uppercase tracking-widest shadow-sm"
+          style="font-family: 'Nunito', sans-serif;"
       >
           {{ currentLevelData.metric_value }}
       </div>
@@ -375,135 +390,137 @@ onUnmounted(() => {
   </div>
 
   <!-- Learning Objectives -->
-  <div v-else-if="props.question?.layout_type === 'learning_objectives'" class="w-full mx-auto p-4 bg-blue-50/50 rounded-2xl flex flex-col justify-center">
-    <div class="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-200 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
-        <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-100 rounded-full opacity-50"></div>
-        
-        <h2 class="text-xl md:text-2xl font-black text-blue-900 mb-6 text-center relative z-10 font-heading tracking-wide uppercase drop-shadow-sm">Tujuan Pembelajaran</h2>
-        
-        <ul class="space-y-3 relative z-10">
-            <li v-for="(item, idx) in conceptualData" :key="idx" class="flex gap-4 items-start bg-blue-50/80 p-4 rounded-xl border border-blue-100 hover:border-blue-300 transition-all hover:-translate-y-1">
-                <div class="w-8 h-8 flex-shrink-0 bg-blue-500 text-white font-black text-lg rounded-full flex items-center justify-center shadow-md border-2 border-blue-200">
-                    {{ idx + 1 }}
-                </div>
-                <p class="text-base md:text-lg font-bold text-slate-700 leading-relaxed pt-1">{{ item }}</p>
-            </li>
-        </ul>
-    </div>
+  <div v-else-if="props.question?.layout_type === 'learning_objectives'" class="w-full flex flex-col justify-center py-6 px-2">
+      <!-- Title -->
+      <h2 class="text-2xl md:text-3xl font-black text-[#1cb0f6] uppercase mb-6 md:mb-8 tracking-wide drop-shadow-sm text-center" style="font-family: 'Nunito', sans-serif;">
+          {{ props.question.title || 'Tujuan Pembelajaran' }}
+      </h2>
+      
+      <!-- List -->
+      <div class="w-full max-w-3xl mx-auto space-y-4 md:space-y-5">
+          <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start md:items-center gap-0 group">
+              <!-- Number Circle -->
+              <div class="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#1cb0f6] border-[3px] border-[#1899d6] text-white font-black text-lg flex items-center justify-center shadow-sm z-10 flex-shrink-0 mt-1 md:mt-0" style="font-family: 'Nunito', sans-serif;">
+                  {{ idx + 1 }}
+              </div>
+              <!-- Text Box -->
+              <div class="bg-white px-5 py-3 md:py-3.5 rounded-[1.25rem] md:rounded-full shadow-sm border-[3px] border-[#1cb0f6] w-full -ml-5 pl-8 md:pl-9 transition-colors group-hover:bg-[#f0f9ff] min-h-[48px] md:min-h-[52px] flex items-center">
+                  <span class="font-bold text-[#5b738b] text-[13px] md:text-base tracking-wide block w-full leading-relaxed break-words" style="font-family: 'Nunito', sans-serif; word-break: break-word;">{{ item }}</span>
+              </div>
+          </div>
+      </div>
   </div>
 
   <!-- Cover Page -->
-  <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full mx-auto flex items-center justify-center relative my-4">
-    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-3xl p-6 shadow-xl overflow-hidden relative border-4 border-white"
-         :style="props.question.image ? `background-image: url('${imageUrl(props.question.image)}'); background-size: cover; background-position: center;` : ''">
-        <div v-if="props.question.image" class="absolute inset-0 bg-indigo-900/60 z-0"></div>
-        <!-- Deco elements -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl z-0"></div>
-        <div class="absolute bottom-0 left-0 w-48 h-48 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl z-0"></div>
-        
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex-1 text-center md:text-left text-white space-y-4">
-                <div class="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white font-bold text-xs uppercase shadow-inner">
-                    {{ conceptualData?.subtitle || 'Misi Pembelajaran' }}
-                </div>
-                <h1 class="text-2xl md:text-4xl font-black font-heading leading-tight drop-shadow-md text-yellow-300" style="-webkit-text-stroke: 1px rgba(0,0,0,0.1);">
-                    {{ props.question.title }}
-                </h1>
-            </div>
-            
-            <div class="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 relative flex items-center justify-center">
-                <!-- Glowing circle behind mascot -->
-                <div class="absolute w-4/5 h-4/5 bg-white rounded-full opacity-20 blur-md animate-pulse"></div>
-                <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain relative z-10 filter drop-shadow-lg animate-float" />
-                <img v-else src="/images/mascot.png" class="w-full h-full object-contain relative z-10 filter drop-shadow-lg animate-float" />
-            </div>
-        </div>
-    </div>
+  <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full flex flex-col justify-center items-center py-4 px-2">
+      <div class="w-full max-w-3xl bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] overflow-hidden flex flex-col shadow-sm text-center">
+          <!-- Optional Image -->
+          <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-48 md:h-64 object-cover border-b-2 border-gray-100" />
+          <div class="p-8 md:p-12 flex flex-col items-center">
+              <span class="inline-block px-4 py-1.5 bg-[#f0f9ff] text-[#1cb0f6] font-black text-xs md:text-sm uppercase tracking-widest rounded-xl border-2 border-[#bae6fd] mb-4" style="font-family: 'Nunito', sans-serif;">
+                  {{ conceptualData?.subtitle || 'Pendahuluan' }}
+              </span>
+              <h1 class="text-3xl md:text-5xl font-black text-[#5b738b] uppercase tracking-wide leading-tight" style="font-family: 'Nunito', sans-serif;">
+                  {{ props.question.title }}
+              </h1>
+          </div>
+      </div>
   </div>
 
   <!-- Initial Questions -->
-  <div v-else-if="props.question?.layout_type === 'initial_questions'" class="w-full mx-auto flex flex-col items-center justify-center my-4">
-    <div class="w-full flex flex-col sm:flex-row items-center gap-6">
-        <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0">
-            <img v-if="props.question.mascot" :src="`/storage/${props.question.mascot.image}`" class="w-full h-full object-contain filter drop-shadow-md animate-bounce-slow" />
-            <img v-else src="/images/mascot.png" class="w-full h-full object-contain filter drop-shadow-md animate-bounce-slow" />
-        </div>
-        
-        <div class="flex-1 w-full space-y-4">
-            <!-- Chat bubble style -->
-            <div v-for="(q, idx) in conceptualData" :key="idx" class="relative bg-white p-4 sm:p-5 rounded-2xl rounded-tl-none shadow-md border-2 border-purple-200 transform transition-transform hover:-translate-y-1">
-                <div class="absolute -left-3 top-0 w-6 h-6 bg-white border-t-2 border-l-2 border-purple-200 transform -skew-x-12"></div>
-                <p class="text-base sm:text-lg font-bold text-purple-900 leading-relaxed font-heading relative z-10">
-                    {{ q }}
-                </p>
-            </div>
-        </div>
-    </div>
+  <div v-else-if="props.question?.layout_type === 'initial_questions'" class="w-full flex flex-col justify-center items-center py-6 px-2">
+      <h2 class="text-2xl md:text-3xl font-black text-[#1cb0f6] uppercase mb-6 md:mb-8 tracking-wide drop-shadow-sm text-center" style="font-family: 'Nunito', sans-serif;">
+          {{ props.question.title || 'Pertanyaan Awal' }}
+      </h2>
+      <div class="w-full max-w-3xl space-y-4">
+          <div v-for="(q, idx) in conceptualData" :key="idx" class="bg-white p-5 md:p-6 rounded-[24px] shadow-sm border-2 border-gray-200 border-b-[6px] transform transition-transform hover:-translate-y-1">
+              <p class="text-base md:text-lg font-bold text-[#5b738b] leading-relaxed" style="font-family: 'Nunito', sans-serif;">
+                  {{ q }}
+              </p>
+          </div>
+      </div>
   </div>
 
   <!-- Image Comparison -->
-  <div v-else-if="props.question?.layout_type === 'image_comparison'" class="w-full mx-auto bg-green-50/50 p-4 md:p-6 rounded-2xl flex flex-col justify-center">
-    <h2 class="text-xl md:text-2xl font-black text-green-900 text-center font-heading uppercase mb-6 drop-shadow-sm tracking-wide">
-        {{ props.question.title }}
-    </h2>
-    
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-        <div class="bg-white p-3 md:p-4 rounded-2xl shadow-md border-4 border-green-200 transform transition-transform hover:scale-[1.02]">
-            <div class="aspect-[4/3] w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
-                <img v-if="conceptualData?.image_left" :src="`/storage/${conceptualData.image_left}`" class="w-full h-full object-cover" />
-                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kiri</div>
-            </div>
-            <div class="bg-green-100 py-2 px-4 rounded-xl border-2 border-green-300 text-center">
-                <h3 class="text-base md:text-lg font-black text-green-800 uppercase tracking-widest">{{ conceptualData?.left_label || 'Gambar 1' }}</h3>
-            </div>
-        </div>
-        
-        <div class="bg-white p-3 md:p-4 rounded-2xl shadow-md border-4 border-blue-200 transform transition-transform hover:scale-[1.02]">
-            <div class="aspect-[4/3] w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
-                <img v-if="conceptualData?.image_right" :src="`/storage/${conceptualData.image_right}`" class="w-full h-full object-cover" />
-                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-bold">Gambar Kanan</div>
-            </div>
-            <div class="bg-blue-100 py-2 px-4 rounded-xl border-2 border-blue-300 text-center">
-                <h3 class="text-base md:text-lg font-black text-blue-800 uppercase tracking-widest">{{ conceptualData?.right_label || 'Gambar 2' }}</h3>
-            </div>
-        </div>
-    </div>
+  <div v-else-if="props.question?.layout_type === 'image_comparison'" class="w-full flex flex-col justify-center items-center py-6 px-2">
+      <h2 class="text-2xl md:text-3xl font-black text-[#1cb0f6] uppercase mb-6 md:mb-8 tracking-wide drop-shadow-sm text-center" style="font-family: 'Nunito', sans-serif;">
+          {{ props.question.title }}
+      </h2>
+      
+      <div class="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          <!-- Left Image -->
+          <div class="bg-white p-3 md:p-4 rounded-[24px] shadow-sm border-2 border-gray-200 border-b-[6px]">
+              <div class="aspect-[4/3] w-full rounded-[16px] overflow-hidden mb-4 bg-gray-50 border-2 border-gray-100 relative">
+                  <img v-if="conceptualData?.image_left" :src="`/storage/${conceptualData.image_left}`" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 font-bold" style="font-family: 'Nunito', sans-serif;">
+                      <LucideIcons.Image class="w-8 h-8 mb-2 opacity-50" />
+                      Gambar Kiri
+                  </div>
+              </div>
+              <div class="bg-[#f0f9ff] py-2 px-4 rounded-xl border-2 border-[#bae6fd] text-center">
+                  <h3 class="text-sm md:text-base font-black text-[#1cb0f6] uppercase tracking-widest" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.left_label || 'Gambar 1' }}</h3>
+              </div>
+          </div>
+          
+          <!-- Right Image -->
+          <div class="bg-white p-3 md:p-4 rounded-[24px] shadow-sm border-2 border-gray-200 border-b-[6px]">
+              <div class="aspect-[4/3] w-full rounded-[16px] overflow-hidden mb-4 bg-gray-50 border-2 border-gray-100 relative">
+                  <img v-if="conceptualData?.image_right" :src="`/storage/${conceptualData.image_right}`" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 font-bold" style="font-family: 'Nunito', sans-serif;">
+                      <LucideIcons.Image class="w-8 h-8 mb-2 opacity-50" />
+                      Gambar Kanan
+                  </div>
+              </div>
+              <div class="bg-[#fdf0f0] py-2 px-4 rounded-xl border-2 border-[#fecdd3] text-center">
+                  <h3 class="text-sm md:text-base font-black text-[#fb7185] uppercase tracking-widest" style="font-family: 'Nunito', sans-serif;">{{ conceptualData?.right_label || 'Gambar 2' }}</h3>
+              </div>
+          </div>
+      </div>
   </div>
 
   <!-- Process List -->
-  <div v-else-if="props.question?.layout_type === 'process_list'" class="w-full mx-auto flex flex-col justify-center py-4">
-    <div class="bg-gradient-to-b from-sky-100 to-green-100 rounded-2xl p-4 md:p-8 border-4 border-white shadow-lg relative overflow-hidden">
-        <!-- Deco elements -->
-        <div class="absolute top-6 right-6 w-20 h-20 bg-white rounded-full opacity-30 blur-xl"></div>
+  <div v-else-if="props.question?.layout_type === 'process_list'" class="w-full mx-auto flex flex-col justify-center py-4 px-2">
+    <div class="flex flex-col sm:flex-row gap-6 md:gap-12 relative z-10 w-full max-w-5xl mx-auto items-center md:items-start px-4">
         
-        <div class="flex flex-col sm:flex-row gap-6 relative z-10">
-            <!-- Left Side: Image / Polaroid -->
-            <div class="w-full sm:w-5/12 flex-shrink-0 flex items-center justify-center">
-                <div class="bg-white p-3 pb-8 rounded-lg shadow-lg border border-gray-200 relative w-full max-w-xs">
-                    <!-- Paper clip -->
-                    <div class="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-12 border-4 border-gray-400 rounded-full bg-transparent transform rotate-12 z-20"></div>
-                    <div class="w-full aspect-square bg-blue-50 overflow-hidden border border-gray-100">
-                        <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
-                        <div v-else class="w-full h-full flex items-center justify-center text-gray-400">Gambar</div>
+        <!-- Left Side: Stacked Polaroids -->
+        <div class="w-10/12 sm:w-5/12 max-w-[260px] md:max-w-[360px] lg:max-w-[400px] flex-shrink-0 flex items-center justify-center relative mt-6 md:mt-8 mx-auto">
+            <!-- Background Polaroid (Rotated) -->
+            <div class="absolute w-full bg-white p-2.5 md:p-3.5 lg:p-4 pb-8 md:pb-12 lg:pb-14 shadow-md border border-gray-200 transform -rotate-6 z-0 translate-y-2 translate-x-2 md:translate-y-3 md:translate-x-3">
+                <div class="w-full aspect-square bg-gray-50 border border-gray-100"></div>
+            </div>
+            
+            <!-- Foreground Polaroid -->
+            <div class="bg-white p-2.5 md:p-3.5 lg:p-4 pb-8 md:pb-12 lg:pb-14 shadow-lg border border-gray-200 relative w-full z-10 transform rotate-2 transition-transform hover:rotate-0 duration-300">
+                <!-- Paper clip -->
+                <div class="absolute -top-5 md:-top-6 left-1/2 -translate-x-1/2 w-7 h-12 md:w-9 md:h-16 border-[3px] border-gray-400 rounded-full bg-transparent z-20">
+                    <div class="absolute top-1 left-1.5 right-1.5 bottom-2 md:bottom-2.5 border-[3px] border-gray-400 rounded-full"></div>
+                </div>
+                
+                <div class="w-full aspect-square bg-blue-50 overflow-hidden border border-gray-100">
+                    <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
+                    <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <LucideIcons.Image class="w-8 h-8 md:w-12 md:h-12 mb-1 opacity-50" />
+                        <span class="text-xs md:text-sm font-bold">Gambar</span>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Right Side: List -->
+        <div class="w-full sm:w-7/12 flex flex-col justify-center mt-6 sm:mt-0">
+            <h2 class="text-2xl md:text-3xl font-black text-[#5b738b] uppercase mb-6 md:mb-8 leading-tight drop-shadow-sm text-center sm:text-left" style="font-family: 'Nunito', sans-serif;">
+                {{ props.question.title }}
+            </h2>
             
-            <!-- Right Side: List -->
-            <div class="w-full sm:w-7/12 flex flex-col justify-center">
-                <h2 class="text-xl md:text-2xl font-black text-slate-700 font-heading uppercase mb-4 leading-tight">
-                    {{ props.question.title }}
-                </h2>
-                
-                <div class="space-y-3">
-                    <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-center gap-3 group">
-                        <div class="w-9 h-9 rounded-full bg-white border-4 border-slate-400 text-slate-700 font-black text-base flex items-center justify-center shadow-md group-hover:border-blue-500 group-hover:text-blue-500 transition-colors flex-shrink-0">
-                            {{ idx + 1 }}.
-                        </div>
-                        <div class="bg-white px-4 py-2 rounded-full shadow-md border-2 border-white group-hover:border-blue-200 w-full transition-all">
-                            <span class="font-bold text-slate-700 text-sm md:text-base uppercase tracking-wide group-hover:text-blue-800">{{ item }}</span>
-                        </div>
+            <div class="space-y-4 md:space-y-5">
+                <div v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start md:items-center gap-0 group">
+                    <!-- Number Circle -->
+                    <div class="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border-[3px] border-[#8ea0b5] text-[#5b738b] font-black text-lg flex items-center justify-center shadow-sm z-10 flex-shrink-0 mt-1 md:mt-0" style="font-family: 'Nunito', sans-serif;">
+                        {{ idx + 1 }}
+                    </div>
+                    <!-- Text Box -->
+                    <div class="bg-white px-5 py-3 md:py-3.5 rounded-[1.25rem] md:rounded-full shadow-sm border-[3px] border-[#8ea0b5] w-full -ml-5 pl-8 md:pl-9 transition-colors group-hover:border-[#1cb0f6] group-hover:bg-[#f0f9ff] min-h-[48px] md:min-h-[52px] flex items-center">
+                        <span class="font-bold text-[#5b738b] text-[13px] md:text-base tracking-wide group-hover:text-[#1cb0f6] block w-full leading-relaxed break-words uppercase" style="font-family: 'Nunito', sans-serif; word-break: break-word;">{{ item }}</span>
                     </div>
                 </div>
             </div>
@@ -512,77 +529,102 @@ onUnmounted(() => {
   </div>
 
   <!-- Interactive Examples -->
-  <div v-else-if="props.question?.layout_type === 'interactive_examples'" class="w-full mx-auto flex flex-col md:flex-row gap-6 justify-center items-center py-4 px-2">
-      <!-- Left: Image -->
-      <div class="w-full md:w-5/12 flex-shrink-0">
-          <div class="bg-white p-4 rounded-3xl shadow-xl border-4 border-teal-200 aspect-[4/3] overflow-hidden flex items-center justify-center relative group">
-              <div class="absolute inset-0 bg-teal-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-              <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" />
-              <div v-else class="text-teal-300 font-bold text-xl flex flex-col items-center"><LucideIcons.Image class="w-12 h-12 mb-2"/>Gambar Materi</div>
+  <div v-else-if="props.question?.layout_type === 'interactive_examples'" class="w-full flex flex-col md:flex-row gap-6 md:gap-10 justify-center items-center py-6 px-2">
+      <!-- Left Side: Stacked Polaroids -->
+      <div class="w-10/12 sm:w-5/12 max-w-[260px] md:max-w-[360px] flex-shrink-0 flex items-center justify-center relative mt-6 md:mt-8 mx-auto">
+          <!-- Background Polaroid (Rotated) -->
+          <div class="absolute w-full bg-white p-2.5 md:p-3.5 lg:p-4 pb-8 md:pb-12 shadow-md border border-gray-200 transform -rotate-6 z-0 translate-y-2 translate-x-2 md:translate-y-3 md:translate-x-3">
+              <div class="w-full aspect-square bg-gray-50 border border-gray-100"></div>
+          </div>
+          
+          <!-- Foreground Polaroid -->
+          <div class="bg-white p-2.5 md:p-3.5 lg:p-4 pb-8 md:pb-12 shadow-lg border border-gray-200 relative w-full z-10 transform rotate-2 transition-transform hover:rotate-0 duration-300">
+              <!-- Paper clip -->
+              <div class="absolute -top-5 md:-top-6 left-1/2 -translate-x-1/2 w-7 h-12 md:w-9 md:h-16 border-[3px] border-gray-400 rounded-full bg-transparent z-20">
+                  <div class="absolute top-1 left-1.5 right-1.5 bottom-2 md:bottom-2.5 border-[3px] border-gray-400 rounded-full"></div>
+              </div>
+              
+              <div class="w-full aspect-square bg-blue-50 overflow-hidden border border-gray-100">
+                  <img v-if="props.question.image" :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                      <LucideIcons.Image class="w-8 h-8 md:w-12 md:h-12 mb-1 opacity-50" />
+                      <span class="text-xs md:text-sm font-bold">Gambar</span>
+                  </div>
+              </div>
           </div>
       </div>
-      <!-- Right: Content & List -->
-      <div class="w-full md:w-7/12 flex flex-col justify-center space-y-6">
-          <div class="bg-teal-50 p-6 rounded-3xl border-2 border-teal-100 shadow-sm relative overflow-hidden">
-              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white opacity-40 rounded-full blur-xl"></div>
-              <h2 class="text-2xl md:text-3xl font-black text-teal-800 font-heading uppercase mb-3 relative z-10 leading-tight">
-                  {{ props.question.title }}
-              </h2>
-              <p class="text-teal-700 font-bold leading-relaxed text-sm md:text-base relative z-10">
-                  {{ props.question.subtitle || 'Pelajari contoh-contoh berikut ini:' }}
+      
+      <!-- Right: Content & List Stack -->
+      <div class="w-full md:w-7/12 flex flex-col justify-center gap-6 mt-6 md:mt-0">
+          
+          <!-- Card 1: Description -->
+          <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] shadow-sm relative pt-10 pb-6 px-6 md:px-8 mt-4 md:mt-6 w-full">
+              <!-- Title Block Overlapping Top -->
+              <div class="absolute -top-5 left-1/2 -translate-x-1/2 w-[90%] bg-[#58cc02] rounded-[16px] border-2 border-white shadow-sm py-2 px-4 text-center flex items-center justify-center min-h-[48px]">
+                  <h2 class="text-xl md:text-2xl font-black text-white uppercase tracking-wide drop-shadow-sm leading-tight" style="font-family: 'Nunito', sans-serif;">
+                      {{ props.question.title }}
+                  </h2>
+              </div>
+              
+              <!-- Content Paragraph -->
+              <p class="text-[#5b738b] font-bold leading-relaxed text-[15px] md:text-lg text-justify mt-2 break-words" style="font-family: 'Nunito', sans-serif;">
+                  {{ props.question.subtitle || 'Pelajari materi berikut ini:' }}
               </p>
           </div>
           
-          <div class="grid grid-cols-2 gap-4">
-              <div v-for="(ex, idx) in conceptualData" :key="idx" class="bg-white py-4 px-3 rounded-2xl shadow-sm border-2 border-teal-100 border-b-4 border-b-teal-400 flex items-center justify-center transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:border-teal-300 hover:border-b-teal-500 group cursor-default">
-                  <span class="font-black text-teal-700 text-base md:text-lg uppercase tracking-wide text-center group-hover:text-teal-900 transition-colors">{{ ex }}</span>
+          <!-- Card 2: Examples List -->
+          <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] shadow-sm p-6 md:p-8 self-end w-full md:w-11/12">
+              <h3 class="text-lg md:text-xl font-bold text-[#5b738b] mb-4" style="font-family: 'Nunito', sans-serif;">
+                  Contoh {{ props.question.title ? props.question.title.toLowerCase() : 'materi' }} :
+              </h3>
+              
+              <div class="flex flex-col gap-3">
+                  <div v-for="(ex, idx) in conceptualData" :key="idx" class="w-full bg-white px-5 py-3 md:py-3.5 rounded-2xl md:rounded-full border-2 border-gray-200 shadow-sm cursor-default hover:border-[#1cb0f6] hover:bg-[#f0f9ff] transition-colors flex items-center min-h-[48px]">
+                      <span class="font-bold text-[#5b738b] text-[14px] md:text-[16px] break-words leading-snug w-full" style="font-family: 'Nunito', sans-serif; word-break: break-word;">{{ ex }}</span>
+                  </div>
               </div>
           </div>
+          
       </div>
   </div>
 
   <!-- Summary List -->
-  <div v-else-if="props.question?.layout_type === 'summary_list'" class="w-full min-h-[400px] flex flex-col justify-center items-center p-6 relative overflow-hidden rounded-3xl shadow-lg border-2 border-gray-200" style="min-height: 500px;">
-      <!-- Background Image -->
-      <div v-if="props.question.image" class="absolute inset-0 z-0">
-          <img :src="imageUrl(props.question.image)" class="w-full h-full object-cover" />
-      </div>
-      <div v-else class="absolute inset-0 z-0 bg-gradient-to-b from-blue-50 to-green-100"></div>
-
-      <div class="relative z-10 w-full max-w-4xl flex flex-col items-center py-10">
-          <!-- Title Box -->
-          <div class="bg-[#e9e3cf] border border-[#a855f7] px-16 py-3 mb-8 shadow-sm" style="box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-              <h2 class="text-3xl md:text-5xl text-black" style="font-family: 'Caveat', cursive, sans-serif;">
-                  {{ props.question.title || 'Ringkasan' }}
-              </h2>
-          </div>
+  <div v-else-if="props.question?.layout_type === 'summary_list'" class="w-full flex flex-col justify-center items-center py-6 px-2">
+      <div class="w-full max-w-3xl flex flex-col items-center">
+          <!-- Title -->
+          <h2 class="text-2xl md:text-3xl font-black text-[#1cb0f6] uppercase mb-6 md:mb-8 tracking-wide drop-shadow-sm text-center" style="font-family: 'Nunito', sans-serif;">
+              {{ props.question.title || 'Ringkasan' }}
+          </h2>
 
           <!-- Content Box -->
-          <div class="bg-white/95 rounded-[30px] border-2 border-dashed border-black p-8 md:p-12 w-full shadow-md max-w-3xl">
-              <ul class="space-y-4">
-                  <li v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start gap-4 group">
-                      <div class="w-2 h-2 rounded-full bg-black mt-3 shrink-0"></div>
-                      <span class="text-3xl shrink-0 group-hover:scale-110 transition-transform">{{ item.icon || '📌' }}</span>
-                      <span class="text-lg md:text-xl font-bold text-gray-800 leading-relaxed font-heading">{{ item.text }}</span>
+          <div class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-6 md:p-8 w-full shadow-sm max-w-3xl">
+              <ul class="space-y-4 md:space-y-5">
+                  <li v-for="(item, idx) in conceptualData" :key="idx" class="flex items-start gap-3 md:gap-4 group cursor-default">
+                      <!-- Icon (Lucide checkmark instead of emoji) -->
+                      <LucideIcons.CheckCircle2 class="w-6 h-6 text-[#1cb0f6] shrink-0 mt-0.5 md:mt-1 group-hover:scale-110 transition-transform" />
+                      
+                      <!-- Text -->
+                      <span class="text-[15px] md:text-lg font-bold text-[#5b738b] leading-relaxed" style="font-family: 'Nunito', sans-serif;">
+                          {{ item.text || item }}
+                      </span>
                   </li>
               </ul>
           </div>
       </div>
   </div>
 
-  <div v-else class="mat-container">
+  <div v-else class="w-full max-w-4xl mx-auto flex flex-col gap-6 md:gap-8 pb-6 px-2">
 
     <!-- Image/Video Banner -->
-    <div v-if="props.question?.image" class="mat-image-wrap">
-
+    <div v-if="props.question?.image" class="w-full">
       <!-- Banner: Video -->
-      <div v-if="isVideo(props.question.image)" class="video-wrap">
-        <div class="vid-inner">
-          <canvas ref="bannerCanvasEl" class="mat-canvas-bg" width="640" height="360"></canvas>
+      <div v-if="isVideo(props.question.image)" class="w-full bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] overflow-hidden flex flex-col shadow-sm">
+        <div class="relative w-full max-h-[400px] bg-black flex items-center justify-center overflow-hidden">
+          <canvas ref="bannerCanvasEl" class="absolute inset-0 w-full h-full object-cover filter blur-xl brightness-50 scale-110 pointer-events-none z-0" width="640" height="360"></canvas>
           <video
             ref="bannerVideoEl"
             :src="imageUrl(props.question.image)"
-            class="mat-video"
+            class="relative z-10 w-full max-h-[400px] object-contain"
             controls
             @loadeddata="onBannerLoaded"
             @play="onBannerPlay"
@@ -591,69 +633,74 @@ onUnmounted(() => {
           ></video>
         </div>
 
-        <div class="vid-controls">
-          <button class="vid-play-btn" @click="toggleBannerPlay">
-            <svg v-if="!bannerPlaying" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
-            <svg v-else viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            {{ bannerPlaying ? 'Pause' : 'Play' }}
+        <div class="p-4 md:p-5 flex justify-center bg-white border-t-2 border-gray-100">
+          <button @click="toggleBannerPlay" class="flex items-center justify-center gap-2 px-8 py-3 bg-[#1cb0f6] hover:bg-[#1899d6] active:translate-y-1 active:border-b-0 text-white font-black text-sm md:text-base uppercase tracking-wider rounded-2xl border-b-[4px] border-[#1899d6] transition-all" style="font-family: 'Nunito', sans-serif;">
+            <svg v-if="!bannerPlaying" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            {{ bannerPlaying ? 'Jeda' : 'Putar Video' }}
           </button>
         </div>
       </div>
 
       <!-- Banner: Image -->
-      <img
-        v-else
-        :src="imageUrl(props.question.image)"
-        :alt="props.question?.title || 'Materi'"
-        class="mat-image"
-      />
+      <div v-else class="w-full bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-2 md:p-3 shadow-sm">
+        <img
+          :src="imageUrl(props.question.image)"
+          :alt="props.question?.title || 'Materi'"
+          class="w-full max-h-[350px] object-cover rounded-[16px] md:rounded-[18px]"
+        />
+      </div>
     </div>
 
     <!-- Header -->
-    <div class="mat-header">
-      <div class="mat-icon">
-        <BookOpen v-if="!props.question?.material_type || props.question?.material_type === 'text'" :size="18" />
-        <Video    v-else-if="props.question?.material_type === 'video'" :size="18" />
-        <Music    v-else-if="props.question?.material_type === 'audio'" :size="18" />
+    <div class="flex items-center gap-4 bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-4 md:p-6 shadow-sm">
+      <div class="w-12 h-12 md:w-16 md:h-16 rounded-[1rem] md:rounded-[1.25rem] bg-[#f0f9ff] text-[#1cb0f6] flex items-center justify-center flex-shrink-0 border-2 border-[#bae6fd]">
+        <BookOpen v-if="!props.question?.material_type || props.question?.material_type === 'text'" class="w-6 h-6 md:w-8 md:h-8" />
+        <Video    v-else-if="props.question?.material_type === 'video'" class="w-6 h-6 md:w-8 md:h-8" />
+        <Music    v-else-if="props.question?.material_type === 'audio'" class="w-6 h-6 md:w-8 md:h-8" />
       </div>
-      <div class="mat-title-section">
-        <h3 class="mat-title">{{ props.question?.title || 'Materi Pembelajaran' }}</h3>
-        <p v-if="props.question?.subtitle" class="mat-subtitle">{{ props.question.subtitle }}</p>
+      <div class="flex flex-col">
+        <h3 class="text-xl md:text-2xl font-black text-[#5b738b] uppercase tracking-wide leading-tight" style="font-family: 'Nunito', sans-serif;">
+          {{ props.question?.title || 'Materi Pembelajaran' }}
+        </h3>
+        <p v-if="props.question?.subtitle" class="text-[#778ca3] font-bold text-sm md:text-base mt-1" style="font-family: 'Nunito', sans-serif;">
+          {{ props.question.subtitle }}
+        </p>
       </div>
     </div>
 
-    <div class="mat-divider"></div>
-
-    <!-- Content -->
-    <div class="mat-content">
+    <!-- Content Area -->
+    <div class="w-full flex flex-col gap-6 md:gap-8">
 
       <!-- YouTube Embed -->
-      <div v-if="props.question?.youtube_link" class="mb-6 rounded-2xl overflow-hidden shadow-lg border border-gray-200" style="aspect-ratio: 16/9;">
-        <iframe
-            :src="props.question.youtube_link"
-            title="YouTube video player"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen
-            class="w-full h-full"
-        ></iframe>
+      <div v-if="props.question?.youtube_link" class="w-full bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-2 md:p-3 shadow-sm">
+        <div class="w-full rounded-[16px] md:rounded-[18px] overflow-hidden" style="aspect-ratio: 16/9;">
+          <iframe
+              :src="props.question.youtube_link"
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+              class="w-full h-full"
+          ></iframe>
+        </div>
       </div>
 
       <!-- Text -->
-      <div v-if="!props.question?.material_type || props.question?.material_type === 'text'" class="mat-text">
-        <div v-html="props.question?.content || 'Konten tidak tersedia'"></div>
+      <div v-if="!props.question?.material_type || props.question?.material_type === 'text'" class="bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-6 md:p-8 shadow-sm">
+        <div class="prose max-w-none text-[#5b738b] font-bold leading-relaxed text-[15px] md:text-lg break-words" style="font-family: 'Nunito', sans-serif;" v-html="props.question?.content || 'Konten tidak tersedia'"></div>
       </div>
 
-      <!-- Video -->
-      <div v-else-if="props.question?.material_type === 'video'" class="mat-media">
-        <div v-if="props.question?.content" class="video-wrap">
-          <div class="vid-inner">
-            <canvas ref="canvasEl" class="mat-canvas-bg" width="640" height="360"></canvas>
+      <!-- Content Video -->
+      <div v-else-if="props.question?.material_type === 'video'" class="w-full">
+        <div v-if="props.question?.content" class="w-full bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] overflow-hidden flex flex-col shadow-sm">
+          <div class="relative w-full max-h-[400px] bg-black flex items-center justify-center overflow-hidden">
+            <canvas ref="canvasEl" class="absolute inset-0 w-full h-full object-cover filter blur-xl brightness-50 scale-110 pointer-events-none z-0" width="640" height="360"></canvas>
             <video
               ref="videoEl"
               :src="props.question.content"
-              class="mat-video"
+              class="relative z-10 w-full max-h-[400px] object-contain"
               controls
               @loadeddata="onLoaded"
               @play="onPlay"
@@ -662,27 +709,28 @@ onUnmounted(() => {
             ></video>
           </div>
 
-          <div class="vid-controls">
-            <button class="vid-play-btn" @click="togglePlay">
-              <svg v-if="!playing" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
-              <svg v-else viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-              {{ playing ? 'Pause' : 'Amati Perbuatan' }}
+          <div class="p-4 md:p-5 flex justify-center bg-white border-t-2 border-gray-100">
+            <button @click="togglePlay" class="flex items-center justify-center gap-2 px-8 py-3 bg-[#1cb0f6] hover:bg-[#1899d6] active:translate-y-1 active:border-b-0 text-white font-black text-sm md:text-base uppercase tracking-wider rounded-2xl border-b-[4px] border-[#1899d6] transition-all" style="font-family: 'Nunito', sans-serif;">
+              <svg v-if="!playing" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
+              <svg v-else viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              {{ playing ? 'Jeda' : 'Putar Video' }}
             </button>
           </div>
         </div>
-        <p v-else class="mat-error">Video tidak tersedia</p>
+        <div v-else class="bg-red-50 text-red-600 font-bold p-4 rounded-2xl border-2 border-red-200 text-center" style="font-family: 'Nunito', sans-serif;">Video tidak tersedia</div>
       </div>
 
       <!-- Audio -->
-      <div v-else-if="props.question?.material_type === 'audio'" class="mat-media">
+      <div v-else-if="props.question?.material_type === 'audio'" class="w-full bg-white rounded-[24px] border-2 border-gray-200 border-b-[6px] p-6 shadow-sm flex flex-col items-center gap-4">
         <audio
           v-if="props.question?.content"
           :src="props.question.content"
           controls
-          class="mat-audio"
+          class="w-full max-w-md"
         ></audio>
-        <p v-else class="mat-error">Audio tidak ti9ersedia</p>
+        <div v-else class="text-red-600 font-bold text-center" style="font-family: 'Nunito', sans-serif;">Audio tidak tersedia</div>
       </div>
+
     </div>
   </div>
 </template>
