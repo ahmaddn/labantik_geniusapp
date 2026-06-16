@@ -159,6 +159,7 @@ class MissionController extends Controller
                         'option_text'  => $opt->option_text,
                         'option_image' => $opt->option_image,
                         'is_correct'   => (bool) $opt->is_correct,
+                        'feedback'     => $opt->feedback,
                     ])->toArray();
                 }
 
