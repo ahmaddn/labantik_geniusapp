@@ -564,13 +564,13 @@ onUnmounted(() => {
                         <Transition name="bbl">
                             <div v-if="bubbleVisible" class="celeb-bubble-wrap">
                                 <div class="mascot-speech-bubble">
-                                    <span>{{ $page.props.global_settings?.platform_mascot_dialog || 'Luar biasa! Kamu telah menyelesaikan misi ini dengan sangat baik!' }}</span>
+                                    <span>{{ (typeof $page.props.global_settings?.platform_mascot_dialog === 'string' && $page.props.global_settings.platform_mascot_dialog !== 'null' && $page.props.global_settings.platform_mascot_dialog !== '[null]' && $page.props.global_settings.platform_mascot_dialog.trim() !== '') ? $page.props.global_settings.platform_mascot_dialog : 'Luar biasa! Kamu telah menyelesaikan misi ini dengan sangat baik!' }}</span>
                                 </div>
                                 <div class="bubble-arrow"></div>
                             </div>
                         </Transition>
                         <img
-                            :src="$page.props.global_settings?.platform_mascot || '/images/templates/pose_jempol.png'"
+                            :src="(typeof $page.props.global_settings?.platform_mascot === 'string' && $page.props.global_settings.platform_mascot !== 'null') ? $page.props.global_settings.platform_mascot : '/images/templates/pose_jempol.png'"
                             alt="Maskot"
                             class="celeb-mascot-img"
                         />
