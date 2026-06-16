@@ -362,6 +362,13 @@ const activeSpeechText = computed(() => {
     if (!s) return "Semangat ya!";
     if (s.isMaterial) return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
     if (s.question && isQuestionAnswered(s.question, s.quiz?.type)) {
+        if (s.question.options) {
+            const ansId = answers[s.question.id];
+            const selectedOpt = s.question.options.find(o => o.id === ansId);
+            if (selectedOpt && selectedOpt.feedback) {
+                return selectedOpt.feedback;
+            }
+        }
         return BUBBLES_ANSWERED[bubbleIdx.value % BUBBLES_ANSWERED.length];
     }
     return BUBBLES_UNANSWERED[bubbleIdx.value % BUBBLES_UNANSWERED.length];
@@ -430,7 +437,7 @@ const submit = async () => {
         const res = await axios.post(
             route("playground.missions.submit", props.mission.id),
             {
-                answers,
+                answers: Object.keys(answers).length > 0 ? answers : null,
                 quiz_ids: props.mission.quizzes
                     .filter((q) =>
                         !["materials", "simulation_clickable", "simulation_slider", "simulation_comparison", "simulation_decision"].includes(q.type)
@@ -451,7 +458,8 @@ const submit = async () => {
         }
     } catch (e) {
         console.error(e);
-        alert("Terjadi kesalahan saat menyimpan jawaban");
+        const msg = e.response?.data?.message || e.message;
+        alert("Terjadi kesalahan saat menyimpan jawaban: " + msg);
     } finally {
         isSubmitting.value = false;
     }

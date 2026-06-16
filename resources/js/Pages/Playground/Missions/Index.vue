@@ -180,8 +180,24 @@ const modalAccent = computed(() => {
         <aside class="dsk-sidebar-left">
             <div class="dsk-sidebar-inner">
                 <div class="ds-brand">
-                    <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }">
-                        <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;" />
+                    <div
+                        class="ds-brand-icon"
+                        :class="{
+                            'has-logo':
+                                $page.props.global_settings?.platform_logo,
+                        }"
+                    >
+                        <img
+                            v-if="$page.props.global_settings?.platform_logo"
+                            :src="$page.props.global_settings?.platform_logo"
+                            alt="Logo"
+                            style="
+                                width: 100%;
+                                height: 100%;
+                                object-fit: contain;
+                                border-radius: 10px;
+                            "
+                        />
                         <Zap
                             v-else
                             :size="18"
@@ -377,7 +393,10 @@ const modalAccent = computed(() => {
                                         isMissionLocked(i)
                                             ? {}
                                             : mission.status === 'completed'
-                                              ? { '--c': '#a855f7', '--s': '#7e22ce' }
+                                              ? {
+                                                    '--c': '#a855f7',
+                                                    '--s': '#7e22ce',
+                                                }
                                               : {
                                                     '--c': getColor(i).bg,
                                                     '--s': getColor(i).sh,
@@ -597,14 +616,31 @@ const modalAccent = computed(() => {
                     :class="{
                         'mi-restart': selectedMission?.status === 'completed',
                         'mi-prog': selectedMission?.status === 'in_progress',
-                        'mi-start': selectedMission?.status === 'not_started' || !selectedMission?.status
+                        'mi-start':
+                            selectedMission?.status === 'not_started' ||
+                            !selectedMission?.status,
                     }"
                 >
-                    <RotateCcw v-if="selectedMission?.status === 'completed'" :size="48" color="#ffffff" :stroke-width="2.5" />
-                    <Target v-else-if="selectedMission?.status === 'in_progress'" :size="48" color="#ffffff" :stroke-width="2.5" />
-                    <Target v-else :size="48" color="#ffffff" :stroke-width="2.5" />
+                    <RotateCcw
+                        v-if="selectedMission?.status === 'completed'"
+                        :size="48"
+                        color="#ffffff"
+                        :stroke-width="2.5"
+                    />
+                    <Target
+                        v-else-if="selectedMission?.status === 'in_progress'"
+                        :size="48"
+                        color="#ffffff"
+                        :stroke-width="2.5"
+                    />
+                    <Target
+                        v-else
+                        :size="48"
+                        color="#ffffff"
+                        :stroke-width="2.5"
+                    />
                 </div>
-                
+
                 <h2 class="modal-title">{{ selectedMission?.name }}</h2>
                 <p class="modal-desc">
                     {{
@@ -644,9 +680,13 @@ const modalAccent = computed(() => {
                     <button
                         class="mcta-primary"
                         :class="{
-                            'mcta-restart': selectedMission?.status === 'completed',
-                            'mcta-prog': selectedMission?.status === 'in_progress',
-                            'mcta-start': selectedMission?.status === 'not_started' || !selectedMission?.status
+                            'mcta-restart':
+                                selectedMission?.status === 'completed',
+                            'mcta-prog':
+                                selectedMission?.status === 'in_progress',
+                            'mcta-start':
+                                selectedMission?.status === 'not_started' ||
+                                !selectedMission?.status,
                         }"
                         @click="proceedMission"
                     >
@@ -664,7 +704,6 @@ const modalAccent = computed(() => {
                 </div>
             </div>
         </div>
-
     </Teleport>
 </template>
 
@@ -1696,7 +1735,7 @@ const modalAccent = computed(() => {
     align-items: center;
     justify-content: center;
     margin-bottom: 24px;
-    box-shadow: 0 8px 0 0 rgba(0,0,0,0.08);
+    box-shadow: 0 8px 0 0 rgba(0, 0, 0, 0.08);
 }
 .mi-restart {
     background: #a855f7;
@@ -1782,7 +1821,9 @@ const modalAccent = computed(() => {
     position: relative;
     top: 0;
     color: #fff;
-    transition: top 0.1s, box-shadow 0.1s;
+    transition:
+        top 0.1s,
+        box-shadow 0.1s;
     width: 100%;
     display: flex;
     align-items: center;
