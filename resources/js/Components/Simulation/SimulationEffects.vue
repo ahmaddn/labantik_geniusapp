@@ -28,7 +28,13 @@ const generateParticles = (count) => {
 const particles = ref(generateParticles(20));
 
 watch(activeEffect, () => {
-    particles.value = generateParticles(activeEffect.value === 'snow' || activeEffect.value === 'rain_heavy' ? 40 : 20);
+    let count = 20;
+    if (['snow', 'rain_heavy', 'confetti'].includes(activeEffect.value)) {
+        count = 50;
+    } else if (['stars', 'clouds'].includes(activeEffect.value)) {
+        count = 30;
+    }
+    particles.value = generateParticles(count);
 });
 </script>
 
@@ -86,6 +92,34 @@ watch(activeEffect, () => {
         <!-- EARTHQUAKE DUST (Earthquake shake is handled by parent, this just adds dust) -->
         <div v-if="activeEffect === 'earthquake'" class="particles-container earthquake-dust">
             <div v-for="p in particles" :key="'eq'+p.id" class="quake-dust" :style="{ left: p.left, animationDelay: p.delay, animationDuration: '2s' }"></div>
+        </div>
+
+        <!-- CONFETTI -->
+        <div v-if="activeEffect === 'confetti'" class="particles-container">
+            <div v-for="p in particles" :key="'cf'+p.id" class="confetti-piece" :style="{ left: p.left, animationDelay: p.delay, animationDuration: p.duration, transform: `scale(${p.scale})`, backgroundColor: `hsl(${Math.random() * 360}, 100%, 60%)` }"></div>
+        </div>
+
+        <!-- LIGHTNING -->
+        <div v-if="activeEffect === 'lightning'" class="lightning-flash"></div>
+
+        <!-- STARS -->
+        <div v-if="activeEffect === 'stars'" class="particles-container">
+            <div v-for="p in particles" :key="'st'+p.id" class="star-twinkle" :style="{ left: p.left, top: `${Math.random() * 80}%`, animationDelay: p.delay, animationDuration: p.duration, transform: `scale(${p.scale})` }">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#ffffff" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+            </div>
+        </div>
+
+        <!-- FOG -->
+        <div v-if="activeEffect === 'fog'" class="fog-container">
+            <div class="fog-layer fog-1"></div>
+            <div class="fog-layer fog-2"></div>
+        </div>
+
+        <!-- CLOUDS -->
+        <div v-if="activeEffect === 'clouds'" class="particles-container">
+            <div v-for="p in particles.slice(0, 5)" :key="'cl'+p.id" class="cloud-float" :style="{ top: `${Math.random() * 30}%`, animationDelay: p.delay, animationDuration: `${Math.random() * 20 + 20}s`, transform: `scale(${p.scale * 2 + 1})` }">
+                <svg width="60" height="40" viewBox="0 0 24 24" fill="#ffffff" stroke="none" opacity="0.8"><path d="M17.5,19 C19.9852814,19 22,16.9852814 22,14.5 C22,12.0147186 19.9852814,10 17.5,10 C17.1856758,10 16.8791054,10.0322234 16.5828608,10.0926521 C15.8217316,7.21447952 13.1537255,5 10,5 C6.13400675,5 3,8.13400675 3,12 C3,12.0534241 3.00059885,12.1067086 3.00178652,12.1598426 C1.85404457,12.8252277 1,14.1130722 1,15.5 C1,17.4329966 2.56700338,19 4.5,19 L17.5,19 Z"/></svg>
+            </div>
         </div>
 
     </div>
@@ -213,5 +247,77 @@ watch(activeEffect, () => {
 @keyframes quakeDustRise {
     0% { transform: translateY(0) scale(1); opacity: 1; }
     100% { transform: translateY(-50px) scale(3); opacity: 0; }
+}
+
+/* CONFETTI */
+.confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 10px; height: 15px;
+    animation: confettiFall linear infinite;
+}
+@keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 1; }
+    50% { transform: translateY(50vh) rotate(180deg) translateX(20px); }
+    100% { transform: translateY(100vh) rotate(360deg) translateX(-20px); opacity: 0; }
+}
+
+/* LIGHTNING */
+.lightning-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    animation: lightningStrike 6s infinite;
+}
+@keyframes lightningStrike {
+    0%, 91%, 93%, 95%, 100% { opacity: 0; }
+    92%, 94% { opacity: 0.8; }
+}
+
+/* STARS */
+.star-twinkle {
+    position: absolute;
+    animation: twinkleStar linear infinite alternate;
+}
+@keyframes twinkleStar {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* FOG */
+.fog-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.fog-layer {
+    position: absolute;
+    top: 0;
+    width: 200vw;
+    height: 100%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.3" fill="white"/></svg>') repeat-x;
+    background-size: 50% 100%;
+    opacity: 0.4;
+    animation: fogMove linear infinite;
+}
+.fog-1 { animation-duration: 60s; }
+.fog-2 { animation-duration: 40s; opacity: 0.2; animation-direction: reverse; transform: scaleY(-1); }
+@keyframes fogMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50vw); }
+}
+
+/* CLOUDS */
+.cloud-float {
+    position: absolute;
+    left: -100px;
+    animation: cloudMove linear infinite;
+    opacity: 0.6;
+}
+@keyframes cloudMove {
+    0% { transform: translateX(-100px); }
+    100% { transform: translateX(110vw); }
 }
 </style>

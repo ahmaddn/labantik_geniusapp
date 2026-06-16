@@ -90,7 +90,12 @@ const effectTranslations = {
     'wind_leaves': 'Daun Berterbangan',
     'dust': 'Debu / Polusi',
     'sunbeams': 'Cerah',
-    'earthquake': 'Gempa'
+    'earthquake': 'Gempa',
+    'confetti': 'Konfeti',
+    'lightning': 'Petir',
+    'stars': 'Bintang',
+    'fog': 'Kabut',
+    'clouds': 'Berawan'
 };
 
 const translatedEffect = computed(() => {

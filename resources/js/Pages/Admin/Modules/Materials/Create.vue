@@ -1147,6 +1147,11 @@ const toggleCardVariant = () => {
                                                             Guncangan Layar
                                                             (Gempa)
                                                         </option>
+                                                        <option value="confetti">Konfeti (Perayaan)</option>
+                                                        <option value="lightning">Kilat (Petir)</option>
+                                                        <option value="stars">Bintang Berkelip</option>
+                                                        <option value="fog">Kabut Berjalan</option>
+                                                        <option value="clouds">Awan Bergerak</option>
                                                     </select>
                                                 </div>
                                                 <div>
