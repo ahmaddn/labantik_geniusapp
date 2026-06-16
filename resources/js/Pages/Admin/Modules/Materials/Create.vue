@@ -1374,6 +1374,24 @@ const toggleCardVariant = () => {
                                     v-model="materialForm.mascot_id"
                                     :options="mascotOptions"
                                 />
+                                <div class="mt-4 bg-white p-4 rounded-xl border border-indigo-100">
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Upload Gambar Background Cover (Opsional)</label>
+                                    <FileUpload
+                                        @change="(e) => {
+                                            materialForm.image = e.target.files[0];
+                                            mediaPreview = URL.createObjectURL(e.target.files[0]);
+                                            mediaType = 'image';
+                                        }"
+                                        accept="image/*"
+                                        :buttonText="mediaPreview ? 'Ganti Gambar Cover' : 'Pilih Gambar Cover'"
+                                        buttonColor="indigo"
+                                    />
+                                    <div v-if="mediaPreview" class="relative inline-block mt-3">
+                                        <img :src="mediaPreview" class="h-32 w-auto object-cover rounded-lg border-2 border-indigo-200" />
+                                        <button type="button" @click="removeMedia" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X class="w-3 h-3"/></button>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">Gambar ini akan menjadi background halaman cover. Format: JPG, PNG, GIF. Maks 2MB.</p>
+                                </div>
                             </div>
                         </template>
 
@@ -1778,7 +1796,7 @@ const toggleCardVariant = () => {
                             </div>
 
                             <!-- Upload Gambar -->
-                            <div v-if="mediaType === 'image'" class="space-y-3">
+                            <div v-if="mediaType === 'image' && materialForm.layout_type !== 'cover_page'" class="space-y-3">
                                 <div
                                     v-if="mediaPreview"
                                     class="relative inline-block"

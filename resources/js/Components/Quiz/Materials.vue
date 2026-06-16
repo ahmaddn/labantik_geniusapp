@@ -395,10 +395,12 @@ onUnmounted(() => {
 
   <!-- Cover Page -->
   <div v-else-if="props.question?.layout_type === 'cover_page'" class="w-full mx-auto flex items-center justify-center relative my-4">
-    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-3xl p-6 shadow-xl overflow-hidden relative border-4 border-white">
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-full rounded-3xl p-6 shadow-xl overflow-hidden relative border-4 border-white"
+         :style="props.question.image ? `background-image: url('${imageUrl(props.question.image)}'); background-size: cover; background-position: center;` : ''">
+        <div v-if="props.question.image" class="absolute inset-0 bg-indigo-900/60 z-0"></div>
         <!-- Deco elements -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
-        <div class="absolute bottom-0 left-0 w-48 h-48 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl z-0"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-yellow-300 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl z-0"></div>
         
         <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div class="flex-1 text-center md:text-left text-white space-y-4">
