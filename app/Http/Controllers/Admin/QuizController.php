@@ -469,20 +469,19 @@ class QuizController extends Controller
                         }
 
                         if (isset($questionData['drag_drop_items'])) {
-                            $dragImages = $request->file('drag_item_images', []);
-                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
-                                $storedPath = $itemData['item_image'] ?? null;
-                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
-                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
-                                    $imgIndex++;
+                                $storedPath = null;
+                                if (isset($itemData['has_image']) && $itemData['has_image']) {
+                                    if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
+                                        $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
+                                    }
                                 }
 
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath ?? null,
+                                    'item_image'         => $storedPath,
                                 ]);
                             }
                         }
@@ -637,20 +636,19 @@ class QuizController extends Controller
                         }
 
                         if (isset($questionData['drag_drop_items'])) {
-                            $dragImages = $request->file('drag_item_images', []);
-                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
-                                $storedPath = $itemData['item_image'] ?? null;
-                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
-                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
-                                    $imgIndex++;
+                                $storedPath = null;
+                                if (isset($itemData['has_image']) && $itemData['has_image']) {
+                                    if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
+                                        $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
+                                    }
                                 }
 
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath ?? null,
+                                    'item_image'         => $storedPath,
                                 ]);
                             }
                         }
@@ -929,14 +927,35 @@ class QuizController extends Controller
                 'image'       => $imagePath,
             ]);
 
+            $retainedImages = [];
+            if ($validated['type'] === 'true_false') {
+                $tfData = json_decode($request->input('tf_question'), true);
+                if ($tfData && !empty($tfData['options'])) {
+                    foreach ($tfData['options'] as $opt) {
+                        if (empty($opt['has_new_image']) && !empty($opt['existing_image'])) {
+                            $retainedImages[] = $opt['existing_image'];
+                        }
+                    }
+                }
+            } elseif ($validated['type'] === 'drag_drop') {
+                $questions = json_decode($request->input('questions'), true);
+                if ($questions && !empty($questions[0]['drag_drop_items'])) {
+                    foreach ($questions[0]['drag_drop_items'] as $item) {
+                        if (empty($item['has_new_image']) && !empty($item['existing_image'])) {
+                            $retainedImages[] = $item['existing_image'];
+                        }
+                    }
+                }
+            }
+
             foreach ($quizzes->questions as $oldQuestion) {
                 foreach ($oldQuestion->options as $oldOption) {
-                    if ($oldOption->option_image) {
+                    if ($oldOption->option_image && !in_array($oldOption->option_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldOption->option_image);
                     }
                 }
                 foreach ($oldQuestion->dragDropItems as $oldItem) {
-                    if ($oldItem->item_image) {
+                    if ($oldItem->item_image && !in_array($oldItem->item_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldItem->item_image);
                     }
                 }
@@ -1025,20 +1044,21 @@ class QuizController extends Controller
                             }
                         }
                         if (isset($questionData['drag_drop_items'])) {
-                            $dragImages = $request->file('drag_item_images', []);
-                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
-                                $storedPath = $itemData['item_image'] ?? null;
-                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
-                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
-                                    $imgIndex++;
+                                $storedPath = null;
+                                if (isset($itemData['has_new_image']) && $itemData['has_new_image']) {
+                                    if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
+                                        $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
+                                    }
+                                } elseif (!empty($itemData['existing_image'])) {
+                                    $storedPath = $itemData['existing_image'];
                                 }
 
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath ?? null,
+                                    'item_image'         => $storedPath,
                                 ]);
                             }
                         }
@@ -1147,14 +1167,35 @@ class QuizController extends Controller
                 'image'       => $imagePath,
             ]);
 
+            $retainedImages = [];
+            if ($validated['type'] === 'true_false') {
+                $tfData = json_decode($request->input('tf_question'), true);
+                if ($tfData && !empty($tfData['options'])) {
+                    foreach ($tfData['options'] as $opt) {
+                        if (empty($opt['has_new_image']) && !empty($opt['existing_image'])) {
+                            $retainedImages[] = $opt['existing_image'];
+                        }
+                    }
+                }
+            } elseif ($validated['type'] === 'drag_drop') {
+                $questions = json_decode($request->input('questions'), true);
+                if ($questions && !empty($questions[0]['drag_drop_items'])) {
+                    foreach ($questions[0]['drag_drop_items'] as $item) {
+                        if (empty($item['has_new_image']) && !empty($item['existing_image'])) {
+                            $retainedImages[] = $item['existing_image'];
+                        }
+                    }
+                }
+            }
+
             foreach ($quizzes->questions as $oldQuestion) {
                 foreach ($oldQuestion->options as $oldOption) {
-                    if ($oldOption->option_image) {
+                    if ($oldOption->option_image && !in_array($oldOption->option_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldOption->option_image);
                     }
                 }
                 foreach ($oldQuestion->dragDropItems as $oldItem) {
-                    if ($oldItem->item_image) {
+                    if ($oldItem->item_image && !in_array($oldItem->item_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldItem->item_image);
                     }
                 }
@@ -1243,20 +1284,21 @@ class QuizController extends Controller
                             }
                         }
                         if (isset($questionData['drag_drop_items'])) {
-                            $dragImages = $request->file('drag_item_images', []);
-                            $imgIndex = 0;
                             foreach ($questionData['drag_drop_items'] as $itemData) {
-                                $storedPath = $itemData['item_image'] ?? null;
-                                if (isset($dragImages[$imgIndex]) && $dragImages[$imgIndex] instanceof \Illuminate\Http\UploadedFile) {
-                                    $storedPath = $dragImages[$imgIndex]->store('questions/drag_items', 'public');
-                                    $imgIndex++;
+                                $storedPath = null;
+                                if (isset($itemData['has_new_image']) && $itemData['has_new_image']) {
+                                    if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
+                                        $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
+                                    }
+                                } elseif (!empty($itemData['existing_image'])) {
+                                    $storedPath = $itemData['existing_image'];
                                 }
 
                                 Drag_drop_items::create([
                                     'question_id'        => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
                                     'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath ?? null,
+                                    'item_image'         => $storedPath,
                                 ]);
                             }
                         }

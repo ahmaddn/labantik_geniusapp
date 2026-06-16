@@ -117,10 +117,14 @@ const dragDropItems = ref(
         id: item.id || Date.now() + Math.random(),
         item_text: item.item_text || "",
         group_local_id: item.drag_drop_group_id,
+        item_image_file: null,
+        item_image_preview: item.item_image ? `/storage/${item.item_image}` : null,
+        existing_image: item.item_image || null,
     })),
 );
 const currentDragDropGroup = ref({ group_name: "" });
-const currentDragDropItem = ref({ item_text: "", group_local_id: null });
+const currentDragDropItem = ref({ item_text: "", group_local_id: null, item_image_file: null });
+const currentDDImagePreview = ref(null);
 
 // --- True/False (Image Select) State ---
 // Pre-populate dari question pertama jika tipe true_false
@@ -371,6 +375,25 @@ const removeDragDropGroup = (local_id) => {
         (i) => i.group_local_id !== local_id,
     );
 };
+const handleDDImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        currentDragDropItem.value.item_image_file = file;
+        currentDDImagePreview.value = URL.createObjectURL(file);
+    }
+};
+const removeDDImage = () => {
+    currentDragDropItem.value.item_image_file = null;
+    currentDDImagePreview.value = null;
+};
+const handleExistingDDImageChange = (event, item) => {
+    const file = event.target.files[0];
+    if (file) {
+        item.item_image_file = file;
+        item.item_image_preview = URL.createObjectURL(file);
+    }
+};
+
 const addDragDropItem = () => {
     if (!currentDragDropItem.value.item_text.trim()) {
         showToast("Teks item harus diisi!", "warning");
@@ -380,11 +403,18 @@ const addDragDropItem = () => {
         showToast("Pilih grup yang benar untuk item ini!", "warning");
         return;
     }
+    if (!currentDragDropItem.value.item_image_file) {
+        showToast("Gambar item harus diunggah!", "warning");
+        return;
+    }
     dragDropItems.value.push({
         ...currentDragDropItem.value,
         id: Date.now() + Math.random(),
+        item_image_preview: currentDDImagePreview.value,
+        existing_image: null,
     });
-    currentDragDropItem.value = { item_text: "", group_local_id: null };
+    currentDragDropItem.value = { item_text: "", group_local_id: null, item_image_file: null };
+    currentDDImagePreview.value = null;
     showToast("Item ditambahkan!", "success");
 };
 const removeDragDropItem = (id) => {
@@ -473,13 +503,21 @@ const finalSave = () => {
                     drag_drop_groups: dragDropGroups.value.map((g) => ({
                         group_name: g.group_name,
                     })),
-                    drag_drop_items: dragDropItems.value.map((i) => ({
+                    drag_drop_items: dragDropItems.value.map((i, idx) => ({
                         item_text: i.item_text,
-                        item_image: null,
+                        has_new_image: !!i.item_image_file,
+                        existing_image: i.existing_image || null,
+                        image_index: idx,
                         group_index: groupIndexMap[i.group_local_id],
                     })),
                 },
             ];
+            
+            dragDropItems.value.forEach((i, idx) => {
+                if (i.item_image_file) {
+                    formData.append(`drag_item_images[${idx}]`, i.item_image_file);
+                }
+            });
         } else {
             questions = quizQuestions.value.map((q, index) => ({
                 question_text: q.question_text,
@@ -1376,6 +1414,19 @@ const toggleCardVariant = () => {
                             placeholder="Contoh: 2"
                             border-color="green"
                         />
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Item <span class="text-red-500">*</span></label>
+                            <div class="space-y-2">
+                                <div v-if="currentDDImagePreview" class="relative inline-block">
+                                    <img :src="currentDDImagePreview" class="h-28 w-28 object-cover rounded-xl border-2 border-green-300" />
+                                    <button type="button" @click="removeDDImage" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"><X class="w-4 h-4" /></button>
+                                </div>
+                                <label class="cursor-pointer inline-flex items-center px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border-2 border-green-200">
+                                    <ImageIcon class="w-5 h-5 mr-2" />{{ currentDDImagePreview ? "Ganti Gambar" : "Pilih Gambar" }}
+                                    <input type="file" @change="handleDDImageChange" accept="image/*" class="hidden" />
+                                </label>
+                            </div>
+                        </div>
                         <SelectField
                             v-model="currentDragDropItem.group_local_id"
                             label="Grup yang Benar"
@@ -1393,25 +1444,38 @@ const toggleCardVariant = () => {
                         <div v-if="dragDropItems.length > 0" class="space-y-2">
                             <h4 class="font-bold text-sm">Item saat ini:</h4>
                             <div
-                                v-for="item in dragDropItems"
+                                v-for="(item, index) in dragDropItems"
                                 :key="item.id"
-                                class="p-3 bg-green-50 rounded-lg border-2 border-green-200 flex items-center justify-between"
+                                class="p-3 bg-green-50 rounded-lg border-2 border-green-200 flex flex-col gap-3"
                             >
-                                <div>
-                                    <div class="font-medium">
-                                        {{ item.item_text }}
+                                <div class="flex justify-between items-start">
+                                    <span class="font-bold text-sm text-green-800">Item {{ index + 1 }}</span>
+                                    <Button variant="danger" size="xs" :icon="Trash2" @click="removeDragDropItem(item.id)" />
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="space-y-3">
+                                        <InputField v-model="item.item_text" label="Teks Item" border-color="green" />
+                                        <SelectField v-model="item.group_local_id" label="Grup" :options="groupSelectOptions" border-color="purple" />
                                     </div>
-                                    <div class="text-xs text-gray-600">
-                                        →
-                                        {{ getGroupName(item.group_local_id) }}
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Item <span class="text-red-500">*</span></label>
+                                        <div class="flex items-start gap-3">
+                                            <div v-if="item.item_image_preview" class="relative inline-block shrink-0">
+                                                <img :src="item.item_image_preview" class="h-20 w-20 object-cover rounded-xl border-2 border-green-300" />
+                                            </div>
+                                            <div v-else class="h-20 w-20 bg-gray-200 rounded-xl flex items-center justify-center text-xs text-gray-500 shrink-0 border-2 border-gray-300">No Image</div>
+                                            
+                                            <div class="flex-1 space-y-1">
+                                                <label class="cursor-pointer inline-flex items-center px-3 py-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border-2 border-green-200 text-xs">
+                                                    <ImageIcon class="w-4 h-4 mr-1" /> Ganti
+                                                    <input type="file" @change="(e) => handleExistingDDImageChange(e, item)" accept="image/*" class="hidden" />
+                                                </label>
+                                                <div v-if="item.existing_image && !item.item_image_file" class="text-xs text-gray-400">Gambar lama</div>
+                                                <div v-if="item.item_image_file" class="text-xs text-blue-500 font-bold">Gambar baru</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <Button
-                                    variant="danger"
-                                    size="xs"
-                                    :icon="Trash2"
-                                    @click="removeDragDropItem(item.id)"
-                                />
                             </div>
                         </div>
                     </div>

@@ -16,6 +16,13 @@ const props = defineProps({
 const emit = defineEmits(['update-answer'])
 
 // ── State ─────────────────────────────────────────────────────
+const getImageUrl = (path) => {
+    if (!path) return '';
+    if (typeof path !== 'string') return '';
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    return '/storage/' + path;
+};
+
 const items        = ref([])
 const zones        = ref([])
 const placed       = ref({})
@@ -185,7 +192,7 @@ onUnmounted(() => { tClone?.remove() })
             <div class="dd-item-visual">
               <img
                 v-if="item.image"
-                :src="`/storage/${item.image}`"
+                :src="getImageUrl(item.image)"
                 :alt="item.label"
                 class="dd-item-img"
               />
@@ -245,7 +252,7 @@ onUnmounted(() => { tClone?.remove() })
               <div class="dd-placed-visual">
                 <img
                   v-if="item.image"
-                  :src="`/storage/${item.image}`"
+                  :src="getImageUrl(item.image)"
                   :alt="item.label"
                   class="dd-placed-img"
                 />

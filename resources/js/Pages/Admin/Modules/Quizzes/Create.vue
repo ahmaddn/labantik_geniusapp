@@ -351,6 +351,10 @@ const addDragDropItem = () => {
         showToast("Pilih grup yang benar untuk item ini!", "warning");
         return;
     }
+    if (!currentDragDropItem.value.item_image_file) {
+        showToast("Gambar item harus diunggah!", "warning");
+        return;
+    }
     // preserve image file + preview if present
     const item = {
         ...currentDragDropItem.value,
@@ -459,10 +463,10 @@ const finalSave = () => {
                     drag_drop_groups: dragDropGroups.value.map((g) => ({
                         group_name: g.group_name,
                     })),
-                    drag_drop_items: dragDropItems.value.map((i) => ({
+                    drag_drop_items: dragDropItems.value.map((i, idx) => ({
                         item_text: i.item_text,
-                        // indicate whether the item has an image; actual files are appended separately
-                        item_image: i.item_image_file ? true : null,
+                        has_image: !!i.item_image_file,
+                        image_index: idx,
                         group_index: groupIndexMap[i.group_local_id],
                     })),
                 },
@@ -485,7 +489,7 @@ const finalSave = () => {
         // attach drag & drop item images if present
         if (isDragDrop.value) {
             dragDropItems.value.forEach((i, idx) => {
-                if (i.item_image_file instanceof File) {
+                if (i.item_image_file) {
                     formData.append(
                         `drag_item_images[${idx}]`,
                         i.item_image_file,
