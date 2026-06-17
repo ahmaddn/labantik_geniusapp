@@ -834,10 +834,6 @@ const toggleCardVariant = () => {
                                 @change="handleMediaChange" 
                                 accept="image/*" 
                                 :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
-                                <FileUpload 
-                                @change="handleMediaChange" 
-                                accept="image/*" 
-                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
                                 buttonColor="blue" 
                             />
                             <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
@@ -871,10 +867,6 @@ const toggleCardVariant = () => {
                                 @change="handleMediaChange" 
                                 accept="video/*" 
                                 :buttonText="mediaPreview ? 'Ganti Video' : 'Pilih Video'" 
-                                <FileUpload 
-                                @change="handleMediaChange" 
-                                accept="image/*" 
-                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
                                 buttonColor="blue" 
                             />
                             <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
