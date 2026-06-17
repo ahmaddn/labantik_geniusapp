@@ -1821,20 +1821,12 @@ const toggleCardVariant = () => {
                                         <X class="w-4 h-4" />
                                     </button>
                                 </div>
-                                <FileUpload
-                                    @change="handleMediaChange"
-                                    accept="image/*"
-                                    :buttonText="
-                                        mediaPreview
-                                            ? 'Ganti Gambar'
-                                            : 'Pilih Gambar'
-                                    "
-                                    <FileUpload 
-                                @change="handleMediaChange" 
-                                accept="image/*" 
-                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
-                                buttonColor="blue" 
-                            />
+                                <FileUpload 
+                                    @change="handleMediaChange" 
+                                    accept="image/*" 
+                                    :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
+                                    buttonColor="blue" 
+                                />
                             <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             <p class="text-xs text-gray-400">
                                     Format: JPG, PNG, GIF. Maks 2MB.
@@ -1863,20 +1855,12 @@ const toggleCardVariant = () => {
                                         <X class="w-4 h-4" />
                                     </button>
                                 </div>
-                                <FileUpload
-                                    @change="handleMediaChange"
-                                    accept="video/*"
-                                    :buttonText="
-                                        mediaPreview
-                                            ? 'Ganti Video'
-                                            : 'Pilih Video'
-                                    "
-                                    <FileUpload 
-                                @change="handleMediaChange" 
-                                accept="image/*" 
-                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
-                                buttonColor="blue" 
-                            />
+                                <FileUpload 
+                                    @change="handleMediaChange" 
+                                    accept="video/*" 
+                                    :buttonText="mediaPreview ? 'Ganti Video' : 'Pilih Video'" 
+                                    buttonColor="blue" 
+                                />
                             <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             <p class="text-xs text-gray-400">
                                     Format: MP4, MOV, AVI, WebM. Maks 50MB.
