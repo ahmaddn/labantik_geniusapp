@@ -17,6 +17,8 @@ import {
     Image as ImageIcon,
     RotateCcw,
     Eye,
+    Menu,
+    X,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
@@ -39,6 +41,7 @@ const menuRef = ref(null);
 const showModal = ref(false);
 const modalVisible = ref(false);
 const selectedModule = ref(null);
+const mobileSidebarOpen = ref(false);
 
 const openModal = (mod) => {
     selectedModule.value = mod;
@@ -135,7 +138,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             <div class="particle p-5"></div>
         </div>
 
-        <aside class="dsk-sidebar-left">
+        <div v-if="mobileSidebarOpen" class="mobile-sidebar-backdrop" @click="mobileSidebarOpen = false"></div>
+
+        <aside class="dsk-sidebar-left" :class="{ 'mobile-open': mobileSidebarOpen }">
             <div class="dsk-sidebar-inner">
                 <div class="ds-brand">
                 <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }">
@@ -151,6 +156,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                     <span class="ds-brand-name">{{
                         $page.props.global_settings?.platform_name || "Geniuss"
                     }}</span>
+                    <button class="mobile-sidebar-close" @click="mobileSidebarOpen = false">
+                        <X :size="20" color="#94a3b8" :stroke-width="2.5" />
+                    </button>
                 </div>
 
                 <div class="ds-sep"></div>
@@ -248,6 +256,9 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
             <div class="learning-path-container">
                 <header class="mobile-top-bar">
                     <div class="mobile-brand">
+                        <button class="mobile-sidebar-toggle" @click="mobileSidebarOpen = true">
+                            <Menu :size="22" color="#334155" :stroke-width="2.5" />
+                        </button>
                         <div class="ds-brand-icon" :class="{ 'has-logo': $page.props.global_settings?.platform_logo }" style="width: 28px; height: 28px; border-radius: 6px;">
                             <img v-if="$page.props.global_settings?.platform_logo" :src="$page.props.global_settings?.platform_logo" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;" />
                             <Zap
@@ -1250,8 +1261,36 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         flex-direction: column;
     }
 
-    .duo-sidebar-left {
-        display: none !important; /* Sembunyikan penuh sidebar kiri asli pada mobile */
+    .dsk-sidebar-left {
+        transform: translateX(-150%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex !important;
+        z-index: 200;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        height: 100dvh;
+        border-radius: 0;
+    }
+    
+    .dsk-sidebar-left.mobile-open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    }
+
+    .dsk-sidebar-inner {
+        border-radius: 0;
+        border-left: none;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    .mobile-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 190;
+        backdrop-filter: blur(2px);
     }
 
     .duo-main-content {
@@ -1303,6 +1342,28 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         font-size: 13px;
     }
 
+    .mobile-sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        margin-right: 4px;
+    }
+    
+    .mobile-sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        margin-left: auto;
+    }
+
     /* Set Kontainer Dropdown Mobile agar Tepat di Bawah Avatar */
     .mobile-dd {
         position: absolute;
@@ -1310,11 +1371,79 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         bottom: auto;
         left: auto;
         right: 16px;
-        width: 200px;
+        width: 220px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        border-radius: 14px;
+        border-radius: 16px;
         background: #ffffff;
         border: 2px solid #cbd5e1;
+        padding: 16px;
+        z-index: 200;
+    }
+    
+    .dd-profile-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .dd-avatar-big {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #38bdf8;
+        color: white;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    
+    .dd-text {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .dd-name {
+        font-weight: 800;
+        color: #1e293b;
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .dd-class {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 700;
+    }
+    
+    .dd-divider {
+        height: 2px;
+        background: #f1f5f9;
+        margin: 12px 0;
+    }
+    
+    .dd-logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        background: transparent;
+        color: #ef4444;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    
+    .dd-logout-btn:hover {
+        background: #fef2f2;
+        border-color: #fca5a5;
     }
 
     /* Perampingan Path Header */
