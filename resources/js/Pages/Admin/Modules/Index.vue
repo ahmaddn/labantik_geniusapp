@@ -678,6 +678,7 @@ const toggleActive = (module) => {
                                 >PNG, JPG, WEBP (maks. 2MB)</span
                             >
                         </label>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                     </div>
 
                     <p

@@ -796,6 +796,7 @@ const finalSave = () => {
                                         class="hidden"
                                     />
                                 </label>
+                                <p class="text-xs text-orange-600/70 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             </div>
                         </div>
                         <InputField

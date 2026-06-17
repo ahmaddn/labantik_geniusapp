@@ -174,6 +174,7 @@ const isSubmitting = ref(false);
 const ready = ref(false);
 const shakeActive = ref(false);
 const phase = ref('quiz'); // 'quiz' | 'celebration'
+const resetKey = ref(0);
 
 // ── Step helpers (harus dideklarasikan sebelum timer & computed lain) ──
 const step = computed(() => steps.value[currentStep.value]);
@@ -256,6 +257,42 @@ function startQuizTimer(quiz) {
         saveTimerState(quiz.id, timeRemaining.value);
     }, 1000);
 }
+
+function retryQuiz(quizId) {
+    if (!quizId) return;
+    
+    const mapTimeout = ssGetMap(SS_TIMEOUT_KEY);
+    delete mapTimeout[quizId];
+    ssSetMap(SS_TIMEOUT_KEY, mapTimeout);
+
+    const mapTime = ssGetMap(SS_TIME_KEY);
+    delete mapTime[quizId];
+    ssSetMap(SS_TIME_KEY, mapTime);
+
+    const newTimeouts = new Set(timedOutQuizzes.value);
+    newTimeouts.delete(quizId);
+    timedOutQuizzes.value = newTimeouts;
+
+    if (step.value && step.value.quiz && step.value.quiz.id === quizId) {
+        // Hentikan timer lama secara paksa tanpa menyimpan state sisa waktu (karena sudah diset ke 0 sebelumnya)
+        clearInterval(timerInt);
+        timerInt = null;
+        activeQuizId = null; // Mencegah pauseActiveTimer() menyimpan waktu 0 ke sessionStorage
+        
+        timeRemaining.value = step.value.quiz.time_limit || 60;
+        startQuizTimer(step.value.quiz);
+    }
+}
+
+const handleGlobalRetry = () => {
+    if (step.value?.question?.id) {
+        delete answers[step.value.question.id];
+    }
+    resetKey.value++;
+    if (timedOutQuizzes.value.has(step.value?.quiz?.id)) {
+        retryQuiz(step.value?.quiz?.id);
+    }
+};
 
 watch(
     () => step.value?.quiz?.id,
@@ -648,6 +685,10 @@ onUnmounted(() => {
                                     </span>
                                 </div>
 
+                                <div v-if="step?.quiz?.image && !step?.isConclusion" style="margin-bottom: 16px;">
+                                    <img :src="step.quiz.image.startsWith('http') ? step.quiz.image : `/storage/${step.quiz.image}`" alt="Quiz Image" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 16px; border: 2px solid #e2e8f0;" />
+                                </div>
+
                                 <!-- Question bubble -->
                                 <div
                                     v-if="step?.question && !step.isMaterial && step.quiz.type !== 'short_answer' && step.quiz.type !== 'reflection'"
@@ -679,15 +720,24 @@ onUnmounted(() => {
                                     </div>
 
                                     <Transition name="slide-fade" mode="out-in">
-                                        <div :key="'step-' + currentStep" style="width: 100%;">
+                                        <div :key="'step-' + currentStep + '-' + resetKey" style="width: 100%;">
                                             <component
                                                 v-if="step.question || step.isMaterial || step.isReflection"
                                                 :is="COMPONENT_MAP[step.quiz.type]"
                                                 :question="step.question"
                                                 :quiz="step.quiz"
                                                 :modelValue="answers[step.question?.id]"
+                                                :disabled="timedOutQuizzes.has(step.quiz?.id)"
                                                 @update-answer="updateAnswer"
                                             />
+                                            
+                                            <!-- Global Retry Button -->
+                                            <div v-if="(step.question || step.isReflection) && step.quiz.type !== 'materials'" class="global-actions">
+                                                <button class="global-reset-btn" @click="handleGlobalRetry">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                                    Ulangi Soal Ini
+                                                </button>
+                                            </div>
                                         </div>
                                     </Transition>
                                 </div>
@@ -1656,5 +1706,32 @@ onUnmounted(() => {
         width: 100%;
         max-width: 280px;
     }
+}
+.global-actions {
+    display: flex; 
+    justify-content: flex-end; 
+    margin-top: 15px; 
+    position: relative; 
+    z-index: 30; 
+    pointer-events: auto;
+}
+.global-reset-btn {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 5px;
+    padding: 6px 13px;
+    background: rgba(255,255,255,.7); 
+    border: 1.5px solid rgba(29,78,216,.2);
+    border-radius: 8px;
+    font-size: 11.5px; 
+    font-weight: 800; 
+    color: #1d4ed8;
+    cursor: pointer; 
+    transition: all .18s;
+    backdrop-filter: blur(4px);
+}
+.global-reset-btn:hover { 
+    background: rgba(255,255,255,.9); 
+    border-color: rgba(29,78,216,.35); 
 }
 </style>

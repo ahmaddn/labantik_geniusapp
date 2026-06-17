@@ -479,6 +479,7 @@ const saveDecision = () => {
                                     v-model="level.image"
                                     @update:modelValue="(file) => { if(file) level._preview = URL.createObjectURL(file); else level._preview = null; }" 
                                 />
+                                <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                 <div v-if="level._preview || level.existing_image" class="mt-3">
                                     <p class="text-xs text-gray-500 mb-1 font-bold">Preview Gambar:</p>
                                     <img :src="level._preview || `/storage/${level.existing_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
@@ -537,6 +538,7 @@ const saveDecision = () => {
                                             v-model="item.image"
                                             @update:modelValue="(file) => { if(file) item._preview = URL.createObjectURL(file); else item._preview = null; }" 
                                         />
+                                        <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                         <div v-if="item._preview || item.existing_image" class="mt-3">
                                             <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
                                             <img :src="item._preview || `/storage/${item.existing_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
@@ -586,6 +588,7 @@ const saveDecision = () => {
                                     v-model="obj.image"
                                     @update:modelValue="(file) => { if(file) obj._preview = URL.createObjectURL(file); else obj._preview = null; }" 
                                 />
+                                <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 (contoh: 200x200 px)</p>
                                 <div v-if="obj._preview || obj.existing_image" class="mt-3">
                                     <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
                                     <img :src="obj._preview || `/storage/${obj.existing_image}`" class="w-16 h-16 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
@@ -626,6 +629,7 @@ const saveDecision = () => {
                                         v-model="dec.initial_state_image"
                                         @update:modelValue="(file) => { if(file) dec._preview_initial = URL.createObjectURL(file); else dec._preview_initial = null; }" 
                                     />
+                                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                     <div v-if="dec._preview_initial || dec.existing_initial_image" class="mt-3">
                                         <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
                                         <img :src="dec._preview_initial || `/storage/${dec.existing_initial_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />
@@ -682,6 +686,7 @@ const saveDecision = () => {
                                             v-model="opt.future_state_image"
                                             @update:modelValue="(file) => { if(file) opt._preview_future = URL.createObjectURL(file); else opt._preview_future = null; }" 
                                         />
+                                        <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                         <div v-if="opt._preview_future || opt.existing_future_image" class="mt-3">
                                             <p class="text-xs text-gray-500 mb-1 font-bold">Preview:</p>
                                             <img :src="opt._preview_future || `/storage/${opt.existing_future_image}`" class="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 shadow-sm" />

@@ -61,6 +61,7 @@ class PretestController extends Controller
             'type'       => $quiz->type,
             'title'      => $quiz->title,
             'time_limit' => $quiz->time_limit,
+            'image'      => $quiz->image,
             'questions'  => $quiz->questions->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,

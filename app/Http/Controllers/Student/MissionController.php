@@ -140,6 +140,7 @@ class MissionController extends Controller
             'time_limit'   => $quiz->time_limit,
             'order_number' => $quiz->order_number ?? 0,
             'created_at'   => $quiz->created_at,
+            'image'        => $quiz->image,
             'questions'    => $quiz->questions->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,

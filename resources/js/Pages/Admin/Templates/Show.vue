@@ -305,6 +305,7 @@ const storageUrl = (path) => `/storage/${path}`;
                         button-color="green"
                         @change="handleBgUpload"
                     />
+                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 1280x720 px)</p>
                 </div>
 
                 <!-- Mascots -->
@@ -394,6 +395,7 @@ const storageUrl = (path) => `/storage/${path}`;
                         button-color="yellow"
                         @change="handleMascotUpload"
                     />
+                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau Potret (contoh: 500x500 px)</p>
                 </div>
             </div>
         </div>

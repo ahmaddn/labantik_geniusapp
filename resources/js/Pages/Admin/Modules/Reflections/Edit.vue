@@ -181,6 +181,8 @@ const goBack = () => {
                                     <span>Pilih File</span>
                                     <input type="file" class="sr-only" accept="image/*" @change="(e) => handleImageUpload(e, index)">
                                 </label>
+                                <p class="text-[10px] text-gray-500 mt-1 ml-2">Rasio 16:9 (contoh: 800x450 px)</p>
+                                <p class="text-[10px] text-gray-500 mt-1 ml-2">Rasio 16:9 (contoh: 800x450 px)</p>
                                 <div v-if="step.image && typeof step.image === 'object'" class="ml-3 w-10 h-10 rounded overflow-hidden border border-gray-300 flex-shrink-0">
                                     <img :src="getImagePreview(step.image)" class="w-full h-full object-cover" />
                                 </div>

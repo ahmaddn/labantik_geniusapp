@@ -217,6 +217,7 @@ const toggleAudio = (bgm) => {
                                 v-model="form.platform_logo"
                                 @update:modelValue="handleLogoUpload"
                             />
+                            <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau memanjang (contoh: 256x256 px)</p>
                             <div v-if="logoPreview" class="mt-4 relative border-2 border-gray-200 rounded-xl p-2 max-w-[200px] inline-block">
                                 <img :src="logoPreview" class="h-24 w-auto object-contain mx-auto" />
                                 <button type="button" @click="deleteLogo" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">
@@ -241,6 +242,7 @@ const toggleAudio = (bgm) => {
                                 v-model="form.platform_mascot"
                                 @update:modelValue="handleMascotUpload"
                             />
+                            <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau Potret (contoh: 500x500 px)</p>
                             <div v-if="mascotPreview" class="mt-4 relative border-2 border-gray-200 rounded-xl p-2 max-w-[200px] inline-block bg-gray-50">
                                 <img :src="mascotPreview" class="h-32 w-auto object-contain mx-auto" />
                                 <button type="button" @click="deleteMascot" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">

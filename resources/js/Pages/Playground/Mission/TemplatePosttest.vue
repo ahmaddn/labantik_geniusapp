@@ -381,6 +381,11 @@ onUnmounted(() => {
                             <div class="title-pill">
                                 POSTTEST: {{ module.name }}
                             </div>
+                            
+                            <div v-if="quiz.image" style="margin-bottom: 16px;">
+                                <img :src="quiz.image.startsWith('http') ? quiz.image : `/storage/${quiz.image}`" alt="Quiz Image" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 16px; border: 2px solid #e2e8f0;" />
+                            </div>
+
                             <div class="question-bubble">
                                 <span>{{
                                     quiz.description ??
@@ -461,6 +466,11 @@ onUnmounted(() => {
                             <div class="title-pill">
                                 SOAL {{ currentIdx + 1 }} DARI {{ totalQ }}
                             </div>
+                            
+                            <div v-if="quiz.image" style="margin-bottom: 16px;">
+                                <img :src="quiz.image.startsWith('http') ? quiz.image : `/storage/${quiz.image}`" alt="Quiz Image" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 16px; border: 2px solid #e2e8f0;" />
+                            </div>
+
                             <div
                                 class="question-bubble"
                                 v-html="currentQ?.question_text"

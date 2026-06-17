@@ -451,6 +451,7 @@ const deleteTemplate = () => {
                         button-color="green"
                         @change="handleBackgroundUpload"
                     />
+                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 1280x720 px)</p>
                     <!-- Helper text -->
                     <p class="mt-1.5 text-xs text-gray-400">
                         Format: JPG, PNG, WEBP &bull; Maks. 5 MB
@@ -496,6 +497,7 @@ const deleteTemplate = () => {
                         button-color="yellow"
                         @change="handleMascotUpload"
                     />
+                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau Potret (contoh: 500x500 px)</p>
                     <!-- Helper text -->
                     <p class="mt-1.5 text-xs text-gray-400">
                         Format: JPG, PNG, WEBP &bull; Maks. 5 MB per maskot

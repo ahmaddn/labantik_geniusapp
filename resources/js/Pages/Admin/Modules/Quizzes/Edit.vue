@@ -766,6 +766,7 @@ const toggleCardVariant = () => {
                                         class="hidden"
                                     />
                                 </label>
+                                <p class="text-xs text-orange-600/70 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             </div>
                         </div>
                         <InputField
@@ -1432,6 +1433,7 @@ const toggleCardVariant = () => {
                                     <ImageIcon class="w-5 h-5 mr-2" />{{ currentDDImagePreview ? "Ganti Gambar" : "Pilih Gambar" }}
                                     <input type="file" @change="handleDDImageChange" accept="image/*" class="hidden" />
                                 </label>
+                                <p class="text-xs text-green-600/70 mt-2">Rekomendasi resolusi: Rasio 1:1 (contoh: 200x200 px)</p>
                             </div>
                         </div>
                         <SelectField

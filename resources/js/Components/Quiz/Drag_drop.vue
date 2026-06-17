@@ -11,9 +11,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update-answer'])
+const emit = defineEmits(['update-answer', 'retry'])
 
 // ── State ─────────────────────────────────────────────────────
 const getImageUrl = (path) => {
@@ -105,9 +109,11 @@ const removeItem = (item, zone) => {
 }
 
 const reset = () => {
+  unplaced.value = [...items.value]
+  zones.value.forEach(z => z.items = [])
   placed.value = {}
-  zones.value.forEach(z => (z.items = []))
   emitUpdate()
+  emit('retry')
 }
 
 // ── Mouse drag ────────────────────────────────────────────────
@@ -276,13 +282,7 @@ onUnmounted(() => { tClone?.remove() })
       </div>
     </div>
 
-    <!-- ── Reset ── -->
-    <div class="dd-actions">
-      <button class="dd-reset-btn" @click="reset">
-        <RotateCcw :size="12" :stroke-width="2.5" />
-        Ulangi Soal Ini
-      </button>
-    </div>
+
 
   </div>
 </template>
@@ -445,18 +445,7 @@ onUnmounted(() => { tClone?.remove() })
 .dd-placed:hover .dd-placed-remove { opacity: 1; }
 .dd-placed-remove:hover { transform: scale(1.15); }
 
-/* ── Actions ── */
-.dd-actions { display: flex; justify-content: flex-end; }
-.dd-reset-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 13px;
-  background: rgba(255,255,255,.7); border: 1.5px solid rgba(29,78,216,.2);
-  border-radius: 8px;
-  font-size: 11.5px; font-weight: 800; color: #1d4ed8;
-  cursor: pointer; transition: all .18s;
-  backdrop-filter: blur(4px);
-}
-.dd-reset-btn:hover { background: rgba(255,255,255,.9); border-color: rgba(29,78,216,.35); }
+
 
 /* ── Transitions ── */
 .dd-pop-enter-active { transition: all .25s cubic-bezier(.34,1.56,.64,1); }

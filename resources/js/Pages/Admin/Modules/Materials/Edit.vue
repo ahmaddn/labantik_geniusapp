@@ -613,6 +613,7 @@ const toggleCardVariant = () => {
                                                 buttonText="Pilih Gambar" 
                                                 buttonColor="blue" 
                                             />
+                                            <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                             <img v-if="level._preview || level.existing_image" :src="level._preview || `/storage/${level.existing_image}`" class="mt-4 h-48 w-full object-cover rounded-xl border-4 border-blue-200" />
                                         </div>
                                     </div>
@@ -673,6 +674,7 @@ const toggleCardVariant = () => {
                                     :buttonText="mediaPreview ? 'Ganti Gambar Cover' : 'Pilih Gambar Cover'"
                                     buttonColor="indigo"
                                 />
+                                <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                                 <div v-if="mediaPreview || materialForm.existing_image" class="relative inline-block mt-3">
                                     <img :src="mediaPreview || `/storage/${materialForm.existing_image}`" class="h-32 w-auto object-cover rounded-lg border-2 border-indigo-200" />
                                     <button type="button" @click="removeMedia" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X class="w-3 h-3"/></button>
@@ -706,6 +708,7 @@ const toggleCardVariant = () => {
                                     <InputField label="Label Gambar Kiri" v-model="materialForm.image_comparison.left_label" />
                                     <div class="mt-2">
                                         <FileUpload @change="e => { materialForm.image_comparison.image_left = e.target.files[0]; materialForm.image_comparison.image_left_preview = URL.createObjectURL(e.target.files[0]) }" accept="image/*" buttonText="Pilih Gambar Kiri" buttonColor="green" />
+                                        <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau 3:4 (contoh: 400x400 px)</p>
                                         <img v-if="materialForm.image_comparison.image_left_preview || materialForm.image_comparison.existing_image_left" :src="materialForm.image_comparison.image_left_preview || `/storage/${materialForm.image_comparison.existing_image_left}`" class="mt-4 h-32 w-full object-cover rounded-xl border" />
                                     </div>
                                 </div>
@@ -715,6 +718,7 @@ const toggleCardVariant = () => {
                                     <InputField label="Label Gambar Kanan" v-model="materialForm.image_comparison.right_label" />
                                     <div class="mt-2">
                                         <FileUpload @change="e => { materialForm.image_comparison.image_right = e.target.files[0]; materialForm.image_comparison.image_right_preview = URL.createObjectURL(e.target.files[0]) }" accept="image/*" buttonText="Pilih Gambar Kanan" buttonColor="blue" />
+                                        <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 1:1 atau 3:4 (contoh: 400x400 px)</p>
                                         <img v-if="materialForm.image_comparison.image_right_preview || materialForm.image_comparison.existing_image_right" :src="materialForm.image_comparison.image_right_preview || `/storage/${materialForm.image_comparison.existing_image_right}`" class="mt-4 h-32 w-full object-cover rounded-xl border" />
                                     </div>
                                 </div>
@@ -830,8 +834,13 @@ const toggleCardVariant = () => {
                                 @change="handleMediaChange" 
                                 accept="image/*" 
                                 :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
+                                <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="image/*" 
+                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
                                 buttonColor="blue" 
                             />
+                            <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             <p class="text-xs text-gray-400">
                                 Format: JPG, PNG, GIF. Maks 2MB.
                             </p>
@@ -862,8 +871,13 @@ const toggleCardVariant = () => {
                                 @change="handleMediaChange" 
                                 accept="video/*" 
                                 :buttonText="mediaPreview ? 'Ganti Video' : 'Pilih Video'" 
+                                <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="image/*" 
+                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
                                 buttonColor="blue" 
                             />
+                            <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
                             <p class="text-xs text-gray-400">
                                 Format: MP4, MOV, AVI, WebM. Maks 50MB.
                             </p>

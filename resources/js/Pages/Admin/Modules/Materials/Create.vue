@@ -1392,7 +1392,8 @@ const toggleCardVariant = () => {
                                         :buttonText="mediaPreview ? 'Ganti Gambar Cover' : 'Pilih Gambar Cover'"
                                         buttonColor="indigo"
                                     />
-                                    <div v-if="mediaPreview" class="relative inline-block mt-3">
+                                    <p class="text-xs text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
+                                <div v-if="mediaPreview" class="relative inline-block mt-3">
                                         <img :src="mediaPreview" class="h-32 w-auto object-cover rounded-lg border-2 border-indigo-200" />
                                         <button type="button" @click="removeMedia" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X class="w-3 h-3"/></button>
                                     </div>
@@ -1828,9 +1829,14 @@ const toggleCardVariant = () => {
                                             ? 'Ganti Gambar'
                                             : 'Pilih Gambar'
                                     "
-                                    buttonColor="blue"
-                                />
-                                <p class="text-xs text-gray-400">
+                                    <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="image/*" 
+                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
+                                buttonColor="blue" 
+                            />
+                            <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
+                            <p class="text-xs text-gray-400">
                                     Format: JPG, PNG, GIF. Maks 2MB.
                                 </p>
                             </div>
@@ -1865,9 +1871,14 @@ const toggleCardVariant = () => {
                                             ? 'Ganti Video'
                                             : 'Pilih Video'
                                     "
-                                    buttonColor="blue"
-                                />
-                                <p class="text-xs text-gray-400">
+                                    <FileUpload 
+                                @change="handleMediaChange" 
+                                accept="image/*" 
+                                :buttonText="mediaPreview ? 'Ganti Gambar' : 'Pilih Gambar'" 
+                                buttonColor="blue" 
+                            />
+                            <p class="text-[10px] text-gray-500 mt-2">Rekomendasi resolusi: Rasio 16:9 (contoh: 800x450 px)</p>
+                            <p class="text-xs text-gray-400">
                                     Format: MP4, MOV, AVI, WebM. Maks 50MB.
                                 </p>
                             </div>
