@@ -699,7 +699,7 @@ onUnmounted(() => {
                                     </span>
                                 </div>
 
-                                <div v-if="step?.quiz?.image && !step?.isConclusion" style="margin-bottom: 16px;">
+                                <div v-if="step?.quiz?.image && !step?.isConclusion && step?.quiz?.type !== 'materials'" style="margin-bottom: 16px;">
                                     <img :src="step.quiz.image.startsWith('http') ? step.quiz.image : `/storage/${step.quiz.image}`" alt="Quiz Image" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 16px; border: 2px solid #e2e8f0;" />
                                 </div>
 
