@@ -382,6 +382,7 @@ let bubbleTimer = null;
 const activeSpeechText = computed(() => {
     const s = step.value;
     if (!s) return "Semangat ya!";
+    if (s.isConclusion) return props.mission.conclusion_speech || "Selesai! Jangan lupa catat poin pentingnya.";
     if (s.isMaterial) return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
     if (s.question && isQuestionAnswered(s.question, s.quiz?.type)) {
         if (s.question.options) {
@@ -664,14 +665,27 @@ onUnmounted(() => {
 
                             <!-- ══ CONCLUSION ══ -->
                             <template v-if="step?.isConclusion">
-                                <div class="title-pill">{{ step.quiz.title }}</div>
-                                <div class="question-bubble">
-                                    {{ mission.conclusion_speech || 'Selamat, kamu telah menyelesaikan misi ini!' }}
-                                </div>
-                                <div class="component-box">
-                                    <p style="font-size:16px;font-weight:700;color:#3c3c3c;line-height:1.7;text-align:center;padding:20px 0;">
-                                        {{ mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.' }}
-                                    </p>
+                                <div class="conclusion-container">
+                                    <div class="conclusion-title-badge">
+                                        <Star class="conclusion-icon" :size="20" />
+                                        <span>{{ step.quiz.title }}</span>
+                                        <Star class="conclusion-icon" :size="20" />
+                                    </div>
+                                    <h2 class="conclusion-subtitle">Kerja bagus! Kamu telah menyelesaikan misi ini <PartyPopper class="inline-icon" :size="24" /></h2>
+
+                                    <div class="conclusion-scroll">
+                                        <div class="scroll-top"></div>
+                                        <div class="scroll-middle">
+                                            <div class="scroll-content">
+                                                <div class="scroll-pin">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#ef4444" stroke="#991b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                                                </div>
+                                                <h3 class="scroll-heading">Ringkasan Pembelajaran</h3>
+                                                <div class="scroll-text-body conclusion-body-content" v-html="mission.conclusion_body || 'Tidak ada penjelasan kesimpulan.'"></div>
+                                            </div>
+                                        </div>
+                                        <div class="scroll-bottom"></div>
+                                    </div>
                                 </div>
                             </template>
 
@@ -1733,5 +1747,173 @@ onUnmounted(() => {
 .global-reset-btn:hover { 
     background: rgba(255,255,255,.9); 
     border-color: rgba(29,78,216,.35); 
+}
+
+/* Conclusion Styles */
+.conclusion-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 0 3rem;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.conclusion-title-badge {
+    background: linear-gradient(180deg, #16a34a, #15803d);
+    color: white;
+    padding: 12px 32px;
+    border-radius: 999px;
+    font-size: 1.25rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 0 #14532d, 0 8px 16px rgba(0,0,0,0.15);
+    border: 3px solid #fef08a;
+    letter-spacing: 1px;
+}
+
+.conclusion-icon {
+    color: #fef08a;
+    fill: #facc15;
+}
+
+.conclusion-subtitle {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    text-align: center;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 10px 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 2px solid #e2e8f0;
+}
+
+.conclusion-scroll {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 1rem;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
+}
+
+.scroll-top {
+    height: 40px;
+    background: #fde08b;
+    border-radius: 20px 20px 0 0;
+    border: 2px solid #b45309;
+    border-bottom: none;
+    box-shadow: inset 0 -10px 10px rgba(0,0,0,0.05), inset 0 10px 10px rgba(255,255,255,0.4);
+    position: relative;
+    z-index: 2;
+}
+.scroll-top::after {
+    content: '';
+    position: absolute;
+    left: -10px; right: -10px; top: 10px; height: 20px;
+    background: #fcd34d;
+    border: 2px solid #b45309;
+    border-radius: 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+}
+
+.scroll-middle {
+    background: #fef3c7;
+    border-left: 2px solid #b45309;
+    border-right: 2px solid #b45309;
+    padding: 10px 30px;
+    position: relative;
+    z-index: 1;
+    background-image: 
+        linear-gradient(90deg, rgba(180,83,9,0.05) 0%, transparent 5%, transparent 95%, rgba(180,83,9,0.05) 100%),
+        repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(180,83,9,0.05) 30px);
+}
+
+.scroll-bottom {
+    height: 40px;
+    background: #fde08b;
+    border-radius: 0 0 20px 20px;
+    border: 2px solid #b45309;
+    border-top: none;
+    box-shadow: inset 0 10px 10px rgba(0,0,0,0.05), inset 0 -10px 10px rgba(255,255,255,0.4);
+    position: relative;
+    z-index: 2;
+}
+.scroll-bottom::after {
+    content: '';
+    position: absolute;
+    left: -10px; right: -10px; bottom: 10px; height: 20px;
+    background: #fcd34d;
+    border: 2px solid #b45309;
+    border-radius: 10px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+}
+
+.scroll-content {
+    background: rgba(255,255,255,0.6);
+    border-radius: 16px;
+    padding: 30px;
+    position: relative;
+    border: 2px dashed #d97706;
+}
+
+.scroll-pin {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    z-index: 10;
+}
+
+.scroll-heading {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #92400e;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+}
+
+.scroll-text-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #451a03;
+    font-weight: 600;
+}
+
+.scroll-text-body :deep(p) {
+    margin-bottom: 12px;
+}
+.scroll-text-body :deep(ul) {
+    list-style: none;
+    padding-left: 0;
+}
+.scroll-text-body :deep(li) {
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 12px;
+}
+.scroll-text-body :deep(li::before) {
+    content: '✅';
+    position: absolute;
+    left: 0;
+    top: -2px;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 640px) {
+    .conclusion-title-badge { font-size: 1rem; padding: 10px 24px; }
+    .conclusion-subtitle { font-size: 1rem; padding: 8px 16px; }
+    .scroll-content { padding: 20px; }
+    .scroll-heading { font-size: 1.2rem; }
 }
 </style>
