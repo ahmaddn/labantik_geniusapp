@@ -403,6 +403,7 @@ class QuizController extends Controller
                     'question_text' => $tfData['question_text'],
                     'image'         => null,
                     'order_number'  => 1,
+                    'type'          => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -438,7 +439,7 @@ class QuizController extends Controller
                         'question_text' => $questionData['question_text'],
                         'image'         => $questionData['image'] ?? null,
                         'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'short_answer' ? 'short_answer' : 'multiple_choice',
+                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -569,6 +570,7 @@ class QuizController extends Controller
                     'question_text' => $tfData['question_text'],
                     'image'         => null,
                     'order_number'  => 1,
+                    'type'          => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -604,7 +606,7 @@ class QuizController extends Controller
                         'question_text' => $questionData['question_text'],
                         'image'         => $questionData['image'] ?? null,
                         'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'short_answer' ? 'short_answer' : 'multiple_choice',
+                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -976,6 +978,7 @@ class QuizController extends Controller
                     'question_text' => $tfData['question_text'],
                     'image'         => null,
                     'order_number'  => 1,
+                    'type'          => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -1013,7 +1016,7 @@ class QuizController extends Controller
                         'question_text' => $questionData['question_text'],
                         'image'         => $questionData['image'] ?? null,
                         'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'short_answer' ? 'short_answer' : 'multiple_choice',
+                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -1216,6 +1219,7 @@ class QuizController extends Controller
                     'question_text' => $tfData['question_text'],
                     'image'         => null,
                     'order_number'  => 1,
+                    'type'          => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -1253,7 +1257,7 @@ class QuizController extends Controller
                         'question_text' => $questionData['question_text'],
                         'image'         => $questionData['image'] ?? null,
                         'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'short_answer' ? 'short_answer' : 'multiple_choice',
+                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
