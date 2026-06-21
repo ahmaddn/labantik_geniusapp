@@ -11,6 +11,7 @@ class Learning_modules extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'template_id',
         'name',
         'description',
         'content',
@@ -76,6 +77,11 @@ class Learning_modules extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function template()
+    {
+        return $this->belongsTo(\App\Models\Templates::class, 'template_id');
     }
 
 }

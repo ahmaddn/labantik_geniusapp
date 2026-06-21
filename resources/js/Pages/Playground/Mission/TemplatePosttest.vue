@@ -228,8 +228,7 @@ const INSTR_ITEMS = [
 ];
 
 const mascotUrl = computed(() => {
-    const customMascot = questions.value.find((q) => q?.mascot?.image)?.mascot
-        ?.image;
+    const customMascot = questions.value.find((q) => q?.mascot?.image)?.mascot?.image;
     if (customMascot) {
         if (customMascot.startsWith("http") || customMascot.startsWith("/")) {
             return customMascot;
@@ -237,10 +236,35 @@ const mascotUrl = computed(() => {
         return `${window.location.origin}/storage/${customMascot}`;
     }
 
-    if (phase.value === "intro") return "/images/templates/pose_nunjuk.png";
+    const templateMascots = props.module?.template?.mascots || [];
+    const getMascotImage = (keyword, fallback) => {
+        const m = templateMascots.find(m => m.name_pose?.toLowerCase()?.includes(keyword));
+        if (m && m.image) {
+            return m.image.startsWith('http') || m.image.startsWith('/') 
+                ? m.image 
+                : `${window.location.origin}/storage/${m.image}`;
+        }
+        if (templateMascots.length > 0 && templateMascots[0].image) {
+             const m0 = templateMascots[0].image;
+             return m0.startsWith('http') || m0.startsWith('/') ? m0 : `${window.location.origin}/storage/${m0}`;
+        }
+        return fallback;
+    };
+
+    if (phase.value === "intro") return getMascotImage('nunjuk', "/images/templates/pose_nunjuk.png");
     if (phase.value === "done" || phase.value === "celebration")
-        return "/images/templates/pose_jempol.png";
-    return "/images/templates/pose_pikir.png";
+        return getMascotImage('jempol', "/images/templates/pose_jempol.png");
+    return getMascotImage('pikir', "/images/templates/pose_pikir.png");
+});
+
+const backgroundUrl = computed(() => {
+    if (props.background) return props.background;
+    const bgs = props.module?.template?.backgrounds || [];
+    if (bgs.length > 0 && bgs[0].image) {
+        const bg = bgs[0].image;
+        return bg.startsWith('http') || bg.startsWith('/') ? bg : `/storage/${bg}`;
+    }
+    return null;
 });
 
 const BUBBLES_INTRO = [
@@ -352,6 +376,7 @@ onUnmounted(() => {
         :progressPercent="progressPct"
         :showProgress="phase === 'quiz'"
         :backsound="props.backsound"
+        :background="backgroundUrl"
     >
         <div class="main-wrapper" :class="{ 'main--on': ready }">
             <div class="pretest-layout-cols">

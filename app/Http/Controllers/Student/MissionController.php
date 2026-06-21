@@ -111,7 +111,8 @@ class MissionController extends Controller
         }
 
         $mission->load([
-            'module',
+            'module.template.backgrounds',
+            'module.template.mascots',
             'materials',
             'materials.mascot',
             'quizzes',
@@ -353,7 +354,7 @@ class MissionController extends Controller
         return Inertia::render('Playground/Mission/Template', [
             'mission'    => $formattedMission,
             'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'module'     => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? ''],
+            'module'     => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? '', 'template' => $mission->module?->template],
             'backsound'  => $backsound,
             'background' => $background,
         ]);
@@ -784,7 +785,7 @@ class MissionController extends Controller
     public function show(Request $request, Learning_modules $learningModule)
     {
         $user = $request->user();
-        $learningModule->load(['template', 'missions.materials', 'missions.quizzes.quizAttempts']);
+        $learningModule->load(['template.backgrounds', 'template.mascots', 'missions.materials', 'missions.quizzes.quizAttempts']);
 
         return Inertia::render('Playground/MissionShow', [
             'module' => $learningModule,

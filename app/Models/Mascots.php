@@ -14,7 +14,8 @@ class Mascots extends Model
 
     protected $fillable = [
         'name_pose',
-        'image'
+        'image',
+        'template_id'
     ];
 
     protected static function booted(): void

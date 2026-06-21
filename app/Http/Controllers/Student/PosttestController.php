@@ -20,6 +20,8 @@ class PosttestController extends Controller
      */
     public function show(Learning_modules $module)
     {
+        $module->load(['template.backgrounds', 'template.mascots']);
+
         $player = session('player');
         if (! $player) {
             return redirect()->route('playground.login');
@@ -117,6 +119,7 @@ class PosttestController extends Controller
                 'id'          => $module->id,
                 'name'        => $module->name,
                 'description' => $module->description,
+                'template'    => $module->template,
             ],
             'user' => [
                 'name'  => $player['nama'] ?? 'Siswa',

@@ -29,8 +29,10 @@ class ModulesController extends Controller
                 'quotes'      => $m->quotes,
                 'closing_text' => $m->closing_text ?? null,
                 'thumbnail'   => $m->thumbnail ? Storage::url($m->thumbnail) : null,
+                'template_id' => $m->template_id,
                 'created_by'  => $m->created_by,
                 'is_active'   => $m->is_active, // ✅ Tambahkan ini
+                'template'    => $m->template,
                 'createdBy'   => $m->createdBy,
                 'created_at'  => $m->created_at,
             ]);
@@ -51,12 +53,14 @@ class ModulesController extends Controller
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
-            'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
+            'template_id' => 'nullable|exists:templates,id',
+            'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = null;
@@ -71,6 +75,7 @@ class ModulesController extends Controller
             'content'     => $validated['content'] ?? '',
             'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
+            'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'created_by'  => Auth::id(),
             'is_active'   => $validated['is_active'] ?? false, // ✅ Tambahkan ini
@@ -165,12 +170,14 @@ class ModulesController extends Controller
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
+            'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
+            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = $modules->thumbnail;
@@ -198,6 +205,7 @@ class ModulesController extends Controller
             'content'     => $validated['content'] ?? '',
             'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
+            'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'is_active'   => $validated['is_active'] ?? $modules->is_active, // ✅ Tambahkan ini
         ]);

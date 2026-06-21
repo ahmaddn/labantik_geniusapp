@@ -344,16 +344,40 @@ const mascotUrl = computed(() => {
             return `${window.location.origin}/storage/${img}`;
         }
     }
-    for (const quiz of props.mission.quizzes) {
-        for (const q of quiz.questions ?? []) {
-            if (q.mascot?.image) {
-                const img = q.mascot.image;
-                if (img.startsWith("http") || img.startsWith("/")) return img;
-                return `${window.location.origin}/storage/${img}`;
-            }
+    const templateMascots = props.module?.template?.mascots || [];
+    const getMascotImage = (keyword, fallback) => {
+        const m = templateMascots.find(m => m.name_pose?.toLowerCase()?.includes(keyword));
+        if (m && m.image) {
+            return m.image.startsWith('http') || m.image.startsWith('/') 
+                ? m.image 
+                : `${window.location.origin}/storage/${m.image}`;
         }
+        if (templateMascots.length > 0 && templateMascots[0].image) {
+             const m0 = templateMascots[0].image;
+             return m0.startsWith('http') || m0.startsWith('/') ? m0 : `${window.location.origin}/storage/${m0}`;
+        }
+        return fallback;
+    };
+    
+    const s = step.value;
+    if (!s) return getMascotImage('pikir', "/images/templates/pose_pikir.png");
+    if (s.isConclusion) return getMascotImage('jempol', "/images/templates/pose_jempol.png");
+    if (s.isMaterial) return getMascotImage('nunjuk', "/images/templates/pose_nunjuk.png");
+    
+    if (s.question && isStepAnswered(s)) {
+        return getMascotImage('jempol', "/images/templates/pose_jempol.png");
     }
-    return DEFAULT_MASCOT;
+    return getMascotImage('pikir', "/images/templates/pose_pikir.png");
+});
+
+const backgroundUrl = computed(() => {
+    if (props.background) return props.background;
+    const bgs = props.module?.template?.backgrounds || [];
+    if (bgs.length > 0 && bgs[0].image) {
+        const bg = bgs[0].image;
+        return bg.startsWith('http') || bg.startsWith('/') ? bg : `/storage/${bg}`;
+    }
+    return null;
 });
 
 // ── Speech bubble ──────────────────────────────────────────────
@@ -525,25 +549,30 @@ onUnmounted(() => {
 
         <!-- ░░ BACKGROUND ░░ -->
         <div class="bg-scene">
-            <div class="sky-gradient"></div>
-            <div class="bg-particles">
-                <div class="particle p-1"></div>
-                <div class="particle p-2"></div>
-                <div class="particle p-3"></div>
-                <div class="particle p-4"></div>
-                <div class="particle p-5"></div>
-            </div>
-            <!-- Educational floating icons -->
-            <div class="edu-particles">
-                <svg class="edu-p ep-1" style="top:10%;left:8%;color:#1cb0f6" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <svg class="edu-p ep-2" style="top:18%;right:10%;color:#ffc800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                <svg class="edu-p ep-3" style="top:35%;left:12%;color:#78c257" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
-                <svg class="edu-p ep-4" style="top:40%;right:12%;color:#ff847c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg>
-                <svg class="edu-p ep-5" style="top:65%;left:8%;color:#845ef7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <svg class="edu-p ep-6" style="top:72%;right:14%;color:#00bcd4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
-                <svg class="edu-p ep-7" style="top:85%;left:22%;color:#e91e63" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
-                <svg class="edu-p ep-8" style="top:25%;left:26%;color:#1cb0f6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
-            </div>
+            <template v-if="backgroundUrl">
+                <div class="custom-bg" :style="{ backgroundImage: `url(${backgroundUrl})` }"></div>
+            </template>
+            <template v-else>
+                <div class="sky-gradient"></div>
+                <div class="bg-particles">
+                    <div class="particle p-1"></div>
+                    <div class="particle p-2"></div>
+                    <div class="particle p-3"></div>
+                    <div class="particle p-4"></div>
+                    <div class="particle p-5"></div>
+                </div>
+                <!-- Educational floating icons -->
+                <div class="edu-particles">
+                    <svg class="edu-p ep-1" style="top:10%;left:8%;color:#1cb0f6" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg class="edu-p ep-2" style="top:18%;right:10%;color:#ffc800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    <svg class="edu-p ep-3" style="top:35%;left:12%;color:#78c257" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+                    <svg class="edu-p ep-4" style="top:40%;right:12%;color:#ff847c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg>
+                    <svg class="edu-p ep-5" style="top:65%;left:8%;color:#845ef7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <svg class="edu-p ep-6" style="top:72%;right:14%;color:#00bcd4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+                    <svg class="edu-p ep-7" style="top:85%;left:22%;color:#e91e63" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12"/></svg>
+                    <svg class="edu-p ep-8" style="top:25%;left:26%;color:#1cb0f6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
+                </div>
+            </template>
         </div>
 
         <!-- ░░ TOP NAV ░░ -->
@@ -888,6 +917,14 @@ onUnmounted(() => {
     inset: 0;
     pointer-events: none;
     z-index: 0;
+}
+.custom-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1;
 }
 .sky-gradient {
     position: absolute;

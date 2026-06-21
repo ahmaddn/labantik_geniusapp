@@ -288,7 +288,7 @@ class QuizController extends Controller
             abort(404);
         }
 
-        $mascots = \App\Models\Mascots::all();
+        $mascots = $modules->template ? $modules->template->mascots : collect();
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [
@@ -313,7 +313,7 @@ class QuizController extends Controller
             abort(404);
         }
 
-        $mascots = \App\Models\Mascots::all();
+        $mascots = $modules->template ? $modules->template->mascots : collect();
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [

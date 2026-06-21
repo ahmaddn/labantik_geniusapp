@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\Admin\MissionController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\QuizController;
+use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -91,6 +92,20 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::delete('/classes/{class}', [ClassesController::class, 'destroy'])->name('destroy');
     });
 
+    // Template Desain Modul
+    Route::name('templates.')->group(function () {
+        // web.php
+        Route::get('/templates', [TemplatesController::class, 'index'])->name('index');
+        Route::post('/templates', [TemplatesController::class, 'store'])->name('store');
+        Route::put('/templates/{templates}', [TemplatesController::class, 'update'])->name('update');
+        Route::delete('/templates/{templates}', [TemplatesController::class, 'destroy'])->name('destroy');
+        Route::get('/templates/{templates}', [TemplatesController::class, 'show'])->name('show');
+
+        // Hapus backgrounds dan mascots individual jika ada
+        Route::delete('/backgrounds/{background}', [TemplatesController::class, 'destroyBackground'])->name('backgrounds.destroy');
+        Route::delete('/mascots/{mascot}', [TemplatesController::class, 'destroyMascot'])->name('mascots.destroy');
+    });
+
     // Reports & History
     Route::name('reports.')->group(function () {
         Route::get('/reports', [ReportsController::class, 'index'])->name('index');
@@ -110,14 +125,6 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::delete('/bgm/{bgm}', [SettingsController::class, 'deleteBgm'])->name('bgm.delete');
         Route::post('/bgm/{bgm}/active', [SettingsController::class, 'setActiveBgm'])->name('bgm.active');
         Route::post('/bgm/clear', [SettingsController::class, 'clearActiveBgm'])->name('bgm.clear');
-    });
-
-    // Maskot
-    Route::name('mascots.')->group(function () {
-        Route::get('/mascots', [App\Http\Controllers\Admin\MascotsController::class, 'index'])->name('index');
-        Route::post('/mascots', [App\Http\Controllers\Admin\MascotsController::class, 'store'])->name('store');
-        Route::put('/mascots/{mascot}', [App\Http\Controllers\Admin\MascotsController::class, 'update'])->name('update');
-        Route::delete('/mascots/{mascot}', [App\Http\Controllers\Admin\MascotsController::class, 'destroy'])->name('destroy');
     });
 
     // Pengguna
