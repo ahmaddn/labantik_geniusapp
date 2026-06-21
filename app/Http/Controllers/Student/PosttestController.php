@@ -85,7 +85,7 @@ class PosttestController extends Controller
                 ];
 
                 if ($question->options->count() > 0) {
-                    $formatted['options'] = $question->options->map(fn($opt) => [
+                    $formatted['options'] = $question->options->sortBy('created_at')->values()->map(fn($opt) => [
                         'id'           => $opt->id,
                         'text'         => $opt->option_text,
                         'option_text'  => $opt->option_text,
