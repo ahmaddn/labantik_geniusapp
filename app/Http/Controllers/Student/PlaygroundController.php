@@ -35,7 +35,6 @@ class PlaygroundController extends Controller
         return Inertia::render('Playground/Index', [
             'user'            => $userData,
             'learningModules' => $learningModules,
-            'background'      => $background,
         ]);
     }
 
