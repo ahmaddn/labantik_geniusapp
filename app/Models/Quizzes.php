@@ -23,6 +23,7 @@ class Quizzes extends Model
         'time_limit',
         'category',
         'order_number',
+        'is_randomized',
     ];
 
     protected static function booted(): void

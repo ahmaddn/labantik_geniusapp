@@ -49,6 +49,7 @@ const quizForm = ref({
     time_limit: props.quiz.time_limit || 30,
     type: props.quiz.type || "multiple_choices",
     category: props.quiz.category || "mission",
+    is_randomized: props.quiz.is_randomized === 1 || props.quiz.is_randomized === true,
 });
 
 watch(() => quizForm.value.category, (newVal) => {
@@ -464,6 +465,7 @@ const finalSave = () => {
     formData.append("type", quizForm.value.type);
     formData.append("time_limit", quizForm.value.time_limit);
     formData.append("category", quizForm.value.category);
+    formData.append("is_randomized", quizForm.value.is_randomized ? "1" : "0");
     formData.append("remove_image", removeExistingImage.value ? "1" : "0");
     if (quizImageFile.value) formData.append("image", quizImageFile.value);
 
@@ -791,6 +793,17 @@ const toggleCardVariant = () => {
                                 :options="categoryOptions"
                                 border-color="orange"
                             />
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <input 
+                                type="checkbox" 
+                                id="isRandomized" 
+                                v-model="quizForm.is_randomized" 
+                                class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500" 
+                            />
+                            <label for="isRandomized" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                Acak Soal (Soal akan ditampilkan secara acak saat dikerjakan)
+                            </label>
                         </div>
                         <div
                             v-if="isTrueFalse"

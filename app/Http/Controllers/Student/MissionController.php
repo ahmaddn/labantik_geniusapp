@@ -31,7 +31,6 @@ class MissionController extends Controller
             'missions.quizzes',
             'missions.quizzes.questions',
             'missions.materials',
-            'template.backgrounds',
         ]);
 
         $missions = $module->missions
@@ -91,12 +90,8 @@ class MissionController extends Controller
             $allMissionsDone = false;
         }
 
-        $backsound  = $module->template?->backsound
-            ? asset('storage/' . $module->template->backsound)
-            : null;
-        $background = $module->template?->backgrounds->first()?->image
-            ? asset('storage/' . $module->template->backgrounds->first()->image)
-            : null;
+        $backsound  = null;
+        $background = null;
 
         return Inertia::render('Playground/Missions/Index', [
             'module'            => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
@@ -123,8 +118,7 @@ class MissionController extends Controller
             'quizzes.questions.mascot',
             'quizzes.questions.options',
             'quizzes.questions.dragDropGroups.items',
-            'module.template',
-            'module.template.backgrounds',
+
             'simulation_clickable_objects',
             'simulation_sliders.levels',
             'simulation_comparisons',
@@ -133,15 +127,23 @@ class MissionController extends Controller
         ]);
 
         // Format quizzes
-        $quizzes = $mission->quizzes->map(fn($quiz) => [
-            'id'           => $quiz->id,
-            'type'         => $quiz->type,
-            'title'        => $quiz->title,
-            'time_limit'   => $quiz->time_limit,
-            'order_number' => $quiz->order_number ?? 0,
-            'created_at'   => $quiz->created_at,
-            'image'        => $quiz->image,
-            'questions'    => $quiz->questions->map(function ($question) {
+        $quizzes = $mission->quizzes->map(function($quiz) {
+            $questionsCollection = $quiz->questions;
+            if ($quiz->is_randomized) {
+                $questionsCollection = $questionsCollection->shuffle();
+            } else {
+                $questionsCollection = $questionsCollection->sortBy('order_number')->values();
+            }
+
+            return [
+                'id'           => $quiz->id,
+                'type'         => $quiz->type,
+                'title'        => $quiz->title,
+                'time_limit'   => $quiz->time_limit,
+                'order_number' => $quiz->order_number ?? 0,
+                'created_at'   => $quiz->created_at,
+                'image'        => $quiz->image,
+                'questions'    => $questionsCollection->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,
                     'question_text' => $question->question_text,
@@ -181,7 +183,8 @@ class MissionController extends Controller
 
                 return $formatted;
             })->toArray(),
-        ])->toArray();
+            ];
+        })->toArray();
 
         // Format materials
         $materials = $mission->materials->map(fn($material) => [
@@ -218,12 +221,6 @@ class MissionController extends Controller
 
         $backsound  = null;
         $background = null;
-        if (! empty($mission->module?->template?->backsound)) {
-            $backsound = asset('storage/' . $mission->module->template->backsound);
-        }
-        if (! empty($mission->module?->template?->backgrounds->first()?->image)) {
-            $background = asset('storage/' . $mission->module->template->backgrounds->first()->image);
-        }
 
         $clickables = [];
         if ($mission->simulation_clickable_objects->isNotEmpty()) {

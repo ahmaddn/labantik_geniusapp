@@ -8,7 +8,6 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Templates;
 class PlaygroundLoginController extends Controller
 {
     /**
@@ -21,12 +20,8 @@ class PlaygroundLoginController extends Controller
         return redirect()->route('playground.index');
     }
 
-    // Ambil template yang aktif / sesuai kebutuhan
-$template   = Templates::with('backgrounds')->orderBy('created_at')->first();
-$backsound  = $template?->backsound  ? asset('storage/' . $template->backsound)  : null;
-$background = $template?->backgrounds->first()?->image
-              ? asset('storage/' . $template->backgrounds->first()->image)
-              : null;
+    $backsound = null;
+    $background = null;
 
     $classes = \App\Models\Classes::select('id', 'name')->orderBy('name')->get();
 

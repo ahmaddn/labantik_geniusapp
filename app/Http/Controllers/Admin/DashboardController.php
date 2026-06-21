@@ -8,7 +8,6 @@ use App\Models\Missions;
 use App\Models\Quizzes;
 use App\Models\Quiz_attempts;
 use App\Models\Materials;
-use App\Models\Templates;
 use App\Models\Classes;
 use App\Models\User;
 use Carbon\Carbon;
@@ -23,7 +22,6 @@ class DashboardController extends Controller
         $totalMissions  = Missions::count();
         $totalQuizzes   = Quizzes::count();
         $totalMaterials = Materials::count();
-        $totalTemplates = Templates::count();
         $totalClasses   = Classes::count();
         $totalStudents  = User::where('role', 'siswa')->count();
         $totalTeachers  = User::where('role', 'guru')->count();
@@ -145,7 +143,6 @@ class DashboardController extends Controller
                 'total_missions'   => $totalMissions,
                 'total_quizzes'    => $totalQuizzes,
                 'total_materials'  => $totalMaterials,
-                'total_templates'  => $totalTemplates,
                 'total_classes'    => $totalClasses,
                 'total_students'   => $totalStudents,
                 'total_teachers'   => $totalTeachers,

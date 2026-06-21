@@ -9,7 +9,6 @@ import {
     TrendingUp,
     Flag,
     FileText,
-    LayoutTemplate,
     GraduationCap,
     Plus,
     ChevronRight,
@@ -53,7 +52,7 @@ const s = computed(() => ({
     total_missions: props.stats?.total_missions ?? 0,
     total_quizzes: props.stats?.total_quizzes ?? 0,
     total_materials: props.stats?.total_materials ?? 0,
-    total_templates: props.stats?.total_templates ?? 0,
+
     total_classes: props.stats?.total_classes ?? 0,
     total_students: props.stats?.total_students ?? 0,
     total_teachers: props.stats?.total_teachers ?? 0,
@@ -400,26 +399,6 @@ const greeting =
                             class="text-xl font-bold text-gray-800 tabular-nums leading-none"
                         >
                             {{ s.total_materials }}
-                        </p>
-                    </div>
-                </button>
-                <button
-                    @click="go('admin.templates.index')"
-                    class="bg-white rounded-xl border border-gray-200 hover:border-pink-300 hover:shadow-sm p-4 flex items-center gap-3 transition-all text-left"
-                >
-                    <div
-                        class="bg-pink-100 w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    >
-                        <LayoutTemplate class="w-4 h-4 text-pink-600" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-400 leading-none mb-1">
-                            Template
-                        </p>
-                        <p
-                            class="text-xl font-bold text-gray-800 tabular-nums leading-none"
-                        >
-                            {{ s.total_templates }}
                         </p>
                     </div>
                 </button>

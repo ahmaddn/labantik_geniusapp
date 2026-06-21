@@ -19,7 +19,7 @@ class MaterialController extends Controller
             abort(404);
         }
 
-        $mascots = $modules->template?->mascots ?? [];
+        $mascots = \App\Models\Mascots::all();
 
         return Inertia::render('Admin/Modules/Materials/Create', [
             'module'  => ['id' => $modules->id, 'name' => $modules->name],
@@ -250,7 +250,7 @@ class MaterialController extends Controller
         }
 
         $materials->load(['mascot']);
-        $mascots = $modules->template?->mascots ?? [];
+        $mascots = \App\Models\Mascots::all();
 
         return Inertia::render('Admin/Modules/Materials/Edit', [
             'module'   => ['id' => $modules->id, 'name' => $modules->name],

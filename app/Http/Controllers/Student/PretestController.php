@@ -34,10 +34,7 @@ class PretestController extends Controller
                 'questions.dragDropGroups.items',
             ])
             ->first();
-        $module->load('template', 'template.backgrounds');
-        $background = $module->template?->backgrounds->first()?->image
-            ? asset('storage/' . $module->template->backgrounds->first()->image)
-            : null;
+        $background = null;
         $backsound = null;
         if (!empty($module->template?->backsound)) {
             $backsound = asset('storage/' . $module->template->backsound);
@@ -56,13 +53,20 @@ class PretestController extends Controller
         if ($alreadyDone) {
             return redirect()->route('playground.missions.index', $module->id);
         }
+        $questionsCollection = $quiz->questions;
+        if ($quiz->is_randomized) {
+            $questionsCollection = $questionsCollection->shuffle();
+        } else {
+            $questionsCollection = $questionsCollection->sortBy('order_number')->values();
+        }
+
         $formattedQuiz = [
             'id'         => $quiz->id,
             'type'       => $quiz->type,
             'title'      => $quiz->title,
             'time_limit' => $quiz->time_limit,
             'image'      => $quiz->image,
-            'questions'  => $quiz->questions->map(function ($question) {
+            'questions'  => $questionsCollection->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,
                     'question_text' => $question->question_text,

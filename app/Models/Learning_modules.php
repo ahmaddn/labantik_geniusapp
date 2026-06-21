@@ -11,7 +11,6 @@ class Learning_modules extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'template_id',
         'name',
         'description',
         'content',
@@ -74,10 +73,6 @@ class Learning_modules extends Model
         return $this->hasMany(\App\Models\Quizzes::class, 'module_id');
     }
 
-    public function template()
-    {
-        return $this->belongsTo(Templates::class, 'template_id');
-    }
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

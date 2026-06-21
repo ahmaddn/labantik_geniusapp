@@ -288,13 +288,12 @@ class QuizController extends Controller
             abort(404);
         }
 
-        $mascots = $modules->template?->mascots ?? [];
+        $mascots = \App\Models\Mascots::all();
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [
                 'id'       => $modules->id,
                 'name'     => $modules->name,
-                'template' => $modules->template,
             ],
             'mission' => [
                 'id'           => $missions->id,
@@ -314,13 +313,12 @@ class QuizController extends Controller
             abort(404);
         }
 
-        $mascots = $modules->template?->mascots ?? [];
+        $mascots = \App\Models\Mascots::all();
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [
                 'id'       => $modules->id,
                 'name'     => $modules->name,
-                'template' => $modules->template,
             ],
             'mission'        => null,
             'mascots'        => $mascots,
@@ -344,6 +342,7 @@ class QuizController extends Controller
             'time_limit'  => 'required|integer|min:1',
             'category'    => 'nullable|string|max:100',
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_randomized' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -386,6 +385,7 @@ class QuizController extends Controller
                 'time_limit'  => $validated['time_limit'],
                 'category'    => $validated['category'] ?? null,
                 'image'       => $imagePath,
+                'is_randomized' => $request->boolean('is_randomized'),
                 'created_by'  => Auth::id(),
             ]);
 
@@ -513,6 +513,7 @@ class QuizController extends Controller
             'time_limit'  => 'required|integer|min:1',
             'category'    => 'required|in:pretest,posttest,case_study',
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_randomized' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -553,6 +554,7 @@ class QuizController extends Controller
                 'time_limit'  => $validated['time_limit'],
                 'category'    => $validated['category'] ?? null,
                 'image'       => $imagePath,
+                'is_randomized' => $request->boolean('is_randomized'),
                 'created_by'  => Auth::id(),
             ]);
 
@@ -891,6 +893,7 @@ class QuizController extends Controller
             'category'     => 'nullable|string|max:100',
             'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'remove_image' => 'nullable|string',
+            'is_randomized' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -927,6 +930,7 @@ class QuizController extends Controller
                 'time_limit'  => $validated['time_limit'],
                 'category'    => $validated['category'] ?? null,
                 'image'       => $imagePath,
+                'is_randomized' => $request->boolean('is_randomized'),
             ]);
 
             $retainedImages = [];
@@ -1132,6 +1136,7 @@ class QuizController extends Controller
             'category'     => 'nullable|string|max:100',
             'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'remove_image' => 'nullable|string',
+            'is_randomized' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -1168,6 +1173,7 @@ class QuizController extends Controller
                 'time_limit'  => $validated['time_limit'],
                 'category'    => $validated['category'] ?? null,
                 'image'       => $imagePath,
+                'is_randomized' => $request->boolean('is_randomized'),
             ]);
 
             $retainedImages = [];
@@ -1354,6 +1360,22 @@ class QuizController extends Controller
             DB::rollBack();
             return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Toggle randomized status for a module-level quiz
+     */
+    public function toggleRandomizedModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $quizzes->update([
+            'is_randomized' => !$quizzes->is_randomized
+        ]);
+
+        return back()->with('success', 'Pengaturan acak soal berhasil diperbarui.');
     }
     public function downloadTemplate(Request $request)
     {

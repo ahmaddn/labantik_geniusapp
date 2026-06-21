@@ -19,6 +19,8 @@ import {
     Pencil,
     Loader2,
     Hash,
+    Shuffle,
+    ListOrdered,
 } from "lucide-vue-next";
 
 const page = usePage();
@@ -272,6 +274,22 @@ const goToEditQuiz = (quiz) => {
     ); // Currently it points to show. Edit could be handled in show or we need a module quiz edit route, but let's just go to show. Or actually there is no edit route for module quizzes, so we just use goToShowQuiz. But user asked for edit button, we can just use goToShowQuiz for now since editing is done in the show page for quizzes.
 };
 
+const toggleQuizRandomized = (quiz) => {
+    router.patch(
+        route("admin.modules.quizzes.toggle_randomized", [props.module.id, quiz.id]),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Flash message will trigger toast
+            },
+            onError: () => {
+                triggerToast("Gagal memperbarui pengaturan acak soal.", "error");
+            }
+        }
+    );
+};
+
 const confirmDeleteQuiz = (quiz) => {
     selectedQuiz.value = quiz;
     showDeleteQuizDialog.value = true;
@@ -448,6 +466,22 @@ const deleteQuiz = () => {
                                 class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
                                 @click.stop
                             >
+                                <!-- Toggle Randomized Button -->
+                                <button
+                                    @click="toggleQuizRandomized(quiz)"
+                                    :title="quiz.is_randomized ? 'Ubah ke Urutkan Soal' : 'Ubah ke Acak Soal'"
+                                    :class="[
+                                        'h-10 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-medium text-xs',
+                                        quiz.is_randomized 
+                                            ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200' 
+                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 border-gray-200'
+                                    ]"
+                                >
+                                    <ListOrdered v-if="quiz.is_randomized" class="w-4 h-4" />
+                                    <Shuffle v-else class="w-4 h-4" />
+                                    <span>{{ quiz.is_randomized ? 'Urutkan Soal' : 'Acak Soal' }}</span>
+                                </button>
+
                                 <!-- Edit Button -->
                                 <button
                                     @click="goToShowQuiz(quiz.id)"
@@ -612,6 +646,22 @@ const deleteQuiz = () => {
                                     class="flex justify-end gap-2 pt-4 border-t-2 border-gray-100"
                                     @click.stop
                                 >
+                                    <!-- Toggle Randomized Button -->
+                                    <button
+                                        @click="toggleQuizRandomized(quiz)"
+                                        :title="quiz.is_randomized ? 'Ubah ke Urutkan Soal' : 'Ubah ke Acak Soal'"
+                                        :class="[
+                                            'h-10 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-medium text-xs',
+                                            quiz.is_randomized 
+                                                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200' 
+                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 border-gray-200'
+                                        ]"
+                                    >
+                                        <ListOrdered v-if="quiz.is_randomized" class="w-4 h-4" />
+                                        <Shuffle v-else class="w-4 h-4" />
+                                        <span>{{ quiz.is_randomized ? 'Urutkan Soal' : 'Acak Soal' }}</span>
+                                    </button>
+
                                     <!-- Edit Button -->
                                     <button
                                         @click="goToShowQuiz(quiz.id)"

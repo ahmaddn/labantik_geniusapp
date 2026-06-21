@@ -11,6 +11,7 @@ import {
     X,
     HelpCircle,
     Settings,
+    Smile,
 } from "lucide-vue-next";
 
 defineProps({
@@ -48,15 +49,6 @@ const menuItems = [
         activeColor: "bg-blue-500",
     },
     {
-        name: "Template Desain Modul",
-        route: "admin.templates.index",
-        icon: Palette,
-        bgColor: "bg-blue-100",
-        iconColor: "text-blue-600",
-        borderColor: "border-blue-300",
-        activeColor: "bg-blue-500",
-    },
-    {
         name: "Modul Pembelajaran",
         route: "admin.modules.index",
         icon: GraduationCap,
@@ -87,6 +79,15 @@ const menuItems = [
         name: "Laporan & Riwayat",
         route: "admin.reports.index",
         icon: BarChart,
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
+        borderColor: "border-blue-300",
+        activeColor: "bg-blue-500",
+    },
+    {
+        name: "Maskot",
+        route: "admin.mascots.index",
+        icon: Smile,
         bgColor: "bg-blue-100",
         iconColor: "text-blue-600",
         borderColor: "border-blue-300",

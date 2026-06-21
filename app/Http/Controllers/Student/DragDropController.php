@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Backgrounds;
 use App\Models\Drag_drop_groups;
 use App\Models\Drag_drop_items;
 use App\Models\Mascots;
@@ -32,7 +31,7 @@ class DragDropController extends Controller
             ]);
 
         $mascot     = Mascots::first();
-        $background = Backgrounds::first();
+        $background = null;
 
         return Inertia::render('Playground/Mission/Drag_drop', [
             'mission'    => ['id' => $mission->id, 'title' => $mission->title],
@@ -40,7 +39,7 @@ class DragDropController extends Controller
             'groups'     => $groups,
             'items'      => $items,
             'mascot'     => $mascot     ? ['id' => $mascot->id,     'name' => $mascot->name ?? 'Teman Belajar', 'image' => $mascot->image]     : null,
-            'background' => $background ? ['id' => $background->id, 'name' => $background->name,               'image' => $background->image] : null,
+            'background' => null,
             'auth'       => ['user' => $request->user()],
         ]);
     }

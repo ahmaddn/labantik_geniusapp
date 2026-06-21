@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Learning_modules;
 use App\Models\Missions;
 use App\Models\Quizzes;
-use App\Models\Templates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +18,7 @@ class ModulesController extends Controller
      */
     public function index()
     {
-        $modules = Learning_modules::with(['template:id,name', 'createdBy:id,name'])
+        $modules = Learning_modules::with(['createdBy:id,name'])
             ->latest()
             ->paginate(12)
             ->through(fn($m) => [
@@ -30,19 +29,14 @@ class ModulesController extends Controller
                 'quotes'      => $m->quotes,
                 'closing_text' => $m->closing_text ?? null,
                 'thumbnail'   => $m->thumbnail ? Storage::url($m->thumbnail) : null,
-                'template_id' => $m->template_id,
                 'created_by'  => $m->created_by,
                 'is_active'   => $m->is_active, // ✅ Tambahkan ini
-                'template'    => $m->template,
                 'createdBy'   => $m->createdBy,
                 'created_at'  => $m->created_at,
             ]);
 
-        $templates = Templates::select('id', 'name')->latest()->get();
-
         return Inertia::render('Admin/Modules/Index', [
             'modules'   => $modules,
-            'templates' => $templates,
         ]);
     }
 
@@ -57,14 +51,12 @@ class ModulesController extends Controller
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
-            'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
-            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = null;
@@ -79,7 +71,6 @@ class ModulesController extends Controller
             'content'     => $validated['content'] ?? '',
             'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
-            'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'created_by'  => Auth::id(),
             'is_active'   => $validated['is_active'] ?? false, // ✅ Tambahkan ini
@@ -134,6 +125,7 @@ class ModulesController extends Controller
                 'title' => $q->title,
                 'questions_count' => $q->questions_count,
                 'time_limit' => $q->time_limit,
+                'is_randomized' => $q->is_randomized,
             ]);
 
         $posttest = $moduleQuizzes
@@ -145,6 +137,7 @@ class ModulesController extends Controller
                 'title' => $q->title,
                 'questions_count' => $q->questions_count,
                 'time_limit' => $q->time_limit,
+                'is_randomized' => $q->is_randomized,
             ]);
 
         return Inertia::render('Admin/Modules/Show', [
@@ -172,14 +165,12 @@ class ModulesController extends Controller
             'content'     => 'nullable|string',
             'quotes'      => 'nullable|string|max:500',
             'closing_text' => 'nullable|string',
-            'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
             'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
             'thumbnail.max'        => 'Ukuran gambar maksimal 5MB.',
-            'template_id.exists'   => 'Template tidak ditemukan.',
         ]);
 
         $thumbnailPath = $modules->thumbnail;
@@ -207,7 +198,6 @@ class ModulesController extends Controller
             'content'     => $validated['content'] ?? '',
             'quotes'      => $validated['quotes'] ?? '',
             'closing_text' => $validated['closing_text'] ?? null,
-            'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'is_active'   => $validated['is_active'] ?? $modules->is_active, // ✅ Tambahkan ini
         ]);
