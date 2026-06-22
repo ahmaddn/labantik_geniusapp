@@ -843,6 +843,37 @@ class QuizController extends Controller
     }
 
     /**
+     * Show edit form for module-level quizzes
+     */
+    public function editModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $quizzes->load([
+            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions.mascot',
+            'questions.options',
+            'questions.dragDropGroups',
+            'questions.dragDropItems.dragDropGroups',
+        ]);
+
+        $mascots = $modules->template?->mascots ?? [];
+
+        return Inertia::render('Admin/Modules/Quizzes/Edit', [
+            'module' => [
+                'id'       => $modules->id,
+                'name'     => $modules->name,
+                'template' => $modules->template,
+            ],
+            'mission' => null,
+            'quiz'    => $quizzes,
+            'mascots' => $mascots,
+        ]);
+    }
+
+    /**
      * Show edit form
      */
     public function edit(Learning_modules $modules, Missions $missions, Quizzes $quizzes)

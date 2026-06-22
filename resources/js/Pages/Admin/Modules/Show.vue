@@ -270,8 +270,8 @@ const deleteMission = () => {
 
 const goToEditQuiz = (quiz) => {
     router.visit(
-        route("admin.modules.quizzes.show", [props.module.id, quiz.id]),
-    ); // Currently it points to show. Edit could be handled in show or we need a module quiz edit route, but let's just go to show. Or actually there is no edit route for module quizzes, so we just use goToShowQuiz. But user asked for edit button, we can just use goToShowQuiz for now since editing is done in the show page for quizzes.
+        route("admin.modules.quizzes.edit", [props.module.id, quiz.id]),
+    );
 };
 
 const toggleQuizRandomized = (quiz) => {
@@ -484,7 +484,7 @@ const deleteQuiz = () => {
 
                                 <!-- Edit Button -->
                                 <button
-                                    @click="goToShowQuiz(quiz.id)"
+                                    @click="goToEditQuiz(quiz)"
                                     title="Edit Tes Awal"
                                     class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
                                 >
@@ -664,7 +664,7 @@ const deleteQuiz = () => {
 
                                     <!-- Edit Button -->
                                     <button
-                                        @click="goToShowQuiz(quiz.id)"
+                                        @click="goToEditQuiz(quiz)"
                                         title="Edit Tes Akhir"
                                         class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:scale-95 transition-all shadow-sm hover:shadow-md border-2 border-yellow-200"
                                     >

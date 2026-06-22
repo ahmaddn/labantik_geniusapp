@@ -242,7 +242,7 @@ function startQuizTimer(quiz) {
         return;
     }
     const saved = ssGetMap(SS_TIME_KEY);
-    timeRemaining.value = saved[quiz.id] !== undefined ? saved[quiz.id] : quiz.time_limit;
+    timeRemaining.value = saved[quiz.id] !== undefined ? saved[quiz.id] : (quiz.time_limit * 60);
     activeQuizId = quiz.id;
     timerInt = setInterval(() => {
         if (timeRemaining.value <= 0) {
@@ -279,7 +279,7 @@ function retryQuiz(quizId) {
         timerInt = null;
         activeQuizId = null; // Mencegah pauseActiveTimer() menyimpan waktu 0 ke sessionStorage
         
-        timeRemaining.value = step.value.quiz.time_limit || 60;
+        timeRemaining.value = step.value.quiz.time_limit ? (step.value.quiz.time_limit * 60) : 60;
         startQuizTimer(step.value.quiz);
     }
 }
@@ -520,6 +520,14 @@ const goToPosttest = () => {
     router.visit(route("playground.posttest.show", props.module.id));
 };
 
+const goToNextMission = () => {
+    if (props.mission.next_mission_id) {
+        router.visit(route("playground.missions.show", props.mission.next_mission_id));
+    } else {
+        goToMissionsIndex();
+    }
+};
+
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
@@ -661,9 +669,13 @@ onUnmounted(() => {
                             <Home :size="18" :stroke-width="3" />
                             <span>Ke Beranda Misi</span>
                         </button>
-                        <button class="btn-duo btn-duo-success" @click="goToPosttest">
-                            <span>Lanjut ke Posttest</span>
+                        <button v-if="!mission.has_next_mission" class="btn-duo btn-duo-success" @click="goToPosttest">
+                            <span>Kerjakan Postest</span>
                             <Rocket :size="18" :stroke-width="3" />
+                        </button>
+                        <button v-else class="btn-duo btn-duo-primary" @click="goToNextMission">
+                            <span>Lanjutkan Misi Selanjutnya</span>
+                            <ArrowRight :size="18" :stroke-width="3" />
                         </button>
                     </div>
                 </div>

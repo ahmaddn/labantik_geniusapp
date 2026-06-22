@@ -46,7 +46,7 @@ const cardVariant = ref("playful");
 const quizForm = ref({
     title: props.quiz.title || "",
     description: props.quiz.description || "",
-    time_limit: props.quiz.time_limit || 30,
+    time_limit: props.quiz.time_limit || 15,
     type: props.quiz.type || "multiple_choices",
     category: props.quiz.category || "mission",
     is_randomized: props.quiz.is_randomized === 1 || props.quiz.is_randomized === true,
@@ -775,7 +775,7 @@ const toggleCardVariant = () => {
                             v-model.number="quizForm.time_limit"
                             type="number"
                             label="Batas Waktu (menit)"
-                            placeholder="30"
+                            placeholder="15"
                             border-color="orange"
                             min="1"
                         />

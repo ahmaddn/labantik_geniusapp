@@ -343,9 +343,17 @@ class MissionController extends Controller
             ->values()
             ->toArray();
 
+        $nextMission = Missions::where('module_id', $mission->module_id)
+            ->where('order_number', '>', $mission->order_number)
+            ->orderBy('order_number', 'asc')
+            ->first();
+
         $formattedMission = [
             'id'                => $mission->id,
             'name'              => $mission->name,
+            'order_number'      => $mission->order_number,
+            'has_next_mission'  => $nextMission !== null,
+            'next_mission_id'   => $nextMission ? $nextMission->id : null,
             'conclusion_speech' => $mission->conclusion_speech,
             'conclusion_body'   => $mission->conclusion_body,
             'quizzes'           => $allItems,

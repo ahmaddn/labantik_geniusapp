@@ -116,18 +116,22 @@ const getCategoryLabel = (value) => {
                         </div>
                     </div>
                     <Button
-                        v-if="mission"
                         class="w-full sm:w-auto"
                         variant="warning"
                         size="md"
                         :icon="Pencil"
                         @click="
                             router.visit(
-                                route('admin.modules.missions.quizzes.edit', [
-                                    module.id,
-                                    mission.id,
-                                    quiz.id,
-                                ]),
+                                mission
+                                    ? route('admin.modules.missions.quizzes.edit', [
+                                          module.id,
+                                          mission.id,
+                                          quiz.id,
+                                      ])
+                                    : route('admin.modules.quizzes.edit', [
+                                          module.id,
+                                          quiz.id,
+                                      ]),
                             )
                         "
                     >

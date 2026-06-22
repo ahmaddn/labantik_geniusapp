@@ -51,7 +51,7 @@ const initialType = queryParams.get("type") || "multiple_choices";
 const quizForm = ref({
     title: "",
     description: "",
-    time_limit: 30,
+    time_limit: 15,
     type: initialType,
     category: props.presetCategory || "mission",
     is_randomized: false,
@@ -186,11 +186,7 @@ const isDragDrop = computed(() => quizForm.value.type === "drag_drop");
 const isTrueFalse = computed(() => quizForm.value.type === "true_false");
 const isShortAnswer = computed(() => quizForm.value.type === "short_answer");
 // timer unit label depends on where the user opened the create flow
-const timeUnitLabel = computed(() =>
-    props.presetCategory === "pretest" || props.presetCategory === "posttest"
-        ? "menit"
-        : "detik",
-);
+const timeUnitLabel = computed(() => "menit");
 
 const showToast = (message, type = "success") => {
     successMessage.value = message;
@@ -805,7 +801,7 @@ const finalSave = () => {
                             v-model.number="quizForm.time_limit"
                             type="number"
                             :label="`Batas Waktu (${timeUnitLabel})`"
-                            placeholder="30"
+                            placeholder="15"
                             border-color="orange"
                             min="1"
                         />

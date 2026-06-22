@@ -154,6 +154,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             // Import module-level quizzes (CSV)
             Route::post('/import', [QuizController::class, 'importModule'])->name('import');
             Route::get('/{quizzes}', [QuizController::class, 'showModule'])->name('show');
+            Route::get('/{quizzes}/edit', [QuizController::class, 'editModule'])->name('edit');
             Route::put('/{quizzes}', [QuizController::class, 'updateModule'])->name('update');
             Route::patch('/{quizzes}/toggle-randomized', [QuizController::class, 'toggleRandomizedModule'])->name('toggle_randomized');
             Route::delete('/{quizzes}', [QuizController::class, 'destroyModule'])->name('destroy');
