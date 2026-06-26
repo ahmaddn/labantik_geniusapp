@@ -29,6 +29,7 @@ import {
     Check,
     X,
 } from "lucide-vue-next";
+import { useSfx } from "@/Composable/useSfx";
 
 const props = defineProps({
     mission: { type: Object, required: true },
@@ -39,6 +40,8 @@ const props = defineProps({
     next_mission: { type: Object, default: null },
     is_overall: { type: Boolean, default: false },
 });
+
+const { playPop, playSuccess } = useSfx();
 
 const TYPE_META = {
     multiple_choices: {
@@ -74,6 +77,9 @@ const TYPE_META = {
 };
 
 const showDetails = ref(false);
+const animatedScore = ref(0);
+const confettiCanvas = ref(null);
+const speechTriggered = ref(false);
 
 const formatTime = (sec) => {
     if (!sec || sec < 0) return "0s";
@@ -183,17 +189,135 @@ const isAnswerCorrect = (detail, ans) => {
 const getQuizExplanation = (detail) => {
     return detail.question?.explanation || null;
 };
-const MASCOT_SPEECHES = computed(() => {
+
+const MASCOT_SPEECHES = [
+    "Jangan menyerah! Setiap kesalahan adalah pelajaran baru.",
+    "Bakat itu dilatih! Kamu berada di jalan yang benar.",
+    "Bumi butuh ilmuwan hebat sepertimu, yuk belajar lagi!",
+    "Keren banget usahamu hari ini, super bangga!",
+    "Fokus pada prosesnya, bukan cuma nilainya ya!",
+    "Ingat, Einstein juga pernah gagal sebelum sukses besar!"
+];
+
+const getInitialSpeechText = () => {
     const s = score.value;
-    if (s >= 90) return "Luar biasa! Nilaimu sempurna!";
-    if (s >= 75) return "Kerja bagus! Terus pertahankan!";
-    if (s >= 60) return "Cukup baik! Masih bisa lebih bagus!";
-    return "Jangan menyerah! Terus belajar ya!";
+    if (s >= 90) return "Luar biasa! Nilaimu sangat sempurna!";
+    if (s >= 75) return "Kerja bagus! Terus pertahankan prestasimu ya!";
+    if (s >= 60) return "Cukup baik! Kamu pasti bisa lebih hebat lagi!";
+    return "Jangan menyerah! Terus belajar dan raih mimpimu ya!";
+};
+
+const activeMascotSpeech = ref(getInitialSpeechText());
+const mascotClicked = ref(false);
+
+const handleMascotClick = () => {
+    playPop();
+    mascotClicked.value = true;
+    speechTriggered.value = true;
+    setTimeout(() => { mascotClicked.value = false; }, 500);
+
+    const randomIndex = Math.floor(Math.random() * MASCOT_SPEECHES.length);
+    activeMascotSpeech.value = MASCOT_SPEECHES[randomIndex];
+    setTimeout(() => { speechTriggered.value = false; }, 300);
+};
+
+// Custom Confetti System using HTML5 Canvas
+function startConfetti(canvas) {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+        if (!canvas) return;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const colors = ["#1cb0f6", "#58cc02", "#ff9600", "#a855f7", "#ff4b4b", "#ffc800"];
+
+    // Spawn initial burst
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height - height,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * height,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+            tiltAngle: 0
+        });
+    }
+
+    function draw() {
+        if (!canvas) return;
+        ctx.clearRect(0, 0, width, height);
+
+        let active = false;
+        particles.forEach((p, idx) => {
+            p.tiltAngle += p.tiltAngleIncremental;
+            p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+            p.x += Math.sin(p.tiltAngle);
+            p.tilt = Math.sin(p.tiltAngle - idx / 3) * 15;
+
+            if (p.y < height) {
+                active = true;
+            }
+
+            ctx.beginPath();
+            ctx.lineWidth = p.r;
+            ctx.strokeStyle = p.color;
+            ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+            ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+            ctx.stroke();
+        });
+
+        if (active) {
+            requestAnimationFrame(draw);
+        } else {
+            ctx.clearRect(0, 0, width, height);
+        }
+    }
+
+    draw();
+}
+
+onMounted(() => {
+    // Play Success Chime
+    if (score.value >= 60) {
+        setTimeout(() => {
+            playSuccess();
+            startConfetti(confettiCanvas.value);
+        }, 300);
+    }
+
+    // Score Count Up Animation
+    const duration = 1200; // ms
+    const startTime = performance.now();
+    const targetScore = score.value;
+
+    function animateCount(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        animatedScore.value = Math.round(progress * targetScore);
+
+        if (progress < 1) {
+            requestAnimationFrame(animateCount);
+        } else {
+            animatedScore.value = targetScore;
+        }
+    }
+    requestAnimationFrame(animateCount);
 });
 </script>
 
 <template>
     <div class="app-layout">
+        <!-- Confetti Overlay Canvas -->
+        <canvas ref="confettiCanvas" class="confetti-canvas"></canvas>
+
         <!-- Particles background (behind everything) -->
         <div class="particles-bg" aria-hidden="true">
             <span class="particle p1"></span>
@@ -224,17 +348,18 @@ const MASCOT_SPEECHES = computed(() => {
 
                 <div class="score-mascot-section">
                     <!-- Mascot with speech bubble -->
-                    <div class="mascot-wrap">
-                        <div class="mascot-speech-bubble-wrap">
+                    <div class="mascot-wrap" @click="handleMascotClick">
+                        <div class="mascot-speech-bubble-wrap" :class="{ 'speech-pop': speechTriggered }">
                             <div class="mascot-speech">
-                                {{ MASCOT_SPEECHES }}
+                                {{ activeMascotSpeech }}
                             </div>
                             <div class="mascot-speech-arrow"></div>
                         </div>
                         <img
                             src="/images/templates/pose_jempol.png"
                             alt="Mascot"
-                            class="mascot-img"
+                            class="mascot-img mascot-interactive"
+                            :class="{ 'mascot-wiggle': mascotClicked }"
                         />
                     </div>
 
@@ -252,7 +377,7 @@ const MASCOT_SPEECHES = computed(() => {
                                 r="58"
                                 class="celeb-prog"
                                 :style="{
-                                    strokeDashoffset: 364 - (364 * score) / 100,
+                                    strokeDashoffset: 364 - (364 * animatedScore) / 100,
                                     stroke: gradeData.color,
                                 }"
                             />
@@ -261,7 +386,7 @@ const MASCOT_SPEECHES = computed(() => {
                             <span
                                 class="celeb-score"
                                 :style="{ color: gradeData.color }"
-                                >{{ score }}</span
+                                >{{ animatedScore }}</span
                             >
                         </div>
                     </div>
@@ -1285,5 +1410,77 @@ const MASCOT_SPEECHES = computed(() => {
 @media (max-width: 600px) {
     .bk-val { font-size: 18px; }
     .total-row { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── Confetti & Gamified CSS ── */
+.confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 999;
+}
+
+.mascot-interactive {
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-interactive:hover {
+    transform: scale(1.06) translateY(-4px);
+}
+.mascot-wiggle {
+    animation: mascotWiggle 0.5s ease-in-out;
+}
+
+@keyframes mascotWiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-8deg) scale(1.1); }
+    75% { transform: rotate(8deg) scale(1.1); }
+}
+
+.speech-pop {
+    animation: speechPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes speechPop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.details-list .detail-card {
+    animation: cardSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardSlideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Cascade delays for cards */
+.details-list .detail-card:nth-child(1) { animation-delay: 0.05s; }
+.details-list .detail-card:nth-child(2) { animation-delay: 0.10s; }
+.details-list .detail-card:nth-child(3) { animation-delay: 0.15s; }
+.details-list .detail-card:nth-child(4) { animation-delay: 0.20s; }
+.details-list .detail-card:nth-child(5) { animation-delay: 0.25s; }
+.details-list .detail-card:nth-child(6) { animation-delay: 0.30s; }
+.details-list .detail-card:nth-child(7) { animation-delay: 0.35s; }
+.details-list .detail-card:nth-child(8) { animation-delay: 0.40s; }
+
+.istat {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+}
+.istat:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.breakdown-card {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+}
+.breakdown-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 </style>

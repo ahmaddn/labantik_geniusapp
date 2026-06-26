@@ -1,14 +1,17 @@
 <script setup>
 import { ref } from 'vue';
 import { CheckCircle2, XCircle, Hand, Image as ImageIcon } from 'lucide-vue-next';
+import { useSfx } from '@/Composable/useSfx';
 
 const props = defineProps({
     quiz: { type: Object, required: true },
 });
 
+const { playPop } = useSfx();
 const clickedObjects = ref([]);
 
 const toggleObject = (id) => {
+    playPop();
     if (clickedObjects.value.includes(id)) {
         clickedObjects.value = clickedObjects.value.filter(itemId => itemId !== id);
     } else {

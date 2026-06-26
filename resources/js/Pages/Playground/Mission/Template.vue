@@ -49,6 +49,8 @@ import Comparisons from "@/Components/Simulation/Comparisons.vue";
 import Decisions from "@/Components/Simulation/Decisions.vue";
 import Reflection from "@/Components/Simulation/Reflection.vue";
 import { useMusic } from "@/Composable/useMusic";
+import { useSfx } from "@/Composable/useSfx";
+
 
 // ── Component / type maps ──────────────────────────────────────
 const COMPONENT_MAP = {
@@ -67,6 +69,10 @@ const COMPONENT_MAP = {
 
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
+const { playPop, playSuccess } = useSfx();
+const confettiCanvas = ref(null);
+const mascotClicked = ref(false);
+
 
 const TYPE_META = {
     multiple_choices: { label: "PILIHAN GANDA", color: "#3b82f6", bg: "#dbeafe" },
@@ -435,6 +441,86 @@ watch(currentStep, () => {
     setTimeout(() => { bubbleVisible.value = true; }, 200);
 });
 
+const handleMascotClick = () => {
+    playPop();
+    mascotClicked.value = true;
+    setTimeout(() => { mascotClicked.value = false; }, 500);
+    rotateBubble();
+};
+
+function startConfetti(canvas) {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+        if (!canvas) return;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const colors = ["#1cb0f6", "#58cc02", "#ff9600", "#a855f7", "#ff4b4b", "#ffc800"];
+
+    for (let i = 0; i < 100; i++) {
+        particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height - height,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * height,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+            tiltAngle: 0
+        });
+    }
+
+    function draw() {
+        if (!canvas) return;
+        ctx.clearRect(0, 0, width, height);
+
+        let active = false;
+        particles.forEach((p, idx) => {
+            p.tiltAngle += p.tiltAngleIncremental;
+            p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+            p.x += Math.sin(p.tiltAngle);
+            p.tilt = Math.sin(p.tiltAngle - idx / 3) * 15;
+
+            if (p.y < height) {
+                active = true;
+            }
+
+            ctx.beginPath();
+            ctx.lineWidth = p.r;
+            ctx.strokeStyle = p.color;
+            ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+            ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+            ctx.stroke();
+        });
+
+        if (active) {
+            requestAnimationFrame(draw);
+        } else {
+            ctx.clearRect(0, 0, width, height);
+        }
+    }
+
+    draw();
+}
+
+watch(phase, (newPhase) => {
+    if (newPhase === "celebration") {
+        playSuccess();
+        setTimeout(() => {
+            if (confettiCanvas.value) {
+                startConfetti(confettiCanvas.value);
+            }
+        }, 150);
+    }
+});
+
+
 // ── Navigation ─────────────────────────────────────────────────
 const updateAnswer = (payload) => {
     if (payload?.questionId !== undefined) answers[payload.questionId] = payload.value;
@@ -682,10 +768,13 @@ onUnmounted(() => {
             </Transition>
 
             <div class="main-wrapper" :class="{ 'main--on': ready }" v-show="phase === 'quiz'">
+                <!-- Confetti Overlay Canvas -->
+                <canvas ref="confettiCanvas" class="confetti-canvas"></canvas>
+
                 <div class="pretest-layout-cols">
 
                     <!-- LEFT COLUMN: MASCOT (DESKTOP ONLY) -->
-                    <div class="mascot-column">
+                    <div class="mascot-column" @click="handleMascotClick">
                         <Transition name="bbl">
                             <div v-if="bubbleVisible" class="mascot-bubble-wrap">
                                 <div class="mascot-speech-bubble">
@@ -694,7 +783,7 @@ onUnmounted(() => {
                                 <div class="bubble-arrow"></div>
                             </div>
                         </Transition>
-                        <div class="mascot-image-container">
+                        <div class="mascot-image-container mascot-interactive" :class="{ 'mascot-wiggle': mascotClicked }">
                             <img :src="mascotUrl" alt="Maskot" class="mascot-avatar-img" />
                             <div class="mascot-avatar-shadow"></div>
                         </div>
@@ -1964,5 +2053,44 @@ onUnmounted(() => {
     .conclusion-subtitle { font-size: 1rem; padding: 8px 16px; }
     .scroll-content { padding: 20px; }
     .scroll-heading { font-size: 1.2rem; }
+}
+
+/* ── Gamification CSS ── */
+.confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 999;
+}
+
+.mascot-interactive {
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-interactive:hover {
+    transform: scale(1.05) translateY(-5px);
+}
+.mascot-wiggle {
+    animation: mascotWiggle 0.5s ease-in-out;
+}
+
+@keyframes mascotWiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-6deg) scale(1.06); }
+    75% { transform: rotate(6deg) scale(1.06); }
+}
+
+/* Pulse animation for active check/next button */
+.btn-duo-success:not(:disabled), .btn-duo-primary:not(:disabled) {
+    animation: footerPulse 2s infinite;
+}
+
+@keyframes footerPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: 0 0 12px rgba(88, 204, 2, 0.3); }
+    100% { transform: scale(1); }
 }
 </style>

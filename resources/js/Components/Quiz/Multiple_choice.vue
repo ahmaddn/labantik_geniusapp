@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { CheckCircle2 } from 'lucide-vue-next'
+import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
   question:   { type: Object, required: true },
@@ -9,6 +10,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update-answer'])
 
+const { playPop } = useSfx()
 const selected     = ref(props.modelValue)
 const selectedAnim = ref(null)
 
@@ -17,6 +19,7 @@ watch(() => props.modelValue, (v) => { selected.value = v })
 const isSelected = (optionId) => selected.value === optionId
 
 const handleSelect = (optionId) => {
+  playPop()
   selected.value     = optionId
   selectedAnim.value = optionId
   setTimeout(() => { selectedAnim.value = null }, 400)

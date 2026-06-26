@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { ArrowRight, ArrowDown, MessageCircle } from 'lucide-vue-next';
+import { useSfx } from '@/Composable/useSfx';
 
 const props = defineProps({
     quiz: { type: Object, required: true },
 });
 
+const { playPop } = useSfx();
 const simulation = computed(() => props.quiz || {});
 const activeOptionIndex = ref(null);
 
@@ -39,9 +41,11 @@ const startTyping = (text) => {
 watch(currentFeedbackMessage, (v) => startTyping(v), { immediate: true });
 
 const selectOption = (index) => {
+    playPop();
     activeOptionIndex.value = index;
     if (navigator.vibrate) navigator.vibrate(40);
 };
+
 
 const colorMap = {
     green:  { bg: '#58cc02', border: '#46a302', text: '#fff' },

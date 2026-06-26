@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { Layers, XCircle, CheckCircle2, RotateCcw, GripHorizontal } from 'lucide-vue-next'
+import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
   question: {
@@ -18,6 +19,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update-answer', 'retry'])
+const { playPop } = useSfx()
+
 
 // ── State ─────────────────────────────────────────────────────
 const getImageUrl = (path) => {
@@ -93,6 +96,7 @@ const emitUpdate = () => {
 
 // ── Place / Remove ────────────────────────────────────────────
 const placeItem = (item, zone) => {
+  playPop()
   if (placed.value[item.id]) {
     const oldZone = zones.value.find(z => z.id === placed.value[item.id])
     if (oldZone) oldZone.items = oldZone.items.filter(i => i.id !== item.id)
@@ -103,12 +107,14 @@ const placeItem = (item, zone) => {
 }
 
 const removeItem = (item, zone) => {
+  playPop()
   zone.items = zone.items.filter(i => i.id !== item.id)
   delete placed.value[item.id]
   emitUpdate()
 }
 
 const reset = () => {
+  playPop()
   unplaced.value = [...items.value]
   zones.value.forEach(z => z.items = [])
   placed.value = {}
@@ -255,6 +261,15 @@ onUnmounted(() => { tClone?.remove() })
               class="dd-placed"
               :class="item.correctGroupId === zone.id ? 'dd-placed--ok' : 'dd-placed--err'"
             >
+              <!-- Animated Ripple Feedback -->
+              <div class="dd-placed-ripple"></div>
+
+              <!-- Status Badge (Correct / Incorrect) -->
+              <div class="dd-status-badge">
+                <CheckCircle2 v-if="item.correctGroupId === zone.id" :size="12" :stroke-width="3" color="#ffffff" />
+                <XCircle v-else :size="12" :stroke-width="3" color="#ffffff" />
+              </div>
+
               <div class="dd-placed-visual">
                 <img
                   v-if="item.image"
@@ -421,8 +436,65 @@ onUnmounted(() => { tClone?.remove() })
   min-width: 64px; position: relative;
   animation: dd-popin .28s cubic-bezier(.34,1.56,.64,1);
 }
-.dd-placed--ok  { background: #f0fdf4; border-color: #4ade80; }
-.dd-placed--err { background: #fef2f2; border-color: #fca5a5; }
+.dd-placed--ok  { 
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7); 
+    border-color: #22c55e;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+.dd-placed--ok .dd-status-badge {
+    background-color: #22c55e;
+}
+.dd-placed--ok .dd-placed-ripple {
+    border: 3px solid #22c55e;
+}
+
+.dd-placed--err {
+    background: linear-gradient(135deg, #fef2f2, #ffe4e6);
+    border-color: #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    animation: dd-wrong-shake 0.4s ease-in-out;
+}
+.dd-placed--err .dd-status-badge {
+    background-color: #ef4444;
+}
+.dd-placed--err .dd-placed-ripple {
+    border: 3px solid #ef4444;
+}
+
+@keyframes dd-wrong-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+.dd-status-badge {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    z-index: 5;
+}
+
+.dd-placed-ripple {
+    position: absolute;
+    inset: -2px;
+    border-radius: 10px;
+    pointer-events: none;
+    animation: placement-ripple 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes placement-ripple {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+
 
 .dd-placed-visual { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .dd-placed-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }

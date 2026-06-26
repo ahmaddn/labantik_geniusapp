@@ -1,12 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { CheckCircle2, Circle } from 'lucide-vue-next'
+import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
   question: {
     type: Object,
     required: true,
-    // shape: { id, question_text, options: [{ id, option_text, option_image, is_correct }] }
   },
   modelValue: {
     type: [String, Boolean, Number],
@@ -16,6 +16,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update-answer'])
 
+const { playPop } = useSfx()
 const selectedAnswer = ref(props.modelValue)
 
 watch(() => props.modelValue, (newVal) => {
@@ -28,6 +29,7 @@ const isTrue = (opt) => {
 }
 
 const handleSelect = (optionId) => {
+  playPop()
   selectedAnswer.value = optionId
   emit('update-answer', {
     questionId: props.question.id,
