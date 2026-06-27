@@ -149,6 +149,8 @@ class MissionController extends Controller
                     'id'            => $question->id,
                     'question_text' => $question->question_text,
                     'quiz_id'       => $question->quiz_id,
+                    'feedback_correct'   => $question->feedback_correct,
+                    'feedback_incorrect' => $question->feedback_incorrect,
                     'mascot'        => $question->mascot ? [
                         'id'        => $question->mascot->id,
                         'name_pose' => $question->mascot->name_pose,
@@ -194,6 +196,7 @@ class MissionController extends Controller
             'image'        => $material->image,
             'title'        => $material->title,
             'subtitle'     => $material->description,
+            'speech_bubble'=> $material->speech_bubble,
             'order_number' => $material->order_number ?? 0,
             'created_at'   => $material->created_at,
             'mascot'     => $material->mascot ? [
@@ -211,6 +214,7 @@ class MissionController extends Controller
                     'material_type' => 'text',
                     'layout_type'   => $material->layout_type,
                     'youtube_link'  => $material->youtube_link,
+                    'speech_bubble' => $material->speech_bubble,
                     'mascot'        => $material->mascot ? [
                         'id'        => $material->mascot->id,
                         'name_pose' => $material->mascot->name_pose,

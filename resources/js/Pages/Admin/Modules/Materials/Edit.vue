@@ -113,6 +113,7 @@ const materialForm = ref({
     content: initialLayoutType === 'default' ? (props.material.content || "") : "",
     youtube_link: props.material.youtube_link || "",
     mascot_id: props.material.mascot_id || null,
+    speech_bubble: props.material.speech_bubble || "",
     image: null,
     remove_image: false,
     layout_type: initialLayoutType,
@@ -250,6 +251,7 @@ const handleSubmit = () => {
     formData.append("layout_type", materialForm.value.layout_type || "default");
     formData.append("youtube_link", materialForm.value.youtube_link || "");
     formData.append("mascot_id", materialForm.value.mascot_id || "");
+    formData.append("speech_bubble", materialForm.value.speech_bubble || "");
     formData.append(
         "remove_image",
         materialForm.value.remove_image ? "1" : "0",
@@ -928,6 +930,19 @@ const toggleCardVariant = () => {
                         <p class="text-sm text-red-700 flex items-center gap-2">
                             <AlertTriangle class="w-4 h-4" /> Template modul ini
                             belum memiliki maskot.
+                        </p>
+                    </div>
+                    
+                    <!-- Mascot Speech Bubble -->
+                    <div>
+                        <TextareaField
+                            label="Balon Ucapan Maskot (Mascot Speech Bubble)"
+                            v-model="materialForm.speech_bubble"
+                            placeholder="Contoh: Halo! Mari kita pelajari materi ini dengan saksama ya!"
+                            rows="3"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">
+                            Pesan yang akan diucapkan oleh maskot saat siswa membuka materi ini.
                         </p>
                     </div>
                 </div>

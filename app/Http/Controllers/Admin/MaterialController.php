@@ -46,6 +46,7 @@ class MaterialController extends Controller
             'materials.*.image_left'  => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
             'materials.*.image_right' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
             'materials.*.layout_type' => 'nullable|string',
+            'materials.*.speech_bubble'=> 'nullable|string',
         ], [
             'materials.*.title.required'   => 'Judul material wajib diisi.',
             'materials.*.content.required' => 'Konten material wajib diisi.',
@@ -63,6 +64,7 @@ class MaterialController extends Controller
                 'youtube_link'=> $material['youtube_link'] ?? null,
                 'mascot_id'   => $material['mascot_id'] ?? null,
                 'layout_type' => $material['layout_type'] ?? null,
+                'speech_bubble'=> $material['speech_bubble'] ?? null,
                 'created_by'  => Auth::id(),
             ];
 
@@ -279,6 +281,7 @@ class MaterialController extends Controller
             'image_right'  => 'nullable|file|mimes:jpeg,png,jpg,gif|max:51200',
             'remove_image' => 'nullable|boolean',
             'layout_type'  => 'nullable|string',
+            'speech_bubble'=> 'nullable|string',
         ], [
             'title.required'   => 'Judul material wajib diisi.',
             'content.required' => 'Konten material wajib diisi.',
@@ -293,6 +296,7 @@ class MaterialController extends Controller
             'youtube_link'=> $validated['youtube_link'],
             'mascot_id'   => $validated['mascot_id'],
             'layout_type' => $validated['layout_type'] ?? null,
+            'speech_bubble'=> $validated['speech_bubble'] ?? null,
         ];
 
         // Handle remove / replace image or video

@@ -409,20 +409,44 @@ const bubbleIdx = ref(0);
 const bubbleVisible = ref(true);
 let bubbleTimer = null;
 
+const isStepCorrect = (s) => {
+    if (!s || !s.question) return true;
+    const ans = answers[s.question.id];
+    if (ans === undefined || ans === null) return false;
+    
+    if (s.quiz?.type === "multiple_choices" || s.quiz?.type === "true_false" || s.quiz?.type === "case_study") {
+        if (s.question.options) {
+            const correctOpt = s.question.options.find(o => o.is_correct);
+            return correctOpt && String(correctOpt.id) === String(ans);
+        }
+    }
+    return true; // Fallback
+};
+
 const activeSpeechText = computed(() => {
     const s = step.value;
     if (!s) return "Semangat ya!";
     if (s.isConclusion) return props.mission.conclusion_speech || "Selesai! Jangan lupa catat poin pentingnya.";
-    if (s.isMaterial) return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
+    if (s.isMaterial) {
+        if (s.question && s.question.speech_bubble) return s.question.speech_bubble;
+        return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
+    }
     if (s.question && isQuestionAnswered(s.question, s.quiz?.type)) {
-        if (s.question.options) {
-            const ansId = answers[s.question.id];
-            const selectedOpt = s.question.options.find(o => o.id === ansId);
-            if (selectedOpt && selectedOpt.feedback) {
-                return selectedOpt.feedback;
+        const correct = isStepCorrect(s);
+        if (correct) {
+            if (s.question.feedback_correct) return s.question.feedback_correct;
+            if (s.question.options) {
+                const ansId = answers[s.question.id];
+                const selectedOpt = s.question.options.find(o => o.id === ansId);
+                if (selectedOpt && selectedOpt.feedback) {
+                    return selectedOpt.feedback;
+                }
             }
+            return BUBBLES_ANSWERED[bubbleIdx.value % BUBBLES_ANSWERED.length];
+        } else {
+            if (s.question.feedback_incorrect) return s.question.feedback_incorrect;
+            return "Ayo coba lagi, periksa kembali jawabanmu!";
         }
-        return BUBBLES_ANSWERED[bubbleIdx.value % BUBBLES_ANSWERED.length];
     }
     return BUBBLES_UNANSWERED[bubbleIdx.value % BUBBLES_UNANSWERED.length];
 });

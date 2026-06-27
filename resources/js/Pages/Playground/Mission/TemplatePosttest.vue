@@ -298,6 +298,20 @@ const bubbleIdx = ref(0);
 const bubbleVisible = ref(true);
 let bubbleTimer = null;
 
+const isStepCorrect = (q) => {
+    if (!q) return true;
+    const ans = answers[q.id];
+    if (ans === undefined || ans === null) return false;
+    
+    if (props.quiz?.type === "multiple_choices" || props.quiz?.type === "true_false" || props.quiz?.type === "case_study") {
+        if (q.options) {
+            const correctOpt = q.options.find(o => o.is_correct);
+            return correctOpt && String(correctOpt.id) === String(ans);
+        }
+    }
+    return true; // Fallback
+};
+
 const activeSpeechText = computed(() => {
     if (phase.value === "intro") {
         return BUBBLES_INTRO[bubbleIdx.value % BUBBLES_INTRO.length];
@@ -309,9 +323,16 @@ const activeSpeechText = computed(() => {
     if (currentQ.value) {
         const answered = isQuestionAnswered(currentQ.value);
         if (answered) {
-            return BUBBLES_QUIZ_ANSWERED[
-                bubbleIdx.value % BUBBLES_QUIZ_ANSWERED.length
-            ];
+            const correct = isStepCorrect(currentQ.value);
+            if (correct) {
+                if (currentQ.value.feedback_correct) return currentQ.value.feedback_correct;
+                return BUBBLES_QUIZ_ANSWERED[
+                    bubbleIdx.value % BUBBLES_QUIZ_ANSWERED.length
+                ];
+            } else {
+                if (currentQ.value.feedback_incorrect) return currentQ.value.feedback_incorrect;
+                return "Ayo coba lagi, periksa kembali jawabanmu!";
+            }
         } else {
             return BUBBLES_QUIZ_UNANSWERED[
                 bubbleIdx.value % BUBBLES_QUIZ_UNANSWERED.length
