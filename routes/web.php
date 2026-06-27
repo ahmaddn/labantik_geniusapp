@@ -56,11 +56,13 @@ Route::prefix('player')->name('playground.')->group(function () {
     // ── Pretest ──────────────────────────────────────────────────
     Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])->name('pretest.show');
     Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
+    Route::get('/modules/{module}/pretest/result', [PretestController::class, 'showResult'])->name('pretest.result');
 
     // ── Posttest ─────────────────────────────────────────────────
     Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])->name('posttest.show');
     Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
     Route::get('/modules/{module}/posttest/result', [PosttestController::class, 'overallResult'])->name('posttest.result');
+    Route::get('/modules/{module}/posttest/quiz-result', [PosttestController::class, 'showQuizResult'])->name('posttest.quiz-result');
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {

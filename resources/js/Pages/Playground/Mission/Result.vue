@@ -39,6 +39,8 @@ const props = defineProps({
     all_missions_done: { type: Boolean, default: false },
     next_mission: { type: Object, default: null },
     is_overall: { type: Boolean, default: false },
+    is_pretest: { type: Boolean, default: false },
+    is_posttest: { type: Boolean, default: false },
 });
 
 const { playPop, playSuccess } = useSfx();
@@ -177,6 +179,12 @@ const startNextMission = () => {
 const goToPosttest = () => {
     if (props.module?.id) {
         router.visit(route("playground.posttest.show", props.module.id));
+    }
+};
+
+const goToPosttestResult = () => {
+    if (props.module?.id) {
+        router.visit(route("playground.posttest.result", props.module.id));
     }
 };
 
@@ -340,7 +348,11 @@ onMounted(() => {
                         {{
                             is_overall
                                 ? `Evaluasi ${module.name} Selesai`
-                                : `Misi ${mission.title} Selesai`
+                                : is_pretest
+                                ? `Pretest ${module.name} Selesai`
+                                : is_posttest
+                                ? `Posttest ${module.name} Selesai`
+                                : `Misi ${mission.name || mission.title} Selesai`
                         }}
                     </p>
                 </div>
@@ -593,7 +605,25 @@ onMounted(() => {
                 </div>
 
                 <div class="footer-right">
-                    <template v-if="!is_overall">
+                    <template v-if="is_pretest">
+                        <button
+                            class="btn-duo btn-duo-primary"
+                            @click="goBack"
+                        >
+                            <span>Lanjut Ke Misi</span>
+                            <ChevronRight :size="18" :stroke-width="3" />
+                        </button>
+                    </template>
+                    <template v-else-if="is_posttest">
+                        <button
+                            class="btn-duo btn-duo-success"
+                            @click="goToPosttestResult"
+                        >
+                            <span>Hasil Akhir Evaluasi</span>
+                            <Rocket :size="18" :stroke-width="3" />
+                        </button>
+                    </template>
+                    <template v-else-if="!is_overall">
                         <button
                             v-if="next_mission"
                             class="btn-duo btn-duo-primary"

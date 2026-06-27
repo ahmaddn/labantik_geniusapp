@@ -608,8 +608,8 @@ const submit = async () => {
                 sessionStorage.removeItem(SS_TIME_KEY);
                 sessionStorage.removeItem(SS_TIMEOUT_KEY);
             } catch {}
-            // Tampilkan phase celebration, bukan redirect langsung
-            phase.value = 'celebration';
+            // Redirect langsung ke halaman feedback kuis hasil misi
+            router.visit(route("playground.missions.result", props.mission.id));
         } else {
             alert("Gagal menyimpan jawaban: " + (data.error || "Unknown error"));
         }

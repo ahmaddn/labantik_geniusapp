@@ -207,10 +207,115 @@ class PretestController extends Controller
         $score = $this->calcScore($quizId, $studentId);
         $attempt->update(['score' => $score]);
 
-        // Setelah pretest → ke daftar misi (dengan flash score untuk apresiasi)
-        return redirect()->route('playground.missions.index', $request->module_id)
-            ->with('pretest_done', true)
-            ->with('pretest_score', $score);
+        // Setelah pretest → arahkan ke halaman feedback kuis pretest
+        return redirect()->route('playground.pretest.result', $request->module_id);
+    }
+
+    public function showResult(Request $request, Learning_modules $module)
+    {
+        $player = session('player');
+        if (! $player) {
+            return redirect()->route('playground.login');
+        }
+
+        // Ambil quiz pretest milik modul ini
+        $quiz = Quizzes::where('module_id', $module->id)
+            ->where('category', 'pretest')
+            ->with([
+                'questions.options',
+                'questions.dragDropGroups.items',
+            ])
+            ->first();
+
+        if (! $quiz) {
+            return redirect()->route('playground.missions.index', $module->id);
+        }
+
+        $studentId      = $player['id'] ?? null;
+        $totalCorrect   = 0;
+        $totalIncorrect = 0;
+        $totalQuestions = 0;
+        $questionsResult = [];
+
+        $attempt = Quiz_attempts::where('quiz_id', $quiz->id)
+            ->where('student_id', $studentId)
+            ->latest()
+            ->first();
+
+        if ($attempt) {
+            $answersByQuestion = $attempt->answers()->get()->keyBy('question_id');
+
+            foreach ($quiz->questions as $question) {
+                $answer = $answersByQuestion->get($question->id);
+
+                if (! $answer) {
+                    continue;
+                }
+
+                $totalQuestions++;
+
+                [
+                    $isCorrect,
+                    $userAnswerText,
+                    $correctAnswerText,
+                    $userAnswerMap,
+                    $correctAnswerMap,
+                ] = $this->checkAnswer($answer, $question);
+
+                if ($isCorrect) {
+                    $totalCorrect++;
+                } else {
+                    $totalIncorrect++;
+                }
+
+                $questionsResult[] = [
+                    'question_id'         => $question->id,
+                    'question_text'       => $question->question_text,
+                    'quiz_type'           => $quiz->type,
+                    'quiz_title'          => $quiz->title,
+                    'is_correct'          => $isCorrect,
+                    'user_answer_text'    => $userAnswerText,
+                    'correct_answer_text' => $correctAnswerText,
+                    'user_answer_map'     => $userAnswerMap,
+                    'correct_answer_map'  => $correctAnswerMap,
+                ];
+            }
+        }
+
+        $score = $totalQuestions > 0
+            ? (int) round(($totalCorrect / $totalQuestions) * 100)
+            : 0;
+
+        return Inertia::render('Playground/Mission/Result', [
+            'mission'           => ['id' => null, 'name' => 'Pretest ' . $module->name, 'title' => 'Pretest'],
+            'next_mission'      => null,
+            'results'           => [
+                'score'            => $score,
+                'correct'          => $totalCorrect,
+                'incorrect'        => $totalIncorrect,
+                'total'            => $totalQuestions,
+                'correct_answers'  => $totalCorrect,
+                'total_questions'  => $totalQuestions,
+                'details'          => collect($questionsResult)->map(fn($q) => [
+                    'question_id' => $q['question_id'],
+                    'question' => [
+                        'id' => $q['question_id'],
+                        'question_text' => $q['question_text'],
+                        'type' => $q['quiz_type'],
+                        'explanation' => Questions::find($q['question_id'])?->explanation,
+                    ],
+                    'is_correct' => $q['is_correct'],
+                    'user_answer' => $q['user_answer_text'],
+                    'correct_answer' => $q['correct_answer_text'],
+                    'user_answer_map' => $q['user_answer_map'],
+                    'correct_answer_map' => $q['correct_answer_map'],
+                ])->toArray(),
+            ],
+            'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module'            => ['id' => $module->id, 'name' => $module->name],
+            'all_missions_done' => false,
+            'is_pretest'        => true,
+        ]);
     }
 
     // ── Preview (untuk development UI, tanpa session) ───────────────
