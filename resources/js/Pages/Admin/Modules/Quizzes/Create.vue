@@ -85,6 +85,8 @@ const currentQuestion = ref({
     mascot_id: null,
     image: null,
     expected_keywords: "",
+    feedback_correct: "",
+    feedback_incorrect: "",
 });
 const questionOptions = ref([]);
 const currentOption = ref({ option_text: "", is_correct: false, feedback: "" });
@@ -92,6 +94,8 @@ const currentOption = ref({ option_text: "", is_correct: false, feedback: "" });
 // --- Drag & Drop State ---
 const dragDropQuestionText = ref("");
 const dragDropMascotId = ref(null);
+const dragDropFeedbackCorrect = ref("");
+const dragDropFeedbackIncorrect = ref("");
 const dragDropGroups = ref([]);
 const dragDropItems = ref([]);
 const currentDragDropGroup = ref({ group_name: "" });
@@ -106,6 +110,8 @@ const currentDragDropItem = ref({
 // Satu soal dengan beberapa opsi berupa gambar, user memilih yang benar
 const trueFalseQuestionText = ref("");
 const trueFalseMascotId = ref(null);
+const trueFalseFeedbackCorrect = ref("");
+const trueFalseFeedbackIncorrect = ref("");
 const trueFalseOptions = ref([]); // { id, option_text, option_image_file, option_image_preview, is_correct }
 const currentTFOption = ref({ option_text: "", is_correct: false });
 const currentTFImageFile = ref(null);
@@ -311,6 +317,8 @@ const addQuestion = () => {
         mascot_id: null,
         image: null,
         expected_keywords: "",
+        feedback_correct: "",
+        feedback_incorrect: "",
     };
     questionOptions.value = [];
     showToast("Pertanyaan ditambahkan!", "success");
@@ -429,6 +437,8 @@ const finalSave = () => {
         const tfQuestionMeta = {
             question_text: trueFalseQuestionText.value,
             mascot_id: trueFalseMascotId.value,
+            feedback_correct: trueFalseFeedbackCorrect.value || "",
+            feedback_incorrect: trueFalseFeedbackIncorrect.value || "",
             options: trueFalseOptions.value.map((o, idx) => ({
                 option_text: o.option_text,
                 is_correct: o.is_correct,
@@ -458,6 +468,8 @@ const finalSave = () => {
                     question_text:
                         dragDropQuestionText.value || quizForm.value.title,
                     mascot_id: dragDropMascotId.value,
+                    feedback_correct: dragDropFeedbackCorrect.value || "",
+                    feedback_incorrect: dragDropFeedbackIncorrect.value || "",
                     image: null,
                     drag_drop_groups: dragDropGroups.value.map((g) => ({
                         group_name: g.group_name,
@@ -474,6 +486,8 @@ const finalSave = () => {
             questions = quizQuestions.value.map((q, index) => ({
                 question_text: q.question_text,
                 mascot_id: q.mascot_id,
+                feedback_correct: q.feedback_correct || null,
+                feedback_incorrect: q.feedback_incorrect || null,
                 image: q.image || null,
                 expected_keywords: q.expected_keywords || null,
                 order_number: index + 1,
@@ -929,6 +943,22 @@ const finalSave = () => {
                                 :rows="3"
                                 border-color="blue"
                             />
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <TextareaField
+                                    v-model="currentQuestion.feedback_correct"
+                                    label="Respon Maskot Saat Benar (Opsional)"
+                                    placeholder="Tulis ucapan maskot saat jawaban siswa BENAR..."
+                                    :rows="2"
+                                    border-color="green"
+                                />
+                                <TextareaField
+                                    v-model="currentQuestion.feedback_incorrect"
+                                    label="Respon Maskot Saat Salah (Opsional)"
+                                    placeholder="Tulis ucapan maskot saat jawaban siswa SALAH..."
+                                    :rows="2"
+                                    border-color="red"
+                                />
+                            </div>
                             <div v-if="mascotOptions.length > 0">
                                 <SelectField
                                     v-model="currentQuestion.mascot_id"
@@ -1155,6 +1185,23 @@ const finalSave = () => {
                             border-color="teal"
                         />
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <TextareaField
+                                v-model="trueFalseFeedbackCorrect"
+                                label="Respon Maskot Saat Benar (Opsional)"
+                                placeholder="Tulis ucapan maskot saat jawaban siswa BENAR..."
+                                :rows="2"
+                                border-color="green"
+                            />
+                            <TextareaField
+                                v-model="trueFalseFeedbackIncorrect"
+                                label="Respon Maskot Saat Salah (Opsional)"
+                                placeholder="Tulis ucapan maskot saat jawaban siswa SALAH..."
+                                :rows="2"
+                                border-color="red"
+                            />
+                        </div>
+
                         <!-- Mascot -->
                         <div v-if="mascotOptions.length > 0">
                             <SelectField
@@ -1377,6 +1424,24 @@ const finalSave = () => {
                             :rows="2"
                             border-color="blue"
                         />
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <TextareaField
+                                v-model="dragDropFeedbackCorrect"
+                                label="Respon Maskot Saat Benar (Opsional)"
+                                placeholder="Tulis ucapan maskot saat jawaban siswa BENAR..."
+                                :rows="2"
+                                border-color="green"
+                            />
+                            <TextareaField
+                                v-model="dragDropFeedbackIncorrect"
+                                label="Respon Maskot Saat Salah (Opsional)"
+                                placeholder="Tulis ucapan maskot saat jawaban siswa SALAH..."
+                                :rows="2"
+                                border-color="red"
+                            />
+                        </div>
+
                         <div v-if="mascotOptions.length > 0">
                             <SelectField
                                 v-model="dragDropMascotId"

@@ -19,6 +19,8 @@ class Questions extends Model
         'order_number',
         'type',
         'expected_keywords',
+        'feedback_correct',
+        'feedback_incorrect',
     ];
 
     protected static function booted(): void
