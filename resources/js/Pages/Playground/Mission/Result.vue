@@ -293,13 +293,11 @@ function startConfetti(canvas) {
 }
 
 onMounted(() => {
-    // Play Success Chime
-    if (score.value >= 60) {
-        setTimeout(() => {
-            playSuccess();
-            startConfetti(confettiCanvas.value);
-        }, 300);
-    }
+    // Play Success Chime & Confetti
+    setTimeout(() => {
+        playSuccess();
+        startConfetti(confettiCanvas.value);
+    }, 300);
 
     // Score Count Up Animation
     const duration = 1200; // ms
