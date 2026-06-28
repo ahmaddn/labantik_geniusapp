@@ -32,36 +32,83 @@ const getImageUrl = (path) => {
                 v-for="(obj, index) in quiz.objects"
                 :key="'co-'+index"
                 class="co-card-wrap"
-                :class="{ 'co-flipped': clickedObjects.includes(index) }"
+                :class="[
+                    { 'co-flipped': clickedObjects.includes(index) },
+                    obj.is_positive ? 'theme-pos' : 'theme-neg'
+                ]"
                 @click="toggleObject(index)"
             >
                 <div class="co-card">
-                    <!-- FRONT -->
-                    <div class="co-front" :class="obj.is_positive ? 'co-front-green' : 'co-front-red'">
-                        <div class="co-img-wrap">
-                            <img v-if="obj.image" :src="getImageUrl(obj.image)" class="co-img" :alt="obj.name" />
+
+                    <!-- ======== FRONT ======== -->
+                    <div class="co-front">
+                        <!-- top color bar -->
+                        <div class="co-topbar">
+                            <span class="co-type-label">{{ obj.is_positive ? '🌟 Positif' : '⚠️ Negatif' }}</span>
+                            <span class="co-card-no">{{ String(index + 1).padStart(2,'0') }}</span>
+                        </div>
+
+                        <!-- name -->
+                        <div class="co-namebox">
+                            <h3 class="co-name">{{ obj.name }}</h3>
+                        </div>
+
+                        <!-- image -->
+                        <div class="co-imgbox">
+                            <img
+                                v-if="obj.image"
+                                :src="getImageUrl(obj.image)"
+                                class="co-img"
+                                :alt="obj.name"
+                            />
                             <div v-else class="co-img-placeholder">
-                                <ImageIcon :size="32" color="#cbd5e1" :stroke-width="2" />
+                                <ImageIcon :size="40" :stroke-width="1.5" />
                             </div>
                         </div>
-                        <h3 class="co-name">{{ obj.name }}</h3>
+
+                        <!-- tap hint -->
                         <div class="co-tap-hint">
                             <Hand :size="14" :stroke-width="2.5" />
-                            Ketuk untuk lihat dampak
+                            <span>Ketuk untuk lihat dampak!</span>
+                        </div>
+
+                        <!-- decorative dots -->
+                        <div class="co-dots">
+                            <span></span><span></span><span></span>
                         </div>
                     </div>
 
-                    <!-- BACK -->
-                    <div class="co-back" :class="obj.is_positive ? 'co-back-green' : 'co-back-red'">
-                        <div class="co-back-icon">
-                            <CheckCircle2 v-if="obj.is_positive" :size="32" :stroke-width="2.5" color="#58cc02" />
-                            <XCircle v-else :size="32" :stroke-width="2.5" color="#ef4444" />
+                    <!-- ======== BACK ======== -->
+                    <div class="co-back">
+                        <!-- top bar -->
+                        <div class="co-topbar">
+                            <span class="co-type-label">{{ obj.is_positive ? '🌟 Dampak Positif' : '⚠️ Dampak Negatif' }}</span>
                         </div>
-                        <h3 class="co-back-name" :class="obj.is_positive ? 'co-back-name-green' : 'co-back-name-red'">{{ obj.name }}</h3>
-                        <div class="co-impact-wrap">
-                            <p class="co-impact">{{ obj.impact_text }}</p>
+
+                        <!-- name -->
+                        <div class="co-namebox">
+                            <h3 class="co-name">{{ obj.name }}</h3>
+                        </div>
+
+                        <!-- icon result -->
+                        <div class="co-result-icon">
+                            <CheckCircle2 v-if="obj.is_positive" :size="36" :stroke-width="2.5" />
+                            <XCircle v-else :size="36" :stroke-width="2.5" />
+                        </div>
+
+                        <!-- impact text box -->
+                        <div class="co-impact-box">
+                            <p class="co-impact-label">💬 Dampaknya:</p>
+                            <p class="co-impact-text">{{ obj.impact_text }}</p>
+                        </div>
+
+                        <!-- footer hint -->
+                        <div class="co-back-hint">
+                            <Hand :size="12" :stroke-width="2.5" />
+                            <span>Ketuk lagi untuk kembali</span>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -69,14 +116,17 @@ const getImageUrl = (path) => {
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+
+/* ─── Wrapper ─────────────────────────────── */
 .co-wrap {
     width: 100%;
-    padding: 8px 0;
+    padding: 12px 0;
     display: flex;
     justify-content: center;
+    font-family: 'Nunito', sans-serif;
 }
 
-/* Grid */
 .co-grid {
     display: flex;
     flex-wrap: wrap;
@@ -85,152 +135,222 @@ const getImageUrl = (path) => {
     width: 100%;
 }
 
-/* 3D card flip */
+/* ─── 3D Flip Container ───────────────────── */
 .co-card-wrap {
     perspective: 1000px;
     cursor: pointer;
-    width: 100%;
-    max-width: 240px;
-    height: 300px;
+    width: 200px;
+    height: 310px;
     flex-shrink: 0;
+    transition: transform 0.25s;
 }
+.co-card-wrap:hover { transform: translateY(-5px); }
+
 .co-card {
     position: relative;
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
+    transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .co-flipped .co-card { transform: rotateY(180deg); }
 
-/* Shared face styles */
+/* ─── Shared face ─────────────────────────── */
 .co-front, .co-back {
     position: absolute;
     inset: 0;
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     border-radius: 20px;
     display: flex;
     flex-direction: column;
+    padding: 10px;
+    gap: 8px;
+    overflow: hidden;
+}
+
+/* ─── Theme: Positive (soft teal/green) ────── */
+.theme-pos .co-front,
+.theme-pos .co-back {
+    background: #edfaf4;
+    border: 3px solid #6ee7b7;
+    box-shadow: 0 6px 0 0 #6ee7b7, 0 10px 20px rgba(110,231,183,0.25);
+}
+.theme-pos .co-topbar   { background: #6ee7b7; }
+.theme-pos .co-imgbox   { border-color: #a7f3d0; background: #f0fdf8; }
+.theme-pos .co-tap-hint { background: #d1fae5; border-color: #6ee7b7; color: #059669; }
+.theme-pos .co-dots span { background: #a7f3d0; }
+.theme-pos .co-impact-box { background: #d1fae5; border-color: #a7f3d0; }
+.theme-pos .co-result-icon { color: #059669; }
+.theme-pos .co-back-hint  { color: #059669; }
+.theme-pos .co-name { color: #065f46; }
+.theme-pos .co-type-label { color: #065f46; }
+.theme-pos .co-card-no { color: #065f46; }
+
+/* ─── Theme: Negative (soft coral/orange) ─── */
+.theme-neg .co-front,
+.theme-neg .co-back {
+    background: #fff7ed;
+    border: 3px solid #fdba74;
+    box-shadow: 0 6px 0 0 #fdba74, 0 10px 20px rgba(253,186,116,0.25);
+}
+.theme-neg .co-topbar   { background: #fdba74; }
+.theme-neg .co-imgbox   { border-color: #fed7aa; background: #fffbf5; }
+.theme-neg .co-tap-hint { background: #ffedd5; border-color: #fdba74; color: #c2410c; }
+.theme-neg .co-dots span { background: #fed7aa; }
+.theme-neg .co-impact-box { background: #ffedd5; border-color: #fed7aa; }
+.theme-neg .co-result-icon { color: #dc2626; }
+.theme-neg .co-back-hint  { color: #c2410c; }
+.theme-neg .co-name { color: #7c2d12; }
+.theme-neg .co-type-label { color: #7c2d12; }
+.theme-neg .co-card-no { color: #7c2d12; }
+
+/* ─── Top bar ─────────────────────────────── */
+.co-topbar {
+    border-radius: 10px;
+    padding: 5px 10px;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 16px;
-    background: #ffffff;
-    transition: box-shadow 0.2s, transform 0.2s;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.co-type-label {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+}
+.co-card-no {
+    font-size: 11px;
+    font-weight: 900;
+    opacity: 0.7;
 }
 
-/* Front */
-.co-front {
-    border: 2px solid #cbd5e1;
-    box-shadow: 0 6px 0 0 #cbd5e1;
+/* ─── Name box ────────────────────────────── */
+.co-namebox {
+    text-align: center;
+    flex-shrink: 0;
 }
-.co-front-green {
-    border-color: #58cc02;
-    box-shadow: 0 6px 0 0 #58cc02;
-}
-.co-front-red {
-    border-color: #ef4444;
-    box-shadow: 0 6px 0 0 #ef4444;
+.co-name {
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
+    margin: 0;
+    text-align: center;
 }
 
-.co-card-wrap:hover .co-front { transform: translateY(-4px); box-shadow: 0 10px 0 0 var(--border-color); }
-.co-card-wrap:active .co-front { transform: translateY(2px); box-shadow: 0 2px 0 0 var(--border-color); }
-
-.co-front-green { --border-color: #58cc02; }
-.co-front-red { --border-color: #ef4444; }
-
-.co-img-wrap {
+/* ─── Image box ───────────────────────────── */
+.co-imgbox {
     flex: 1;
-    width: 100%;
+    border-radius: 14px;
+    border: 2.5px solid;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
+    min-height: 0;
 }
-.co-img { max-width: 140px; max-height: 140px; object-fit: contain; }
+.co-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+}
 .co-img-placeholder {
-    width: 80px; height: 80px;
-    background: #f1f5f9;
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    opacity: 0.35;
 }
-.co-name {
-    font-size: 18px;
-    font-weight: 800;
-    color: #334155;
-    text-align: center;
-    margin-bottom: 12px;
-    line-height: 1.2;
-}
+
+/* ─── Tap hint ────────────────────────────── */
 .co-tap-hint {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 10.5px;
     font-weight: 800;
-    color: #0ea5e9;
-    background: #e0f2fe;
-    border: 2px solid #7dd3fc;
-    border-radius: 12px;
-    padding: 6px 12px;
-    animation: pulseHint 2s infinite;
+    border-radius: 10px;
+    border: 2px solid;
+    padding: 5px 8px;
+    flex-shrink: 0;
+    animation: bounceHint 2s ease-in-out infinite;
 }
-@keyframes pulseHint { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes bounceHint {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+}
 
-/* Back */
-.co-back { 
-    transform: rotateY(180deg);
-}
-.co-back-green {
-    background: #f0fdf4;
-    border: 2px solid #58cc02;
-    box-shadow: 0 6px 0 0 #58cc02;
-}
-.co-back-red {
-    background: #fef2f2;
-    border: 2px solid #ef4444;
-    box-shadow: 0 6px 0 0 #ef4444;
-}
-.co-back-icon {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: #ffffff;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 12px;
+/* ─── Decorative dots ─────────────────────── */
+.co-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
     flex-shrink: 0;
 }
-.co-back-name { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 12px; line-height: 1.2; }
-.co-back-name-green { color: #58cc02; }
-.co-back-name-red { color: #ef4444; }
-.co-impact-wrap {
-    background: rgba(255,255,255,0.8);
-    border-radius: 16px;
-    padding: 12px;
-    width: 100%;
+.co-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+/* ─── Back face ───────────────────────────── */
+.co-back { transform: rotateY(180deg); }
+
+/* ─── Result icon ─────────────────────────── */
+.co-result-icon {
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ─── Impact box ──────────────────────────── */
+.co-impact-box {
     flex: 1;
+    border-radius: 14px;
+    border: 2px solid;
+    padding: 10px 12px;
     overflow-y: auto;
-    border: 2px solid rgba(0,0,0,0.05);
+    min-height: 0;
 }
-.co-impact {
-    font-size: 14px;
+.co-impact-box::-webkit-scrollbar { width: 4px; }
+.co-impact-box::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+
+.co-impact-label {
+    font-size: 10px;
+    font-weight: 900;
+    color: #6b7280;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.co-impact-text {
+    font-size: 12.5px;
     font-weight: 700;
-    color: #475569;
-    text-align: center;
-    line-height: 1.5;
+    color: #374151;
+    line-height: 1.55;
+    margin: 0;
 }
 
-/* Scrollbar hidden for impact */
-.co-impact-wrap::-webkit-scrollbar { width: 4px; }
-.co-impact-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+/* ─── Back hint ───────────────────────────── */
+.co-back-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 9.5px;
+    font-weight: 800;
+    opacity: 0.75;
+    flex-shrink: 0;
+}
 
-/* Mobile */
+/* ─── Mobile ──────────────────────────────── */
 @media (max-width: 500px) {
-    .co-card-wrap { max-width: calc(50% - 8px); height: 260px; }
-    .co-img { max-width: 100px; max-height: 100px; }
-    .co-name, .co-back-name { font-size: 16px; }
-    .co-impact { font-size: 13px; }
-    .co-grid { gap: 16px; }
+    .co-card-wrap { width: calc(50% - 10px); height: 270px; }
+    .co-name { font-size: 13px; }
+    .co-impact-text { font-size: 11.5px; }
+    .co-grid { gap: 14px; }
 }
 </style>
