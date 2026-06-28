@@ -394,6 +394,10 @@ class MissionController extends Controller
 
         $nextMission = Missions::where('module_id', $mission->module_id)
             ->where('order_number', '>', $mission->order_number)
+            ->where(function ($q) {
+                $q->whereHas('quizzes')
+                  ->orWhereHas('materials');
+            })
             ->orderBy('order_number', 'asc')
             ->first();
 
@@ -472,17 +476,14 @@ class MissionController extends Controller
         $moduleId = $mission->module_id;
         $module   = $mission->module;
 
+        // Cek apakah semua misi sudah selesai menggunakan StudentMissionLog
+        // (dibuat saat submitMissionAnswers dipanggil — sumber kebenaran yang andal)
         $allMissionIds   = Missions::where('module_id', $moduleId)->pluck('id');
-        $allMissionsDone = $allMissionIds->isNotEmpty() && $allMissionIds->every(function ($missionId) use ($studentId) {
-            $missionQuizIds = Quizzes::where('mission_id', $missionId)
-                ->where('category', 'mission')
-                ->pluck('id');
-            if ($missionQuizIds->isEmpty()) return false;
-            return $missionQuizIds->every(
-                fn($qid) => Quiz_attempts::where('quiz_id', $qid)
-                    ->where('student_id', $studentId)->exists()
-            );
-        });
+        $allMissionsDone = $allMissionIds->isNotEmpty() && $allMissionIds->every(
+            fn($missionId) => \App\Models\StudentMissionLog::where('mission_id', $missionId)
+                ->where('user_id', $studentId)
+                ->exists()
+        );
 
         $posttestQuiz = Quizzes::where('module_id', $moduleId)
             ->where('category', 'posttest')
@@ -490,6 +491,11 @@ class MissionController extends Controller
         $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
             ->where('student_id', $studentId)
             ->exists();
+
+        // Jika posttest sudah dikerjakan, sembunyikan tombol "Lanjut Posttest"
+        if ($posttestDone) {
+            $allMissionsDone = false;
+        }
 
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => $mission->id, 'name' => $mission->name],
