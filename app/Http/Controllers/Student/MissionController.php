@@ -151,6 +151,7 @@ class MissionController extends Controller
                     'quiz_id'       => $question->quiz_id,
                     'feedback_correct'   => $question->feedback_correct,
                     'feedback_incorrect' => $question->feedback_incorrect,
+                    'explanation'        => $question->explanation,
                     'mascot'        => $question->mascot ? [
                         'id'        => $question->mascot->id,
                         'name_pose' => $question->mascot->name_pose,
@@ -500,6 +501,20 @@ class MissionController extends Controller
                 'total'            => $totalQuestions,
                 'breakdown'        => $breakdown,
                 'questions_result' => $questionsResult,
+                'details'          => collect($questionsResult)->map(fn($q) => [
+                    'question_id' => $q['question_id'],
+                    'question' => [
+                        'id' => $q['question_id'],
+                        'question_text' => $q['question_text'],
+                        'type' => $q['quiz_type'],
+                        'explanation' => Questions::find($q['question_id'])?->explanation,
+                    ],
+                    'is_correct' => $q['is_correct'],
+                    'user_answer' => $q['user_answer_text'],
+                    'correct_answer' => $q['correct_answer_text'],
+                    'user_answer_map' => $q['user_answer_map'],
+                    'correct_answer_map' => $q['correct_answer_map'],
+                ])->toArray(),
             ],
             'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'module'            => ['id' => $moduleId, 'name' => $module?->name ?? 'Modul'],

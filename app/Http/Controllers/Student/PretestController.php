@@ -75,6 +75,7 @@ class PretestController extends Controller
                     'quiz_id'       => $question->quiz_id,
                     'feedback_correct'   => $question->feedback_correct,
                     'feedback_incorrect' => $question->feedback_incorrect,
+                    'explanation'        => $question->explanation,
                     'mascot'        => $question->mascot ? [
                         'id'        => $question->mascot->id,
                         'name_pose' => $question->mascot->name_pose,

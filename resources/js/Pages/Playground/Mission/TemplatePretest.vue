@@ -37,7 +37,7 @@ import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import PretestLayout from "@/Layouts/PretestLayout.vue";
 
-const { playPop, playSuccess } = useSfx();
+const { playPop, playSuccess, playFail } = useSfx();
 const layoutRef = ref(null);
 const confettiCanvas = ref(null);
 
@@ -150,14 +150,64 @@ const progressPct = computed(() =>
         : Math.round((answeredCnt.value / totalQ.value) * 100),
 );
 
-function updateAnswer({ questionId, value }) {
-    answers.value = { ...answers.value, [questionId]: value };
+const isAnswerChecked = ref(false);
+const isCurrentCorrect = ref(false);
+
+
+function checkAnswerLocal() {
+    const q = currentQ.value;
+    if (!q) return false;
+    const ans = answers.value[q.id];
+    if (ans === undefined || ans === null) return false;
+
+    if (quizType.value === "drag_drop") {
+        const items = q.drag_drop_items || [];
+        if (items.length === 0) return false;
+        return items.every(item => ans[item.id] !== undefined && String(ans[item.id]) === String(item.correct_group_id));
+    }
+
+    if (quizType.value === "short_answer") {
+        const userText = String(ans).trim().toLowerCase();
+        if (q.options && q.options.length > 0) {
+            return q.options.some(opt => opt.is_correct && String(opt.option_text).trim().toLowerCase() === userText);
+        }
+        return false;
+    }
+
+    if (q.options && q.options.length > 0) {
+        if (Array.isArray(ans)) {
+            const correctIds = q.options.filter(o => o.is_correct).map(o => String(o.id)).sort();
+            const userIds = ans.map(id => String(id)).sort();
+            return JSON.stringify(userIds) === JSON.stringify(correctIds);
+        }
+        const selectedOpt = q.options.find(o => String(o.id) === String(ans));
+        return selectedOpt ? !!selectedOpt.is_correct : false;
+    }
+    return true;
 }
 
-function goPrev() {
-    if (!isFirst.value) currentIdx.value--;
-}
-function goNext() {
+const correctText = computed(() => {
+    const q = currentQ.value;
+    if (!q) return "";
+
+    if (quizType.value === "drag_drop") {
+        const groups = q.drag_drop_groups || [];
+        const items = q.drag_drop_items || [];
+        return items.map(item => {
+            const group = groups.find(g => String(g.id) === String(item.correct_group_id));
+            return `"${item.item_text}" masuk ke "${group ? group.group_name : '?'}"`;
+        }).join(", ");
+    }
+
+    if (q.options && q.options.length > 0) {
+        const correctOpts = q.options.filter(o => o.is_correct);
+        return correctOpts.map(o => o.option_text || o.text).join(", ");
+    }
+
+    return "";
+});
+
+function onCheckAnswer() {
     if (!canGoNext.value) {
         shakeActive.value = true;
         setTimeout(() => {
@@ -165,8 +215,35 @@ function goNext() {
         }, 600);
         return;
     }
-    if (!isLast.value) currentIdx.value++;
-    else submitQuiz();
+    isCurrentCorrect.value = checkAnswerLocal();
+    isAnswerChecked.value = true;
+    if (isCurrentCorrect.value) {
+        playSuccess();
+    } else {
+        playFail();
+    }
+}
+
+function updateAnswer({ questionId, value }) {
+    if (isAnswerChecked.value) return;
+    answers.value = { ...answers.value, [questionId]: value };
+}
+
+function goPrev() {
+    if (!isFirst.value) {
+        currentIdx.value--;
+        isAnswerChecked.value = false;
+        isCurrentCorrect.value = false;
+    }
+}
+function goNext() {
+    if (!isLast.value) {
+        currentIdx.value++;
+        isAnswerChecked.value = false;
+        isCurrentCorrect.value = false;
+    } else {
+        submitQuiz();
+    }
 }
 
 function startQuiz() {
@@ -610,6 +687,7 @@ onUnmounted(() => {
                             <div
                                 class="component-box"
                                 :class="{ 'opts--shake': shakeActive }"
+                                :style="{ pointerEvents: isAnswerChecked ? 'none' : 'auto', opacity: isAnswerChecked ? 0.8 : 1 }"
                             >
                                 <component
                                     v-if="currentQ"
@@ -757,23 +835,13 @@ onUnmounted(() => {
 
                     <template v-else-if="phase === 'quiz'">
                         <button
-                            v-if="isLast"
+                            v-if="!isAnswerChecked"
                             class="btn-duo btn-duo-success"
-                            @click="submitQuiz"
-                            :disabled="submitting || !canGoNext"
-                        >
-                            <span v-if="!submitting" class="desktop-only">Selesaikan Pretest</span>
-                            <Loader2 v-else :size="18" class="spin" :stroke-width="3" />
-                            <CheckCircle2 v-if="!submitting" :size="18" :stroke-width="3" />
-                        </button>
-                        <button
-                            v-else
-                            class="btn-duo btn-duo-primary"
-                            @click="goNext"
+                            @click="onCheckAnswer"
                             :disabled="!canGoNext || submitting"
                         >
-                            <span class="desktop-only">Selanjutnya</span>
-                            <ArrowRight :size="18" :stroke-width="3" />
+                            <span>Periksa Jawaban</span>
+                            <CheckCircle2 :size="18" :stroke-width="3" />
                         </button>
                     </template>
 
@@ -790,6 +858,60 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Slide-up Instant Feedback Sheet -->
+        <Transition name="slide-up">
+            <div 
+                v-if="isAnswerChecked" 
+                class="feedback-sheet" 
+                :class="isCurrentCorrect ? 'feedback-sheet--correct' : 'feedback-sheet--incorrect'"
+            >
+                <div class="feedback-sheet-inner">
+                    <div class="feedback-status-wrap">
+                        <div class="feedback-icon-circle">
+                            <svg v-if="isCurrentCorrect" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </div>
+                        <div class="feedback-texts">
+                            <h4 class="feedback-title">
+                                {{ isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!' }}
+                            </h4>
+                            <div v-if="!isCurrentCorrect" class="feedback-correct-answer">
+                                <span class="font-bold">Jawaban Benar:</span> {{ correctText }}
+                            </div>
+                            <div v-if="currentQ?.explanation" class="feedback-explanation">
+                                <div class="explanation-title">Pembahasan:</div>
+                                <div class="explanation-body" v-html="currentQ.explanation"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button
+                        v-if="isLast"
+                        class="btn-duo btn-duo-success btn-feedback-next"
+                        @click="goNext"
+                        :disabled="submitting"
+                    >
+                        <span v-if="!submitting">Selesaikan Pretest</span>
+                        <Loader2 v-else :size="18" class="spin" />
+                        <CheckCircle2 v-if="!submitting" :size="18" />
+                    </button>
+                    <button
+                        v-else
+                        class="btn-duo btn-duo-primary btn-feedback-next"
+                        @click="goNext"
+                    >
+                        <span>Lanjutkan</span>
+                        <ArrowRight :size="18" />
+                    </button>
+                </div>
+            </div>
+        </Transition>
     </PretestLayout>
 </template>
 
@@ -1660,5 +1782,105 @@ onUnmounted(() => {
     0% { transform: scale(1); }
     50% { transform: scale(1.02); box-shadow: 0 0 12px rgba(88, 204, 2, 0.3); }
     100% { transform: scale(1); }
+}
+
+/* ── Bottom drawer feedback sheet ── */
+.feedback-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+    z-index: 100;
+    border-top: 4px solid;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+}
+.feedback-sheet--correct {
+    background-color: #d7ffb8;
+    border-color: #58cc02;
+    color: #276c00;
+}
+.feedback-sheet--incorrect {
+    background-color: #ffdfe0;
+    border-color: #ff4b4b;
+    color: #b91c1c;
+}
+.feedback-sheet-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+}
+.feedback-status-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex: 1;
+}
+.feedback-icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    flex-shrink: 0;
+}
+.feedback-sheet--correct .feedback-icon-circle {
+    color: #58cc02;
+}
+.feedback-sheet--incorrect .feedback-icon-circle {
+    color: #ff4b4b;
+}
+.feedback-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+.feedback-title {
+    font-family: "Baloo 2", cursive;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+}
+.feedback-correct-answer {
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+}
+.feedback-explanation {
+    margin-top: 8px;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.05);
+    line-height: 1.5;
+}
+.explanation-title {
+    font-weight: 800;
+    margin-bottom: 2px;
+    color: #1e293b;
+}
+.btn-feedback-next {
+    align-self: center;
+    height: 50px;
+    min-width: 140px;
+}
+
+/* Slide-up transition */
+.slide-up-enter-active, .slide-up-leave-active {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+}
+.slide-up-enter-from, .slide-up-leave-to {
+    transform: translateY(100%);
+    opacity: 0;
 }
 </style>

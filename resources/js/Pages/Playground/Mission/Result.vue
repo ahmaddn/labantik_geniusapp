@@ -78,7 +78,7 @@ const TYPE_META = {
     },
 };
 
-const showDetails = ref(false);
+const showDetails = ref(true);
 const animatedScore = ref(0);
 const confettiCanvas = ref(null);
 const speechTriggered = ref(false);
@@ -539,40 +539,59 @@ onMounted(() => {
                                 <div
                                     class="dc-question"
                                     v-html="detail.question.question_text"
-                                ></div>
-
-                                <div class="dc-answers">
-                                    <div
-                                        v-for="(
-                                            ans, aIdx
-                                        ) in detail.user_answers"
-                                        :key="aIdx"
-                                        class="answer-item"
-                                        :class="
-                                            isAnswerCorrect(detail, ans)
-                                                ? 'ans-correct'
-                                                : 'ans-wrong'
-                                        "
-                                    >
-                                        <div class="ans-icon">
-                                            <Check
-                                                v-if="
-                                                    isAnswerCorrect(detail, ans)
-                                                "
-                                                :size="16"
-                                            />
-                                            <X v-else :size="16" />
-                                        </div>
-                                        <div class="ans-text">
-                                            <span class="font-bold">Kamu:</span>
-                                            {{
-                                                ans.user_answer_text ||
-                                                ans.answer_text ||
-                                                "-"
-                                            }}
-                                        </div>
-                                    </div>
+                                >
                                 </div>
+                                <div class="dc-answers">
+                                     <!-- Jika drag_drop -->
+                                     <template v-if="detail.question.type === 'drag_drop'">
+                                         <div
+                                             v-for="(correctGroup, itemText) in detail.correct_answer_map"
+                                             :key="itemText"
+                                             class="answer-item"
+                                             :class="
+                                                 (detail.user_answer_map || {})[itemText] === correctGroup
+                                                     ? 'ans-correct'
+                                                     : 'ans-wrong'
+                                             "
+                                         >
+                                             <div class="ans-icon">
+                                                 <Check
+                                                     v-if="(detail.user_answer_map || {})[itemText] === correctGroup"
+                                                     :size="16"
+                                                 />
+                                                 <X v-else :size="16" />
+                                             </div>
+                                             <div class="ans-text">
+                                                 <span class="font-bold">{{ itemText }}:</span>
+                                                 Kamu menaruh di <span class="underline">{{ (detail.user_answer_map || {})[itemText] || '(tidak dijawab)' }}</span>
+                                                 (Seharusnya: <span class="font-bold">{{ correctGroup }}</span>)
+                                             </div>
+                                         </div>
+                                     </template>
+
+                                     <!-- Jika bukan drag_drop -->
+                                     <template v-else>
+                                         <div
+                                             class="answer-item"
+                                             :class="detail.is_correct ? 'ans-correct' : 'ans-wrong'"
+                                         >
+                                             <div class="ans-icon">
+                                                 <Check v-if="detail.is_correct" :size="16" />
+                                                 <X v-else :size="16" />
+                                             </div>
+                                             <div class="ans-text">
+                                                 <div>
+                                                     <span class="font-bold">Jawaban Kamu:</span>
+                                                     <span> {{ detail.user_answer || '(tidak dijawab)' }}</span>
+                                                 </div>
+                                                 <div v-if="!detail.is_correct" class="mt-1">
+                                                     <span class="font-bold" style="color: #58cc02">Jawaban Benar:</span>
+                                                     <span style="color: #58cc02"> {{ detail.correct_answer || '-' }}</span>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </template>
+                                 </div>
 
                                 <div
                                     v-if="getQuizExplanation(detail)"
