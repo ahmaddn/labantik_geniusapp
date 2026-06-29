@@ -1,13 +1,5 @@
 import { ref } from 'vue'
 
-const isMuted = () => {
-    try {
-        return localStorage.getItem('geniuss_music_on') === 'false';
-    } catch {
-        return false;
-    }
-};
-
 let sharedCtx = null;
 
 function getAudioContext() {
@@ -27,7 +19,6 @@ function getAudioContext() {
 
 export function useSfx() {
     const playPop = () => {
-        if (isMuted()) return;
         const ctx = getAudioContext();
         if (!ctx) return;
 
@@ -50,7 +41,6 @@ export function useSfx() {
     };
 
     const playSuccess = () => {
-        if (isMuted()) return;
         const ctx = getAudioContext();
         if (!ctx) return;
 
@@ -78,7 +68,6 @@ export function useSfx() {
     };
 
     const playFail = () => {
-        if (isMuted()) return;
         const ctx = getAudioContext();
         if (!ctx) return;
 
@@ -99,5 +88,29 @@ export function useSfx() {
         osc.stop(ctx.currentTime + 0.35);
     };
 
-    return { playPop, playSuccess, playFail };
+    const playRetry = () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        const now = ctx.currentTime;
+        // Frekuensi menurun lalu naik cepat (seperti suara memutar balik / rewind)
+        osc.frequency.setValueAtTime(550, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.22);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(now + 0.22);
+    };
+
+    return { playPop, playSuccess, playFail, playRetry };
 }

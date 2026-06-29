@@ -1231,7 +1231,8 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 /* 📱 ELEMENT KHUSUS MOBILE (Default Tersembunyi di Desktop) */
 .mobile-top-bar,
 .mobile-stats-card,
-.mobile-bottom-nav {
+.mobile-bottom-nav,
+.mobile-sidebar-close {
     display: none;
 }
 
@@ -1340,6 +1341,13 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
         width: 32px;
         height: 32px;
         font-size: 13px;
+        border-radius: 50%;
+        background: #38bdf8;
+        color: white;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .mobile-sidebar-toggle {

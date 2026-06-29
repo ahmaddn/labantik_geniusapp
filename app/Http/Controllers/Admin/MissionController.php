@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Learning_modules;
 use App\Models\Missions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class MissionController extends Controller
@@ -65,6 +66,7 @@ class MissionController extends Controller
                     'layout_type' => $material->layout_type,
                     'image' => $material->image,
                     'thumbnail' => $material->thumbnail,
+                    'custom_dialogues' => $material->custom_dialogues,
                     'order_number' => $material->order_number,
                     'created_at' => $material->created_at,
                     'created_by' => $material->createdBy ? $material->createdBy->name : null,
@@ -86,6 +88,7 @@ class MissionController extends Controller
                     'id' => $quiz->id,
                     'title' => $quiz->title,
                     'description' => $quiz->description,
+                    'custom_dialogues' => $quiz->custom_dialogues,
                     'type' => $quiz->type,
                     'time_limit' => $quiz->time_limit,
                     'category' => $quiz->category,
@@ -135,6 +138,7 @@ class MissionController extends Controller
                 'name' => $missions->name,
                 'order_number' => $missions->order_number,
                 'description' => $missions->description ?? null,
+                'voiceover_url' => $missions->voiceover_url ? Storage::url($missions->voiceover_url) : null,
             ],
             'materials' => $materials,
             'quizzes' => $quizzes,
@@ -158,19 +162,38 @@ class MissionController extends Controller
             'order_number' => 'nullable|integer|min:1',
             'conclusion_speech' => 'nullable|string|max:255',
             'conclusion_body' => 'nullable|string',
+            'voiceover_file' => 'nullable|file|mimes:mp3,wav,ogg|max:10240',
+            'remove_voiceover' => 'nullable|boolean',
         ], [
             'name.required' => 'Nama mission wajib diisi.',
+            'voiceover_file.mimes' => 'Format audio harus mp3, wav, atau ogg.',
+            'voiceover_file.max' => 'Ukuran audio maksimal 10MB.',
         ]);
+
+        $voiceoverPath = $missions->voiceover_url;
+
+        if (!empty($validated['remove_voiceover']) && $voiceoverPath) {
+            Storage::disk('public')->delete($voiceoverPath);
+            $voiceoverPath = null;
+        }
+
+        if ($request->hasFile('voiceover_file')) {
+            if ($voiceoverPath) {
+                Storage::disk('public')->delete($voiceoverPath);
+            }
+            $voiceoverPath = $request->file('voiceover_file')->store('voiceovers', 'public');
+        }
 
         $missions->update([
             'name' => $validated['name'],
             'order_number' => $validated['order_number'] ?? $missions->order_number,
             'conclusion_speech' => $validated['conclusion_speech'] ?? null,
             'conclusion_body' => $validated['conclusion_body'] ?? null,
+            'voiceover_url' => $voiceoverPath,
         ]);
 
         return redirect()
-            ->route('admin.modules.show', $modules->id)
+            ->back()
             ->with('success', 'Mission berhasil diperbarui.');
     }
 
@@ -239,5 +262,38 @@ class MissionController extends Controller
         }
 
         return redirect()->back()->with('success', 'Urutan berhasil disimpan.');
+    }
+
+    /**
+     * Update custom dialogues for a material or quiz card
+     */
+    public function updateCustomDialogues(Learning_modules $modules, Missions $missions, Request $request)
+    {
+        if ($missions->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'item_id' => 'required|string',
+            'item_type' => 'required|string|in:material,quiz',
+            'custom_dialogues' => 'nullable|string',
+        ]);
+
+        $model = null;
+        if ($validated['item_type'] === 'material') {
+            $model = \App\Models\Materials::where('mission_id', $missions->id)->find($validated['item_id']);
+        } else if ($validated['item_type'] === 'quiz') {
+            $model = \App\Models\Quizzes::where('mission_id', $missions->id)->find($validated['item_id']);
+        }
+
+        if (!$model) {
+            return redirect()->back()->with('error', 'Konten tidak ditemukan.');
+        }
+
+        $model->update([
+            'custom_dialogues' => $validated['custom_dialogues'],
+        ]);
+
+        return redirect()->back()->with('success', 'Kalimat dialog maskot berhasil diperbarui.');
     }
 }

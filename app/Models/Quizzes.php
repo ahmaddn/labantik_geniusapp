@@ -24,6 +24,7 @@ class Quizzes extends Model
         'category',
         'order_number',
         'is_randomized',
+        'custom_dialogues',
     ];
 
     protected static function booted(): void

@@ -21,6 +21,7 @@ class Missions extends Model
         'content',
         'image',
         'youtube_link',
+        'voiceover_url',
         'is_active',
         'conclusion_speech',
         'conclusion_body',

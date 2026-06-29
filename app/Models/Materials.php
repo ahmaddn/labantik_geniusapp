@@ -24,6 +24,7 @@ class Materials extends Model
         'mission_id',
         'layout_type',
         'order_number',
+        'custom_dialogues',
     ];
 
     protected static function booted(): void

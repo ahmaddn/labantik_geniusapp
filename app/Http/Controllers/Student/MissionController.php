@@ -11,6 +11,7 @@ use App\Models\Quiz_attempts;
 use App\Models\Quizzes;
 use App\Models\User_answers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class MissionController extends Controller
@@ -52,7 +53,13 @@ class MissionController extends Controller
                 )->count();
 
                 $status = 'not_started';
-                if ($completedQuizzes > 0) {
+                $isCompletedInLogs = \App\Models\StudentMissionLog::where('user_id', $player['id'] ?? null)
+                    ->where('mission_id', $mission->id)
+                    ->exists();
+
+                if ($isCompletedInLogs) {
+                    $status = 'completed';
+                } else if ($completedQuizzes > 0) {
                     $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
                 }
 
@@ -137,13 +144,14 @@ class MissionController extends Controller
             }
 
             return [
-                'id'           => $quiz->id,
-                'type'         => $quiz->type,
-                'title'        => $quiz->title,
-                'time_limit'   => $quiz->time_limit,
-                'order_number' => $quiz->order_number ?? 0,
-                'created_at'   => $quiz->created_at,
-                'image'        => $quiz->image,
+                'id'               => $quiz->id,
+                'type'             => $quiz->type,
+                'title'            => $quiz->title,
+                'time_limit'       => $quiz->time_limit,
+                'order_number'     => $quiz->order_number ?? 0,
+                'created_at'       => $quiz->created_at,
+                'image'            => $quiz->image,
+                'custom_dialogues' => $quiz->custom_dialogues,
                 'questions'    => $questionsCollection->map(function ($question) {
                 $formatted = [
                     'id'            => $question->id,
@@ -192,14 +200,15 @@ class MissionController extends Controller
 
         // Format materials
         $materials = $mission->materials->map(fn($material) => [
-            'id'           => $material->id,
-            'type'         => 'materials',
-            'image'        => $material->image,
-            'title'        => $material->title,
-            'subtitle'     => $material->description,
-            'speech_bubble'=> $material->speech_bubble,
-            'order_number' => $material->order_number ?? 0,
-            'created_at'   => $material->created_at,
+            'id'               => $material->id,
+            'type'             => 'materials',
+            'image'            => $material->image,
+            'title'            => $material->title,
+            'subtitle'         => $material->description,
+            'speech_bubble'    => $material->speech_bubble,
+            'custom_dialogues' => $material->custom_dialogues,
+            'order_number'     => $material->order_number ?? 0,
+            'created_at'       => $material->created_at,
             'mascot'     => $material->mascot ? [
                 'id'        => $material->mascot->id,
                 'name_pose' => $material->mascot->name_pose,
@@ -361,6 +370,7 @@ class MissionController extends Controller
             'next_mission_id'   => $nextMission ? $nextMission->id : null,
             'conclusion_speech' => $mission->conclusion_speech,
             'conclusion_body'   => $mission->conclusion_body,
+            'voiceover_url'     => $mission->voiceover_url ? Storage::url($mission->voiceover_url) : null,
             'quizzes'           => $allItems,
         ];
 

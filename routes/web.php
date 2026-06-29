@@ -170,6 +170,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::put('/{missions}', [MissionController::class, 'update'])->name('update');
             Route::delete('/{missions}', [MissionController::class, 'destroy'])->name('destroy');
             Route::post('/{missions}/reorder', [MissionController::class, 'reorderSteps'])->name('reorder');
+            Route::post('/{missions}/custom-dialogues', [MissionController::class, 'updateCustomDialogues'])->name('custom-dialogues.update');
 
             // Material Routes (nested under missions)
             Route::prefix('{missions}/materials')->name('materials.')->group(function () {

@@ -40,7 +40,7 @@ defineExpose({ musicOn, toggleMusic });
 </script>
 
 <template>
-    <div class="app-layout">
+    <div class="app-layout theme-posttest">
         <!-- ░░ BACKGROUND ░░ -->
         <div class="bg-scene">
             <div class="sky-gradient"></div>
@@ -273,6 +273,18 @@ defineExpose({ musicOn, toggleMusic });
     min-height: 100vh;
     font-family: "Nunito", "Baloo 2", sans-serif;
     overflow-x: hidden;
+
+    /* Theme Variables - Ruby/Rose (Posttest) */
+    --theme-color-primary: #f43f5e;
+    --theme-color-primary-hover: #e11d48;
+    --theme-color-primary-active: #be123c;
+    
+    --theme-bg-gradient: linear-gradient(135deg, #fce4ec 0%, #fdf2f8 40%, #fff1f2 100%);
+    --theme-particle-1: radial-gradient(circle, #fecdd3, #fda4af);
+    --theme-particle-2: radial-gradient(circle, #fbcfe8, #f472b6);
+    --theme-particle-3: radial-gradient(circle, #ffe4e6, #f43f5e);
+    --theme-particle-4: radial-gradient(circle, #fef3c7, #fbbf24);
+    --theme-particle-5: radial-gradient(circle, #ddd6fe, #c4b5fd);
 }
 
 /* ─── BG SCENE ─── */
@@ -286,7 +298,7 @@ defineExpose({ musicOn, toggleMusic });
 .sky-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 40%, #f0fdf4 100%);
+    background: var(--theme-bg-gradient);
 }
 
 .bg-particles {
@@ -305,7 +317,7 @@ defineExpose({ musicOn, toggleMusic });
 .bg-particles .p-1 {
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, #bfdbfe, #93c5fd);
+    background: var(--theme-particle-1);
     top: -100px;
     left: -150px;
     animation: blobDrift1 18s ease-in-out infinite;
@@ -313,7 +325,7 @@ defineExpose({ musicOn, toggleMusic });
 .bg-particles .p-2 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, #d1fae5, #6ee7b7);
+    background: var(--theme-particle-2);
     top: 30%;
     right: -100px;
     animation: blobDrift2 22s ease-in-out infinite;
@@ -321,7 +333,7 @@ defineExpose({ musicOn, toggleMusic });
 .bg-particles .p-3 {
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, #fce7f3, #f9a8d4);
+    background: var(--theme-particle-3);
     bottom: 10%;
     left: 20%;
     animation: blobDrift3 16s ease-in-out infinite;
@@ -329,7 +341,7 @@ defineExpose({ musicOn, toggleMusic });
 .bg-particles .p-4 {
     width: 350px;
     height: 350px;
-    background: radial-gradient(circle, #ede9fe, #c4b5fd);
+    background: var(--theme-particle-4);
     top: 50%;
     left: 40%;
     animation: blobDrift1 20s ease-in-out infinite reverse;
@@ -337,7 +349,7 @@ defineExpose({ musicOn, toggleMusic });
 .bg-particles .p-5 {
     width: 250px;
     height: 250px;
-    background: radial-gradient(circle, #fef3c7, #fde68a);
+    background: var(--theme-particle-5);
     bottom: 20%;
     right: 20%;
     animation: blobDrift2 14s ease-in-out infinite reverse;

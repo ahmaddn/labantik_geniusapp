@@ -8,6 +8,11 @@ import {
     Clock,
     Music2,
     VolumeX,
+    Volume2,
+    Play,
+    Square,
+    Radio,
+    Mic,
     CheckCircle2,
     BookOpen,
     Star,
@@ -67,9 +72,9 @@ const COMPONENT_MAP = {
     reflection: Reflection,
 };
 
-const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
+const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio, setBgmVolume, restoreBgmVolume } =
     useMusic();
-const { playPop, playSuccess, playFail } = useSfx();
+const { playPop, playSuccess, playFail, playRetry } = useSfx();
 const confettiCanvas = ref(null);
 const mascotClicked = ref(false);
 
@@ -91,7 +96,7 @@ const typeMeta = (t) => TYPE_META[t] || TYPE_META.materials;
 
 // ── Props ──────────────────────────────────────────────────────
 const props = defineProps({
-    mission: { type: Object, required: true },
+    mission: { type: Object, required: true },  
     user: { type: Object, default: () => ({ name: "Siswa" }) },
     module: {
         type: Object,
@@ -291,6 +296,7 @@ function retryQuiz(quizId) {
 }
 
 const handleGlobalRetry = () => {
+    playRetry();
     if (step.value?.question?.id) {
         delete answers[step.value.question.id];
     }
@@ -367,15 +373,23 @@ const mascotUrl = computed(() => {
         return fallback;
     };
     
+    const activePose = activeSpeechBubble.value.pose || "pikir";
+    return getMascotImage(activePose, `/images/templates/pose_${activePose}.png`);
+});
+
+const themeClass = computed(() => {
     const s = step.value;
-    if (!s) return getMascotImage('pikir', "/images/templates/pose_pikir.png");
-    if (s.isConclusion) return getMascotImage('jempol', "/images/templates/pose_jempol.png");
-    if (s.isMaterial) return getMascotImage('nunjuk', "/images/templates/pose_nunjuk.png");
+    if (!s) return 'theme-quiz';
     
-    if (s.question && isStepAnswered(s)) {
-        return getMascotImage('jempol', "/images/templates/pose_jempol.png");
-    }
-    return getMascotImage('pikir', "/images/templates/pose_pikir.png");
+    const isSim = s.quiz?.type?.startsWith('simulation') || 
+                  s.type === 'simulation_clickable' ||
+                  s.type === 'simulation_slider' ||
+                  s.type === 'simulation_comparison' ||
+                  s.type === 'simulation_decision';
+                  
+    if (isSim) return 'theme-simulation';
+    if (s.isMaterial || s.quiz?.type === 'materials') return 'theme-material';
+    return 'theme-quiz';
 });
 
 const backgroundUrl = computed(() => {
@@ -390,21 +404,28 @@ const backgroundUrl = computed(() => {
 
 // ── Speech bubble ──────────────────────────────────────────────
 const BUBBLES_UNANSWERED = [
-    "Gas baca soalnya dulu nih!",
-    "Slow aja bacanya, dipikirin mateng-mateng!",
-    "Fokus dong, kamu pasti bisa!",
-    "Cek ombak dulu, baca soalnya baik-baik!",
+    { text: "Gas baca soalnya dulu nih!", pose: "nunjuk" },
+    { text: "Slow aja bacanya, dipikirin mateng-mateng!", pose: "pikir" },
+    { text: "Fokus dong, kamu pasti bisa!", pose: "keren" },
+    { text: "Cek ombak dulu, baca soalnya baik-baik!", pose: "pikir" },
+    { text: "Wah, soal ini menarik banget! Ayo kita selesaikan!", pose: "nunjuk" },
+    { text: "Ada yang membingungkan? Coba baca pertanyaannya sekali lagi ya!", pose: "pikir" },
+    { text: "Tenang, jangan terburu-buru. Masih banyak waktu!", pose: "nunjuk" },
+    { text: "Kamu hebat! Pertanyaan ini pasti mudah buat kamu!", pose: "jempol" },
+    { text: "Ayo tunjukkan kemampuan terbaikmu sekarang!", pose: "keren" },
+    { text: "Setiap langkah kecil adalah bagian dari belajar. Semangat!", pose: "jempol" },
+    { text: "Konsentrasi penuh, mari kita pecahkan teka-teki ini!", pose: "pikir" },
 ];
 const BUBBLES_ANSWERED = [
-    "Cakep! Langsung gas klik Selanjutnya.",
-    "Udah yakin sama jawaban ini?",
-    "Kece badai! Lanjut ke soal berikutnya yuk.",
-    "Mantul! Gas terus pantang mundur!",
+    { text: "Cakep! Langsung gas klik Selanjutnya.", pose: "jempol" },
+    { text: "Udah yakin sama jawaban ini?", pose: "keren" },
+    { text: "Kece badai! Lanjut ke soal berikutnya yuk.", pose: "keren" },
+    { text: "Mantul! Gas terus pantang mundur!", pose: "jempol" },
 ];
 const BUBBLES_MATERIAL = [
-    "Kuy kepoin materinya dulu!",
-    "Pahami pelan-pelan aja, chill!",
-    "Catet di otak ya, ini bekal buat soal nanti!",
+    { text: "Kuy kepoin materinya dulu!", pose: "nunjuk" },
+    { text: "Pahami pelan-pelan aja, chill!", pose: "pikir" },
+    { text: "Catet di otak ya, ini bekal buat soal nanti!", pose: "jempol" },
 ];
 
 const bubbleIdx = ref(0);
@@ -425,33 +446,69 @@ const isStepCorrect = (s) => {
     return true; // Fallback
 };
 
-const activeSpeechText = computed(() => {
+const activeSpeechBubble = computed(() => {
     const s = step.value;
-    if (!s) return "Semangat ya!";
-    if (s.isConclusion) return props.mission.conclusion_speech || "Selesai! Jangan lupa catat poin pentingnya.";
-    if (s.isMaterial) {
-        if (s.question && s.question.speech_bubble) return s.question.speech_bubble;
+    if (!s) return { text: "Semangat ya!", pose: "jempol" };
+    if (s.isConclusion) return { text: props.mission.conclusion_speech || "Selesai! Jangan lupa catat poin pentingnya.", pose: "jempol" };
+
+    const dialoguesStr = s.quiz?.custom_dialogues;
+    const customLines = dialoguesStr
+        ? dialoguesStr.split("\n").map(l => l.trim()).filter(l => l.length > 0)
+        : [];
+
+    const isSim = s.quiz?.type?.startsWith('simulation') || 
+                  s.type === 'simulation_clickable' ||
+                  s.type === 'simulation_slider' ||
+                  s.type === 'simulation_comparison' ||
+                  s.type === 'simulation_decision';
+
+    if (isSim) {
+        if (customLines.length > 0) {
+            const line = customLines[bubbleIdx.value % customLines.length];
+            const poses = ["nunjuk", "pikir", "keren", "jempol"];
+            const pose = poses[bubbleIdx.value % poses.length];
+            return { text: line, pose };
+        }
+        return { text: "Ayo coba simulasinya dan amati apa yang terjadi!", pose: "nunjuk" };
+    }
+
+    if (s.isMaterial || s.quiz?.type === 'materials') {
+        if (customLines.length > 0) {
+            const line = customLines[bubbleIdx.value % customLines.length];
+            const poses = ["nunjuk", "pikir", "keren", "jempol"];
+            const pose = poses[bubbleIdx.value % poses.length];
+            return { text: line, pose };
+        }
+        if (s.question && s.question.speech_bubble) return { text: s.question.speech_bubble, pose: "nunjuk" };
         return BUBBLES_MATERIAL[bubbleIdx.value % BUBBLES_MATERIAL.length];
     }
     if (s.question && isQuestionAnswered(s.question, s.quiz?.type)) {
         const correct = isStepCorrect(s);
         if (correct) {
-            if (s.question.feedback_correct) return s.question.feedback_correct;
+            if (s.question.feedback_correct) return { text: s.question.feedback_correct, pose: "jempol" };
             if (s.question.options) {
                 const ansId = answers[s.question.id];
                 const selectedOpt = s.question.options.find(o => o.id === ansId);
                 if (selectedOpt && selectedOpt.feedback) {
-                    return selectedOpt.feedback;
+                    return { text: selectedOpt.feedback, pose: "keren" };
                 }
             }
             return BUBBLES_ANSWERED[bubbleIdx.value % BUBBLES_ANSWERED.length];
         } else {
-            if (s.question.feedback_incorrect) return s.question.feedback_incorrect;
-            return "Ayo coba lagi, periksa kembali jawabanmu!";
+            if (s.question.feedback_incorrect) return { text: s.question.feedback_incorrect, pose: "pikir" };
+            return { text: "Ayo coba lagi, periksa kembali jawabanmu!", pose: "pikir" };
         }
+    }
+    if (customLines.length > 0) {
+        const line = customLines[bubbleIdx.value % customLines.length];
+        const poses = ["pikir", "nunjuk", "keren", "jempol"];
+        const pose = poses[bubbleIdx.value % poses.length];
+        return { text: line, pose };
     }
     return BUBBLES_UNANSWERED[bubbleIdx.value % BUBBLES_UNANSWERED.length];
 });
+
+const activeSpeechText = computed(() => activeSpeechBubble.value.text);
 
 const rotateBubble = () => {
     bubbleVisible.value = false;
@@ -741,23 +798,82 @@ const goToNextMission = () => {
     }
 };
 
+// ── Voice Over Audio ──────────────────────────────────────────
+const voAudio = ref(null);
+const voPlaying = ref(false);
+const voVolume = ref(1.0);
+
+const updateVoVolume = () => {
+    if (voAudio.value) {
+        voAudio.value.volume = voVolume.value;
+    }
+};
+
+const initVoiceover = () => {
+    if (!props.mission.voiceover_url) return;
+    
+    voAudio.value = new Audio(props.mission.voiceover_url);
+    voAudio.value.volume = voVolume.value;
+    
+    voAudio.value.addEventListener("play", () => {
+        voPlaying.value = true;
+        // Duck BGM to 0.1
+        setBgmVolume(0.1);
+    });
+
+    voAudio.value.addEventListener("pause", () => {
+        voPlaying.value = false;
+        // Restore BGM to 0.4
+        restoreBgmVolume();
+    });
+
+    voAudio.value.addEventListener("ended", () => {
+        voPlaying.value = false;
+        // Restore BGM to 0.4
+        restoreBgmVolume();
+    });
+
+    // Try autoplay (handling browser security blocks)
+    voAudio.value.play().catch((err) => {
+        console.warn("Autoplay voiceover blocked or requires user gesture:", err);
+    });
+};
+
+const toggleVoiceover = () => {
+    if (!voAudio.value) return;
+    if (voPlaying.value) {
+        voAudio.value.pause();
+    } else {
+        voAudio.value.play().catch(() => {});
+    }
+};
+
+const stopVoiceover = () => {
+    if (voAudio.value) {
+        voAudio.value.pause();
+        voAudio.value.currentTime = 0;
+    }
+};
+
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
     document.addEventListener("visibilitychange", handleVisibility);
     setTimeout(() => initAutoMusic(props.backsound), 100);
     if (step.value?.quiz) startQuizTimer(step.value.quiz);
+    initVoiceover();
 });
 onUnmounted(() => {
     clearInterval(bubbleTimer);
     clearInterval(timerInt);
     document.removeEventListener("visibilitychange", handleVisibility);
     destroyAudio();
+    stopVoiceover();
 });
 </script>
 
 <template>
-    <div class="app-layout">
+    <div class="app-layout" :class="themeClass">
         <!-- ░░ FONT LOAD ░░ -->
         <div style="display: none">
             <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1038,6 +1154,32 @@ onUnmounted(() => {
                         <VolumeX v-else :size="24" :stroke-width="2.5" />
                     </button>
 
+                    <!-- Voice Over Narasi Button & Volume Slider -->
+                    <div v-if="mission.voiceover_url" class="voice-control-wrapper">
+                        <button
+                            class="voice-footer-btn"
+                            @click="toggleVoiceover"
+                            :class="{ 'voice-on': voPlaying }"
+                            title="Suara Narasi"
+                        >
+                            <Volume2 v-if="voPlaying" :size="24" :stroke-width="2.5" class="vo-playing-icon" />
+                            <Radio v-else :size="24" :stroke-width="2.5" />
+                        </button>
+                        <!-- Volume Slider Popover -->
+                        <div class="voice-volume-slider-popover">
+                            <Volume2 :size="14" class="vo-slider-icon" />
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                v-model="voVolume"
+                                @input="updateVoVolume"
+                                class="voice-volume-input"
+                            />
+                        </div>
+                    </div>
+
                     <button
                         v-if="!isFirst"
                         class="btn-duo btn-duo-secondary"
@@ -1202,6 +1344,60 @@ onUnmounted(() => {
     min-height: 100vh;
     font-family: "Nunito", "Baloo 2", sans-serif;
     overflow-x: hidden;
+
+    /* Theme Variables - Default Blue-ish (Pretest/Posttest/Fallback) */
+    --theme-color-primary: #1cb0f6;
+    --theme-color-primary-hover: #1899d6;
+    --theme-color-primary-active: #1480b3;
+    
+    --theme-bg-solid: #f0f9ff;
+    --theme-particle-1: radial-gradient(circle, #e0f2fe, #bae6fd);
+    --theme-particle-2: radial-gradient(circle, #bae6fd, #7dd3fc);
+    --theme-particle-3: radial-gradient(circle, #e0f2fe, #e0f2fe);
+    --theme-particle-4: radial-gradient(circle, #f0f9ff, #e0f2fe);
+    --theme-particle-5: radial-gradient(circle, #bae6fd, #e0f2fe);
+}
+
+.app-layout.theme-material {
+    /* Soft Light Blue */
+    --theme-color-primary: #0ea5e9;
+    --theme-color-primary-hover: #0284c7;
+    --theme-color-primary-active: #0369a1;
+    
+    --theme-bg-solid: #e0f2fe; /* soft light blue background */
+    --theme-particle-1: radial-gradient(circle, #bae6fd, #7dd3fc);
+    --theme-particle-2: radial-gradient(circle, #dbeafe, #bfdbfe);
+    --theme-particle-3: radial-gradient(circle, #eff6ff, #dbeafe);
+    --theme-particle-4: radial-gradient(circle, #f0f9ff, #e0f2fe);
+    --theme-particle-5: radial-gradient(circle, #bae6fd, #e0f2fe);
+}
+
+.app-layout.theme-simulation {
+    /* Soft Light Green */
+    --theme-color-primary: #10b981;
+    --theme-color-primary-hover: #059669;
+    --theme-color-primary-active: #047857;
+    
+    --theme-bg-solid: #d1fae5; /* soft light green background */
+    --theme-particle-1: radial-gradient(circle, #a7f3d0, #34d399);
+    --theme-particle-2: radial-gradient(circle, #e8f5e9, #c8e6c9);
+    --theme-particle-3: radial-gradient(circle, #f0fdf4, #d1fae5);
+    --theme-particle-4: radial-gradient(circle, #d1fae5, #a7f3d0);
+    --theme-particle-5: radial-gradient(circle, #e8f5e9, #d1fae5);
+}
+
+.app-layout.theme-quiz {
+    /* Soft Light Yellow */
+    --theme-color-primary: #eab308;
+    --theme-color-primary-hover: #ca8a04;
+    --theme-color-primary-active: #a16207;
+    
+    --theme-bg-solid: #fef9c3; /* soft light yellow background */
+    --theme-particle-1: radial-gradient(circle, #fef08a, #fde68a);
+    --theme-particle-2: radial-gradient(circle, #fffbeb, #fde68a);
+    --theme-particle-3: radial-gradient(circle, #fefce8, #fef9c3);
+    --theme-particle-4: radial-gradient(circle, #fef9c3, #fef08a);
+    --theme-particle-5: radial-gradient(circle, #fde68a, #fef9c3);
 }
 
 /* ─── BG SCENE ─── */
@@ -1222,7 +1418,7 @@ onUnmounted(() => {
 .sky-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 40%, #f0fdf4 100%);
+    background: var(--theme-bg-solid);
 }
 .bg-particles {
     position: absolute;
@@ -1235,11 +1431,11 @@ onUnmounted(() => {
     filter: blur(60px);
     opacity: 0.35;
 }
-.bg-particles .p-1 { width: 500px; height: 500px; background: radial-gradient(circle, #bfdbfe, #93c5fd); top: -100px; left: -150px; animation: blobDrift1 18s ease-in-out infinite; }
-.bg-particles .p-2 { width: 400px; height: 400px; background: radial-gradient(circle, #d1fae5, #6ee7b7); top: 30%; right: -100px; animation: blobDrift2 22s ease-in-out infinite; }
-.bg-particles .p-3 { width: 300px; height: 300px; background: radial-gradient(circle, #fce7f3, #f9a8d4); bottom: 10%; left: 20%; animation: blobDrift3 16s ease-in-out infinite; }
-.bg-particles .p-4 { width: 350px; height: 350px; background: radial-gradient(circle, #ede9fe, #c4b5fd); top: 50%; left: 40%; animation: blobDrift1 20s ease-in-out infinite reverse; }
-.bg-particles .p-5 { width: 250px; height: 250px; background: radial-gradient(circle, #fef3c7, #fde68a); bottom: 20%; right: 20%; animation: blobDrift2 14s ease-in-out infinite reverse; }
+.bg-particles .p-1 { width: 500px; height: 500px; background: var(--theme-particle-1); top: -100px; left: -150px; animation: blobDrift1 18s ease-in-out infinite; }
+.bg-particles .p-2 { width: 400px; height: 400px; background: var(--theme-particle-2); top: 30%; right: -100px; animation: blobDrift2 22s ease-in-out infinite; }
+.bg-particles .p-3 { width: 300px; height: 300px; background: var(--theme-particle-3); bottom: 10%; left: 20%; animation: blobDrift3 16s ease-in-out infinite; }
+.bg-particles .p-4 { width: 350px; height: 350px; background: var(--theme-particle-4); top: 50%; left: 40%; animation: blobDrift1 20s ease-in-out infinite reverse; }
+.bg-particles .p-5 { width: 250px; height: 250px; background: var(--theme-particle-5); bottom: 20%; right: 20%; animation: blobDrift2 14s ease-in-out infinite reverse; }
 
 @keyframes blobDrift1 { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-40px) scale(1.05); } 66% { transform: translate(-20px,20px) scale(0.95); } }
 @keyframes blobDrift2 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-35px,25px) scale(1.08); } }
@@ -1620,7 +1816,121 @@ onUnmounted(() => {
 }
 .music-fab:hover { background: #f7f7f7; transform: translateY(-2px); border-bottom-width: 5px; }
 .music-fab:active { transform: translateY(2px); border-bottom-width: 2px; }
-.music-fab.music-on { background: #1cb0f6; border-color: #1cb0f6; border-bottom-color: #1899d6; color: white; }
+.music-fab.music-on { background: var(--theme-color-primary); border-color: var(--theme-color-primary); border-bottom-color: var(--theme-color-primary-hover); color: white; }
+
+/* ─── FOOTER AUDIO BUTTONS ─── */
+.music-footer-btn, .voice-footer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 2px solid #e5e5e5;
+    border-bottom: 4px solid #cbd5e1;
+    cursor: pointer;
+    background: #ffffff;
+    color: #afafaf;
+    transition: all 0.15s ease;
+    outline: none;
+}
+.music-footer-btn:hover, .voice-footer-btn:hover {
+    background: #f7f7f7;
+    transform: translateY(-2px);
+    border-bottom-width: 5px;
+}
+.music-footer-btn:active, .voice-footer-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+.music-footer-btn.music-on {
+    background: var(--theme-color-primary);
+    border-color: var(--theme-color-primary);
+    border-bottom-color: var(--theme-color-primary-hover);
+    color: white;
+}
+.voice-footer-btn.voice-on {
+    background: var(--theme-color-primary);
+    border-color: var(--theme-color-primary);
+    border-bottom-color: var(--theme-color-primary-hover);
+    color: white;
+}
+.vo-playing-icon {
+    animation: voPulse 1.2s infinite alternate;
+}
+@keyframes voPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.15); }
+}
+
+.voice-control-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.voice-volume-slider-popover {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 50;
+}
+
+/* Jembatan transparan agar hover tidak terputus */
+.voice-volume-slider-popover::before {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 100%;
+    height: 15px;
+    background: transparent;
+}
+
+.voice-volume-slider-popover::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    border-right: 2px solid #e5e5e5;
+    border-bottom: 2px solid #e5e5e5;
+    z-index: 1;
+}
+
+.voice-control-wrapper:hover .voice-volume-slider-popover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.voice-volume-input {
+    width: 80px;
+    accent-color: #0ea5e9;
+    cursor: pointer;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e5e5;
+    outline: none;
+}
+
+.vo-slider-icon {
+    color: #0ea5e9;
+}
 
 /* ─── FIXED FOOTER BAR ─── */
 .footer-bar {
@@ -1682,13 +1992,13 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 .btn-duo-primary {
-    background-color: #1cb0f6;
-    border: 2px solid #1cb0f6;
-    border-bottom: 5px solid #1899d6;
+    background-color: var(--theme-color-primary);
+    border: 2px solid var(--theme-color-primary);
+    border-bottom: 5px solid var(--theme-color-primary-hover);
     color: #ffffff;
 }
 .btn-duo-primary:hover:not(:disabled) { filter: brightness(1.04); }
-.btn-duo-primary:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+.btn-duo-primary:active:not(:disabled) { background-color: var(--theme-color-primary-active); border-color: var(--theme-color-primary-active); transform: translateY(3px); border-bottom-width: 2px; }
 
 .btn-duo-success {
     background-color: #58cc02;

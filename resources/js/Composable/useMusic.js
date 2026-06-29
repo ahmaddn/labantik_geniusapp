@@ -111,7 +111,19 @@ export function useMusic() {
         savePref(musicOn.value)
     }
 
+    const setBgmVolume = (vol) => {
+        if (audioRef.value) {
+            audioRef.value.volume = vol;
+        }
+    }
+
+    const restoreBgmVolume = () => {
+        if (audioRef.value) {
+            audioRef.value.volume = 0.4;
+        }
+    }
+
     const destroyAudio = () => {}
 
-    return { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio }
+    return { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio, setBgmVolume, restoreBgmVolume }
 }

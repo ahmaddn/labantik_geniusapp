@@ -31,6 +31,12 @@ import {
     Settings,
     Settings2,
     Workflow,
+    Volume2,
+    VolumeX,
+    Mic,
+    Upload,
+    Play,
+    MessageSquare,
 } from "lucide-vue-next";
 import draggable from "vuedraggable";
 
@@ -207,6 +213,81 @@ const goToSimulationConfig = () => {
             props.mission.id,
         ]),
     );
+};
+
+// Edit Mission & Voice Over Form
+const showEditMissionModal = ref(false);
+const voiceoverFileInput = ref(null);
+const editMissionForm = useForm({
+    _method: 'PUT',
+    name: props.mission.name,
+    order_number: props.mission.order_number,
+    voiceover_file: null,
+    remove_voiceover: false,
+});
+
+const openEditMissionModal = () => {
+    editMissionForm.name = props.mission.name;
+    editMissionForm.order_number = props.mission.order_number;
+    editMissionForm.voiceover_file = null;
+    editMissionForm.remove_voiceover = false;
+    showEditMissionModal.value = true;
+};
+
+const handleVoiceoverChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        editMissionForm.voiceover_file = file;
+        editMissionForm.remove_voiceover = false;
+    }
+};
+
+const submitEditMission = () => {
+    const url = route("admin.modules.missions.update", [
+        props.module.id,
+        props.mission.id,
+    ]);
+    editMissionForm.post(url, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            showEditMissionModal.value = false;
+            triggerToast("Pengaturan misi dan Voice Over berhasil disimpan!", "success");
+        },
+        onError: () => triggerToast("Gagal menyimpan pengaturan misi.", "error"),
+    });
+};
+
+// Mascot Dialogues Form (Random Sentences)
+const showMascotDialogModal = ref(false);
+const mascotDialogTargetTitle = ref('');
+const mascotDialogForm = useForm({
+    item_id: '',
+    item_type: '', // 'material' or 'quiz'
+    custom_dialogues: '',
+});
+
+const openMascotDialogModal = (item) => {
+    mascotDialogForm.item_id = item.id;
+    mascotDialogForm.item_type = item.itemType;
+    mascotDialogForm.custom_dialogues = item.custom_dialogues || '';
+    mascotDialogTargetTitle.value = item.title;
+    showMascotDialogModal.value = true;
+};
+
+const submitMascotDialog = () => {
+    const url = route("admin.modules.missions.custom-dialogues.update", [
+        props.module.id,
+        props.mission.id,
+    ]);
+    mascotDialogForm.post(url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showMascotDialogModal.value = false;
+            triggerToast("Dialog acak maskot berhasil diperbarui!", "success");
+        },
+        onError: () => triggerToast("Gagal memperbarui dialog maskot.", "error"),
+    });
 };
 
 // Import forms (CSV/XLSX)
@@ -505,11 +586,22 @@ const getLayoutTypeLabel = (type) => {
                             </span>
                         </div>
 
-                        <h1
-                            class="text-2xl md:text-3xl font-heading font-bold text-gray-800 mb-2"
-                        >
-                            {{ mission.name }}
-                        </h1>
+                        <div class="flex items-center gap-3 flex-wrap mb-2">
+                            <h1 class="text-2xl md:text-3xl font-heading font-bold text-gray-800">
+                                {{ mission.name }}
+                            </h1>
+                            <button
+                                @click="openEditMissionModal"
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium rounded-xl border-2 border-indigo-200 transition-colors text-sm"
+                            >
+                                <Volume2 class="w-4 h-4 text-indigo-600" />
+                                <span>Voice Over & Pengaturan</span>
+                            </button>
+                        </div>
+                        <div v-if="mission.voiceover_url" class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs border border-emerald-200 mb-2">
+                            <Volume2 class="w-3.5 h-3.5" />
+                            <span>Voice Over Terpasang</span>
+                        </div>
                         <p
                             v-if="mission.description"
                             class="text-sm text-gray-600"
@@ -777,8 +869,17 @@ const getLayoutTypeLabel = (type) => {
                                             </div>
                                         </div>
                                         <div
-                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0 items-center"
                                         >
+                                            <button
+                                                type="button"
+                                                class="w-full sm:w-auto px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 font-bold rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5"
+                                                @click="openMascotDialogModal(item)"
+                                                title="Dialog Maskot"
+                                            >
+                                                <MessageSquare class="w-4 h-4 text-indigo-600" />
+                                                <span>Dialog Maskot</span>
+                                            </button>
                                             <Button
                                                 class="w-full sm:w-auto"
                                                 variant="info"
@@ -942,8 +1043,17 @@ const getLayoutTypeLabel = (type) => {
                                             </div>
                                         </div>
                                         <div
-                                            class="flex flex-col sm:flex-row gap-2 shrink-0"
+                                            class="flex flex-col sm:flex-row gap-2 shrink-0 items-center"
                                         >
+                                            <button
+                                                type="button"
+                                                class="w-full sm:w-auto px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 font-bold rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5"
+                                                @click="openMascotDialogModal(item)"
+                                                title="Dialog Maskot"
+                                            >
+                                                <MessageSquare class="w-4 h-4 text-indigo-600" />
+                                                <span>Dialog Maskot</span>
+                                            </button>
                                             <Button
                                                 class="w-full sm:w-auto"
                                                 variant="info"
@@ -1408,6 +1518,107 @@ const getLayoutTypeLabel = (type) => {
                         @click="submitQuizImport"
                         >Import</Button
                     >
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Edit Mission & Voice Over -->
+        <Modal :show="showEditMissionModal" @close="showEditMissionModal = false">
+            <template #title>
+                <div class="flex items-center gap-2 text-indigo-600">
+                    <Volume2 class="w-5 h-5" />
+                    <span class="font-bold">Pengaturan Misi & Voice Over</span>
+                </div>
+            </template>
+            <div class="space-y-4 py-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Misi</label>
+                    <input
+                        v-model="editMissionForm.name"
+                        type="text"
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Misal: Misi 1"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Urut</label>
+                    <input
+                        v-model="editMissionForm.order_number"
+                        type="number"
+                        min="1"
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                    <label class="block text-sm font-medium text-gray-800 mb-1 flex items-center gap-2">
+                        <Mic class="w-4 h-4 text-indigo-500" />
+                        <span>File Voice Over Narasi (MP3 / WAV / OGG)</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mb-2">Voice Over ini akan diputar otomatis saat siswa memasuki Misi ini.</p>
+
+                    <div v-if="mission.voiceover_url && !editMissionForm.remove_voiceover" class="mb-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <Volume2 class="w-4 h-4 text-indigo-600 shrink-0" />
+                            <audio :src="mission.voiceover_url" controls class="h-8 max-w-xs"></audio>
+                        </div>
+                        <button
+                            type="button"
+                            @click="editMissionForm.remove_voiceover = true"
+                            class="text-xs text-red-600 hover:text-red-700 font-medium shrink-0 flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-red-200"
+                        >
+                            <Trash2 class="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                        </button>
+                    </div>
+
+                    <input
+                        ref="voiceoverFileInput"
+                        type="file"
+                        accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                        @change="handleVoiceoverChange"
+                    />
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button variant="ghost" size="md" @click="showEditMissionModal = false">Batal</Button>
+                    <Button variant="primary" size="md" :disabled="editMissionForm.processing" @click="submitEditMission">Simpan Pengaturan</Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Kalimat Dialog Maskot (Kalimat Random) -->
+        <Modal :show="showMascotDialogModal" @close="showMascotDialogModal = false">
+            <template #title>
+                <div class="flex items-center gap-2 text-indigo-600">
+                    <MessageSquare class="w-5 h-5" />
+                    <span class="font-bold">Dialog Acak Maskot: {{ mascotDialogTargetTitle }}</span>
+                </div>
+            </template>
+            <div class="space-y-4 py-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Kalimat-Kalimat Acak Maskot
+                    </label>
+                    <p class="text-xs text-gray-500 mb-2">
+                        Tulis kalimat dialog yang akan diucapkan maskot secara acak/bergantian saat siswa membuka kuis/materi ini.
+                        <strong>Pisahkan setiap kalimat dengan baris baru (Enter).</strong>
+                    </p>
+                    <textarea
+                        v-model="mascotDialogForm.custom_dialogues"
+                        rows="6"
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                        placeholder="Misal:&#10;Ayo pahami materi ini pelan-pelan ya!&#10;Fokus bacanya ya, kamu pasti bisa!&#10;Jangan terburu-buru menjawabnya!"
+                    ></textarea>
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <Button variant="ghost" size="md" @click="showMascotDialogModal = false">Batal</Button>
+                    <Button variant="primary" size="md" :disabled="mascotDialogForm.processing" @click="submitMascotDialog">Simpan Dialog</Button>
                 </div>
             </template>
         </Modal>
