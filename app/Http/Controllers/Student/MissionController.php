@@ -737,6 +737,24 @@ class MissionController extends Controller
         $userMap     = [];
         $correctMap  = [];
 
+        $quizType = $question->quiz?->type ?? '';
+        $isShortOrReflection = in_array($quizType, ['short_answer', 'reflection']);
+
+        if ($isShortOrReflection) {
+            $responseStr = trim($answer->response ?? '');
+            
+            // Get correct/reference answer from options if any
+            if ($question->options && $question->options->count() > 0) {
+                $correctOpts = $question->options->where('is_correct', true);
+                if ($correctOpts->isEmpty()) {
+                    $correctOpts = $question->options;
+                }
+                $correctText = $correctOpts->pluck('option_text')->implode(', ');
+            }
+            
+            return [true, $responseStr, $correctText, [], []];
+        }
+
         // ── Options-based questions ───────────────────────────────
         if ($question->options && $question->options->count() > 0) {
             $allOptions  = $question->options->keyBy('id');
