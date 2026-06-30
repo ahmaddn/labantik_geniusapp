@@ -1,37 +1,49 @@
-# Catatan Perubahan (Changelog) - Sejak 26 Juni 2026
+# Catatan Perubahan Aplikasi - Labantik Genius
 
-Berikut adalah penjelasan rinci mengenai pembaruan sistem dan antarmuka interaktif pada aplikasi **Labantik Genius - Web Education**:
-
----
-
-### 📅 29 Juni 2026
-#### **1. Progresi Misi, Dialog Maskot, & Voiceover**
-* **Diferensiasi Tampilan Belajar Siswa:** Antarmuka playground siswa saat memuat **Materi** (bertema biru tenang), **Simulasi** (bertema hijau segar), maupun **Kuis** (bertema kuning emas) sekarang telah dipisahkan secara visual lengkap dengan efek partikel latar belakang yang dinamis sesuai tema untuk memberikan pengalaman belajar yang lebih terfokus.
-* **Dialog Maskot Kustom (Random):** Admin/Guru sekarang dapat menginput kalimat kustom berbaris-baris (`custom_dialogues`) untuk masing-masing kuis atau materi. Kalimat ini akan ditampilkan secara bergantian/acak (*random*) pada gelembung ucapan maskot bersama dengan pose maskot yang dinamis.
-* **Panduan Suara (Voiceover Misi):** Siswa dapat memutar rekaman instruksi suara (*voiceover*) pendukung lewat panel kontrol audio (play, pause, volume slider) di area bawah kuis misi.
-* **Sinkronisasi Progres Misi:** Pencatatan otomatis pencapaian dan status progresi belajar siswa langsung di database saat misi diselesaikan.
-* **Penyempurnaan Audio:** Pembersihan alokasi memori pemutar musik/suara saat navigasi untuk menghindari penumpukan suara.
-* **Layout Pretest/Posttest Baru: ** Memperkenalkan pembungkus layout halaman evaluasi yang lebih teratur dan indah.
+Berikut adalah daftar perubahan dan pembaruan sistem pembelajaran interaktif pada aplikasi **Labantik Genius - Web Education** yang ditulis dalam bahasa yang mudah dipahami:
 
 ---
 
-### 📅 28 Juni 2026
-#### **2. Dashboard Hasil Kuis & Efek Animasi Interaktif**
-* **Hasil Kuis Berkelanjutan (Feedback):** Setiap menyelesaikan kuis bentuk apa pun (Pretest, Posttest, Kuis Misi) siswa langsung disuguhi halaman rekapitulasi nilai detail.
-* **Tampilan Lebih Menarik & Tidak Monoton:** Selebrasi kelulusan misi diramaikan dengan semburan konfeti berwarna (*canvas-confetti*) serta antarmuka statistik skor yang atraktif.
-* **Perbaikan Bug:** Memperbaiki pergeseran klik area objek simulasi dan penanganan data misi kosong.
+### 📅 Pembaruan Halaman Belajar, Kalimat Maskot, & Suara Panduan (29 Juni 2026)
+* **Warna Layar Berubah Otomatis (Perubahan Tampilan):**
+  * *Di mana letaknya:* Halaman belajar siswa (Playground).
+  * *Penjelasan:* Layar akan otomatis berubah warna: **Biru** untuk halaman membaca materi, **Hijau** saat membuka simulasi/game interaktif, dan **Kuning** saat mengisi soal kuis. Hal ini membantu siswa fokus pada aktivitasnya.
+* **Kalimat Maskot Bisa Ditulis Sendiri (Bahasa Interaktif):**
+  * *Di mana letaknya:* Menu Kuis/Materi di Dashboard Guru/Admin.
+  * *Penjelasan:* Guru dapat menulis sendiri teks kalimat ucapan maskot (Geni) agar ucapan yang muncul di layar siswa lebih komunikatif, bervariasi, dan bergantian secara acak.
+* **Panduan Suara (Voice Over) di Misi Belajar:**
+  * *Di mana letaknya:* Bagian bawah layar misi belajar siswa (misalnya di Misi 1).
+  * *Penjelasan:* Guru dapat mengunggah rekaman suara arahan. Siswa tinggal klik tombol putar (Play) atau sesuaikan volume untuk mendengarkan penjelasannya.
+* **Penyimpanan Nilai Otomatis:**
+  * *Di mana letaknya:* Sistem database otomatis.
+  * *Penjelasan:* Progres dan nilai misi siswa akan otomatis tersimpan aman di database saat misi selesai dikerjakan. Siswa tidak perlu khawatir nilainya hilang.
 
 ---
 
-### 📅 27 Juni 2026
-#### **3. Impor CSV & Manajemen Kuis Lanjutan**
-* **Kelola Kuis Multi-tipe:** Form edit soal baru untuk pilihan ganda, benar/salah, dan drag-drop.
-* **Impor Materi CSV:** Pengunggahan materi massal via dashboard admin.
-* **Navigasi Kuis Siswa:** Transisi responsif dan penyimpanan sementara pilihan kuis siswa.
+### 📅 Laporan Nilai Akhir & Hiasan Kertas Warna-Warni (28 Juni 2026)
+* **Rincian Hasil Ujian & Kuis (Feedback Kuis):**
+  * *Di mana letaknya:* Layar laporan nilai sesaat setelah kuis/evaluasi selesai dikerjakan.
+  * *Penjelasan:* Menampilkan nilai akhir, jumlah jawaban benar, jumlah jawaban salah, serta keterangannya agar siswa langsung tahu hasilnya secara detail.
+* **Hiasan Kertas Warna-Warni (Selebrasi Konfeti):**
+  * *Di mana letaknya:* Muncul otomatis di layar hasil kelulusan siswa.
+  * *Penjelasan:* Semburan kertas warna-warni (konfeti) yang interaktif akan muncul sebagai hadiah visual saat siswa berhasil lulus agar belajar tidak membosankan.
 
 ---
 
-### 📅 26 Juni 2026
-#### **4. Efek Suara (SFX) & Tarik-Lepas (Drag & Drop)**
-* **Pemicu SFX Interaktif:** Memasang composable `useSfx` untuk memutar audio umpan balik secara instan sewaktu klik tombol atau menjawab soal.
-* **Umpan Balik Kuis Drag & Drop:** Menampilkan indikator kebenaran (badge centang/silang) langsung pada objek yang ditarik secara dinamis untuk memberikan respon cepat.
+### 📅 Memasukkan Materi Massal & Pembuatan Soal Praktis (27 Juni 2026)
+* **Unggah Materi Massal Lewat File Excel (CSV):**
+  * *Di mana letaknya:* Menu Materi pada Dashboard Guru.
+  * *Penjelasan:* Guru tidak perlu mengetik satu-satu materi di aplikasi, melainkan bisa langsung mengunggah file Excel berisi kumpulan materi sekaligus untuk menghemat waktu.
+* **Form Edit Soal Kuis Guru:**
+  * *Di mana letaknya:* Menu Kuis pada Dashboard Guru.
+  * *Penjelasan:* Menyediakan form pengisian soal yang mudah dipahami Guru untuk membuat soal pilihan ganda, benar/salah, maupun soal geser gambar.
+
+---
+
+### 📅 Efek Suara Menarik & Umpan Balik Geser Gambar (26 Juni 2026)
+* **Efek Suara Tombol & Jawaban:**
+  * *Di mana letaknya:* Saat siswa mengeklik tombol atau menjawab pertanyaan.
+  * *Penjelasan:* Menambahkan efek suara menyenangkan agar suasana belajar kuis menjadi seru, interaktif, dan menyenangkan.
+* **Tanda Penilaian Instan di Soal Geser Gambar (Drag & Drop):**
+  * *Di mana letaknya:* Halaman kuis tarik-lepas (mengelompokkan gambar).
+  * *Penjelasan:* Ketika gambar diletakkan di kotak jawaban, otomatis akan muncul tanda centang hijau (benar) atau tanda silang merah (salah) di atas gambar tersebut untuk respon cepat.

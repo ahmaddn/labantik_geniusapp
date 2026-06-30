@@ -397,16 +397,30 @@ onUnmounted(() => {
                                 <h4 class="timeline-title">
                                     <span class="inline-flex items-center gap-2">
                                         <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                                        Progresi Misi, Dialog Maskot, & Voiceover
+                                        Pembaruan Halaman Belajar, Kalimat Maskot, & Suara Panduan
                                     </span>
                                 </h4>
-                                <ul class="timeline-list">
-                                    <li><strong>Diferensiasi Tampilan Belajar Siswa:</strong> Pembagian antarmuka playground siswa saat memuat <strong>Materi</strong> (bertema biru tenang), <strong>Simulasi</strong> (bertema hijau segar), maupun <strong>Kuis</strong> (bertema kuning emas) sekarang telah dipisahkan secara visual lengkap dengan efek partikel latar belakang yang dinamis sesuai tema untuk memberikan pengalaman belajar yang lebih terfokus.</li>
-                                    <li><strong>Dialog Maskot Kustom (Random):</strong> Admin/Guru sekarang dapat menginput kalimat kustom berbaris-baris (`custom_dialogues`) untuk masing-masing kuis atau materi. Kalimat ini akan ditampilkan secara bergantian/acak (*random*) pada gelembung ucapan maskot bersama dengan pose maskot yang dinamis.</li>
-                                    <li><strong>Panduan Suara (Voiceover Misi):</strong> Siswa dapat memutar rekaman instruksi suara (*voiceover*) pendukung lewat panel kontrol audio (play, pause, volume slider) di area bawah kuis misi.</li>
-                                    <li><strong>Sinkronisasi Progres Misi:</strong> Pencatatan otomatis pencapaian dan status progresi belajar siswa langsung di database saat misi diselesaikan.</li>
-                                    <li><strong>Penyempurnaan Audio:</strong> Pembersihan alokasi memori pemutar musik/suara saat navigasi untuk menghindari penumpukan suara.</li>
-                                    <li><strong>Layout Pretest/Posttest Baru:</strong> Memperkenalkan pembungkus layout halaman evaluasi yang lebih teratur dan indah.</li>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Warna Layar Berubah Otomatis (Perubahan Tampilan):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman belajar siswa (Playground).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Layar akan otomatis berubah warna: **Biru** untuk halaman membaca materi, **Hijau** saat membuka simulasi/game interaktif, dan **Kuning** saat mengisi soal kuis.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Kalimat Maskot Bisa Ditulis Sendiri (Bahasa Interaktif):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Menu Kuis/Materi di Dashboard Guru/Admin.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru dapat menulis sendiri teks kalimat ucapan maskot (Geni) agar ucapan yang muncul di layar siswa lebih komunikatif, bervariasi, dan bergantian secara acak.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Panduan Suara (Voice Over) di Misi Belajar:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Bagian bawah layar misi belajar siswa (misalnya di Misi 1).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru dapat mengunggah rekaman suara arahan. Siswa tinggal klik tombol putar (Play) atau sesuaikan volume untuk mendengarkan penjelasannya.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Penyimpanan Nilai Otomatis:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Sistem database otomatis.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Progres dan nilai misi siswa akan otomatis tersimpan aman di database saat misi selesai dikerjakan.</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -419,13 +433,20 @@ onUnmounted(() => {
                                 <h4 class="timeline-title">
                                     <span class="inline-flex items-center gap-2">
                                         <svg class="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886L4.2 10.8l5.888 1.912L12 18.6l1.912-5.888L19.8 10.8l-5.888-1.912zm0 0L12 3zm-7 14 1.5-1.5M17 17l1.5 1.5M5 7l1.5 1.5M17 7l1.5-1.5"/></svg>
-                                        Dashboard Hasil Kuis & Efek Animasi Interaktif
+                                        Laporan Nilai Akhir & Hiasan Kertas Warna-Warni
                                     </span>
                                 </h4>
-                                <ul class="timeline-list">
-                                    <li><strong>Hasil Kuis Berkelanjutan (Feedback):</strong> Setiap menyelesaikan kuis bentuk apa pun (Pretest, Posttest, Kuis Misi) siswa langsung disuguhi halaman rekapitulasi nilai detail.</li>
-                                    <li><strong>Tampilan Lebih Menarik & Tidak Monoton:</strong> Selebrasi kelulusan misi diramaikan dengan semburan konfeti berwarna (*canvas-confetti*) serta antarmuka statistik skor yang atraktif.</li>
-                                    <li><strong>Perbaikan Bug:</strong> Memperbaiki pergeseran klik area objek simulasi dan penanganan data misi kosong.</li>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Rincian Hasil Ujian & Kuis (Feedback Kuis):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Layar laporan nilai sesaat setelah kuis/evaluasi selesai dikerjakan.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menampilkan nilai akhir, jumlah jawaban benar, jumlah jawaban salah, serta keterangannya agar siswa langsung tahu hasilnya.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Hiasan Kertas Warna-Warni (Selebrasi Konfeti):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Muncul otomatis di layar hasil kelulusan siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Semburan kertas warna-warni (konfeti) yang interaktif akan muncul sebagai hadiah visual saat siswa berhasil lulus agar belajar tidak membosankan.</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -438,13 +459,20 @@ onUnmounted(() => {
                                 <h4 class="timeline-title">
                                     <span class="inline-flex items-center gap-2">
                                         <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                        Impor CSV & Manajemen Kuis Lanjutan
+                                        Memasukkan Materi Massal & Pembuatan Soal Praktis
                                     </span>
                                 </h4>
-                                <ul class="timeline-list">
-                                    <li><strong>Kelola Kuis Multi-tipe:</strong> Form edit soal baru untuk pilihan ganda, benar/salah, dan drag-drop.</li>
-                                    <li><strong>Impor Materi CSV:</strong> Pengunggahan materi massal via dashboard admin.</li>
-                                    <li><strong>Navigasi Kuis Siswa:</strong> Transisi responsif dan penyimpanan sementara pilihan kuis siswa.</li>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Unggah Materi Massal Lewat File Excel:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Menu Materi pada Dashboard Guru.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru tidak perlu mengetik satu-satu materi di aplikasi, melainkan bisa langsung mengunggah file Excel berisi kumpulan materi sekaligus.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Form Edit Soal Kuis Guru:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Menu Kuis pada Dashboard Guru.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menyediakan form pengisian soal yang mudah dipahami Guru untuk membuat soal pilihan ganda, benar/salah, maupun soal geser gambar.</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -457,12 +485,20 @@ onUnmounted(() => {
                                 <h4 class="timeline-title">
                                     <span class="inline-flex items-center gap-2">
                                         <svg class="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                                        Efek Suara (SFX) & Tarik-Lepas (Drag & Drop)
+                                        Efek Suara Menarik & Umpan Balik Geser Gambar
                                     </span>
                                 </h4>
-                                <ul class="timeline-list">
-                                    <li><strong>Pemicu SFX Interaktif:</strong> Memasang composable <code>useSfx</code> untuk memutar audio umpan balik secara instan sewaktu klik tombol atau menjawab soal.</li>
-                                    <li><strong>Umpan Balik Kuis Drag & Drop:</strong> Menampilkan indikator kebenaran (badge centang/silang) langsung pada objek yang ditarik secara dinamis untuk memberikan respon cepat.</li>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Efek Suara Tombol & Jawaban:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Saat siswa mengeklik tombol atau menjawab pertanyaan.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menambahkan efek suara menyenangkan agar suasana belajar kuis menjadi seru dan interaktif.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Tanda Penilaian Instan di Soal Geser Gambar (Drag & Drop):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis tarik-lepas (mengelompokkan gambar).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Ketika gambar diletakkan di kotak jawaban, otomatis akan muncul tanda centang hijau (benar) atau tanda silang merah (salah) di atas gambar tersebut untuk respon cepat.</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
