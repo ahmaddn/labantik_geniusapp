@@ -2,6 +2,9 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 import { useMusic } from "@/Composable/useMusic";
+import Modal from "@/Components/UI/Modal.vue";
+
+const showChangelog = ref(false);
 
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio } =
     useMusic();
@@ -154,53 +157,77 @@ onUnmounted(() => {
                 }}</span>
             </button>
 
-            <button
-                class="music-btn"
-                :class="{ 'music-btn--on': musicOn }"
-                @click="toggleMusic(null)"
-                :aria-label="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
-            >
-                <svg
-                    v-if="musicOn"
-                    class="music-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <!-- Tombol Update -->
+                <button
+                    class="btn-update-nav"
+                    @click.prevent="showChangelog = true"
+                    aria-label="Lihat Fitur Utama"
                 >
-                    <path d="M9 18V5l12-2v13" />
-                    <circle cx="6" cy="18" r="3" />
-                    <circle cx="18" cy="16" r="3" />
-                </svg>
-                <svg
-                    v-else
-                    class="music-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
+                    <svg
+                        class="update-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="width: 15px; height: 15px;"
+                    >
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                    </svg>
+                    <span class="update-label">Update</span>
+                </button>
+
+                <!-- Tombol Musik -->
+                <button
+                    class="music-btn"
+                    :class="{ 'music-btn--on': musicOn }"
+                    @click="toggleMusic(null)"
+                    :aria-label="musicOn ? 'Matikan musik' : 'Nyalakan musik'"
                 >
-                    <line x1="2" y1="2" x2="22" y2="22" />
-                    <path d="M9 9v9" />
-                    <circle cx="6" cy="18" r="3" />
-                    <path d="M21 15.34V5L13 6.5" />
-                </svg>
-                <span class="music-label">{{
-                    musicOn ? "Musik" : "Musik"
-                }}</span>
-                <svg
-                    class="chevron-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.8"
-                    stroke-linecap="round"
-                >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
-            </button>
+                    <svg
+                        v-if="musicOn"
+                        class="music-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                    >
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                    </svg>
+                    <svg
+                        v-else
+                        class="music-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                    >
+                        <line x1="2" y1="2" x2="22" y2="22" />
+                        <path d="M9 9v9" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                    </svg>
+                    <span class="music-label">{{
+                        musicOn ? "Musik" : "Musik"
+                    }}</span>
+                    <svg
+                        class="chevron-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.8"
+                        stroke-linecap="round"
+                    >
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </button>
+            </div>
         </nav>
 
         <main class="main">
@@ -342,6 +369,118 @@ onUnmounted(() => {
                 </div>
             </div>
         </main>
+
+        <!-- Modal Catatan Update -->
+        <Modal
+            :show="showChangelog"
+            @close="showChangelog = false"
+            title="Catatan Perubahan Aplikasi"
+            maxWidth="2xl"
+            borderColor="yellow"
+        >
+            <div class="changelog-container">
+                <div class="changelog-card">
+                    <div class="changelog-header-badge">
+                        <span class="inline-flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Catatan Pembaruan (Sejak 26 Juni 2026)
+                        </span>
+                    </div>
+                    <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
+                    
+                    <div class="changelog-timeline">
+                        <!-- Update Item 1 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-blue-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">29 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                        Progresi Misi, Dialog Maskot, & Voiceover
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list">
+                                    <li><strong>Diferensiasi Tampilan Belajar Siswa:</strong> Pembagian antarmuka playground siswa saat memuat <strong>Materi</strong> (bertema biru tenang), <strong>Simulasi</strong> (bertema hijau segar), maupun <strong>Kuis</strong> (bertema kuning emas) sekarang telah dipisahkan secara visual lengkap dengan efek partikel latar belakang yang dinamis sesuai tema untuk memberikan pengalaman belajar yang lebih terfokus.</li>
+                                    <li><strong>Dialog Maskot Kustom (Random):</strong> Admin/Guru sekarang dapat menginput kalimat kustom berbaris-baris (`custom_dialogues`) untuk masing-masing kuis atau materi. Kalimat ini akan ditampilkan secara bergantian/acak (*random*) pada gelembung ucapan maskot bersama dengan pose maskot yang dinamis.</li>
+                                    <li><strong>Panduan Suara (Voiceover Misi):</strong> Siswa dapat memutar rekaman instruksi suara (*voiceover*) pendukung lewat panel kontrol audio (play, pause, volume slider) di area bawah kuis misi.</li>
+                                    <li><strong>Sinkronisasi Progres Misi:</strong> Pencatatan otomatis pencapaian dan status progresi belajar siswa langsung di database saat misi diselesaikan.</li>
+                                    <li><strong>Penyempurnaan Audio:</strong> Pembersihan alokasi memori pemutar musik/suara saat navigasi untuk menghindari penumpukan suara.</li>
+                                    <li><strong>Layout Pretest/Posttest Baru:</strong> Memperkenalkan pembungkus layout halaman evaluasi yang lebih teratur dan indah.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 2 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-green-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">28 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886L4.2 10.8l5.888 1.912L12 18.6l1.912-5.888L19.8 10.8l-5.888-1.912zm0 0L12 3zm-7 14 1.5-1.5M17 17l1.5 1.5M5 7l1.5 1.5M17 7l1.5-1.5"/></svg>
+                                        Dashboard Hasil Kuis & Efek Animasi Interaktif
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list">
+                                    <li><strong>Hasil Kuis Berkelanjutan (Feedback):</strong> Setiap menyelesaikan kuis bentuk apa pun (Pretest, Posttest, Kuis Misi) siswa langsung disuguhi halaman rekapitulasi nilai detail.</li>
+                                    <li><strong>Tampilan Lebih Menarik & Tidak Monoton:</strong> Selebrasi kelulusan misi diramaikan dengan semburan konfeti berwarna (*canvas-confetti*) serta antarmuka statistik skor yang atraktif.</li>
+                                    <li><strong>Perbaikan Bug:</strong> Memperbaiki pergeseran klik area objek simulasi dan penanganan data misi kosong.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 3 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-amber-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">27 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                        Impor CSV & Manajemen Kuis Lanjutan
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list">
+                                    <li><strong>Kelola Kuis Multi-tipe:</strong> Form edit soal baru untuk pilihan ganda, benar/salah, dan drag-drop.</li>
+                                    <li><strong>Impor Materi CSV:</strong> Pengunggahan materi massal via dashboard admin.</li>
+                                    <li><strong>Navigasi Kuis Siswa:</strong> Transisi responsif dan penyimpanan sementara pilihan kuis siswa.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 4 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-purple-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">26 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                                        Efek Suara (SFX) & Tarik-Lepas (Drag & Drop)
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list">
+                                    <li><strong>Pemicu SFX Interaktif:</strong> Memasang composable <code>useSfx</code> untuk memutar audio umpan balik secara instan sewaktu klik tombol atau menjawab soal.</li>
+                                    <li><strong>Umpan Balik Kuis Drag & Drop:</strong> Menampilkan indikator kebenaran (badge centang/silang) langsung pada objek yang ditarik secara dinamis untuk memberikan respon cepat.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end">
+                    <button
+                        @click="showChangelog = false"
+                        class="btn-close-modal"
+                    >
+                        TUTUP
+                    </button>
+                </div>
+            </template>
+        </Modal>
     </div>
 </template>
 
@@ -883,10 +1022,12 @@ onUnmounted(() => {
     .logo-name {
         font-size: 18px;
     }
-    .music-label {
-        display: none; /* Sembunyikan teks musik di layar sangat kecil agar fit */
+    .music-label,
+    .update-label {
+        display: none; /* Sembunyikan teks label di layar sangat kecil agar fit */
     }
-    .music-btn {
+    .music-btn,
+    .btn-update-nav {
         padding: 8px 12px;
         gap: 5px;
         border-radius: 12px;
@@ -901,5 +1042,167 @@ onUnmounted(() => {
     .card-title {
         font-size: 21px;
     }
+}
+
+/* Tombol Update di Navigasi */
+.btn-update-nav {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    background: #fff;
+    border: 2.5px solid #fcd34d;
+    border-radius: 14px;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #d97706;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 0 0 #fef3c7;
+    transition: all 0.1s ease;
+    outline: none;
+    flex-shrink: 0;
+}
+.btn-update-nav:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 0 #fef3c7;
+}
+.btn-update-nav:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 0 #fef3c7;
+}
+.update-label {
+    white-space: nowrap;
+}
+
+/* Styling Changelog di dalam Modal */
+.changelog-container {
+    padding: 8px 4px;
+    font-family: "Nunito", sans-serif;
+}
+.changelog-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.changelog-header-badge {
+    align-self: flex-start;
+    background: #fef3c7;
+    color: #d97706;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 13px;
+    border: 2px solid #fcd34d;
+}
+.changelog-subtitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #4b5563;
+    line-height: 1.5;
+}
+.changelog-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: relative;
+    padding-left: 20px;
+    border-left: 3px dashed #e5e7eb;
+    margin-left: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.timeline-item {
+    position: relative;
+}
+.timeline-dot {
+    position: absolute;
+    left: -27px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+}
+.timeline-dot.bg-blue-500 {
+    background-color: #3b82f6;
+    box-shadow: 0 0 0 2px #dbeafe;
+}
+.timeline-dot.bg-green-500 {
+    background-color: #22c55e;
+    box-shadow: 0 0 0 2px #dcfce7;
+}
+.timeline-dot.bg-amber-500 {
+    background-color: #f59e0b;
+    box-shadow: 0 0 0 2px #fef3c7;
+}
+.timeline-dot.bg-purple-500 {
+    background-color: #a855f7;
+    box-shadow: 0 0 0 2px #f3e8ff;
+}
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.timeline-date {
+    font-size: 12px;
+    font-weight: 800;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+}
+.timeline-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1f2937;
+    text-align: left;
+}
+.timeline-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    list-style-type: disc;
+    text-align: left;
+}
+.timeline-list li {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+    line-height: 1.5;
+    text-align: left;
+}
+.timeline-list li strong {
+    color: #1f2937;
+    font-weight: 700;
+}
+.btn-close-modal {
+    padding: 10px 24px;
+    background: #f3f4f6;
+    border: 2.5px solid #e5e7eb;
+    border-radius: 14px;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #4b5563;
+    cursor: pointer;
+    box-shadow: 0 4px 0 0 #e5e7eb;
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+}
+.btn-close-modal:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    box-shadow: 0 4px 0 0 #d1d5db;
+}
+.btn-close-modal:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 0 #d1d5db;
 }
 </style>

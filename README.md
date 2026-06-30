@@ -8,6 +8,7 @@ Labantik Genius is an interactive and gamified educational web application desig
 - **Structured Learning**: Curriculum is organized into dynamic modules and progressive missions.
 - **Mission Checkpoints**: Students navigate through specific tasks and objectives within each module to unlock the next level.
 - **Multimedia Integration**: Supports YouTube links, custom images, and rich-text explanations to deliver interactive materials.
+- **Voiceover Integration**: Supports custom voiceover tracks (e.g., in Mission 1) to provide audio-based guidance to students.
 
 ### 2. Gamified Simulations
 The platform provides a highly interactive "Playground" with four unique simulation modes:
@@ -17,22 +18,28 @@ The platform provides a highly interactive "Playground" with four unique simulat
 - **Case Studies (Scenarios)**: Real-world problems where students must choose the correct solution from multiple options and receive immediate, context-aware feedback.
 
 ### 3. Drag & Drop Interactions
-- Engaging hands-on interactions where students categorize, organize, or sort elements properly to test their understanding dynamically.
+- **Hands-on Categorization**: Engaging interactions where students categorize, organize, or sort elements properly to test their understanding dynamically.
+- **Immediate Status & SFX Feedback**: Displays instant visual indicators (correct/wrong badges, ripple effects) and plays satisfying pop/feedback sound effects upon dropping items.
 
 ### 4. Assessments & Quizzes
 - **Pretest & Posttest System**: Dedicated tests before and after modules to measure knowledge growth and learning effectiveness.
 - **Mission-level Quizzes**: Mini-assessments tied to specific missions to validate a student's grasp of the current topic.
-- **Detailed Feedback**: Students receive immediate guidance and scoring based on their answers.
+- **Detailed Result Dashboard**: Displays comprehensive assessment results (scores of pretest, posttest, and missions) with celebratory canvas-confetti animations and interactive mascot dialogues explaining answers.
 
 ### 5. Custom Module Design & Templates
 - Administrators can customize the visual theme of the modules (mascots, backgrounds, color schemes) using built-in design templates to keep the learning environment fresh and attractive.
 
-### 6. Admin & Teacher Dashboard (GeniAdmin)
+### 6. Interactive Copy & Audio Systems
+- **Mascot Speech Bubbles**: The learning mascot speaks to the user using friendly, interactive dialog and shifts poses dynamically (jempol, keren, pikir, nunjuk).
+- **Custom Dialogues**: Admin can set custom dialog scripts for each material/quiz to guide the student conversationally.
+- **Sound System (useSfx & useMusic)**: A managed audio engine handles playbacks of background soundtracks and click/feedback SFX cleanly across Vue pages.
+
+### 7. Admin & Teacher Dashboard (GeniAdmin)
 - **Class & Student Management**: Import users via Excel (CSV) or add them manually. Group students into designated classes.
 - **Content Management**: Create, edit, and organize all modules, missions, simulation configurations, and study materials easily via a user-friendly CMS interface.
 - **Feature Toggles**: Easily activate or deactivate certain modules depending on the curriculum schedule.
 
-### 7. Progress Tracking & Reporting
+### 8. Progress Tracking & Reporting
 - **Student History**: Track exact login times, completion status of missions, and individual quiz scores.
 - **Exportable Reports**: Generate and export detailed reports in Excel (XLSX) format for easy grading and administrative review.
 
