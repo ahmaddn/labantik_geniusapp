@@ -510,8 +510,8 @@ onUnmounted(() => {
                                 :key="index"
                                 class="detail-card"
                                 :class="{
-                                    'card-correct': detail.is_correct,
-                                    'card-wrong': !detail.is_correct,
+                                    'card-correct': detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection',
+                                    'card-wrong': !detail.is_correct && detail.question.type !== 'short_answer' && detail.question.type !== 'reflection',
                                 }"
                             >
                                 <div class="dc-header">
@@ -535,13 +535,13 @@ onUnmounted(() => {
                                     <div
                                         class="dc-status"
                                         :class="
-                                            detail.is_correct
+                                            (detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection')
                                                 ? 'text-green'
                                                 : 'text-red'
                                         "
                                     >
                                         <CheckCircle2
-                                            v-if="detail.is_correct"
+                                            v-if="detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection'"
                                             :size="20"
                                         />
                                         <XCircle v-else :size="20" />
@@ -585,10 +585,10 @@ onUnmounted(() => {
                                      <template v-else>
                                          <div
                                              class="answer-item"
-                                             :class="detail.is_correct ? 'ans-correct' : 'ans-wrong'"
+                                             :class="(detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection') ? 'ans-correct' : 'ans-wrong'"
                                          >
                                              <div class="ans-icon">
-                                                 <Check v-if="detail.is_correct" :size="16" />
+                                                 <Check v-if="detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection'" :size="16" />
                                                  <X v-else :size="16" />
                                              </div>
                                              <div class="ans-text">
@@ -596,7 +596,11 @@ onUnmounted(() => {
                                                      <span class="font-bold">Jawaban Kamu:</span>
                                                      <span> {{ detail.user_answer || '(tidak dijawab)' }}</span>
                                                  </div>
-                                                 <div v-if="!detail.is_correct" class="mt-1">
+                                                 <div v-if="(detail.question.type === 'short_answer' || detail.question.type === 'reflection') && detail.correct_answer && detail.correct_answer !== '-'" class="mt-1">
+                                                     <span class="font-bold" style="color: #0ea5e9">Referensi Jawaban:</span>
+                                                     <span style="color: #0ea5e9"> {{ detail.correct_answer }}</span>
+                                                 </div>
+                                                 <div v-else-if="!detail.is_correct && detail.question.type !== 'short_answer' && detail.question.type !== 'reflection'" class="mt-1">
                                                      <span class="font-bold" style="color: #58cc02">Jawaban Benar:</span>
                                                      <span style="color: #58cc02"> {{ detail.correct_answer || '-' }}</span>
                                                  </div>
