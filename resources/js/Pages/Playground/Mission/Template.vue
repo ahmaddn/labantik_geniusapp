@@ -74,7 +74,7 @@ const COMPONENT_MAP = {
 
 const { musicOn, handleVisibility, initAutoMusic, toggleMusic, destroyAudio, setBgmVolume, restoreBgmVolume } =
     useMusic();
-const { playPop, playSuccess, playFail, playRetry } = useSfx();
+const { playPop, playSuccess, playFail, playRetry, playClick } = useSfx();
 const confettiCanvas = ref(null);
 const mascotClicked = ref(false);
 
@@ -629,11 +629,7 @@ function checkAnswerLocal() {
     }
 
     if (s.quiz?.type === "short_answer") {
-        const userText = String(ans).trim().toLowerCase();
-        if (q.options && q.options.length > 0) {
-            return q.options.some(opt => opt.is_correct && String(opt.option_text).trim().toLowerCase() === userText);
-        }
-        return false;
+        return true; // Essay/short_answer always accepted and treated as correct/complete
     }
 
     if (q.options && q.options.length > 0) {
@@ -855,10 +851,19 @@ const stopVoiceover = () => {
     }
 };
 
+const handleGlobalClick = (e) => {
+    const target = e.target;
+    const button = target.closest("button, .btn, .btn-duo, [role='button'], .clickable-opt, .option-btn, .draggable-item, .nav-left, .music-fab");
+    if (button) {
+        playClick();
+    }
+};
+
 onMounted(() => {
     setTimeout(() => (ready.value = true), 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("click", handleGlobalClick);
     setTimeout(() => initAutoMusic(props.backsound), 100);
     if (step.value?.quiz) startQuizTimer(step.value.quiz);
     initVoiceover();
@@ -867,6 +872,7 @@ onUnmounted(() => {
     clearInterval(bubbleTimer);
     clearInterval(timerInt);
     document.removeEventListener("visibilitychange", handleVisibility);
+    window.removeEventListener("click", handleGlobalClick);
     destroyAudio();
     stopVoiceover();
 });
@@ -1246,10 +1252,13 @@ onUnmounted(() => {
                         </div>
                         <div class="feedback-texts">
                             <h4 class="feedback-title">
-                                {{ isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!' }}
+                                {{ step?.quiz?.type === 'short_answer' ? 'Jawabanmu Berhasil Dikirim!' : (isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!') }}
                             </h4>
-                            <div v-if="!isCurrentCorrect" class="feedback-correct-answer">
+                            <div v-if="!isCurrentCorrect && step?.quiz?.type !== 'short_answer'" class="feedback-correct-answer">
                                 <span class="font-bold">Jawaban Benar:</span> {{ correctText }}
+                            </div>
+                            <div v-if="step?.quiz?.type === 'short_answer' && correctText" class="feedback-correct-answer">
+                                <span class="font-bold">Referensi Jawaban:</span> {{ correctText }}
                             </div>
                             <div v-if="step?.question?.explanation" class="feedback-explanation">
                                 <div class="explanation-title">Pembahasan:</div>
@@ -1343,7 +1352,7 @@ onUnmounted(() => {
     width: 100vw;
     min-height: 100vh;
     font-family: "Nunito", "Baloo 2", sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
 
     /* Theme Variables - Default Blue-ish (Pretest/Posttest/Fallback) */
     --theme-color-primary: #1cb0f6;
@@ -1651,7 +1660,7 @@ onUnmounted(() => {
     padding: 16px 20px 100px;
     opacity: 0;
     transition: opacity 0.45s;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 .main--on { opacity: 1; }
 

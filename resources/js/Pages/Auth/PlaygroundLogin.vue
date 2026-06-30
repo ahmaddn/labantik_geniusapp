@@ -389,6 +389,37 @@ onUnmounted(() => {
                     <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
                     
                     <div class="changelog-timeline">
+                        <!-- Update Item 0 (Today) -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-amber-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">30 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        Umpan Balik Esai, Maskot Melayang (Sticky), & Suara Klik Baru
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Penilaian Uji Pemahaman Singkat (Bukan Benar/Salah):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis isian/esai singkat siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Jawaban esai siswa tidak lagi dinilai sebagai "Benar" atau "Kurang Tepat/Salah". Sistem akan selalu menerima masukan jawaban dengan pesan *"Jawabanmu Berhasil Dikirim!"* dan menyandingkannya dengan *"Referensi Jawaban"* pembanding.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Maskot Geni Mengikuti Layar (Sticky):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman belajar siswa (Playground).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Maskot burung biru Geni kini akan tetap berada di layar (ikut turun) saat siswa menggeser layar ke bawah, agar selalu menemani proses belajar.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Suara Klik Tombol Baru (Lebih Bervariasi):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Seluruh tombol di halaman belajar siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menambahkan efek suara klik ganda gelembung air (*double-bubble chirp*) yang khas dan berbeda setiap kali tombol ditekan agar pengerjaan kuis semakin interaktif.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!-- Update Item 1 -->
                         <div class="timeline-item">
                             <div class="timeline-dot bg-blue-500"></div>

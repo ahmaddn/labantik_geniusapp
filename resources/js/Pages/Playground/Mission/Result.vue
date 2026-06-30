@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import {
     CheckCircle2,
@@ -43,7 +43,7 @@ const props = defineProps({
     is_posttest: { type: Boolean, default: false },
 });
 
-const { playPop, playSuccess } = useSfx();
+const { playPop, playSuccess, playClick } = useSfx();
 
 const TYPE_META = {
     multiple_choices: {
@@ -316,6 +316,20 @@ onMounted(() => {
         }
     }
     requestAnimationFrame(animateCount);
+
+    window.addEventListener("click", handleGlobalClick);
+});
+
+const handleGlobalClick = (e) => {
+    const target = e.target;
+    const button = target.closest("button, .btn, .btn-duo, [role='button'], .clickable-opt, .option-btn, .draggable-item, .nav-left, .music-fab");
+    if (button) {
+        playClick();
+    }
+};
+
+onUnmounted(() => {
+    window.removeEventListener("click", handleGlobalClick);
 });
 </script>
 

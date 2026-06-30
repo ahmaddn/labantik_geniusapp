@@ -4,6 +4,19 @@ Berikut adalah daftar perubahan dan pembaruan sistem pembelajaran interaktif pad
 
 ---
 
+### 📅 Umpan Balik Esai, Maskot Melayang (Sticky), & Suara Klik Baru (30 Juni 2026)
+* **Penilaian Uji Pemahaman Singkat (Bukan Benar/Salah):**
+  * *Di mana letaknya:* Halaman kuis isian/esai singkat siswa.
+  * *Penjelasan:* Jawaban esai siswa tidak lagi dinilai secara kaku sebagai "Benar" atau "Kurang Tepat/Salah". Sistem akan selalu menyimpan jawaban siswa dengan pesan ramah *"Jawabanmu Berhasil Dikirim!"* dan menampilkan *"Referensi Jawaban"* sebagai pembanding mandiri.
+* **Maskot Geni Mengikuti Layar (Sticky):**
+  * *Di mana letaknya:* Halaman belajar siswa (Playground).
+  * *Penjelasan:* Maskot burung biru Geni kini akan tetap berada di layar (ikut turun) saat siswa menggeser layar ke bawah, agar tidak terpotong atau menghilang dari pandangan siswa.
+* **Suara Klik Tombol Baru (Lebih Bervariasi):**
+  * *Di mana letaknya:* Seluruh tombol di halaman belajar siswa.
+  * *Penjelasan:* Mengeklik tombol apa saja di halaman belajar kini mengeluarkan suara klik ganda gelembung air (*double-bubble chirp*) yang khas dan baru untuk memberikan respon yang menyenangkan dan berbeda dari suara bawaan kuis.
+
+---
+
 ### 📅 Pembaruan Halaman Belajar, Kalimat Maskot, & Suara Panduan (29 Juni 2026)
 * **Warna Layar Berubah Otomatis (Perubahan Tampilan):**
   * *Di mana letaknya:* Halaman belajar siswa (Playground).

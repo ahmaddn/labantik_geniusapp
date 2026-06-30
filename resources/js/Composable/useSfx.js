@@ -111,6 +111,31 @@ export function useSfx() {
         osc.start();
         osc.stop(now + 0.22);
     };
+    const playClick = () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
 
-    return { playPop, playSuccess, playFail, playRetry };
+        const now = ctx.currentTime;
+        // Double bubble chirp sound
+        [0, 0.02].forEach((delay) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500 + delay * 1000, now + delay);
+            osc.frequency.exponentialRampToValueAtTime(800 + delay * 500, now + delay + 0.035);
+
+            gain.gain.setValueAtTime(0, now + delay);
+            gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.005);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.035);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.035);
+        });
+    };
+
+    return { playPop, playSuccess, playFail, playRetry, playClick };
 }

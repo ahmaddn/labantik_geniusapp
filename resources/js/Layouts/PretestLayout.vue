@@ -272,7 +272,7 @@ defineExpose({ musicOn, toggleMusic });
     width: 100vw;
     min-height: 100vh;
     font-family: "Nunito", "Baloo 2", sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip;
 
     /* Theme Variables - Royal Blue (Pretest) */
     --theme-color-primary: #0ea5e9;

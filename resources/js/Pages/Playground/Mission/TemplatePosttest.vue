@@ -35,7 +35,7 @@ import Short_answer from "@/Components/Quiz/Short_answer.vue";
 import Materials from "@/Components/Quiz/Materials.vue";
 import PretestLayout from "@/Layouts/PosttestLayout.vue";
 
-const { playPop, playSuccess, playFail } = useSfx();
+const { playPop, playSuccess, playFail, playClick } = useSfx();
 const layoutRef = ref(null);
 const confettiCanvas = ref(null);
 
@@ -165,11 +165,7 @@ function checkAnswerLocal() {
     }
 
     if (quizType.value === "short_answer") {
-        const userText = String(ans).trim().toLowerCase();
-        if (q.options && q.options.length > 0) {
-            return q.options.some(opt => opt.is_correct && String(opt.option_text).trim().toLowerCase() === userText);
-        }
-        return false;
+        return true; // Essay/short_answer always accepted and treated as correct/complete
     }
 
     if (q.options && q.options.length > 0) {
@@ -536,15 +532,25 @@ watch(phase, (newPhase) => {
     }
 });
 
+const handleGlobalClick = (e) => {
+    const target = e.target;
+    const button = target.closest("button, .btn, .btn-duo, [role='button'], .clickable-opt, .option-btn, .draggable-item, .nav-left, .music-fab");
+    if (button) {
+        playClick();
+    }
+};
+
 onMounted(() => {
     setTimeout(() => {
         ready.value = true;
     }, 80);
     bubbleTimer = setInterval(rotateBubble, 3500);
+    window.addEventListener("click", handleGlobalClick);
 });
 onUnmounted(() => {
     clearInterval(timerInt);
     clearInterval(bubbleTimer);
+    window.removeEventListener("click", handleGlobalClick);
 });
 </script>
 
@@ -869,10 +875,13 @@ onUnmounted(() => {
                         </div>
                         <div class="feedback-texts">
                             <h4 class="feedback-title">
-                                {{ isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!' }}
+                                {{ quizType === 'short_answer' ? 'Jawabanmu Berhasil Dikirim!' : (isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!') }}
                             </h4>
-                            <div v-if="!isCurrentCorrect" class="feedback-correct-answer">
+                            <div v-if="!isCurrentCorrect && quizType !== 'short_answer'" class="feedback-correct-answer">
                                 <span class="font-bold">Jawaban Benar:</span> {{ correctText }}
+                            </div>
+                            <div v-if="quizType === 'short_answer' && correctText" class="feedback-correct-answer">
+                                <span class="font-bold">Referensi Jawaban:</span> {{ correctText }}
                             </div>
                             <div v-if="currentQ?.explanation" class="feedback-explanation">
                                 <div class="explanation-title">Pembahasan:</div>
@@ -916,7 +925,7 @@ onUnmounted(() => {
     padding: 20px 24px 130px;
     opacity: 0;
     transition: opacity 0.45s;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 .main--on {
     opacity: 1;
