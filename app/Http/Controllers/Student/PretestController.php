@@ -370,21 +370,31 @@ class PretestController extends Controller
         $correctMap  = [];
 
         $quizType = $question->quiz?->type ?? '';
-        $isShortOrReflection = in_array($quizType, ['short_answer', 'reflection']);
 
-        if ($isShortOrReflection) {
+        if ($quizType === 'reflection') {
             $responseStr = trim($answer->response ?? '');
+            return [true, $responseStr, '', [], []];
+        }
+
+        if ($quizType === 'short_answer') {
+            $responseStr = trim($answer->response ?? '');
+            $correctText = $question->expected_keywords ?? '';
             
-            // Get correct/reference answer from options if any
-            if ($question->options && $question->options->count() > 0) {
-                $correctOpts = $question->options->where('is_correct', true);
-                if ($correctOpts->isEmpty()) {
-                    $correctOpts = $question->options;
+            $isCorrect = false;
+            if (!empty($correctText)) {
+                $keywords = array_map('trim', explode(',', strtolower($correctText)));
+                $userAnsLower = strtolower($responseStr);
+                foreach ($keywords as $kw) {
+                    if ($kw !== '' && str_contains($userAnsLower, $kw)) {
+                        $isCorrect = true;
+                        break;
+                    }
                 }
-                $correctText = $correctOpts->pluck('option_text')->implode(', ');
+            } else {
+                $isCorrect = true;
             }
             
-            return [true, $responseStr, $correctText, [], []];
+            return [$isCorrect, $responseStr, $correctText, [], []];
         }
 
         // Options-based (multiple_choices, true_false, case_study)

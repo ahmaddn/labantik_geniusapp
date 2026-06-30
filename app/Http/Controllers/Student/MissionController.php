@@ -684,6 +684,7 @@ class MissionController extends Controller
             'true_false'       => ['correct' => 0, 'total' => 0],
             'case_study'       => ['correct' => 0, 'total' => 0],
             'drag_drop'        => ['correct' => 0, 'total' => 0],
+            'short_answer'     => ['correct' => 0, 'total' => 0],
         ];
 
         $totalCorrect   = 0;
@@ -738,21 +739,31 @@ class MissionController extends Controller
         $correctMap  = [];
 
         $quizType = $question->quiz?->type ?? '';
-        $isShortOrReflection = in_array($quizType, ['short_answer', 'reflection']);
 
-        if ($isShortOrReflection) {
+        if ($quizType === 'reflection') {
             $responseStr = trim($answer->response ?? '');
+            return [true, $responseStr, '', [], []];
+        }
+
+        if ($quizType === 'short_answer') {
+            $responseStr = trim($answer->response ?? '');
+            $correctText = $question->expected_keywords ?? '';
             
-            // Get correct/reference answer from options if any
-            if ($question->options && $question->options->count() > 0) {
-                $correctOpts = $question->options->where('is_correct', true);
-                if ($correctOpts->isEmpty()) {
-                    $correctOpts = $question->options;
+            $isCorrect = false;
+            if (!empty($correctText)) {
+                $keywords = array_map('trim', explode(',', strtolower($correctText)));
+                $userAnsLower = strtolower($responseStr);
+                foreach ($keywords as $kw) {
+                    if ($kw !== '' && str_contains($userAnsLower, $kw)) {
+                        $isCorrect = true;
+                        break;
+                    }
                 }
-                $correctText = $correctOpts->pluck('option_text')->implode(', ');
+            } else {
+                $isCorrect = true;
             }
             
-            return [true, $responseStr, $correctText, [], []];
+            return [$isCorrect, $responseStr, $correctText, [], []];
         }
 
         // ── Options-based questions ───────────────────────────────
