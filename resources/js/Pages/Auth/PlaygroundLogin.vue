@@ -403,8 +403,8 @@ onUnmounted(() => {
                                 <ul class="timeline-list font-medium">
                                     <li>
                                         <strong>Penilaian Uji Pemahaman Singkat (Bukan Benar/Salah):</strong>
-                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis isian/esai singkat siswa.</span>
-                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Jawaban esai siswa tidak lagi dinilai sebagai "Benar" atau "Kurang Tepat/Salah". Sistem akan selalu menerima masukan jawaban dengan pesan *"Jawabanmu Berhasil Dikirim!"* dan menyandingkannya dengan *"Referensi Jawaban"* pembanding.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis isian/esai singkat siswa dan halaman laporan hasil nilai.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Jawaban esai siswa tidak lagi dinilai kaku sebagai "Benar" atau "Kurang Tepat/Salah". Di layar kuis, sistem selalu menerima jawaban dengan pesan *"Jawabanmu Berhasil Dikirim!"*. Di halaman detail hasil kuis, kartu soal akan otomatis berwarna hijau sukses dengan tanda centang hijau (bukan silang merah), serta menyajikan *"Referensi Jawaban"* berwarna biru (jika disediakan Guru) tanpa menampilkan baris kosong.</span>
                                     </li>
                                     <li class="mt-2">
                                         <strong>Maskot Geni Mengikuti Layar (Sticky):</strong>
