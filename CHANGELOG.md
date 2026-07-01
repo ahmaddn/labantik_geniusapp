@@ -4,6 +4,19 @@ Berikut adalah daftar perubahan dan pembaruan sistem pembelajaran interaktif pad
 
 ---
 
+### 📅 Rincian Hasil Kuis Lengkap & Genius Badge (1 Juli 2026)
+* **Pecahan Nilai per Kategori Soal (Breakdown Kategori):**
+  * *Di mana letaknya:* Halaman Laporan Hasil Kuis (Pretest, Misi Belajar, Posttest).
+  * *Penjelasan:* Sekarang siswa dapat melihat pembagian nilai dan keakuratan jawaban (benar/salah) berdasarkan jenis soal yang dikerjakan (pilihan ganda, benar/salah, studi kasus, esai, atau tarik-lepas) untuk mempermudah evaluasi belajar.
+* **Rincian Nilai Tiap Misi di Hasil Akhir Modul:**
+  * *Di mana letaknya:* Halaman hasil akhir modul.
+  * *Penjelasan:* Menampilkan rekapitulasi performa dan nilai secara mendetail untuk setiap misi yang telah diselesaikan dalam modul tersebut.
+* **Lencana Kejeniusan (Genius Badge):**
+  * *Di mana letaknya:* Bagian atas layar hasil kelulusan siswa.
+  * *Penjelasan:* Memunculkan lencana bertuliskan "Genius" dengan animasi menarik ketika siswa berhasil menyelesaikan kuis dengan nilai sempurna atau performa luar biasa sebagai bentuk apresiasi tambahan.
+
+---
+
 ### 📅 Umpan Balik Esai, Maskot Melayang (Sticky), & Suara Klik Baru (30 Juni 2026)
 * **Penilaian Uji Pemahaman Singkat (Bukan Benar/Salah):**
   * *Di mana letaknya:* Halaman kuis isian/esai singkat siswa dan halaman laporan hasil nilai.

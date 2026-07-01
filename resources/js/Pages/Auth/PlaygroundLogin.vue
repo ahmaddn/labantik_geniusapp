@@ -391,6 +391,37 @@ onUnmounted(() => {
                     <div class="changelog-timeline">
                         <!-- Update Item 0 (Today) -->
                         <div class="timeline-item">
+                            <div class="timeline-dot bg-green-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">1 Juli 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        Rincian Hasil Kuis Lengkap & Genius Badge
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pecahan Nilai per Kategori Soal (Breakdown Kategori):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Laporan Hasil Kuis (Pretest, Misi Belajar, Posttest).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Sekarang siswa dapat melihat pembagian nilai dan keakuratan jawaban berdasarkan jenis soal yang dikerjakan (pilihan ganda, benar/salah, dsb.) untuk mempermudah evaluasi belajar.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Rincian Nilai Tiap Misi di Hasil Akhir Modul:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman hasil akhir modul.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menampilkan rekapitulasi performa dan nilai secara mendetail untuk setiap misi yang telah diselesaikan.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Lencana Kejeniusan (Genius Badge):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Bagian atas layar hasil kelulusan siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Memunculkan lencana "Genius" dengan animasi menarik ketika siswa menyelesaikan kuis dengan nilai sempurna.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 1 -->
+                        <div class="timeline-item">
                             <div class="timeline-dot bg-amber-500"></div>
                             <div class="timeline-content">
                                 <div class="timeline-date">30 Juni 2026</div>
