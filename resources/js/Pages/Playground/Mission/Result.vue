@@ -93,72 +93,154 @@ const formatTime = (sec) => {
 
 const score = computed(() => {
     if (props.is_overall) {
-        return Math.round(props.results.overall_score || props.results.score || 0);
+        return Math.round(
+            props.results.overall_score || props.results.score || 0,
+        );
     }
     return Math.round(props.results.score || 0);
 });
 
 const accuracy = computed(() => {
     if (props.is_overall) return props.results.overall_accuracy || 0;
-    const total = props.results.total_questions || 0;
-    const correct = props.results.correct_answers || 0;
+    const total = props.results.total_questions || props.results.total || 0;
+    const correct = props.results.correct_answers || props.results.correct || 0;
     if (total === 0) return 0;
     return Math.round((correct / total) * 100);
 });
 
 const correctCount = computed(() => {
     if (props.is_overall) {
-        return props.results.overall_correct || props.results.correct_answers || 0;
+        return (
+            props.results.overall_correct ||
+            props.results.correct_answers ||
+            props.results.correct ||
+            0
+        );
     }
-    return props.results.correct_answers || 0;
+    return props.results.correct_answers || props.results.correct || 0;
 });
 
 const incorrectCount = computed(() => {
     if (props.is_overall) {
-        const total = props.results.overall_total || props.results.total_questions || 0;
-        return total - (props.results.overall_correct || props.results.correct_answers || 0);
+        const total =
+            props.results.overall_total ||
+            props.results.total_questions ||
+            props.results.total ||
+            0;
+        return (
+            total -
+            (props.results.overall_correct ||
+                props.results.correct_answers ||
+                props.results.correct ||
+                0)
+        );
     }
-    const total = props.results.total_questions || 0;
-    return total - (props.results.correct_answers || 0);
+    const total = props.results.total_questions || props.results.total || 0;
+    const correct = props.results.correct_answers || props.results.correct || 0;
+    return total - correct;
 });
 
-// Breakdown per bagian (untuk is_overall)
+// Breakdown per bagian (untuk is_overall atau detail misi)
 const breakdownSections = computed(() => {
-    if (!props.is_overall) return [];
-    return [
-        {
-            key: 'pretest',
-            label: 'Pretest',
-            icon: BookOpen,
-            color: '#1cb0f6',
-            bg: '#ddf4ff',
-            data: props.results.pretest || { correct: 0, incorrect: 0, total: 0, score: 0 },
-        },
-        {
-            key: 'missions',
-            label: 'Misi',
-            icon: Target,
-            color: '#58cc02',
-            bg: '#eefdf0',
-            data: props.results.missions || { correct: 0, incorrect: 0, total: 0, score: 0 },
-        },
-        {
-            key: 'posttest',
-            label: 'Posttest',
+    if (props.is_overall) {
+        const sections = [
+            {
+                key: "pretest",
+                label: "Pretest",
+                icon: BookOpen,
+                color: "#1cb0f6",
+                bg: "#ddf4ff",
+                data: props.results.pretest || {
+                    correct: 0,
+                    incorrect: 0,
+                    total: 0,
+                    score: 0,
+                },
+            }
+        ];
+
+        if (props.results.missions_breakdown && props.results.missions_breakdown.length > 0) {
+            props.results.missions_breakdown.forEach((m, idx) => {
+                sections.push({
+                    key: `mission_${m.id || idx}`,
+                    label: m.name || `Misi ${idx + 1}`,
+                    icon: Target,
+                    color: "#58cc02",
+                    bg: "#eefdf0",
+                    data: {
+                        correct: m.correct || 0,
+                        incorrect: m.incorrect || 0,
+                        total: m.total || 0,
+                        score: m.score || 0,
+                    },
+                });
+            });
+        } else {
+            sections.push({
+                key: "missions",
+                label: "Misi",
+                icon: Target,
+                color: "#58cc02",
+                bg: "#eefdf0",
+                data: props.results.missions || {
+                    correct: 0,
+                    incorrect: 0,
+                    total: 0,
+                    score: 0,
+                },
+            });
+        }
+
+        sections.push({
+            key: "posttest",
+            label: "Posttest",
             icon: Zap,
-            color: '#ff9600',
-            bg: '#fff4e5',
-            data: props.results.posttest || { correct: 0, incorrect: 0, total: 0, score: 0 },
-        },
-    ];
+            color: "#ff9600",
+            bg: "#fff4e5",
+            data: props.results.posttest || {
+                correct: 0,
+                incorrect: 0,
+                total: 0,
+                score: 0,
+            },
+        });
+
+        return sections;
+    }
+
+    if (props.results.breakdown && props.results.breakdown.length > 0) {
+        return props.results.breakdown.map((item) => {
+            const meta = TYPE_META[item.type] || {
+                label: item.type,
+                color: "#64748b",
+                bg: "#f1f5f9",
+                icon: BookOpen,
+            };
+            return {
+                key: item.type,
+                label: meta.label,
+                icon: meta.icon,
+                color: meta.color,
+                bg: meta.bg,
+                data: {
+                    correct: item.correct,
+                    incorrect: item.incorrect,
+                    total: item.total,
+                    score: item.score,
+                },
+            };
+        });
+    }
+
+    return [];
 });
 
 const gradeData = computed(() => {
     const s = score.value;
-    if (s >= 90) return { title: "Luar Biasa!", color: "#58cc02", icon: Star };
-    if (s >= 75) return { title: "Kerja Bagus!", color: "#1cb0f6", icon: Zap };
+    if (s >= 90) return { title: "Genius!", color: "#58cc02", icon: Star };
+    if (s >= 75) return { title: "Luar Biasa!", color: "#1cb0f6", icon: Zap };
     if (s >= 60)
-        return { title: "Cukup Baik!", color: "#ff9600", icon: TrendingUp };
+        return { title: "Kerja Bagus!", color: "#ff9600", icon: TrendingUp };
     return { title: "Terus Belajar!", color: "#ff4b4b", icon: Flame };
 });
 
@@ -204,14 +286,14 @@ const MASCOT_SPEECHES = [
     "Bumi butuh ilmuwan hebat sepertimu, yuk belajar lagi!",
     "Keren banget usahamu hari ini, super bangga!",
     "Fokus pada prosesnya, bukan cuma nilainya ya!",
-    "Ingat, Einstein juga pernah gagal sebelum sukses besar!"
+    "Ingat, Einstein juga pernah gagal sebelum sukses besar!",
 ];
 
 const getInitialSpeechText = () => {
     const s = score.value;
-    if (s >= 90) return "Luar biasa! Nilaimu sangat sempurna!";
-    if (s >= 75) return "Kerja bagus! Terus pertahankan prestasimu ya!";
-    if (s >= 60) return "Cukup baik! Kamu pasti bisa lebih hebat lagi!";
+    if (s >= 90) return "Genius! Kamu memiliki pemahaman yang luar biasa!";
+    if (s >= 75) return "Luar biasa! Terus pertahankan prestasimu ya!";
+    if (s >= 60) return "Kerja bagus! Kamu pasti bisa lebih hebat lagi!";
     return "Jangan menyerah! Terus belajar dan raih mimpimu ya!";
 };
 
@@ -222,19 +304,23 @@ const handleMascotClick = () => {
     playPop();
     mascotClicked.value = true;
     speechTriggered.value = true;
-    setTimeout(() => { mascotClicked.value = false; }, 500);
+    setTimeout(() => {
+        mascotClicked.value = false;
+    }, 500);
 
     const randomIndex = Math.floor(Math.random() * MASCOT_SPEECHES.length);
     activeMascotSpeech.value = MASCOT_SPEECHES[randomIndex];
-    setTimeout(() => { speechTriggered.value = false; }, 300);
+    setTimeout(() => {
+        speechTriggered.value = false;
+    }, 300);
 };
 
 // Custom Confetti System using HTML5 Canvas
 function startConfetti(canvas) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
 
     window.addEventListener("resize", () => {
         if (!canvas) return;
@@ -243,7 +329,14 @@ function startConfetti(canvas) {
     });
 
     const particles = [];
-    const colors = ["#1cb0f6", "#58cc02", "#ff9600", "#a855f7", "#ff4b4b", "#ffc800"];
+    const colors = [
+        "#1cb0f6",
+        "#58cc02",
+        "#ff9600",
+        "#a855f7",
+        "#ff4b4b",
+        "#ffc800",
+    ];
 
     // Spawn initial burst
     for (let i = 0; i < 150; i++) {
@@ -255,7 +348,7 @@ function startConfetti(canvas) {
             color: colors[Math.floor(Math.random() * colors.length)],
             tilt: Math.random() * 10 - 5,
             tiltAngleIncremental: Math.random() * 0.07 + 0.02,
-            tiltAngle: 0
+            tiltAngle: 0,
         });
     }
 
@@ -322,7 +415,9 @@ onMounted(() => {
 
 const handleGlobalClick = (e) => {
     const target = e.target;
-    const button = target.closest("button, .btn, .btn-duo, [role='button'], .clickable-opt, .option-btn, .draggable-item, .nav-left, .music-fab");
+    const button = target.closest(
+        "button, .btn, .btn-duo, [role='button'], .clickable-opt, .option-btn, .draggable-item, .nav-left, .music-fab",
+    );
     if (button) {
         playClick();
     }
@@ -361,19 +456,27 @@ onUnmounted(() => {
                             is_overall
                                 ? `Evaluasi ${module.name} Selesai`
                                 : is_pretest
-                                ? `Pretest ${module.name} Selesai`
-                                : is_posttest
-                                ? `Posttest ${module.name} Selesai`
-                                : `Misi ${mission.name || mission.title} Selesai`
+                                  ? `Pretest ${module.name} Selesai`
+                                  : is_posttest
+                                    ? `Posttest ${module.name} Selesai`
+                                    : `Misi ${mission.name || mission.title} Selesai`
                         }}
                     </p>
+                    <div v-if="score >= 90" class="genius-badge-wrap">
+                        <div class="genius-badge">
+                            <Sparkles :size="16" />
+                            <span>PRESTASI: GENIUS</span>
+                        </div>
+                    </div>
                 </div>
-
 
                 <div class="score-mascot-section">
                     <!-- Mascot with speech bubble -->
                     <div class="mascot-wrap" @click="handleMascotClick">
-                        <div class="mascot-speech-bubble-wrap" :class="{ 'speech-pop': speechTriggered }">
+                        <div
+                            class="mascot-speech-bubble-wrap"
+                            :class="{ 'speech-pop': speechTriggered }"
+                        >
                             <div class="mascot-speech">
                                 {{ activeMascotSpeech }}
                             </div>
@@ -401,7 +504,8 @@ onUnmounted(() => {
                                 r="58"
                                 class="celeb-prog"
                                 :style="{
-                                    strokeDashoffset: 364 - (364 * animatedScore) / 100,
+                                    strokeDashoffset:
+                                        364 - (364 * animatedScore) / 100,
                                     stroke: gradeData.color,
                                 }"
                             />
@@ -442,49 +546,103 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <!-- ══ BREAKDOWN PER BAGIAN (is_overall only) ══ -->
-                <div v-if="is_overall" class="breakdown-section">
-                    <div class="breakdown-title">Rincian Per Bagian</div>
+                <!-- ══ BREAKDOWN PER BAGIAN (is_overall ATAU detail misi dengan breakdown) ══ -->
+                <div
+                    v-if="
+                        is_overall ||
+                        (!is_overall &&
+                            results.breakdown &&
+                            results.breakdown.length > 0)
+                    "
+                    class="breakdown-section"
+                >
+                    <div class="breakdown-title">
+                        {{
+                            is_overall
+                                ? "Rincian Per Bagian"
+                                : "Rincian Per Tipe Soal"
+                        }}
+                    </div>
                     <div class="breakdown-cards">
                         <div
                             v-for="section in breakdownSections"
                             :key="section.key"
                             class="breakdown-card"
-                            :style="{ borderColor: section.color, '--bc': section.color, '--bg': section.bg }"
+                            :style="{
+                                borderColor: section.color,
+                                '--bc': section.color,
+                                '--bg': section.bg,
+                            }"
                         >
-                            <div class="bk-header" :style="{ backgroundColor: section.bg }">
-                                <div class="bk-icon" :style="{ backgroundColor: section.color }">
-                                    <component :is="section.icon" :size="16" :stroke-width="2.5" color="white" />
+                            <div
+                                class="bk-header"
+                                :style="{ backgroundColor: section.bg }"
+                            >
+                                <div
+                                    class="bk-icon"
+                                    :style="{ backgroundColor: section.color }"
+                                >
+                                    <component
+                                        :is="section.icon"
+                                        :size="16"
+                                        :stroke-width="2.5"
+                                        color="white"
+                                    />
                                 </div>
-                                <span class="bk-label" :style="{ color: section.color }">{{ section.label }}</span>
+                                <span
+                                    class="bk-label"
+                                    :style="{ color: section.color }"
+                                    >{{ section.label }}</span
+                                >
                             </div>
                             <div class="bk-stats">
                                 <div class="bk-stat">
-                                    <span class="bk-val bk-correct">{{ section.data.correct }}</span>
+                                    <span class="bk-val bk-correct">{{
+                                        section.data.correct
+                                    }}</span>
                                     <span class="bk-lbl">Benar</span>
                                 </div>
                                 <div class="bk-divider"></div>
                                 <div class="bk-stat">
-                                    <span class="bk-val bk-wrong">{{ section.data.incorrect }}</span>
+                                    <span class="bk-val bk-wrong">{{
+                                        section.data.incorrect
+                                    }}</span>
                                     <span class="bk-lbl">Salah</span>
                                 </div>
                                 <div class="bk-divider"></div>
                                 <div class="bk-stat">
-                                    <span class="bk-val" :style="{ color: section.color }">{{ section.data.score }}</span>
+                                    <span
+                                        class="bk-val"
+                                        :style="{ color: section.color }"
+                                        >{{ section.data.score }}</span
+                                    >
                                     <span class="bk-lbl">Nilai</span>
                                 </div>
                             </div>
                             <div class="bk-progress">
                                 <div
                                     class="bk-progress-fill"
-                                    :style="{ width: section.data.score + '%', backgroundColor: section.color }"
+                                    :style="{
+                                        width: section.data.score + '%',
+                                        backgroundColor: section.color,
+                                    }"
                                 ></div>
                             </div>
                         </div>
                     </div>
-                    <!-- Total Keseluruhan -->
+                    <!-- Total Keseluruhan / Misi / Pretest / Posttest -->
                     <div class="total-row">
-                        <span class="total-label">Total Keseluruhan</span>
+                        <span class="total-label">
+                            {{
+                                is_overall
+                                    ? "Total Keseluruhan"
+                                    : is_pretest
+                                      ? "Total Pretest"
+                                      : is_posttest
+                                        ? "Total Posttest"
+                                        : "Total Misi"
+                            }}
+                        </span>
                         <div class="total-pills">
                             <span class="pill pill-green">{{ correctCount }} Benar</span>
                             <span class="pill pill-red">{{ incorrectCount }} Salah</span>
@@ -510,8 +668,16 @@ onUnmounted(() => {
                                 :key="index"
                                 class="detail-card"
                                 :class="{
-                                    'card-correct': detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection',
-                                    'card-wrong': !detail.is_correct && detail.question.type !== 'short_answer' && detail.question.type !== 'reflection',
+                                    'card-correct':
+                                        detail.is_correct ||
+                                        detail.question.type ===
+                                            'short_answer' ||
+                                        detail.question.type === 'reflection',
+                                    'card-wrong':
+                                        !detail.is_correct &&
+                                        detail.question.type !==
+                                            'short_answer' &&
+                                        detail.question.type !== 'reflection',
                                 }"
                             >
                                 <div class="dc-header">
@@ -535,13 +701,23 @@ onUnmounted(() => {
                                     <div
                                         class="dc-status"
                                         :class="
-                                            (detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection')
+                                            detail.is_correct ||
+                                            detail.question.type ===
+                                                'short_answer' ||
+                                            detail.question.type ===
+                                                'reflection'
                                                 ? 'text-green'
                                                 : 'text-red'
                                         "
                                     >
                                         <CheckCircle2
-                                            v-if="detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection'"
+                                            v-if="
+                                                detail.is_correct ||
+                                                detail.question.type ===
+                                                    'short_answer' ||
+                                                detail.question.type ===
+                                                    'reflection'
+                                            "
                                             :size="20"
                                         />
                                         <XCircle v-else :size="20" />
@@ -551,63 +727,153 @@ onUnmounted(() => {
                                 <div
                                     class="dc-question"
                                     v-html="detail.question.question_text"
-                                >
-                                </div>
+                                ></div>
                                 <div class="dc-answers">
-                                     <!-- Jika drag_drop -->
-                                     <template v-if="detail.question.type === 'drag_drop'">
-                                         <div
-                                             v-for="(correctGroup, itemText) in detail.correct_answer_map"
-                                             :key="itemText"
-                                             class="answer-item"
-                                             :class="
-                                                 (detail.user_answer_map || {})[itemText] === correctGroup
-                                                     ? 'ans-correct'
-                                                     : 'ans-wrong'
-                                             "
-                                         >
-                                             <div class="ans-icon">
-                                                 <Check
-                                                     v-if="(detail.user_answer_map || {})[itemText] === correctGroup"
-                                                     :size="16"
-                                                 />
-                                                 <X v-else :size="16" />
-                                             </div>
-                                             <div class="ans-text">
-                                                 <span class="font-bold">{{ itemText }}:</span>
-                                                 Kamu menaruh di <span class="underline">{{ (detail.user_answer_map || {})[itemText] || '(tidak dijawab)' }}</span>
-                                                 (Seharusnya: <span class="font-bold">{{ correctGroup }}</span>)
-                                             </div>
-                                         </div>
-                                     </template>
+                                    <!-- Jika drag_drop -->
+                                    <template
+                                        v-if="
+                                            detail.question.type === 'drag_drop'
+                                        "
+                                    >
+                                        <div
+                                            v-for="(
+                                                correctGroup, itemText
+                                            ) in detail.correct_answer_map"
+                                            :key="itemText"
+                                            class="answer-item"
+                                            :class="
+                                                (detail.user_answer_map || {})[
+                                                    itemText
+                                                ] === correctGroup
+                                                    ? 'ans-correct'
+                                                    : 'ans-wrong'
+                                            "
+                                        >
+                                            <div class="ans-icon">
+                                                <Check
+                                                    v-if="
+                                                        (detail.user_answer_map ||
+                                                            {})[itemText] ===
+                                                        correctGroup
+                                                    "
+                                                    :size="16"
+                                                />
+                                                <X v-else :size="16" />
+                                            </div>
+                                            <div class="ans-text">
+                                                <span class="font-bold"
+                                                    >{{ itemText }}:</span
+                                                >
+                                                Kamu menaruh di
+                                                <span class="underline">{{
+                                                    (detail.user_answer_map ||
+                                                        {})[itemText] ||
+                                                    "(tidak dijawab)"
+                                                }}</span>
+                                                (Seharusnya:
+                                                <span class="font-bold">{{
+                                                    correctGroup
+                                                }}</span
+                                                >)
+                                            </div>
+                                        </div>
+                                    </template>
 
-                                     <!-- Jika bukan drag_drop -->
-                                     <template v-else>
-                                         <div
-                                             class="answer-item"
-                                             :class="(detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection') ? 'ans-correct' : 'ans-wrong'"
-                                         >
-                                             <div class="ans-icon">
-                                                 <Check v-if="detail.is_correct || detail.question.type === 'short_answer' || detail.question.type === 'reflection'" :size="16" />
-                                                 <X v-else :size="16" />
-                                             </div>
-                                             <div class="ans-text">
-                                                 <div>
-                                                     <span class="font-bold">Jawaban Kamu:</span>
-                                                     <span> {{ detail.user_answer || '(tidak dijawab)' }}</span>
-                                                 </div>
-                                                 <div v-if="(detail.question.type === 'short_answer' || detail.question.type === 'reflection') && detail.correct_answer && detail.correct_answer !== '-'" class="mt-1">
-                                                     <span class="font-bold" style="color: #0ea5e9">Referensi Jawaban:</span>
-                                                     <span style="color: #0ea5e9"> {{ detail.correct_answer }}</span>
-                                                 </div>
-                                                 <div v-else-if="!detail.is_correct && detail.question.type !== 'short_answer' && detail.question.type !== 'reflection'" class="mt-1">
-                                                     <span class="font-bold" style="color: #58cc02">Jawaban Benar:</span>
-                                                     <span style="color: #58cc02"> {{ detail.correct_answer || '-' }}</span>
-                                                 </div>
-                                             </div>
-                                         </div>
-                                     </template>
-                                 </div>
+                                    <!-- Jika bukan drag_drop -->
+                                    <template v-else>
+                                        <div
+                                            class="answer-item"
+                                            :class="
+                                                detail.is_correct ||
+                                                detail.question.type ===
+                                                    'short_answer' ||
+                                                detail.question.type ===
+                                                    'reflection'
+                                                    ? 'ans-correct'
+                                                    : 'ans-wrong'
+                                            "
+                                        >
+                                            <div class="ans-icon">
+                                                <Check
+                                                    v-if="
+                                                        detail.is_correct ||
+                                                        detail.question.type ===
+                                                            'short_answer' ||
+                                                        detail.question.type ===
+                                                            'reflection'
+                                                    "
+                                                    :size="16"
+                                                />
+                                                <X v-else :size="16" />
+                                            </div>
+                                            <div class="ans-text">
+                                                <div>
+                                                    <span class="font-bold"
+                                                        >Jawaban Kamu:</span
+                                                    >
+                                                    <span>
+                                                        {{
+                                                            detail.user_answer ||
+                                                            "(tidak dijawab)"
+                                                        }}</span
+                                                    >
+                                                </div>
+                                                <div
+                                                    v-if="
+                                                        (detail.question
+                                                            .type ===
+                                                            'short_answer' ||
+                                                            detail.question
+                                                                .type ===
+                                                                'reflection') &&
+                                                        detail.correct_answer &&
+                                                        detail.correct_answer !==
+                                                            '-'
+                                                    "
+                                                    class="mt-1"
+                                                >
+                                                    <span
+                                                        class="font-bold"
+                                                        style="color: #0ea5e9"
+                                                        >Referensi
+                                                        Jawaban:</span
+                                                    >
+                                                    <span
+                                                        style="color: #0ea5e9"
+                                                    >
+                                                        {{
+                                                            detail.correct_answer
+                                                        }}</span
+                                                    >
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        !detail.is_correct &&
+                                                        detail.question.type !==
+                                                            'short_answer' &&
+                                                        detail.question.type !==
+                                                            'reflection'
+                                                    "
+                                                    class="mt-1"
+                                                >
+                                                    <span
+                                                        class="font-bold"
+                                                        style="color: #58cc02"
+                                                        >Jawaban Benar:</span
+                                                    >
+                                                    <span
+                                                        style="color: #58cc02"
+                                                    >
+                                                        {{
+                                                            detail.correct_answer ||
+                                                            "-"
+                                                        }}</span
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
 
                                 <div
                                     v-if="getQuizExplanation(detail)"
@@ -641,10 +907,7 @@ onUnmounted(() => {
 
                 <div class="footer-right">
                     <template v-if="is_pretest">
-                        <button
-                            class="btn-duo btn-duo-primary"
-                            @click="goBack"
-                        >
+                        <button class="btn-duo btn-duo-primary" @click="goBack">
                             <span>Lanjut Ke Misi</span>
                             <ChevronRight :size="18" :stroke-width="3" />
                         </button>
@@ -725,21 +988,98 @@ onUnmounted(() => {
     animation: particleFloat 8s ease-in-out infinite;
 }
 
-.p1 { width: 14px; height: 14px; background: #1cb0f6; top: 10%; left: 8%;  animation-delay: 0s;   animation-duration: 7s; }
-.p2 { width: 10px; height: 10px; background: #58cc02; top: 25%; left: 90%; animation-delay: 1.2s; animation-duration: 9s; }
-.p3 { width: 18px; height: 18px; background: #ff9600; top: 60%; left: 5%;  animation-delay: 2.4s; animation-duration: 8s; }
-.p4 { width: 8px;  height: 8px;  background: #a855f7; top: 80%; left: 85%; animation-delay: 0.6s; animation-duration: 6s; }
-.p5 { width: 12px; height: 12px; background: #ffc800; top: 45%; left: 95%; animation-delay: 3s;   animation-duration: 10s; }
-.p6 { width: 16px; height: 16px; background: #1cb0f6; top: 15%; left: 50%; animation-delay: 1.8s; animation-duration: 7.5s; }
-.p7 { width: 10px; height: 10px; background: #58cc02; top: 70%; left: 40%; animation-delay: 0.9s; animation-duration: 8.5s; }
-.p8 { width: 6px;  height: 6px;  background: #ff4b4b; top: 35%; left: 15%; animation-delay: 2s;   animation-duration: 6.5s; }
+.p1 {
+    width: 14px;
+    height: 14px;
+    background: #1cb0f6;
+    top: 10%;
+    left: 8%;
+    animation-delay: 0s;
+    animation-duration: 7s;
+}
+.p2 {
+    width: 10px;
+    height: 10px;
+    background: #58cc02;
+    top: 25%;
+    left: 90%;
+    animation-delay: 1.2s;
+    animation-duration: 9s;
+}
+.p3 {
+    width: 18px;
+    height: 18px;
+    background: #ff9600;
+    top: 60%;
+    left: 5%;
+    animation-delay: 2.4s;
+    animation-duration: 8s;
+}
+.p4 {
+    width: 8px;
+    height: 8px;
+    background: #a855f7;
+    top: 80%;
+    left: 85%;
+    animation-delay: 0.6s;
+    animation-duration: 6s;
+}
+.p5 {
+    width: 12px;
+    height: 12px;
+    background: #ffc800;
+    top: 45%;
+    left: 95%;
+    animation-delay: 3s;
+    animation-duration: 10s;
+}
+.p6 {
+    width: 16px;
+    height: 16px;
+    background: #1cb0f6;
+    top: 15%;
+    left: 50%;
+    animation-delay: 1.8s;
+    animation-duration: 7.5s;
+}
+.p7 {
+    width: 10px;
+    height: 10px;
+    background: #58cc02;
+    top: 70%;
+    left: 40%;
+    animation-delay: 0.9s;
+    animation-duration: 8.5s;
+}
+.p8 {
+    width: 6px;
+    height: 6px;
+    background: #ff4b4b;
+    top: 35%;
+    left: 15%;
+    animation-delay: 2s;
+    animation-duration: 6.5s;
+}
 
 @keyframes particleFloat {
-    0%   { opacity: 0;    transform: translateY(0) scale(0.8); }
-    20%  { opacity: 0.6;  }
-    50%  { opacity: 0.4;  transform: translateY(-30px) scale(1.1); }
-    80%  { opacity: 0.5;  }
-    100% { opacity: 0;    transform: translateY(10px) scale(0.8); }
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.8);
+    }
+    20% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.4;
+        transform: translateY(-30px) scale(1.1);
+    }
+    80% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+    }
 }
 
 .main-scroll {
@@ -806,7 +1146,7 @@ onUnmounted(() => {
 .mascot-speech-bubble-wrap {
     position: relative;
     margin-bottom: 10px;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.07));
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.07));
     animation: floatBubble 4s ease-in-out infinite;
 }
 
@@ -838,8 +1178,13 @@ onUnmounted(() => {
 }
 
 @keyframes floatBubble {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-5px); }
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
 }
 
 .mascot-img {
@@ -1313,7 +1658,9 @@ onUnmounted(() => {
         gap: 8px;
         padding: 0 20px;
     }
-    .btn-duo span { display: none; }
+    .btn-duo span {
+        display: none;
+    }
     .btn-duo {
         padding: 12px;
         border-radius: 50%;
@@ -1322,7 +1669,9 @@ onUnmounted(() => {
         height: 48px;
         gap: 0;
     }
-    .footer-bar { height: 76px; }
+    .footer-bar {
+        height: 76px;
+    }
 }
 
 /* ─── BREAKDOWN PER BAGIAN ─── */
@@ -1355,7 +1704,7 @@ onUnmounted(() => {
     border: 2px solid;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .bk-header {
@@ -1412,8 +1761,12 @@ onUnmounted(() => {
     color: #3c3c3c;
 }
 
-.bk-correct { color: #58cc02 !important; }
-.bk-wrong   { color: #ff4b4b !important; }
+.bk-correct {
+    color: #58cc02 !important;
+}
+.bk-wrong {
+    color: #ff4b4b !important;
+}
 
 .bk-lbl {
     font-size: 11px;
@@ -1468,13 +1821,52 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 
-.pill-green { background: #eefdf0; color: #58cc02; border: 1px solid #c2f5cc; }
-.pill-red   { background: #ffe5e5; color: #ff4b4b; border: 1px solid #fecaca; }
-.pill-blue  { background: #ddf4ff; color: #1cb0f6; border: 1px solid #bae6fd; }
+.pill-green {
+    background: #eefdf0;
+    color: #58cc02;
+    border: 1px solid #c2f5cc;
+}
+.pill-red {
+    background: #ffe5e5;
+    color: #ff4b4b;
+    border: 1px solid #fecaca;
+}
+.pill-blue {
+    background: #ddf4ff;
+    color: #1cb0f6;
+    border: 1px solid #bae6fd;
+}
 
 @media (max-width: 600px) {
-    .bk-val { font-size: 18px; }
-    .total-row { flex-direction: column; align-items: flex-start; }
+    .bk-val {
+        font-size: 18px;
+    }
+    .total-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ── Genius Badge Styles ── */
+.genius-badge-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.genius-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #58cc02 0%, #22c55e 100%);
+    color: #ffffff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+    border: 2px solid #ffffff;
 }
 
 /* ── Confetti & Gamified CSS ── */
@@ -1500,9 +1892,16 @@ onUnmounted(() => {
 }
 
 @keyframes mascotWiggle {
-    0%, 100% { transform: rotate(0) scale(1); }
-    25% { transform: rotate(-8deg) scale(1.1); }
-    75% { transform: rotate(8deg) scale(1.1); }
+    0%,
+    100% {
+        transform: rotate(0) scale(1);
+    }
+    25% {
+        transform: rotate(-8deg) scale(1.1);
+    }
+    75% {
+        transform: rotate(8deg) scale(1.1);
+    }
 }
 
 .speech-pop {
@@ -1510,8 +1909,14 @@ onUnmounted(() => {
 }
 
 @keyframes speechPop {
-    0% { transform: scale(0.9); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .details-list .detail-card {
@@ -1519,22 +1924,46 @@ onUnmounted(() => {
 }
 
 @keyframes cardSlideIn {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* Cascade delays for cards */
-.details-list .detail-card:nth-child(1) { animation-delay: 0.05s; }
-.details-list .detail-card:nth-child(2) { animation-delay: 0.10s; }
-.details-list .detail-card:nth-child(3) { animation-delay: 0.15s; }
-.details-list .detail-card:nth-child(4) { animation-delay: 0.20s; }
-.details-list .detail-card:nth-child(5) { animation-delay: 0.25s; }
-.details-list .detail-card:nth-child(6) { animation-delay: 0.30s; }
-.details-list .detail-card:nth-child(7) { animation-delay: 0.35s; }
-.details-list .detail-card:nth-child(8) { animation-delay: 0.40s; }
+.details-list .detail-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+.details-list .detail-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+.details-list .detail-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+.details-list .detail-card:nth-child(4) {
+    animation-delay: 0.2s;
+}
+.details-list .detail-card:nth-child(5) {
+    animation-delay: 0.25s;
+}
+.details-list .detail-card:nth-child(6) {
+    animation-delay: 0.3s;
+}
+.details-list .detail-card:nth-child(7) {
+    animation-delay: 0.35s;
+}
+.details-list .detail-card:nth-child(8) {
+    animation-delay: 0.4s;
+}
 
 .istat {
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+    transition:
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s;
 }
 .istat:hover {
     transform: translateY(-4px);
@@ -1542,7 +1971,9 @@ onUnmounted(() => {
 }
 
 .breakdown-card {
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+    transition:
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s;
 }
 .breakdown-card:hover {
     transform: translateY(-3px);
