@@ -240,6 +240,14 @@ class PosttestController extends Controller
         $totalQuestions = 0;
         $questionsResult = [];
 
+        $byType = [
+            'multiple_choices' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'true_false'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'case_study'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'drag_drop'        => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'short_answer'     => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+        ];
+
         $attempt = Quiz_attempts::where('quiz_id', $quiz->id)
             ->where('student_id', $studentId)
             ->latest()
@@ -271,10 +279,24 @@ class PosttestController extends Controller
                     $totalIncorrect++;
                 }
 
+                $qType = $question->type;
+                if ($qType === 'multiple_choice') {
+                    $qType = 'multiple_choices';
+                }
+
+                if (isset($byType[$qType])) {
+                    $byType[$qType]['total']++;
+                    if ($isCorrect) {
+                        $byType[$qType]['correct']++;
+                    } else {
+                        $byType[$qType]['incorrect']++;
+                    }
+                }
+
                 $questionsResult[] = [
                     'question_id'         => $question->id,
                     'question_text'       => $question->question_text,
-                    'quiz_type'           => $quiz->type,
+                    'quiz_type'           => $qType,
                     'quiz_title'          => $quiz->title,
                     'is_correct'          => $isCorrect,
                     'user_answer_text'    => $userAnswerText,
@@ -289,6 +311,16 @@ class PosttestController extends Controller
             ? (int) round(($totalCorrect / $totalQuestions) * 100)
             : 0;
 
+        $breakdown = collect($byType)
+            ->filter(fn($d) => $d['total'] > 0)
+            ->map(fn($d, $type) => [
+                'type'      => $type,
+                'correct'   => $d['correct'],
+                'incorrect' => $d['incorrect'],
+                'total'     => $d['total'],
+                'score'     => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
+            ])->values()->toArray();
+
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => null, 'name' => 'Posttest ' . $module->name, 'title' => 'Posttest'],
             'next_mission'      => null,
@@ -299,6 +331,7 @@ class PosttestController extends Controller
                 'total'            => $totalQuestions,
                 'correct_answers'  => $totalCorrect,
                 'total_questions'  => $totalQuestions,
+                'breakdown'        => $breakdown,
                 'details'          => collect($questionsResult)->map(fn($q) => [
                     'question_id' => $q['question_id'],
                     'question' => [
@@ -381,6 +414,32 @@ class PosttestController extends Controller
             ? (int) round(($missionStats['correct'] / $missionStats['total']) * 100)
             : 0;
 
+        // ── Rekap Misi individual ──────────────────────────────────────────
+        $missions = \App\Models\Missions::where('module_id', $module->id)
+            ->orderBy('order_number', 'asc')
+            ->get();
+        $missionsBreakdown = [];
+        foreach ($missions as $mission) {
+            $mQuizzes = Quizzes::where('mission_id', $mission->id)->get();
+            $mCorrect = 0;
+            $mIncorrect = 0;
+            $mTotal = 0;
+            foreach ($mQuizzes as $mQuiz) {
+                $s = $calcQuizStats($mQuiz);
+                $mCorrect   += $s['correct'];
+                $mIncorrect += $s['incorrect'];
+                $mTotal     += $s['total'];
+            }
+            $missionsBreakdown[] = [
+                'id'        => $mission->id,
+                'name'      => $mission->name,
+                'correct'   => $mCorrect,
+                'incorrect' => $mIncorrect,
+                'total'     => $mTotal,
+                'score'     => $mTotal > 0 ? (int) round(($mCorrect / $mTotal) * 100) : 0,
+            ];
+        }
+
         // ── Posttest ───────────────────────────────────────────────────────
         $posttestQuiz  = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
         $posttestStats = $posttestQuiz ? $calcQuizStats($posttestQuiz) : ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
@@ -396,15 +455,16 @@ class PosttestController extends Controller
             'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'mission'    => ['id' => null, 'name' => 'Hasil Akhir Modul'],
             'results'    => [
-                'score'           => $finalScore,
-                'correct_answers' => $correctAll,
-                'total_questions' => $totalAll,
-                'overall_score'   => $finalScore,
-                'overall_correct' => $correctAll,
-                'overall_total'   => $totalAll,
-                'pretest'  => $pretestStats,
-                'missions' => $missionStats,
-                'posttest' => $posttestStats,
+                'score'              => $finalScore,
+                'correct_answers'    => $correctAll,
+                'total_questions'    => $totalAll,
+                'overall_score'      => $finalScore,
+                'overall_correct'    => $correctAll,
+                'overall_total'      => $totalAll,
+                'pretest'            => $pretestStats,
+                'missions'           => $missionStats,
+                'missions_breakdown' => $missionsBreakdown,
+                'posttest'           => $posttestStats,
             ],
             'all_missions_done' => true,
         ]);

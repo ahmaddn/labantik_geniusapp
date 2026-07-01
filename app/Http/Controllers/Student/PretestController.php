@@ -238,6 +238,14 @@ class PretestController extends Controller
         $totalQuestions = 0;
         $questionsResult = [];
 
+        $byType = [
+            'multiple_choices' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'true_false'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'case_study'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'drag_drop'        => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'short_answer'     => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+        ];
+
         $attempt = Quiz_attempts::where('quiz_id', $quiz->id)
             ->where('student_id', $studentId)
             ->latest()
@@ -269,10 +277,24 @@ class PretestController extends Controller
                     $totalIncorrect++;
                 }
 
+                $qType = $question->type;
+                if ($qType === 'multiple_choice') {
+                    $qType = 'multiple_choices';
+                }
+
+                if (isset($byType[$qType])) {
+                    $byType[$qType]['total']++;
+                    if ($isCorrect) {
+                        $byType[$qType]['correct']++;
+                    } else {
+                        $byType[$qType]['incorrect']++;
+                    }
+                }
+
                 $questionsResult[] = [
                     'question_id'         => $question->id,
                     'question_text'       => $question->question_text,
-                    'quiz_type'           => $quiz->type,
+                    'quiz_type'           => $qType,
                     'quiz_title'          => $quiz->title,
                     'is_correct'          => $isCorrect,
                     'user_answer_text'    => $userAnswerText,
@@ -287,6 +309,16 @@ class PretestController extends Controller
             ? (int) round(($totalCorrect / $totalQuestions) * 100)
             : 0;
 
+        $breakdown = collect($byType)
+            ->filter(fn($d) => $d['total'] > 0)
+            ->map(fn($d, $type) => [
+                'type'      => $type,
+                'correct'   => $d['correct'],
+                'incorrect' => $d['incorrect'],
+                'total'     => $d['total'],
+                'score'     => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
+            ])->values()->toArray();
+
         return Inertia::render('Playground/Mission/Result', [
             'mission'           => ['id' => null, 'name' => 'Pretest ' . $module->name, 'title' => 'Pretest'],
             'next_mission'      => null,
@@ -297,6 +329,7 @@ class PretestController extends Controller
                 'total'            => $totalQuestions,
                 'correct_answers'  => $totalCorrect,
                 'total_questions'  => $totalQuestions,
+                'breakdown'        => $breakdown,
                 'details'          => collect($questionsResult)->map(fn($q) => [
                     'question_id' => $q['question_id'],
                     'question' => [
