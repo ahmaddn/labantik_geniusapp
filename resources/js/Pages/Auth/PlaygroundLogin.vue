@@ -389,6 +389,62 @@ onUnmounted(() => {
                     <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
                     
                     <div class="changelog-timeline">
+                        <!-- Update Item 12 Juli 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-blue-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">12 Juli 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                        Target Modul Berdasarkan Kelas & Tab Penyaring Siswa
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pengaturan Target Kelas Modul (Panel Admin):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Modal tambah/edit modul di dashboard Admin.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru/Admin dapat menetapkan target modul ke satu atau beberapa kelas paralel tertentu secara mudah (misalnya hanya untuk Kelas 1A dan 1B) melalui pilihan checkbox. Modul yang tidak dihubungkan ke kelas mana pun akan otomatis berstatus modul umum.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Lencana Visual Kelas (Panel Admin):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Daftar kartu modul di dashboard Admin.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menambahkan lencana (badge) biru penunjuk kelas target agar Guru dapat langsung memantau modul mana saja yang aktif untuk kelas tertentu secara visual.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Tab Switcher Penyaring Modul (Dashboard Siswa):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Layar Playground siswa (Materi Pembelajaran).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Siswa kini dapat menyaring modul secara instan menggunakan tombol Tab 3D yang membal (chunky style) untuk memilih kategori: Semua Modul, Modul khusus Kelas mereka saja, atau Modul Umum (suplemen belajar untuk semua kelas).</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Pembaruan Layout Kuis Pilihan Ganda (A-E):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis pilihan ganda siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Tombol opsi A-E diperbarui dengan ketebalan 3D warna-warni yang cerah, font bulat Nunito ramah anak, dan efek animasi klik yang lebih lembut.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Penyempurnaan Kuis Benar / Salah:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis Benar/Salah.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Pemisahan skema warna yang tegas antara tombol hijau mint untuk "Benar" dan merah koral untuk "Salah", lengkap dengan ikon centang & silang untuk mempermudah anak-anak.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Redesain Slider Simulasi (Double Slider):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Elemen pengatur nilai pada simulasi sains.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menghilangkan penumpukan angka yang membingungkan siswa. Angka nilai aktif kini melayang di lencana tersendiri, dengan tombol peg tebal 3D yang mudah digeser oleh anak SD.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Penyempurnaan Efek Cuaca (Hujan & Salju):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Animasi simulasi cuaca.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Memperbaiki partikel hujan/salju yang sempat membeku di bagian atas layar agar langsung meluncur jatuh dengan transisi jatuh yang sangat halus.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Pengembalian Layout Flowchart Refleksi Geser (Horizontal Scroll):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Layar refleksi akhir simulasi.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Mengembalikan alur langkah refleksi ke mode geser ke samping (scroll) agar mendukung langkah yang dinamis dengan rapi tanpa menumpuk di layar.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!-- Update Item 0 (Today) -->
                         <div class="timeline-item">
                             <div class="timeline-dot bg-green-500"></div>
