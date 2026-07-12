@@ -138,69 +138,80 @@ watch(activeEffect, () => {
 /* RAIN */
 .rain-drop {
     position: absolute;
-    top: -20px;
+    top: -50px;
     width: 2px;
     height: 15px;
     background: rgba(255,255,255,0.6);
     animation: rainFall linear infinite;
+    animation-fill-mode: backwards;
 }
 .rain-drop.heavy {
     width: 3px; height: 25px;
     background: rgba(255,255,255,0.8);
 }
 .heavy-rain-bg { background: rgba(0,0,0,0.3); }
-@keyframes rainFall { to { transform: translateY(100vh); } }
+@keyframes rainFall { 
+    0% { transform: translateY(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(120vh); opacity: 1; }
+}
 
 /* SNOW */
 .snow-flake {
     position: absolute;
-    top: -30px;
+    top: -50px;
     animation: snowFall linear infinite;
+    animation-fill-mode: backwards;
     opacity: 0.8;
 }
 @keyframes snowFall { 
-    0% { transform: translateY(-30px) rotate(0deg) translateX(0); }
-    50% { transform: translateY(50vh) rotate(180deg) translateX(20px); }
-    100% { transform: translateY(100vh) rotate(360deg) translateX(-20px); }
+    0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    50% { transform: translateY(50vh) rotate(180deg) translateX(20px); opacity: 0.8; }
+    100% { transform: translateY(120vh) rotate(360deg) translateX(-20px); opacity: 0.8; }
 }
 
 /* BUBBLES */
 .bubble {
     position: absolute;
-    bottom: -20px;
+    bottom: -50px;
     width: 12px; height: 12px;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.8);
     background: rgba(255,255,255,0.2);
     animation: bubbleRise linear infinite;
+    animation-fill-mode: backwards;
 }
 @keyframes bubbleRise {
     0% { transform: translateY(0) scale(1); opacity: 0; }
     10% { opacity: 1; }
-    100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+    100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
 }
 
 /* FIRE SPARKS */
 .fire-spark {
     position: absolute;
-    bottom: 0;
+    bottom: -20px;
     animation: sparkRise linear infinite;
+    animation-fill-mode: backwards;
 }
 @keyframes sparkRise {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    100% { transform: translateY(-100px) scale(0); opacity: 0; }
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-120px) scale(0); opacity: 0; }
 }
 
 /* WIND LEAVES */
 .wind-leaf {
     position: absolute;
-    left: -30px;
+    left: -50px;
     animation: leafBlow linear infinite;
+    animation-fill-mode: backwards;
 }
 @keyframes leafBlow {
-    0% { transform: translateX(-30px) rotate(0deg) translateY(0); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateX(100vw) rotate(720deg) translateY(100px); opacity: 0; }
+    0% { transform: translateX(0) rotate(0deg) translateY(0); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateX(110vw) rotate(720deg) translateY(100px); opacity: 0; }
 }
 
 /* DUST */
@@ -210,9 +221,11 @@ watch(activeEffect, () => {
     background: rgba(200,180,150,0.6);
     border-radius: 50%;
     animation: dustFloat linear infinite;
+    animation-fill-mode: backwards;
 }
 @keyframes dustFloat {
     0% { transform: translate(0,0); opacity: 0; }
+    10% { opacity: 1; }
     50% { transform: translate(20px, -20px); opacity: 1; }
     100% { transform: translate(-20px, -40px); opacity: 0; }
 }

@@ -30,7 +30,7 @@ class PlaygroundController extends Controller
                 'name' => $player['nama_kelas'] ?? '-',
             ],
         ];
-        $learningModules = $this->getLearningModules($player['id'] ?? null);
+        $learningModules = $this->getLearningModules($player['id'] ?? null, $player['kelas'] ?? null);
 
         return Inertia::render('Playground/Index', [
             'user'            => $userData,
@@ -46,11 +46,19 @@ class PlaygroundController extends Controller
      *   2. Misi     → semua misi di modul punya attempt di seluruh quiznya
      *   3. Posttest → ada Quiz_attempt untuk quiz category='posttest' milik modul
      */
-    private function getLearningModules(?string $studentId): array
+    private function getLearningModules(?string $studentId, ?string $classId): array
     {
         $modules = Learning_modules::where('is_active', true)
+            ->where(function ($query) use ($classId) {
+                if ($classId) {
+                    $query->whereHas('classes', function($q) use ($classId) {
+                        $q->where('classes.id', $classId);
+                    });
+                }
+                $query->orWhereDoesntHave('classes');
+            })
             ->orderBy('name')
-            ->with(['missions.quizzes'])
+            ->with(['missions.quizzes', 'classes:id,name'])
             ->get();
 
         return $modules->map(function ($module) use ($studentId) {
@@ -119,6 +127,7 @@ class PlaygroundController extends Controller
                 'best_score'       => $bestScore,
                 'finished'         => $fullyCompleted, // dipakai Vue untuk styling lama
                 'fully_completed'  => $fullyCompleted, // flag eksplisit untuk tombol
+                'is_general'       => $module->classes->isEmpty(), // flag modul umum / general
             ];
         })->toArray();
     }

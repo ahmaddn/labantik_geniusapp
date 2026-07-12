@@ -62,21 +62,21 @@ const handleInput = () => {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 10px;
+  padding: 8px 0;
 }
 
 .sa-card {
   width: 100%;
   max-width: 650px;
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-bottom: 4px solid #e5e7eb;
-  border-radius: 24px;
+  border: 3px solid #e2e8f0;
+  border-bottom: 6px solid #cbd5e1;
+  border-radius: 28px;
   padding: 28px 32px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
 .sa-header {
@@ -89,40 +89,42 @@ const handleInput = () => {
   width: 36px;
   height: 36px;
   background: #f3e8ff; /* Light purple background */
-  border-radius: 10px;
+  border: 2px solid #e9d5ff;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 3px 0 0 #e9d5ff;
 }
 
 .sa-title {
   font-family: 'Nunito', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
   color: #a855f7; /* Purple to match icon */
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
 }
 
 .sa-image-wrap {
   width: 100%;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 2px solid #e5e7eb;
-  background: #f9fafb;
+  border: 3px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .sa-image {
   width: 100%;
-  max-height: 250px;
+  max-height: 260px;
   object-fit: cover;
   display: block;
 }
 
 .sa-question {
   font-family: 'Nunito', sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
-  color: #374151; /* Gray-700 */
+  color: #334155;
   line-height: 1.5;
 }
 
@@ -137,43 +139,42 @@ const handleInput = () => {
 
 .sa-input {
   width: 100%;
-  padding: 16px 20px;
+  padding: 18px 20px;
   font-family: 'Nunito', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: #1f2937;
-  background-color: #f3f4f6; /* Gray-100 */
-  border: 2px solid #e5e7eb; /* Light border */
-  border-bottom: 4px solid #e5e7eb; /* Thick bottom border for 3D effect */
-  border-radius: 16px;
+  color: #334155;
+  background-color: #f8fafc;
+  border: 3px solid #cbd5e1;
+  border-radius: 18px;
   outline: none;
   resize: vertical;
   min-height: 120px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  line-height: 1.5;
 }
 
 .sa-input::placeholder {
-  color: #9ca3af;
-  font-weight: 700;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .sa-input:focus {
   background-color: #ffffff;
-  border-color: #3b82f6; /* Blue border on focus */
-  border-bottom-color: #3b82f6;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.15);
+  border-color: #a855f7;
+  box-shadow: 0 0 0 5px rgba(168, 85, 247, 0.15);
 }
 
 /* Mobile Responsiveness */
 @media (max-width: 600px) {
   .sa-card {
     padding: 20px 24px;
-    border-radius: 20px;
+    border-radius: 24px;
     gap: 20px;
   }
   
   .sa-title {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .sa-icon-wrap {
@@ -182,11 +183,11 @@ const handleInput = () => {
   }
   
   .sa-question {
-    font-size: 18px;
+    font-size: 17px;
   }
   
   .sa-input {
-    font-size: 16px;
+    font-size: 15px;
     padding: 14px 16px;
     min-height: 100px;
   }

@@ -117,6 +117,18 @@ const goToModule = (mod) => {
 
 const ACCENTS = ["#58cc02", "#1cb0f6", "#ff9600", "#a435f0"];
 const accent = (i) => ACCENTS[i % ACCENTS.length];
+
+// ── Tab switcher & Filter ──
+const activeFilter = ref("all"); // "all", "class", "general"
+
+const filteredModules = computed(() => {
+    if (activeFilter.value === "class") {
+        return props.learningModules.filter((m) => !m.is_general);
+    } else if (activeFilter.value === "general") {
+        return props.learningModules.filter((m) => m.is_general);
+    }
+    return props.learningModules;
+});
 </script>
 
 <template>
@@ -348,10 +360,38 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
                     </div>
                 </div>
 
+                <!-- ░░ TAB FILTER SWITCHER (Chunky Duolingo Style) ░░ -->
+                <div class="duo-tabs-container">
+                    <button
+                        class="duo-tab-pill"
+                        :class="{ active: activeFilter === 'all' }"
+                        @click="activeFilter = 'all'"
+                    >
+                        <BookOpen :size="16" :stroke-width="3" />
+                        <span>Semua Modul</span>
+                    </button>
+                    <button
+                        class="duo-tab-pill"
+                        :class="{ active: activeFilter === 'class' }"
+                        @click="activeFilter = 'class'"
+                    >
+                        <GraduationCap :size="16" :stroke-width="3" />
+                        <span>Modul Kelas {{ user.class?.name || '-' }}</span>
+                    </button>
+                    <button
+                        class="duo-tab-pill"
+                        :class="{ active: activeFilter === 'general' }"
+                        @click="activeFilter = 'general'"
+                    >
+                        <Star :size="16" :stroke-width="3" />
+                        <span>Modul Umum</span>
+                    </button>
+                </div>
+
                 <div class="missions-scroll-viewport">
                     <div class="missions-grid-layout">
                         <div
-                            v-for="(mod, i) in learningModules"
+                            v-for="(mod, i) in filteredModules"
                             :key="mod.id"
                             class="image-chunky-card"
                         >
@@ -1707,5 +1747,52 @@ const accent = (i) => ACCENTS[i % ACCENTS.length];
 }
 .mcta-secondary:active {
     opacity: 0.7;
+}
+
+/* ════════════════════════════════
+   TAB FILTER SWITCHER (Chunky Duolingo Style)
+   ════════════════════════════════ */
+.duo-tabs-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    padding: 0 4px;
+}
+.duo-tab-pill {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 10px 18px;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 850;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 0 #cbd5e1;
+    position: relative;
+    top: 0;
+    transition: all 0.1s ease;
+}
+.duo-tab-pill:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.duo-tab-pill:active {
+    top: 3px;
+    box-shadow: 0 1px 0 0 #cbd5e1;
+}
+.duo-tab-pill.active {
+    background: #e0f2fe;
+    border-color: #0ea5e9;
+    color: #0369a1;
+    box-shadow: 0 4px 0 0 #0284c7;
+}
+.duo-tab-pill.active:active {
+    top: 3px;
+    box-shadow: 0 1px 0 0 #0284c7;
 }
 </style>

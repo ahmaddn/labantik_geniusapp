@@ -36,6 +36,7 @@ const props = defineProps({
      */
     modules: { type: Object, default: () => ({ data: [] }) },
     templates: { type: Array, default: () => [] },
+    classes: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -95,6 +96,7 @@ const form = useForm({
     thumbnail: null,
     thumbnail_remove: false,
     is_active: false,
+    class_ids: [],
 });
 
 // ── Scroll lock ──
@@ -156,6 +158,7 @@ const openEdit = (module) => {
     form.thumbnail = null;
     form.thumbnail_remove = false;
     form.is_active = module.is_active ?? false;
+    form.class_ids = module.classes ? module.classes.map(c => c.id) : [];
 
     thumbnailPreview.value = module.thumbnail ?? null;
     showDialog.value = true;
@@ -381,6 +384,31 @@ const toggleActive = (module) => {
                                 </span>
                             </div>
                             <div
+                                v-if="module.classes && module.classes.length > 0"
+                                class="flex flex-wrap gap-1.5 items-center text-xs text-gray-500"
+                            >
+                                <GraduationCap
+                                    class="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                />
+                                <span class="font-bold text-blue-600 mr-1">Target:</span>
+                                <span
+                                    v-for="c in module.classes"
+                                    :key="c.id"
+                                    class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-blue-200"
+                                >
+                                    {{ c.name }}
+                                </span>
+                            </div>
+                            <div
+                                v-else
+                                class="flex items-center gap-2 text-xs text-gray-400"
+                            >
+                                <GraduationCap
+                                    class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
+                                />
+                                <span class="font-medium">Target: Semua Kelas</span>
+                            </div>
+                            <div
                                 v-if="module.quotes"
                                 class="flex items-start gap-2 text-xs text-gray-500"
                             >
@@ -532,6 +560,33 @@ const toggleActive = (module) => {
                     border-color="blue"
                     :error="form.errors.template_id"
                 />
+
+                <!-- Target Kelas (Pivot Table Selection) -->
+                <div class="mt-4 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100">
+                    <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                        <GraduationCap class="w-4 h-4 text-blue-500" />
+                        Target Kelas (Kosongkan jika untuk Semua Kelas / Umum)
+                    </label>
+                    <div v-if="classes && classes.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <label
+                            v-for="cls in classes"
+                            :key="cls.id"
+                            class="flex items-center gap-2.5 p-2.5 bg-white hover:bg-blue-50 border-2 rounded-xl cursor-pointer transition-all duration-200"
+                            :class="form.class_ids.includes(cls.id) ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-gray-200'"
+                        >
+                            <input
+                                type="checkbox"
+                                :value="cls.id"
+                                v-model="form.class_ids"
+                                class="rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                            />
+                            <span class="text-sm font-bold text-gray-700">{{ cls.name }}</span>
+                        </label>
+                    </div>
+                    <div v-else class="text-xs text-gray-400">
+                        Belum ada kelas terdaftar. Modul akan otomatis berstatus umum.
+                    </div>
+                </div>
 
                 <!-- Deskripsi -->
                 <TextAreaField

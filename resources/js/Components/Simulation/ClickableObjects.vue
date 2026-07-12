@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { CheckCircle2, XCircle, Hand, Image as ImageIcon } from 'lucide-vue-next';
+import { CheckCircle2, XCircle, Hand, Image as ImageIcon, Sparkles, AlertTriangle, MessageSquare } from 'lucide-vue-next';
 import { useSfx } from '@/Composable/useSfx';
 
 const props = defineProps({
@@ -44,7 +44,11 @@ const getImageUrl = (path) => {
                     <div class="co-front">
                         <!-- top color bar -->
                         <div class="co-topbar">
-                            <span class="co-type-label">{{ obj.is_positive ? '🌟 Positif' : '⚠️ Negatif' }}</span>
+                            <span class="co-type-label">
+                                <Sparkles v-if="obj.is_positive" :size="12" :stroke-width="2.5" class="inline-block mr-1 align-middle" />
+                                <AlertTriangle v-else :size="12" :stroke-width="2.5" class="inline-block mr-1 align-middle" />
+                                <span class="align-middle">{{ obj.is_positive ? 'Positif' : 'Negatif' }}</span>
+                            </span>
                             <span class="co-card-no">{{ String(index + 1).padStart(2,'0') }}</span>
                         </div>
 
@@ -68,8 +72,8 @@ const getImageUrl = (path) => {
 
                         <!-- tap hint -->
                         <div class="co-tap-hint">
-                            <Hand :size="14" :stroke-width="2.5" />
-                            <span>Ketuk untuk lihat dampak!</span>
+                            <Hand :size="13" :stroke-width="2.5" class="inline-block align-middle mr-1" />
+                            <span class="align-middle">Ketuk untuk lihat dampak!</span>
                         </div>
 
                         <!-- decorative dots -->
@@ -82,7 +86,11 @@ const getImageUrl = (path) => {
                     <div class="co-back">
                         <!-- top bar -->
                         <div class="co-topbar">
-                            <span class="co-type-label">{{ obj.is_positive ? '🌟 Dampak Positif' : '⚠️ Dampak Negatif' }}</span>
+                            <span class="co-type-label">
+                                <Sparkles v-if="obj.is_positive" :size="12" :stroke-width="2.5" class="inline-block mr-1 align-middle" />
+                                <AlertTriangle v-else :size="12" :stroke-width="2.5" class="inline-block mr-1 align-middle" />
+                                <span class="align-middle">{{ obj.is_positive ? 'Dampak Positif' : 'Dampak Negatif' }}</span>
+                            </span>
                         </div>
 
                         <!-- name -->
@@ -98,14 +106,17 @@ const getImageUrl = (path) => {
 
                         <!-- impact text box -->
                         <div class="co-impact-box">
-                            <p class="co-impact-label">💬 Dampaknya:</p>
+                            <p class="co-impact-label">
+                                <MessageSquare :size="11" :stroke-width="2.5" class="inline-block mr-1 align-middle" />
+                                <span class="align-middle">Dampaknya:</span>
+                            </p>
                             <p class="co-impact-text">{{ obj.impact_text }}</p>
                         </div>
 
                         <!-- footer hint -->
                         <div class="co-back-hint">
-                            <Hand :size="12" :stroke-width="2.5" />
-                            <span>Ketuk lagi untuk kembali</span>
+                            <Hand :size="12" :stroke-width="2.5" class="inline-block align-middle mr-1" />
+                            <span class="align-middle">Ketuk lagi untuk kembali</span>
                         </div>
                     </div>
 
@@ -139,8 +150,8 @@ const getImageUrl = (path) => {
 .co-card-wrap {
     perspective: 1000px;
     cursor: pointer;
-    width: 200px;
-    height: 310px;
+    width: 240px;
+    height: 360px;
     flex-shrink: 0;
     transition: transform 0.25s;
 }
@@ -161,66 +172,66 @@ const getImageUrl = (path) => {
     inset: 0;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    border-radius: 20px;
+    border-radius: 24px;
     display: flex;
     flex-direction: column;
-    padding: 10px;
-    gap: 8px;
+    padding: 14px;
+    gap: 10px;
     overflow: hidden;
 }
 
-/* ─── Theme: Positive (soft teal/green) ────── */
+/* ─── Theme: Positive (soft emerald/green) ────── */
 .theme-pos .co-front,
 .theme-pos .co-back {
-    background: #edfaf4;
-    border: 3px solid #6ee7b7;
-    box-shadow: 0 6px 0 0 #6ee7b7, 0 10px 20px rgba(110,231,183,0.25);
+    background: #f0fdf4;
+    border: 3px solid #10b981;
+    box-shadow: 0 6px 0 0 #10b981, 0 12px 24px rgba(16,185,129,0.12);
 }
-.theme-pos .co-topbar   { background: #6ee7b7; }
-.theme-pos .co-imgbox   { border-color: #a7f3d0; background: #f0fdf8; }
-.theme-pos .co-tap-hint { background: #d1fae5; border-color: #6ee7b7; color: #059669; }
+.theme-pos .co-topbar   { background: #d1fae5; border: 1.5px solid #a7f3d0; color: #065f46; }
+.theme-pos .co-imgbox   { border-color: #a7f3d0; background: #ffffff; }
+.theme-pos .co-tap-hint { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
 .theme-pos .co-dots span { background: #a7f3d0; }
-.theme-pos .co-impact-box { background: #d1fae5; border-color: #a7f3d0; }
-.theme-pos .co-result-icon { color: #059669; }
-.theme-pos .co-back-hint  { color: #059669; }
+.theme-pos .co-impact-box { background: #ffffff; border-color: #e2e8f0; }
+.theme-pos .co-result-icon { color: #10b981; }
+.theme-pos .co-back-hint  { color: #065f46; }
 .theme-pos .co-name { color: #065f46; }
 .theme-pos .co-type-label { color: #065f46; }
 .theme-pos .co-card-no { color: #065f46; }
 
-/* ─── Theme: Negative (soft coral/orange) ─── */
+/* ─── Theme: Negative (soft rose/red) ─── */
 .theme-neg .co-front,
 .theme-neg .co-back {
-    background: #fff7ed;
-    border: 3px solid #fdba74;
-    box-shadow: 0 6px 0 0 #fdba74, 0 10px 20px rgba(253,186,116,0.25);
+    background: #fef2f2;
+    border: 3px solid #f87171;
+    box-shadow: 0 6px 0 0 #f87171, 0 12px 24px rgba(248,113,113,0.12);
 }
-.theme-neg .co-topbar   { background: #fdba74; }
-.theme-neg .co-imgbox   { border-color: #fed7aa; background: #fffbf5; }
-.theme-neg .co-tap-hint { background: #ffedd5; border-color: #fdba74; color: #c2410c; }
-.theme-neg .co-dots span { background: #fed7aa; }
-.theme-neg .co-impact-box { background: #ffedd5; border-color: #fed7aa; }
-.theme-neg .co-result-icon { color: #dc2626; }
-.theme-neg .co-back-hint  { color: #c2410c; }
-.theme-neg .co-name { color: #7c2d12; }
-.theme-neg .co-type-label { color: #7c2d12; }
-.theme-neg .co-card-no { color: #7c2d12; }
+.theme-neg .co-topbar   { background: #fee2e2; border: 1.5px solid #fca5a5; color: #7f1d1d; }
+.theme-neg .co-imgbox   { border-color: #fca5a5; background: #ffffff; }
+.theme-neg .co-tap-hint { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+.theme-neg .co-dots span { background: #fca5a5; }
+.theme-neg .co-impact-box { background: #ffffff; border-color: #e2e8f0; }
+.theme-neg .co-result-icon { color: #ef4444; }
+.theme-neg .co-back-hint  { color: #7f1d1d; }
+.theme-neg .co-name { color: #7f1d1d; }
+.theme-neg .co-type-label { color: #7f1d1d; }
+.theme-neg .co-card-no { color: #7f1d1d; }
 
 /* ─── Top bar ─────────────────────────────── */
 .co-topbar {
-    border-radius: 10px;
-    padding: 5px 10px;
+    border-radius: 12px;
+    padding: 6px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
 }
 .co-type-label {
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 900;
     letter-spacing: 0.3px;
 }
 .co-card-no {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 900;
     opacity: 0.7;
 }
@@ -231,7 +242,7 @@ const getImageUrl = (path) => {
     flex-shrink: 0;
 }
 .co-name {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 900;
     line-height: 1.25;
     margin: 0;
@@ -241,7 +252,7 @@ const getImageUrl = (path) => {
 /* ─── Image box ───────────────────────────── */
 .co-imgbox {
     flex: 1;
-    border-radius: 14px;
+    border-radius: 16px;
     border: 2.5px solid;
     overflow: hidden;
     display: flex;
@@ -253,7 +264,7 @@ const getImageUrl = (path) => {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 6px;
+    padding: 8px;
 }
 .co-img-placeholder {
     display: flex;
@@ -270,11 +281,11 @@ const getImageUrl = (path) => {
     align-items: center;
     justify-content: center;
     gap: 5px;
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 800;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 2px solid;
-    padding: 5px 8px;
+    padding: 6px 10px;
     flex-shrink: 0;
     animation: bounceHint 2s ease-in-out infinite;
 }
@@ -309,9 +320,9 @@ const getImageUrl = (path) => {
 /* ─── Impact box ──────────────────────────── */
 .co-impact-box {
     flex: 1;
-    border-radius: 14px;
+    border-radius: 16px;
     border: 2px solid;
-    padding: 10px 12px;
+    padding: 12px 14px;
     overflow-y: auto;
     min-height: 0;
 }
@@ -327,7 +338,7 @@ const getImageUrl = (path) => {
     letter-spacing: 0.5px;
 }
 .co-impact-text {
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 700;
     color: #374151;
     line-height: 1.55;
@@ -340,7 +351,7 @@ const getImageUrl = (path) => {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    font-size: 9.5px;
+    font-size: 11px;
     font-weight: 800;
     opacity: 0.75;
     flex-shrink: 0;
@@ -348,9 +359,14 @@ const getImageUrl = (path) => {
 
 /* ─── Mobile ──────────────────────────────── */
 @media (max-width: 500px) {
-    .co-card-wrap { width: calc(50% - 10px); height: 270px; }
-    .co-name { font-size: 13px; }
-    .co-impact-text { font-size: 11.5px; }
+    .co-card-wrap { width: calc(50% - 10px); height: 290px; }
+    .co-name { font-size: 14px; }
+    .co-impact-text { font-size: 12px; }
     .co-grid { gap: 14px; }
+    .co-front, .co-back { padding: 10px; gap: 8px; border-radius: 20px; }
+    .co-tap-hint { font-size: 11px; padding: 4px 8px; border-radius: 10px; }
+    .co-topbar { padding: 4px 8px; border-radius: 10px; }
+    .co-type-label { font-size: 11px; }
+    .co-card-no { font-size: 11px; }
 }
 </style>

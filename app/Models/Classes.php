@@ -34,4 +34,9 @@ class Classes extends Model
     {
         return $this->hasMany(User::class, 'class_id');
     }
+
+    public function learningModules()
+    {
+        return $this->belongsToMany(Learning_modules::class, 'learning_module_classes', 'class_id', 'learning_module_id');
+    }
 }

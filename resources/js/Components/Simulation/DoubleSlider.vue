@@ -38,15 +38,15 @@ const isWarning = computed(() => {
     return dangerScore.value >= mid && dangerScore.value < Math.floor(max * 0.8);
 });
 
-const statusColor = computed(() => isDanger.value ? '#ef4444' : isWarning.value ? '#eab308' : '#58cc02');
+const statusColor = computed(() => isDanger.value ? '#ef4444' : isWarning.value ? '#eab308' : '#22c55e');
 const statusBg = computed(() => isDanger.value ? '#fef2f2' : isWarning.value ? '#fefce8' : '#f0fdf4');
-const statusBorder = computed(() => isDanger.value ? '#fca5a5' : isWarning.value ? '#fde047' : '#86efac');
+const statusBorder = computed(() => isDanger.value ? '#fca5a5' : isWarning.value ? '#fde047' : '#bbf7d0');
 const statusLabel = computed(() => isDanger.value ? 'BAHAYA' : isWarning.value ? 'WASPADA' : 'AMAN');
 const levelImage = computed(() => currentLevelData.value?.image ? `/storage/${currentLevelData.value.image}` : null);
 const levelNarration = computed(() => currentLevelData.value?.narration || 'Ayo ubah penggeser untuk melihat dampaknya!');
 
-const sliderColor = (idx) => (['#1cb0f6', '#58cc02', '#f97316', '#a855f7'][idx % 4]);
-const sliderTrackColor = (idx) => (['#bae6fd', '#bbf7d0', '#fdba74', '#e9d5ff'][idx % 4]);
+const sliderColor = (idx) => (['#1cb0f6', '#10b981', '#f97316', '#a855f7'][idx % 4]);
+const sliderTrackColor = (idx) => (['#bae6fd', '#a7f3d0', '#fdba74', '#e9d5ff'][idx % 4]);
 
 watch(sliderValues, () => {
     emit('update-answer', { value: Object.values(sliderValues).join('-') });
@@ -68,7 +68,7 @@ onMounted(() => {
                 <transition :name="currentLevelData?.image_transition !== 'none' ? 'magic-' + currentLevelData?.image_transition : ''">
                     <img :key="levelImage" v-if="levelImage" :src="levelImage" class="ds-visual-img" />
                     <div v-else class="ds-visual-placeholder">
-                        <ImageIcon :size="48" color="#cbd5e1" :stroke-width="1.5" />
+                        <ImageIcon :size="40" color="#94a3b8" :stroke-width="1.5" />
                         <span>Gambar Belum Tersedia</span>
                     </div>
                 </transition>
@@ -77,17 +77,17 @@ onMounted(() => {
 
                 <!-- Status badge -->
                 <div class="ds-status-badge" :style="{ background: statusBg, borderColor: statusBorder, color: statusColor }">
-                    <AlertTriangle v-if="isDanger" :size="16" :stroke-width="3" />
-                    <AlertCircle v-else-if="isWarning" :size="16" :stroke-width="3" />
-                    <CheckCircle2 v-else :size="16" :stroke-width="3" />
-                    {{ statusLabel }}
+                    <AlertTriangle v-if="isDanger" :size="14" :stroke-width="3" />
+                    <AlertCircle v-else-if="isWarning" :size="14" :stroke-width="3" />
+                    <CheckCircle2 v-else :size="14" :stroke-width="3" />
+                    <span class="ds-status-text">{{ statusLabel }}</span>
                 </div>
             </div>
 
             <!-- Narration panel -->
             <div class="ds-narration">
                 <div class="ds-narration-badge">
-                    <MessageCircle :size="24" color="#1cb0f6" :stroke-width="2.5" />
+                    <MessageCircle :size="20" color="#1cb0f6" :stroke-width="2.5" />
                 </div>
                 <p class="ds-level-name" v-if="currentLevelData">"{{ currentLevelData.level_name || 'Amati Perubahan' }}"</p>
                 <p class="ds-level-narration">{{ levelNarration }}</p>
@@ -95,7 +95,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- Sliders -->
+        <!-- Sliders Controls Area -->
         <div class="ds-controls">
             <div v-if="variables.length === 0" class="ds-empty">Belum ada variabel penggeser.</div>
 
@@ -105,19 +105,20 @@ onMounted(() => {
                         {{ v.name || `Variabel ${idx + 1}` }}
                     </span>
                     <span class="ds-slider-value">
-                        {{ sliderValues[idx] === 1 ? (v.min_label || 'Min') : sliderValues[idx] === 3 ? (v.max_label || 'Max') : 'Sedang' }}
+                        {{ sliderValues[idx] === 1 ? (v.min_label || 'Rendah') : sliderValues[idx] === 3 ? (v.max_label || 'Tinggi') : 'Sedang' }}
                     </span>
                 </div>
-                <div class="ds-slider-row">
-                    <span class="ds-slider-edge">{{ v.min_label || 'Min' }}</span>
-                    <div class="ds-slider-track-wrap">
+                
+                <div class="ds-slider-inner-row">
+                    <span class="ds-slider-limit-label">{{ v.min_label || 'Rendah' }}</span>
+                    <div class="ds-slider-container">
                         <input
                             type="range"
                             min="1" max="3" step="1"
                             v-model.number="sliderValues[idx]"
                             class="ds-slider"
                             :style="{
-                                '--track-color': sliderTrackColor(idx),
+                                '--track-color': '#cbd5e1',
                                 '--thumb-color': sliderColor(idx),
                             }"
                         />
@@ -125,7 +126,7 @@ onMounted(() => {
                             <div v-for="s in 3" :key="s" class="ds-dot" :class="{ 'ds-dot-on': sliderValues[idx] >= s }" :style="{ background: sliderValues[idx] >= s ? sliderColor(idx) : '#cbd5e1' }"></div>
                         </div>
                     </div>
-                    <span class="ds-slider-edge">{{ v.max_label || 'Max' }}</span>
+                    <span class="ds-slider-limit-label">{{ v.max_label || 'Tinggi' }}</span>
                 </div>
             </div>
         </div>
@@ -133,44 +134,48 @@ onMounted(() => {
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
 .ds-wrap {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
+    font-family: 'Nunito', sans-serif;
 }
 
 /* Title */
 .ds-title {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 900;
-    color: #58cc02;
+    color: #1cb0f6;
     text-transform: uppercase;
     text-align: center;
     letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
 /* Main Area */
 .ds-main {
     display: flex;
-    gap: 20px;
+    gap: 24px;
     align-items: stretch;
 }
 
-/* Visual */
+/* Visual Box */
 .ds-visual {
-    flex: 1.5;
+    flex: 1.3;
     position: relative;
-    border-radius: 20px;
-    border: 2px solid #cbd5e1;
-    border-bottom-width: 5px;
-    background: #f1f5f9;
+    border-radius: 24px;
+    border: 3px solid #cbd5e1;
+    border-bottom-width: 6px;
+    background: #f8fafc;
     overflow: hidden;
-    min-height: 200px;
+    min-height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 .ds-visual-danger { border-color: #ef4444; }
 .ds-quake { animation: ds-quake-shake 0.35s cubic-bezier(.36,.07,.19,.97) infinite; }
@@ -181,25 +186,24 @@ onMounted(() => {
     60% { transform: translate(-2px,3px); }
     80% { transform: translate(2px,-2px); }
 }
-.ds-visual-img { width: 100%; height: 100%; object-fit: cover; z-index: 10; position: absolute; top: 0; left: 0; }
-.ds-visual-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-weight: 800; font-size: 14px; position: absolute; width: 100%; height: 100%; }
+.ds-visual-img { width: 100%; height: 100%; object-fit: cover; z-index: 10; position: absolute; top: 0; left: 0; will-change: transform, opacity; }
+.ds-visual-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-weight: 800; font-size: 13px; position: absolute; width: 100%; height: 100%; }
 
-/* Magic Transitions */
-.magic-fade-enter-active, .magic-fade-leave-active { transition: opacity 0.8s ease-in-out; }
+/* Transitions */
+.magic-fade-enter-active, .magic-fade-leave-active { transition: opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
 .magic-fade-enter-from, .magic-fade-leave-to { opacity: 0; }
 
-.magic-zoom-fade-enter-active, .magic-zoom-fade-leave-active { transition: all 0.8s ease-in-out; }
-.magic-zoom-fade-enter-from { opacity: 0; transform: scale(1.1); }
-.magic-zoom-fade-leave-to { opacity: 0; transform: scale(0.9); }
+.magic-zoom-fade-enter-active, .magic-zoom-fade-leave-active { transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.magic-zoom-fade-enter-from { opacity: 0; transform: scale(1.04); }
+.magic-zoom-fade-leave-to { opacity: 0; transform: scale(0.96); }
 
-.magic-slide-left-enter-active, .magic-slide-left-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.magic-slide-left-enter-from { opacity: 0; transform: translateX(10%); }
-.magic-slide-left-leave-to { opacity: 0; transform: translateX(-10%); }
+.magic-slide-left-enter-active, .magic-slide-left-leave-active { transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.magic-slide-left-enter-from { opacity: 0; transform: translateX(4%); }
+.magic-slide-left-leave-to { opacity: 0; transform: translateX(-4%); }
 
-.magic-slide-right-enter-active, .magic-slide-right-leave-active { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.magic-slide-right-enter-from { opacity: 0; transform: translateX(-10%); }
-.magic-slide-right-leave-to { opacity: 0; transform: translateX(10%); }
-
+.magic-slide-right-enter-active, .magic-slide-right-leave-active { transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.magic-slide-right-enter-from { opacity: 0; transform: translateX(-4%); }
+.magic-slide-right-leave-to { opacity: 0; transform: translateX(4%); }
 
 .ds-status-badge {
     position: absolute;
@@ -209,124 +213,188 @@ onMounted(() => {
     gap: 6px;
     border-radius: 99px;
     padding: 6px 14px;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 900;
-    border: 2px solid;
+    border: 2.5px solid;
     z-index: 30;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
 }
+.ds-status-text {
+    letter-spacing: 0.5px;
+}
 
-/* Narration */
+/* Narration Panel */
 .ds-narration {
     flex: 1;
-    border-radius: 20px;
-    border: 2px solid #bae6fd;
+    border-radius: 24px;
+    border: 3px solid #bae6fd;
+    border-bottom-width: 6px;
     background: #f0f9ff;
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 12px;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 .ds-narration-badge {
-    width: 48px; height: 48px;
+    width: 44px; height: 44px;
     border-radius: 50%;
     background: #ffffff;
+    border: 2px solid #bae6fd;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 0 0 #bae6fd;
+    box-shadow: 0 3px 0 0 #bae6fd;
     flex-shrink: 0;
 }
-.ds-level-name { font-size: 16px; font-weight: 800; color: #0369a1; font-style: italic; }
-.ds-level-narration { font-size: 14px; font-weight: 700; color: #475569; line-height: 1.5; }
+.ds-level-name { font-size: 15px; font-weight: 900; color: #0284c7; }
+.ds-level-narration { font-size: 13.5px; font-weight: 800; color: #475569; line-height: 1.5; }
 .ds-metric-pill {
     background: #ffffff;
     color: #1cb0f6;
-    border-radius: 99px;
-    padding: 6px 16px;
-    font-size: 14px;
-    font-weight: 800;
-    border: 2px solid #bae6fd;
+    border-radius: 14px;
+    border: 2.5px solid #bae6fd;
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 900;
+    box-shadow: 0 2px 5px rgba(28, 176, 246, 0.05);
 }
 
-/* Sliders */
+/* Controls Center */
 .ds-controls {
     background: #ffffff;
-    border-radius: 20px;
-    border: 2px solid #cbd5e1;
-    padding: 20px;
+    border-radius: 28px;
+    border: 3px solid #e2e8f0;
+    border-bottom-width: 6px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
-.ds-empty { text-align: center; color: #94a3b8; font-weight: 800; font-size: 15px; }
-.ds-slider-group { display: flex; flex-direction: column; gap: 10px; }
-.ds-slider-header { display: flex; align-items: center; justify-content: space-between; }
-.ds-slider-name {
-    font-size: 13px;
-    font-weight: 900;
-    border-radius: 8px;
-    padding: 4px 12px;
-}
-.ds-slider-value { font-size: 13px; font-weight: 800; color: #64748b; }
-
-.ds-slider-row {
+.ds-empty { text-align: center; color: #94a3b8; font-weight: 800; font-size: 14px; }
+.ds-slider-group {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    padding: 16px;
+    border-radius: 20px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
 }
-.ds-slider-edge { font-size: 12px; font-weight: 800; color: #94a3b8; min-width: 32px; text-align: center; }
-.ds-slider-track-wrap { flex: 1; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.ds-slider-header { display: flex; align-items: center; justify-content: space-between; }
+.ds-slider-name {
+    font-size: 11px;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.ds-slider-value {
+    font-size: 11px;
+    font-weight: 900;
+    color: #1cb0f6;
+    background: #f0f9ff;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1.5px solid #bae6fd;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
 
+.ds-slider-inner-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+.ds-slider-limit-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    width: 60px;
+}
+.ds-slider-inner-row .ds-slider-limit-label:first-child {
+    text-align: right;
+}
+.ds-slider-inner-row .ds-slider-limit-label:last-child {
+    text-align: left;
+}
+
+.ds-slider-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 24px;
+}
+
+/* Custom Slider peg */
 .ds-slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 12px;
-    background: var(--track-color, #e2e8f0);
+    height: 8px;
+    background: var(--track-color, #cbd5e1);
     border-radius: 99px;
     outline: none;
     cursor: pointer;
+    position: relative;
+    z-index: 10;
 }
+
 .ds-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 28px; height: 28px;
+    width: 24px; height: 24px;
     border-radius: 50%;
     background: var(--thumb-color, #1cb0f6);
-    box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
+    border: 4px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     cursor: pointer;
     transition: transform 0.1s;
 }
+.ds-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .ds-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
+
 .ds-slider::-moz-range-thumb {
-    width: 28px; height: 28px;
-    border: none;
+    width: 16px; height: 16px;
+    border: 4px solid #ffffff;
     border-radius: 50%;
     background: var(--thumb-color, #1cb0f6);
-    box-shadow: 0 0 0 4px #fff, 0 4px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     cursor: pointer;
+    transition: transform 0.1s;
 }
+.ds-slider::-moz-range-thumb:hover { transform: scale(1.15); }
 
 .ds-step-dots {
     display: flex;
     justify-content: space-between;
-    padding: 0 14px;
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 5;
 }
 .ds-dot {
-    width: 8px; height: 8px;
+    width: 6px; height: 6px;
     border-radius: 50%;
+    background: #cbd5e1;
     transition: background 0.3s;
 }
 
 /* Mobile Responsive */
-@media (max-width: 640px) {
-    .ds-main { flex-direction: column; }
-    .ds-visual { min-height: 160px; border-radius: 16px; }
-    .ds-sliders-grid { display: flex; flex-direction: column; gap: 12px; }
-    .ds-slider-row { grid-template-columns: 1fr; gap: 8px; }
-    .ds-slider-label-col { text-align: left; }
+@media (max-width: 768px) {
+    .ds-main { flex-direction: column; gap: 16px; }
+    .ds-visual { min-height: 180px; }
+    .ds-slider-inner-row { gap: 8px; }
+    .ds-slider-limit-label { width: 45px; font-size: 9.5px; }
 }
 </style>

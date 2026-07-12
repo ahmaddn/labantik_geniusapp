@@ -59,6 +59,11 @@ class Learning_modules extends Model
         });
     }
 
+    public function classes()
+    {
+        return $this->belongsToMany(Classes::class, 'learning_module_classes', 'learning_module_id', 'class_id');
+    }
+
     public function missions()
     {
         return $this->hasMany(Missions::class, 'module_id');

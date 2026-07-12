@@ -18,7 +18,7 @@ class ModulesController extends Controller
      */
     public function index()
     {
-        $modules = Learning_modules::with(['createdBy:id,name'])
+        $modules = Learning_modules::with(['createdBy:id,name', 'classes:id,name'])
             ->latest()
             ->paginate(12)
             ->through(fn($m) => [
@@ -31,14 +31,18 @@ class ModulesController extends Controller
                 'thumbnail'   => $m->thumbnail ? Storage::url($m->thumbnail) : null,
                 'template_id' => $m->template_id,
                 'created_by'  => $m->created_by,
-                'is_active'   => $m->is_active, // ✅ Tambahkan ini
+                'is_active'   => $m->is_active,
+                'classes'     => $m->classes->map(fn($c) => ['id' => $c->id, 'name' => $c->name]),
                 'template'    => $m->template,
                 'createdBy'   => $m->createdBy,
                 'created_at'  => $m->created_at,
             ]);
 
+        $classes = \App\Models\Classes::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('Admin/Modules/Index', [
             'modules'   => $modules,
+            'classes'   => $classes,
         ]);
     }
 
@@ -55,7 +59,9 @@ class ModulesController extends Controller
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
-            'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
+            'is_active'   => 'nullable|boolean',
+            'class_ids'   => 'nullable|array',
+            'class_ids.*' => 'exists:classes,id',
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
@@ -69,7 +75,7 @@ class ModulesController extends Controller
                 ->store('modules/thumbnails', 'public');
         }
 
-        Learning_modules::create([
+        $module = Learning_modules::create([
             'name'        => $validated['name'],
             'description' => $validated['description'] ?? '',
             'content'     => $validated['content'] ?? '',
@@ -78,8 +84,12 @@ class ModulesController extends Controller
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
             'created_by'  => Auth::id(),
-            'is_active'   => $validated['is_active'] ?? false, // ✅ Tambahkan ini
+            'is_active'   => $validated['is_active'] ?? false,
         ]);
+
+        if (!empty($validated['class_ids'])) {
+            $module->classes()->sync($validated['class_ids']);
+        }
 
         return redirect()->route('admin.modules.index')
             ->with('success', 'Modul berhasil ditambahkan.');
@@ -172,7 +182,9 @@ class ModulesController extends Controller
             'closing_text' => 'nullable|string',
             'template_id' => 'nullable|exists:templates,id',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5014',
-            'is_active'   => 'nullable|boolean', // ✅ Tambahkan validasi
+            'is_active'   => 'nullable|boolean',
+            'class_ids'   => 'nullable|array',
+            'class_ids.*' => 'exists:classes,id',
         ], [
             'name.required'        => 'Nama modul wajib diisi.',
             'thumbnail.image'      => 'File harus berupa gambar.',
@@ -207,8 +219,14 @@ class ModulesController extends Controller
             'closing_text' => $validated['closing_text'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'thumbnail'   => $thumbnailPath,
-            'is_active'   => $validated['is_active'] ?? $modules->is_active, // ✅ Tambahkan ini
+            'is_active'   => $validated['is_active'] ?? $modules->is_active,
         ]);
+
+        if (isset($validated['class_ids'])) {
+            $modules->classes()->sync($validated['class_ids']);
+        } else {
+            $modules->classes()->sync([]);
+        }
 
         return redirect()->route('admin.modules.index')
             ->with('success', 'Modul berhasil diperbarui.');

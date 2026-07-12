@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { CheckCircle2, Circle } from 'lucide-vue-next'
+import { CheckCircle2, XCircle, Circle } from 'lucide-vue-next'
 import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
@@ -62,11 +62,16 @@ const handleSelect = (optionId) => {
         </div>
 
         <div class="tf-inner">
+          <div class="tf-content-left">
+            <span class="tf-label">{{ option.option_text || option.text }}</span>
+          </div>
           
-          <span class="tf-label">{{ option.option_text || option.text }}</span>
-          <div class="tf-radio">
-            <CheckCircle2 v-if="selectedAnswer === option.id" :size="20" :stroke-width="2" />
-            <Circle v-else :size="20" :stroke-width="1.8" />
+          <div class="tf-indicator">
+            <template v-if="selectedAnswer === option.id">
+              <CheckCircle2 v-if="isTrue(option)" :size="22" color="#22c55e" :stroke-width="3" />
+              <XCircle v-else :size="22" color="#ef4444" :stroke-width="3" />
+            </template>
+            <Circle v-else :size="22" color="#cbd5e1" :stroke-width="2.5" />
           </div>
         </div>
       </button>
@@ -75,136 +80,131 @@ const handleSelect = (optionId) => {
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
 .tf-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 16px;
+  font-family: 'Nunito', sans-serif;
 }
 
 .tf-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
+  gap: 16px;
 }
 
 .tf-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  background: #f8fafc;
-  border: 2.5px solid #e2e8f0;
-  border-radius: 14px;
+  background: #ffffff;
+  border: 3px solid #e2e8f0;
+  border-bottom-width: 6px;
+  border-radius: 24px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   overflow: hidden;
   padding: 0;
+  width: 100%;
+  position: relative;
+  outline: none;
 }
 
 .tf-option:hover {
-  background: #f1f5f9;
+  transform: translateY(-2px);
   border-color: #cbd5e1;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
+/* True Selected Styling (Green) */
 .tf-true.selected {
-  background: #dcfce7;
-  border-color: #4ade80;
-  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.12);
+  background: #f0fdf4;
+  border-color: #22c55e;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.08);
+}
+.tf-true.selected:hover {
+  border-color: #22c55e;
 }
 
+/* False Selected Styling (Red) */
 .tf-false.selected {
-  background: #e2feef;
-  border-color: #44ef77;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+  background: #fef2f2;
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+}
+.tf-false.selected:hover {
+  border-color: #ef4444;
 }
 
 /* Image area */
 .tf-img-wrap {
   width: 100%;
-  background: #fff;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: #ffffff;
+  border-bottom: 2px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
-  max-height: 120px;
+  padding: 12px;
+  height: 140px;
   overflow: hidden;
 }
 
 .tf-img {
   max-width: 100%;
-  max-height: 100px;
+  max-height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 /* Inner row */
 .tf-inner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 1rem;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
   width: 100%;
 }
 
-.tf-icon-wrap {
+.tf-content-left {
+  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.tf-true .tf-icon-wrap {
-  background: rgba(74, 222, 128, 0.15);
-  color: #16a34a;
-}
-
-.tf-false .tf-icon-wrap {
-  background: rgba(239, 68, 68, 0.1);
-  color: #26dc44;
 }
 
 .tf-label {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   color: #334155;
-  flex: 1;
-  text-align: center;
+  text-align: left;
 }
 
 .tf-true.selected .tf-label {
-  color: #166534;
+  color: #15803d;
 }
 
 .tf-false.selected .tf-label {
-  color: #1d7f32;
+  color: #b91c1c;
 }
 
-.tf-radio {
+.tf-indicator {
   flex-shrink: 0;
-  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.tf-true.selected .tf-radio {
-  color: #16a34a;
-}
-
-.tf-false.selected .tf-radio {
-  color: #26dc3e;
-}
-
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .tf-options {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .tf-inner {
+    padding: 14px 16px;
+  }
+  .tf-label {
+    font-size: 15px;
   }
 }
 </style>
