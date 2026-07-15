@@ -165,6 +165,7 @@ class ReportsController extends Controller
         $missionLogs = $missionLogsRaw->map(function ($log) {
             return [
                 'id' => $log->id,
+                'student_id' => $log->user_id,
                 'student_name' => $log->user ? $log->user->name : '-',
                 'mission_name' => $log->mission ? $log->mission->name : '-',
                 'attempt_number' => $log->attempt_number,
@@ -202,20 +203,34 @@ class ReportsController extends Controller
             'attempt_id'  => $a->id,
             'quiz_id'     => $a->quiz_id,
             'quiz_title'  => $a->quiz?->title ?? 'Quiz',
-            'quiz_type'   => $a->quiz?->type,
+            'quiz_type'   => $a->quiz?->type ?? ($a->quiz?->category ?? 'general'),
             'score'       => (int) $a->score,
             'started_at'  => $a->started_at,
             'finished_at' => $a->finished_at,
-            'answers'     => $a->answers->map(fn($ans) => [
-                'question_id'   => $ans->question_id,
-                'question_text' => $ans->question?->question_text,
-                'response'      => $ans->response,
-                'selected_option' => $ans->selectedOption ? $ans->selectedOption->option_text : null,
-                'is_correct'    => $ans->selectedOption ? (bool)$ans->selectedOption->is_correct : null,
-                // Include options or groups if needed for more complex rendering
-                'options'       => $ans->question?->options,
-                'dragDropGroups'=> $ans->question?->dragDropGroups,
-            ]),
+            'answers'     => $a->answers->map(function($ans) {
+                if ($ans->question) {
+                    [$isCorrect, $userAnswerText, $correctAnswerText, $userAnswerMap, $correctAnswerMap] = $this->checkAnswer($ans, $ans->question);
+                } else {
+                    $isCorrect = null;
+                    $userAnswerText = null;
+                    $correctAnswerText = null;
+                    $userAnswerMap = [];
+                    $correctAnswerMap = [];
+                }
+                return [
+                    'question_id'   => $ans->question_id,
+                    'question_text' => $ans->question?->question_text ?? 'Pertanyaan Terhapus',
+                    'response'      => $ans->response,
+                    'selected_option' => $ans->selectedOption ? $ans->selectedOption->option_text : null,
+                    'is_correct'    => $isCorrect,
+                    'user_answer_text' => $userAnswerText,
+                    'correct_answer_text' => $correctAnswerText,
+                    'user_answer_map' => $userAnswerMap,
+                    'correct_answer_map' => $correctAnswerMap,
+                    'options'       => $ans->question?->options,
+                    'dragDropGroups'=> $ans->question?->dragDropGroups,
+                ];
+            }),
         ])->values();
 
         $overall = $quizzes->count() > 0 ? (int) round($quizzes->avg('score')) : 0;

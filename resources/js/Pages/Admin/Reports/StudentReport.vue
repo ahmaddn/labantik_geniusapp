@@ -519,15 +519,30 @@ onMounted(() => {
                 <div v-for="(ans, idx) in selectedItemForAnswers.answers" :key="idx" class="bg-gray-50 p-4 rounded-2xl border-2 border-gray-100">
                     <p class="font-bold text-gray-800 mb-2">{{ idx + 1 }}. {{ ans.question_text || 'Pertanyaan' }}</p>
                     
-                    <div v-if="selectedItemForAnswers.quiz_type === 'drag_drop'" class="text-sm text-gray-700 bg-white p-3 rounded-xl border border-gray-200">
-                        <p class="font-semibold mb-1 text-gray-500 text-xs">JAWABAN PASANGAN:</p>
-                        <pre class="whitespace-pre-wrap font-sans">{{ ans.response }}</pre>
+                    <div v-if="selectedItemForAnswers.quiz_type === 'drag_drop' || (ans.user_answer_map && Object.keys(ans.user_answer_map).length > 0)" class="text-sm text-gray-700 bg-white p-3 rounded-xl border border-gray-200 space-y-2">
+                        <p class="font-semibold mb-1 text-gray-500 text-xs">PENCELUPAN / PENEMPATAN GRUP:</p>
+                        <div v-for="(groupName, itemText) in ans.user_answer_map" :key="itemText" class="flex justify-between items-center py-1.5 border-b last:border-b-0 border-gray-100">
+                            <span class="font-medium text-gray-800">"{{ itemText }}" dipasangkan ke "{{ groupName }}"</span>
+                            <span v-if="ans.correct_answer_map && ans.correct_answer_map[itemText] === groupName" class="inline-flex items-center gap-0.5 bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">
+                                ✓ Benar
+                            </span>
+                            <span v-else class="inline-flex flex-col items-end gap-0.5">
+                                <span class="inline-flex items-center gap-0.5 bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs font-bold border border-red-200">
+                                    ✗ Salah
+                                </span>
+                                <span class="text-[10px] text-gray-500 mt-0.5">Harusnya: {{ ans.correct_answer_map ? ans.correct_answer_map[itemText] : '' }}</span>
+                            </span>
+                        </div>
                     </div>
                     
                     <div v-else class="flex flex-col sm:flex-row sm:items-center gap-2">
                         <div class="flex-1 bg-white p-3 rounded-xl border border-gray-200 text-sm text-gray-700">
                             <span class="font-semibold text-gray-500 block text-xs mb-1">JAWABAN SISWA:</span>
-                            {{ ans.selected_option || ans.response || '(Tidak dijawab)' }}
+                            <span class="font-medium">{{ ans.selected_option || ans.user_answer_text || ans.response || '(Tidak dijawab)' }}</span>
+                            
+                            <div v-if="!ans.is_correct && ans.correct_answer_text" class="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 p-2 rounded-lg font-medium">
+                                <strong>Jawaban Benar:</strong> {{ ans.correct_answer_text }}
+                            </div>
                         </div>
                         <div v-if="ans.is_correct !== null" class="shrink-0">
                             <span v-if="ans.is_correct" class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-sm font-bold border border-green-200">

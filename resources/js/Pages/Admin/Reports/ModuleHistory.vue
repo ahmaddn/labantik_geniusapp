@@ -12,8 +12,9 @@ import {
     CheckCircle,
     Download
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { h } from "vue";
+import Pagination from "@/Components/UI/Pagination.vue";
 
 const props = defineProps({
     module: Object,
@@ -23,6 +24,35 @@ const props = defineProps({
 });
 
 const activeTab = ref("summary"); // "summary" atau "history"
+
+const currentPage = ref(1);
+const perPage = 10;
+
+const paginatedLogs = computed(() => {
+    return props.mission_logs.slice(
+        (currentPage.value - 1) * perPage,
+        currentPage.value * perPage
+    );
+});
+
+const paginationMeta = computed(() => {
+    const total = props.mission_logs.length;
+    const lastPage = Math.ceil(total / perPage);
+    const from = total > 0 ? (currentPage.value - 1) * perPage + 1 : 0;
+    const to = Math.min(currentPage.value * perPage, total);
+    return {
+        current_page: currentPage.value,
+        last_page: lastPage,
+        per_page: perPage,
+        total: total,
+        from: from,
+        to: to
+    };
+});
+
+const handlePageChange = (page) => {
+    currentPage.value = page;
+};
 
 
 const goBack = () => {
@@ -278,32 +308,44 @@ const handleAction = ({ action, data }) => {
                 </div>
 
                 <div v-else class="space-y-4">
-                    <details v-for="log in mission_logs" :key="log.id" class="group bg-white rounded-2xl border-2 border-blue-100 shadow-sm overflow-hidden open:border-blue-300 transition-all">
-                        <summary class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 cursor-pointer bg-blue-50/50 hover:bg-blue-50 list-none gap-4">
-                            <div class="flex items-center gap-4 w-full">
-                                <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0">
-                                    {{ log.attempt_number }}
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="font-bold text-gray-800 text-lg">{{ log.student_name }}</h3>
-                                    <p class="text-sm text-gray-500 font-medium">{{ log.mission_name }}</p>
-                                </div>
-                                <div class="text-right shrink-0">
-                                    <p class="text-sm font-bold text-gray-700">{{ log.completed_at }}</p>
-                                    <p class="text-xs text-blue-600 font-semibold uppercase">Selesai</p>
-                                </div>
-                                <div class="shrink-0 text-blue-400 group-open:rotate-180 transition-transform">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                </div>
-                            </div>
-                        </summary>
-                        <div class="p-4 border-t border-blue-100 bg-white">
-                            <p class="text-gray-600 text-sm">
-                                Siswa ini telah menyelesaikan seluruh tahapan materi dan soal yang ada pada <b>{{ log.mission_name }}</b> (Percobaan ke-{{ log.attempt_number }}).
-                                Detail skor dapat dilihat di tombol <b>Lihat Detail</b> pada tab Ringkasan & Siswa.
-                            </p>
-                        </div>
-                    </details>
+                    <div class="overflow-x-auto bg-white rounded-3xl border-4 border-blue-200 shadow-playful">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-500 text-white text-left">
+                                    <th class="p-4 font-bold border-b border-blue-200">Nama Siswa</th>
+                                    <th class="p-4 font-bold border-b border-blue-200">Misi</th>
+                                    <th class="p-4 font-bold border-b border-blue-200 text-center">Percobaan Ke</th>
+                                    <th class="p-4 font-bold border-b border-blue-200">Waktu Selesai</th>
+                                    <th class="p-4 font-bold border-b border-blue-200 text-center">Status</th>
+                                    <th class="p-4 font-bold border-b border-blue-200 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="log in paginatedLogs" :key="log.id" class="hover:bg-blue-50/50 transition-colors">
+                                    <td class="p-4 border-b border-gray-100 font-bold text-gray-800">{{ log.student_name }}</td>
+                                    <td class="p-4 border-b border-gray-100 text-gray-600 font-medium">{{ log.mission_name }}</td>
+                                    <td class="p-4 border-b border-gray-100 text-center">
+                                        <span class="inline-flex items-center justify-center bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full text-xs border border-blue-200">
+                                            Percobaan {{ log.attempt_number }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4 border-b border-gray-100 text-gray-500 text-sm font-medium">{{ log.completed_at }}</td>
+                                    <td class="p-4 border-b border-gray-100 text-center">
+                                        <span class="inline-flex items-center justify-center bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full text-xs border border-green-200">
+                                            Selesai
+                                        </span>
+                                    </td>
+                                    <td class="p-4 border-b border-gray-100 text-center">
+                                        <button @click="goToStudentReport(log.student_id)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm">
+                                            <Eye class="w-3.5 h-3.5" /> Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Pagination :meta="paginationMeta" @change="handlePageChange" />
                 </div>
             </div>
         </div>
