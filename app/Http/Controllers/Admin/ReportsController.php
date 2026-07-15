@@ -7,6 +7,8 @@ use App\Models\Learning_modules;
 use App\Models\Quizzes;
 use App\Models\Quiz_attempts;
 use App\Models\User;
+use App\Models\Questions;
+use App\Models\User_answers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -288,9 +290,7 @@ class ReportsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Nilai berhasil diperbarui');
-    }
-
-    /**
+    }    /**
      * Export laporan modul ke XLSX
      */
     public function exportModuleXlsx(Request $request, Learning_modules $modules)
@@ -299,19 +299,54 @@ class ReportsController extends Controller
         $totalQuizzes = $quizIds->count();
 
         $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
-            ->with('student.class', 'quiz')
+            ->with([
+                'student.class', 
+                'quiz', 
+                'answers.question.options', 
+                'answers.question.dragDropGroups.items'
+            ])
             ->get();
 
         $grouped = $attempts
             ->filter(fn($a) => $a->student !== null)
             ->groupBy('student_id');
 
-        // Extract all unique quiz titles to make column headers
-        $allQuizTitles = [];
-        foreach ($attempts as $att) {
-            if ($att->quiz) {
-                $allQuizTitles[$att->quiz_id] = $att->quiz->title;
-            }
+        // Fetch all quizzes belonging to this module in order
+        // 1. Pretest
+        $pretestQuiz = Quizzes::where('module_id', $modules->id)->where('category', 'pretest')->first();
+        
+        // 2. Mission Quizzes
+        $missionQuizzes = Quizzes::whereHas('mission', function($q) use ($modules) {
+            $q->where('module_id', $modules->id);
+        })
+        ->with('mission')
+        ->get()
+        ->sortBy(function($q) {
+            return ($q->mission->order_number ?? 0) . '_' . ($q->order_number ?? 0);
+        });
+
+        // 3. Other module level quizzes (not pretest/posttest)
+        $otherQuizzes = Quizzes::where('module_id', $modules->id)
+            ->whereNull('mission_id')
+            ->whereNotIn('category', ['pretest', 'posttest'])
+            ->orderBy('order_number')
+            ->get();
+
+        // 4. Posttest
+        $posttestQuiz = Quizzes::where('module_id', $modules->id)->where('category', 'posttest')->first();
+
+        $orderedQuizzes = collect();
+        if ($pretestQuiz) {
+            $orderedQuizzes->push($pretestQuiz);
+        }
+        foreach ($missionQuizzes as $q) {
+            $orderedQuizzes->push($q);
+        }
+        foreach ($otherQuizzes as $q) {
+            $orderedQuizzes->push($q);
+        }
+        if ($posttestQuiz) {
+            $orderedQuizzes->push($posttestQuiz);
         }
 
         $students = [];
@@ -325,9 +360,32 @@ class ReportsController extends Controller
             $detailQuizzes = [];
             foreach ($studentAttempts as $att) {
                 if (!isset($detailQuizzes[$att->quiz_id]) || $detailQuizzes[$att->quiz_id]['score'] < $att->score) {
+                    
+                    // Compute details of correct/incorrect questions
+                    $quiz = $orderedQuizzes->firstWhere('id', $att->quiz_id);
+                    $detailText = '-';
+                    if ($quiz) {
+                        $questions = $quiz->questions()->orderBy('order_number')->orderBy('id')->get();
+                        $detailParts = [];
+                        $qIdx = 1;
+                        foreach ($questions as $question) {
+                            $answer = $att->answers->where('question_id', $question->id)->first();
+                            if ($answer) {
+                                [$isCorrect] = $this->checkAnswer($answer, $question);
+                                $status = $isCorrect ? 'Benar' : 'Salah';
+                                $detailParts[] = "No {$qIdx}: {$status}";
+                            } else {
+                                $detailParts[] = "No {$qIdx}: -";
+                            }
+                            $qIdx++;
+                        }
+                        $detailText = !empty($detailParts) ? implode(', ', $detailParts) : '-';
+                    }
+
                     $detailQuizzes[$att->quiz_id] = [
                         'title' => $att->quiz->title ?? 'Quiz',
                         'score' => $att->score,
+                        'details' => $detailText,
                         'finished_at' => $att->finished_at ? \Carbon\Carbon::parse($att->finished_at)->format('d/m/Y H:i') : 'Belum selesai'
                     ];
                 }
@@ -373,7 +431,7 @@ class ReportsController extends Controller
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         
         // Merge title cell across dynamic columns
-        $lastColIndex = 5 + count($allQuizTitles); // A=1, B=2, C=3, D=4, E=5, then quizzes
+        $lastColIndex = 5 + ($orderedQuizzes->count() * 2); // A=1, B=2, C=3, D=4, E=5, then 2 columns per quiz
         $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max($lastColIndex, 5));
         $sheet->mergeCells('A1:' . $lastColLetter . '1');
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -386,10 +444,15 @@ class ReportsController extends Controller
         $sheet->setCellValue('E3', 'Progres (%)');
         
         $colIdx = 6;
-        foreach ($allQuizTitles as $qId => $qTitle) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
-            $sheet->setCellValue($colLetter . '3', 'Nilai: ' . $qTitle);
-            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        foreach ($orderedQuizzes as $quiz) {
+            $colLetterVal = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->setCellValue($colLetterVal . '3', 'Nilai: ' . $quiz->title);
+            $sheet->getColumnDimension($colLetterVal)->setAutoSize(true);
+            $colIdx++;
+
+            $colLetterDet = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->setCellValue($colLetterDet . '3', 'Detail: ' . $quiz->title);
+            $sheet->getColumnDimension($colLetterDet)->setAutoSize(true);
             $colIdx++;
         }
 
@@ -415,15 +478,22 @@ class ReportsController extends Controller
             $sheet->setCellValue('E' . $rowNum, $row['completion_percent']);
             
             $colIdx = 6;
-            foreach ($allQuizTitles as $qId => $qTitle) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
-                if (isset($row['details'][$qId])) {
-                    $sheet->setCellValue($colLetter . $rowNum, $row['details'][$qId]['score']);
-                } else {
-                    $sheet->setCellValue($colLetter . $rowNum, '-');
-                }
-                $sheet->getStyle($colLetter . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            foreach ($orderedQuizzes as $quiz) {
+                $qId = $quiz->id;
+                $colLetterVal = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
                 $colIdx++;
+                $colLetterDet = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+                $colIdx++;
+
+                if (isset($row['details'][$qId])) {
+                    $sheet->setCellValue($colLetterVal . $rowNum, $row['details'][$qId]['score']);
+                    $sheet->setCellValue($colLetterDet . $rowNum, $row['details'][$qId]['details']);
+                } else {
+                    $sheet->setCellValue($colLetterVal . $rowNum, '-');
+                    $sheet->setCellValue($colLetterDet . $rowNum, '-');
+                }
+                $sheet->getStyle($colLetterVal . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($colLetterDet . $rowNum)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
             }
 
             $rowNum++;
@@ -440,5 +510,117 @@ class ReportsController extends Controller
         $response->headers->set('Cache-Control', 'max-age=0');
 
         return $response;
+    }
+
+    /**
+     * Check correctness of a student answer.
+     */
+    private function checkAnswer(User_answers $answer, $question): array
+    {
+        $userText    = '';
+        $correctText = '';
+        $userMap     = [];
+        $correctMap  = [];
+
+        $quizType = $question->quiz?->type ?? '';
+
+        if ($quizType === 'reflection') {
+            $responseStr = trim($answer->response ?? '');
+            return [true, $responseStr, '', [], []];
+        }
+
+        if ($quizType === 'short_answer') {
+            $responseStr = trim($answer->response ?? '');
+            $correctText = $question->expected_keywords ?? '';
+            
+            $isCorrect = false;
+            if (!empty($correctText)) {
+                $keywords = array_map('trim', explode(',', strtolower($correctText)));
+                $userAnsLower = strtolower($responseStr);
+                foreach ($keywords as $kw) {
+                    if ($kw !== '' && str_contains($userAnsLower, $kw)) {
+                        $isCorrect = true;
+                        break;
+                    }
+                }
+            } else {
+                $isCorrect = true;
+            }
+            
+            return [$isCorrect, $responseStr, $correctText, [], []];
+        }
+
+        // Options-based (multiple_choices, true_false, case_study)
+        if ($question->options && $question->options->count() > 0) {
+            $allOptions  = $question->options->keyBy('id');
+            $correctOpts = $question->options->where('is_correct', true);
+            $correctIds  = $correctOpts->pluck('id')->map(fn($id) => (string) $id)->sort()->values()->toArray();
+            $correctText = $correctOpts->pluck('option_text')->implode(', ');
+
+            $responseStr = trim($answer->response ?? '');
+
+            if (str_starts_with($responseStr, '[')) {
+                $selectedIds = collect(json_decode($responseStr, true) ?? [])
+                    ->map(fn($id) => (string) $id)->sort()->values()->toArray();
+
+                $userText = collect($selectedIds)
+                    ->map(fn($id) => $allOptions->get($id)?->option_text ?? $id)
+                    ->implode(', ');
+
+                return [$selectedIds === $correctIds, $userText, $correctText, [], []];
+            }
+
+            $selectedId = $answer->selected_option_id
+                ? (string) $answer->selected_option_id
+                : $responseStr;
+
+            $userText  = $allOptions->get($selectedId)?->option_text ?? $selectedId;
+            $isCorrect = count($correctIds) === 1 && $selectedId === $correctIds[0];
+
+            return [$isCorrect, $userText, $correctText, [], []];
+        }
+
+        // Drag & drop
+        $responseStr = trim($answer->response ?? '');
+        if (str_starts_with($responseStr, '{')) {
+            $placed = json_decode($responseStr, true) ?? [];
+
+            $question->loadMissing('dragDropGroups.items');
+
+            if (! $question->dragDropGroups || $question->dragDropGroups->isEmpty()) {
+                return [false, '', '', [], []];
+            }
+
+            $itemToCorrectGroup = [];
+            $itemLabels         = [];
+            $groupLabels        = [];
+
+            foreach ($question->dragDropGroups as $group) {
+                $groupLabels[(string) $group->id] = $group->group_name;
+                foreach ($group->items as $item) {
+                    $itemLabels[(string) $item->id]         = $item->item_text;
+                    $itemToCorrectGroup[(string) $item->id] = (string) $group->id;
+                    $correctMap[$item->item_text]           = $group->group_name;
+                }
+            }
+
+            $allCorrect = true;
+            foreach ($itemToCorrectGroup as $itemId => $correctGroupId) {
+                $placedGroupId = isset($placed[$itemId]) ? (string) $placed[$itemId] : null;
+                $userGroupName = $placedGroupId
+                    ? ($groupLabels[$placedGroupId] ?? $placedGroupId)
+                    : '(tidak dijawab)';
+
+                $userMap[$itemLabels[$itemId]] = $userGroupName;
+
+                if ($placedGroupId !== $correctGroupId) {
+                    $allCorrect = false;
+                }
+            }
+
+            return [$allCorrect, '', '', $userMap, $correctMap];
+        }
+
+        return [false, '', '', [], []];
     }
 }
