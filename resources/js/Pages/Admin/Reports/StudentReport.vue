@@ -12,7 +12,7 @@ import {
     Eye,
     Edit3
 } from "lucide-vue-next";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import Modal from "@/Components/UI/Modal.vue";
 import { useForm } from "@inertiajs/vue3";
 import {
@@ -56,6 +56,12 @@ const props = defineProps({
     scoreDistribution: Object,
     reflections: Array,
 });
+
+const pretestQuizzes = computed(() => props.quizzes.filter(q => q.category === 'pretest'));
+const posttestQuizzes = computed(() => props.quizzes.filter(q => q.category === 'posttest'));
+const normalQuizzes = computed(() => props.quizzes.filter(q => q.category !== 'pretest' && q.category !== 'posttest'));
+
+const activeTab = ref('pretest');
 
 const showAnswersModal = ref(false);
 const showScoreModal = ref(false);
@@ -130,6 +136,14 @@ const lineChartRef = ref(null);
 const donutChartRef = ref(null);
 
 onMounted(() => {
+    if (pretestQuizzes.value.length === 0) {
+        if (normalQuizzes.value.length > 0) {
+            activeTab.value = 'quiz';
+        } else if (posttestQuizzes.value.length > 0) {
+            activeTab.value = 'posttest';
+        }
+    }
+
     if (!props.quizzes.length) return;
 
     const labels = props.chartLabels;
@@ -406,69 +420,251 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- DataTable -->
-            <div>
-                <div
-                    class="bg-blue-100 rounded-2xl p-4 flex items-center justify-between mb-4"
-                >
-                    <h2 class="text-xl font-bold text-gray-800">
-                        Detail Hasil Quiz
-                    </h2>
-                    <span
-                        class="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold"
+            <!-- Tab Switcher & DataTable -->
+            <div class="space-y-4">
+                <!-- Tab Buttons -->
+                <div class="flex flex-wrap gap-2.5 p-1.5 bg-gray-50 border border-gray-200 rounded-2xl max-w-lg shadow-sm">
+                    <button
+                        @click="activeTab = 'pretest'"
+                        class="flex-1 py-2 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+                        :class="activeTab === 'pretest'
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-100'"
                     >
-                        {{ quizzes.length }} Quiz
-                    </span>
+                        <span>Pre-Test</span>
+                        <span
+                            class="px-2 py-0.5 text-xs rounded-full font-extrabold"
+                            :class="activeTab === 'pretest' ? 'bg-blue-800 text-white' : 'bg-gray-200 text-gray-700'"
+                        >
+                            {{ pretestQuizzes.length }}
+                        </span>
+                    </button>
+                    <button
+                        @click="activeTab = 'quiz'"
+                        class="flex-1 py-2 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+                        :class="activeTab === 'quiz'
+                            ? 'bg-emerald-600 text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-100'"
+                    >
+                        <span>Kuis Misi</span>
+                        <span
+                            class="px-2 py-0.5 text-xs rounded-full font-extrabold"
+                            :class="activeTab === 'quiz' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'"
+                        >
+                            {{ normalQuizzes.length }}
+                        </span>
+                    </button>
+                    <button
+                        @click="activeTab = 'posttest'"
+                        class="flex-1 py-2 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+                        :class="activeTab === 'posttest'
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'text-gray-600 hover:bg-gray-100'"
+                    >
+                        <span>Post-Test</span>
+                        <span
+                            class="px-2 py-0.5 text-xs rounded-full font-extrabold"
+                            :class="activeTab === 'posttest' ? 'bg-purple-800 text-white' : 'bg-gray-200 text-gray-700'"
+                        >
+                            {{ posttestQuizzes.length }}
+                        </span>
+                    </button>
                 </div>
 
-                <DataTable
-                    :columns="columns"
-                    :data="quizzes"
-                    :actions="[]"
-                    :initial-per-page="10"
-                    empty-message="Siswa ini belum mengerjakan quiz apapun."
-                    search-placeholder="Cari nama quiz..."
-                >
-                    <!-- Icon + angka untuk kolom Skor -->
-                    <template #cell-score="{ row }">
-                        <div class="flex items-center justify-center gap-1.5">
-                            <Star
-                                v-if="row.score >= 80"
-                                class="w-4 h-4 text-blue-500 shrink-0"
-                            />
-                            <CheckCircle
-                                v-else-if="row.score >= 60"
-                                class="w-4 h-4 text-yellow-500 shrink-0"
-                            />
-                            <AlertTriangle
-                                v-else
-                                class="w-4 h-4 text-red-500 shrink-0"
-                            />
-                            <span
-                                class="font-bold"
-                                :class="scoreColor(row.score)"
-                            >
-                                {{ row.score }}
-                            </span>
-                        </div>
-                    </template>
-                    <template #cell-actions="{ row }">
-                        <div class="flex items-center justify-end gap-2">
-                            <button
-                                @click="openAnswers(row)"
-                                class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-blue-200"
-                            >
-                                <Eye class="w-4 h-4" /> Detail
-                            </button>
-                            <button
-                                @click="openScore(row, 'quiz')"
-                                class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-yellow-200"
-                            >
-                                <Edit3 class="w-4 h-4" /> Nilai
-                            </button>
-                        </div>
-                    </template>
-                </DataTable>
+                <!-- Pre-Test Table Content -->
+                <div v-if="activeTab === 'pretest'">
+                    <div
+                        class="bg-blue-100 rounded-2xl p-4 flex items-center justify-between mb-4 border border-blue-200"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Detail Hasil Pre-Test
+                        </h2>
+                        <span
+                            class="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold"
+                        >
+                            {{ pretestQuizzes.length }} Pre-Test
+                        </span>
+                    </div>
+
+                    <DataTable
+                        :columns="columns"
+                        :data="pretestQuizzes"
+                        :actions="[]"
+                        :initial-per-page="10"
+                        empty-message="Siswa ini belum mengerjakan pre-test apapun."
+                        search-placeholder="Cari nama pre-test..."
+                    >
+                        <!-- Icon + angka untuk kolom Skor -->
+                        <template #cell-score="{ row }">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <Star
+                                    v-if="row.score >= 80"
+                                    class="w-4 h-4 text-blue-500 shrink-0"
+                                />
+                                <CheckCircle
+                                    v-else-if="row.score >= 60"
+                                    class="w-4 h-4 text-yellow-500 shrink-0"
+                                />
+                                <AlertTriangle
+                                    v-else
+                                    class="w-4 h-4 text-red-500 shrink-0"
+                                />
+                                <span
+                                    class="font-bold"
+                                    :class="scoreColor(row.score)"
+                                >
+                                    {{ row.score }}
+                                </span>
+                            </div>
+                        </template>
+                        <template #cell-actions="{ row }">
+                            <div class="flex items-center justify-end gap-2">
+                                <button
+                                    @click="openAnswers(row)"
+                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-blue-200"
+                                >
+                                    <Eye class="w-4 h-4" /> Detail
+                                </button>
+                                <button
+                                    @click="openScore(row, 'quiz')"
+                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-yellow-200"
+                                >
+                                    <Edit3 class="w-4 h-4" /> Nilai
+                                </button>
+                            </div>
+                        </template>
+                    </DataTable>
+                </div>
+
+                <!-- Kuis Misi Table Content -->
+                <div v-if="activeTab === 'quiz'">
+                    <div
+                        class="bg-emerald-100 rounded-2xl p-4 flex items-center justify-between mb-4 border border-emerald-200"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Detail Hasil Kuis Misi
+                        </h2>
+                        <span
+                            class="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-sm font-bold"
+                        >
+                            {{ normalQuizzes.length }} Kuis
+                        </span>
+                    </div>
+
+                    <DataTable
+                        :columns="columns"
+                        :data="normalQuizzes"
+                        :actions="[]"
+                        :initial-per-page="10"
+                        empty-message="Siswa ini belum mengerjakan kuis misi apapun."
+                        search-placeholder="Cari nama kuis..."
+                    >
+                        <!-- Icon + angka untuk kolom Skor -->
+                        <template #cell-score="{ row }">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <Star
+                                    v-if="row.score >= 80"
+                                    class="w-4 h-4 text-blue-500 shrink-0"
+                                />
+                                <CheckCircle
+                                    v-else-if="row.score >= 60"
+                                    class="w-4 h-4 text-yellow-500 shrink-0"
+                                />
+                                <AlertTriangle
+                                    v-else
+                                    class="w-4 h-4 text-red-500 shrink-0"
+                                />
+                                <span
+                                    class="font-bold"
+                                    :class="scoreColor(row.score)"
+                                >
+                                    {{ row.score }}
+                                </span>
+                            </div>
+                        </template>
+                        <template #cell-actions="{ row }">
+                            <div class="flex items-center justify-end gap-2">
+                                <button
+                                    @click="openAnswers(row)"
+                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-blue-200"
+                                >
+                                    <Eye class="w-4 h-4" /> Detail
+                                </button>
+                                <button
+                                    @click="openScore(row, 'quiz')"
+                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-yellow-200"
+                                >
+                                    <Edit3 class="w-4 h-4" /> Nilai
+                                </button>
+                            </div>
+                        </template>
+                    </DataTable>
+                </div>
+
+                <!-- Post-Test Table Content -->
+                <div v-if="activeTab === 'posttest'">
+                    <div
+                        class="bg-purple-100 rounded-2xl p-4 flex items-center justify-between mb-4 border border-purple-200"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Detail Hasil Post-Test
+                        </h2>
+                        <span
+                            class="bg-purple-500 text-white px-4 py-1.5 rounded-full text-sm font-bold"
+                        >
+                            {{ posttestQuizzes.length }} Post-Test
+                        </span>
+                    </div>
+
+                    <DataTable
+                        :columns="columns"
+                        :data="posttestQuizzes"
+                        :actions="[]"
+                        :initial-per-page="10"
+                        empty-message="Siswa ini belum mengerjakan post-test apapun."
+                        search-placeholder="Cari nama post-test..."
+                    >
+                        <!-- Icon + angka untuk kolom Skor -->
+                        <template #cell-score="{ row }">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <Star
+                                    v-if="row.score >= 80"
+                                    class="w-4 h-4 text-blue-500 shrink-0"
+                                />
+                                <CheckCircle
+                                    v-else-if="row.score >= 60"
+                                    class="w-4 h-4 text-yellow-500 shrink-0"
+                                />
+                                <AlertTriangle
+                                    v-else
+                                    class="w-4 h-4 text-red-500 shrink-0"
+                                />
+                                <span
+                                    class="font-bold"
+                                    :class="scoreColor(row.score)"
+                                >
+                                    {{ row.score }}
+                                </span>
+                            </div>
+                        </template>
+                        <template #cell-actions="{ row }">
+                            <div class="flex items-center justify-end gap-2">
+                                <button
+                                    @click="openAnswers(row)"
+                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-blue-200"
+                                >
+                                    <Eye class="w-4 h-4" /> Detail
+                                </button>
+                                <button
+                                    @click="openScore(row, 'quiz')"
+                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-yellow-200"
+                                >
+                                    <Edit3 class="w-4 h-4" /> Nilai
+                                </button>
+                            </div>
+                        </template>
+                    </DataTable>
+                </div>
             </div>
 
             <!-- Bagian Jawaban Refleksi -->

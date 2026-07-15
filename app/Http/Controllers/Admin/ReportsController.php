@@ -204,6 +204,7 @@ class ReportsController extends Controller
             'quiz_id'     => $a->quiz_id,
             'quiz_title'  => $a->quiz?->title ?? 'Quiz',
             'quiz_type'   => $a->quiz?->type ?? ($a->quiz?->category ?? 'general'),
+            'category'    => $a->quiz?->category ?? 'general',
             'score'       => (int) $a->score,
             'started_at'  => $a->started_at,
             'finished_at' => $a->finished_at,
