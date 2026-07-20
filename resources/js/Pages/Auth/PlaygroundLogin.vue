@@ -389,6 +389,37 @@ onUnmounted(() => {
                     <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
                     
                     <div class="changelog-timeline">
+                        <!-- Update Item 20 Juli 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-amber-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">20 Juli 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                        Fitur Remedial (Reset Progres) & Mulai Ulang (Restart) Belajar
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pilihan Tindakan Kuis Selesai (Restart vs Reset):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Misi Pembelajaran (klik kuis/misi yang selesai) & Modal selesai Modul utama.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menyediakan dua opsi baru saat mengulang pengerjaan: **Mulai Ulang (Restart)** untuk berlatih kembali dengan mempertahankan skor lama sebelum submit baru, dan **Hapus Progres (Reset)** untuk menghapus seluruh nilai dan progres lama agar bersih dari awal seperti remedial.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Visualisasi Node Pre-test & Post-test di Peta Misi:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Misi Pembelajaran siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Pre-test dan Post-test kini muncul sebagai pin bulat interaktif di awal dan akhir jalur petualangan belajar, lengkap dengan fitur restart dan reset.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Reset Progres Seluruh Modul:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Modal pop-up modul yang sudah selesai di halaman Beranda.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Siswa/Guru dapat menghapus total seluruh progres pengerjaan di satu modul (termasuk pretest, semua misi, refleksi, dan posttest) untuk mengulangi belajar dari awal secara penuh.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!-- Update Item 15 Juli 2026 -->
                         <div class="timeline-item">
                             <div class="timeline-dot bg-purple-500"></div>

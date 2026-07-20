@@ -4,6 +4,19 @@ Berikut adalah daftar perubahan dan pembaruan sistem pembelajaran interaktif pad
 
 ---
 
+### 📅 Fitur Remedial (Reset Progres) & Mulai Ulang (Restart) Belajar (20 Juli 2026)
+* **Pilihan Tindakan Kuis Selesai (Restart vs Reset):**
+  * *Di mana letaknya:* Halaman Misi Pembelajaran (klik kuis/misi yang selesai) & Modal selesai Modul utama.
+  * *Penjelasan:* Menyediakan dua opsi baru saat mengulang pengerjaan: **Mulai Ulang (Restart)** untuk berlatih kembali dengan mempertahankan skor lama sebelum submit baru, dan **Hapus Progres (Reset)** untuk menghapus seluruh nilai dan progres lama agar bersih dari awal seperti remedial.
+* **Visualisasi Node Pre-test & Post-test di Peta Misi:**
+  * *Di mana letaknya:* Halaman Misi Pembelajaran siswa.
+  * *Penjelasan:* Pre-test dan Post-test kini muncul sebagai pin bulat interaktif di awal dan akhir jalur petualangan belajar, lengkap dengan fitur restart dan reset.
+* **Reset Progres Seluruh Modul:**
+  * *Di mana letaknya:* Modal pop-up modul yang sudah selesai di halaman Beranda.
+  * *Penjelasan:* Siswa/Guru dapat menghapus total seluruh progres pengerjaan di satu modul (termasuk pretest, semua misi, refleksi, dan posttest) untuk mengulangi belajar dari awal secara penuh.
+
+---
+
 ### 📅 Laporan Analisis Belajar Siswa (Student Report) & Pembaruan Tampilan Auth (15 Juli 2026)
 * **Visualisasi Grafik Analisis Nilai (Student Report Dashboard):**
   * *Di mana letaknya:* Menu Laporan Siswa (Student Report) di Dashboard Admin/Guru.
