@@ -4,6 +4,50 @@ Berikut adalah daftar perubahan dan pembaruan sistem pembelajaran interaktif pad
 
 ---
 
+### 📅 Laporan Analisis Belajar Siswa (Student Report) & Pembaruan Tampilan Auth (15 Juli 2026)
+* **Visualisasi Grafik Analisis Nilai (Student Report Dashboard):**
+  * *Di mana letaknya:* Menu Laporan Siswa (Student Report) di Dashboard Admin/Guru.
+  * *Penjelasan:* Menambahkan visualisasi grafik interaktif (Grafik Batang skor kuis, Grafik Garis tren perkembangan nilai, dan Grafik Donat distribusi nilai) untuk memudahkan Guru memantau tingkat pemahaman siswa secara sekilas.
+* **Penyaringan Riwayat Pengerjaan Kuis (Module History Tabs):**
+  * *Di mana letaknya:* Detail Laporan Siswa per modul.
+  * *Penjelasan:* Riwayat kuis siswa kini dibagi rapi ke dalam tiga kategori tab: Pretest, Kuis Misi, dan Posttest. Masing-masing tab menyajikan informasi lengkap seperti skor, waktu pengerjaan, dan tanggal penyelesaian kuis.
+* **Detail Jawaban & Penyesuaian Nilai Manual:**
+  * *Di mana letaknya:* Baris tindakan tabel riwayat kuis pada Laporan Siswa.
+  * *Penjelasan:* Guru sekarang dapat melihat rincian setiap lembar jawaban siswa (tombol "Detail") serta mengubah/menyesuaikan nilai siswa secara manual (tombol "Nilai") apabila diperlukan.
+* **Latar Belakang Ilustrasi Halaman Autentikasi (AuthLayout):**
+  * *Di mana letaknya:* Sisi kiri halaman Login & Registrasi pada perangkat desktop.
+  * *Penjelasan:* Mengganti latar belakang warna biru polos dengan ilustrasi visual yang interaktif (`auth-bg.png` / `auth.png`) untuk memberikan kesan modern dan ramah pengguna.
+
+---
+
+### 📅 Target Modul Berdasarkan Kelas & Tab Penyaring Siswa (12 Juli 2026)
+* **Pengaturan Target Kelas Modul (Panel Admin):**
+  * *Di mana letaknya:* Modal tambah/edit modul di dashboard Admin.
+  * *Penjelasan:* Guru/Admin dapat menetapkan target modul ke satu atau beberapa kelas paralel tertentu secara mudah (misalnya hanya untuk Kelas 1A dan 1B) melalui pilihan checkbox. Modul yang tidak dihubungkan ke kelas mana pun akan otomatis berstatus modul umum.
+* **Lencana Visual Kelas (Panel Admin):**
+  * *Di mana letaknya:* Daftar kartu modul di dashboard Admin.
+  * *Penjelasan:* Menambahkan lencana (badge) biru penunjuk kelas target agar Guru dapat langsung memantau modul mana saja yang aktif untuk kelas tertentu secara visual.
+* **Tab Switcher Penyaring Modul (Dashboard Siswa):**
+  * *Di mana letaknya:* Layar Playground siswa (Materi Pembelajaran).
+  * *Penjelasan:* Siswa kini dapat menyaring modul secara instan menggunakan tombol Tab 3D yang membal (chunky style) untuk memilih kategori: Semua Modul, Modul khusus Kelas mereka saja, atau Modul Umum (suplemen belajar untuk semua kelas).
+* **Pembaruan Layout Kuis Pilihan Ganda (A-E):**
+  * *Di mana letaknya:* Halaman kuis pilihan ganda siswa.
+  * *Penjelasan:* Tombol opsi A-E diperbarui dengan ketebalan 3D warna-warni yang cerah, font bulat Nunito ramah anak, dan efek animasi klik yang lebih lembut.
+* **Penyempurnaan Kuis Benar / Salah:**
+  * *Di mana letaknya:* Halaman kuis Benar/Salah.
+  * *Penjelasan:* Pemisahan skema warna yang tegas antara tombol hijau mint untuk "Benar" dan merah koral untuk "Salah", lengkap dengan ikon centang & silang untuk mempermudah anak-anak.
+* **Redesain Slider Simulasi (Double Slider):**
+  * *Di mana letaknya:* Elemen pengatur nilai pada simulasi sains.
+  * *Penjelasan:* Menghilangkan penumpukan angka yang membingungkan siswa. Angka nilai aktif kini melayang di lencana tersendiri, dengan tombol peg tebal 3D yang mudah digeser oleh anak SD.
+* **Penyempurnaan Efek Cuaca (Hujan & Salju):**
+  * *Di mana letaknya:* Animasi simulasi cuaca.
+  * *Penjelasan:* Memperbaiki partikel hujan/salju yang sempat membeku di bagian atas layar agar langsung meluncur jatuh dengan transisi jatuh yang sangat halus.
+* **Pengembalian Layout Flowchart Refleksi Geser (Horizontal Scroll):**
+  * *Di mana letaknya:* Layar refleksi akhir simulasi.
+  * *Penjelasan:* Mengembalikan alur langkah refleksi ke mode geser ke samping (scroll) agar mendukung langkah yang dinamis dengan rapi tanpa menumpuk di layar.
+
+---
+
 ### 📅 Rincian Hasil Kuis Lengkap & Genius Badge (1 Juli 2026)
 * **Pecahan Nilai per Kategori Soal (Breakdown Kategori):**
   * *Di mana letaknya:* Halaman Laporan Hasil Kuis (Pretest, Misi Belajar, Posttest).

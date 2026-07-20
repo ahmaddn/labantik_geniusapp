@@ -39,6 +39,10 @@ const props = defineProps({
     missions: { type: Array, default: () => [] },
     all_missions_done: { type: Boolean, default: false },
     backsound: { type: String, default: null },
+    has_pretest: { type: Boolean, default: false },
+    pretest_done: { type: Boolean, default: false },
+    has_posttest: { type: Boolean, default: false },
+    posttest_done: { type: Boolean, default: false },
 });
 
 const ready = ref(false);
@@ -68,13 +72,48 @@ const goBack = () => {
 const logout = () => router.post(route("playground.logout"));
 
 const isMissionLocked = (i) => {
+    if (props.has_pretest && !props.pretest_done) return true;
     if (i === 0) return false;
     return props.missions[i - 1].status !== "completed";
 };
 
+const selectedType = ref('mission'); // 'mission' | 'pretest' | 'posttest'
+
 const openModal = (mission, i) => {
     if (isMissionLocked(i)) return;
+    selectedType.value = 'mission';
     selectedMission.value = mission;
+    showModal.value = true;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalVisible.value = true;
+        });
+    });
+};
+
+const openPretestModal = () => {
+    selectedType.value = 'pretest';
+    selectedMission.value = {
+        name: 'Pre-test',
+        description: 'Uji kemampuan awalmu sebelum memulai misi belajar!',
+        status: props.pretest_done ? 'completed' : 'not_started',
+    };
+    showModal.value = true;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalVisible.value = true;
+        });
+    });
+};
+
+const openPosttestModal = () => {
+    if (!props.all_missions_done && !props.posttest_done) return;
+    selectedType.value = 'posttest';
+    selectedMission.value = {
+        name: 'Post-test',
+        description: 'Uji kemampuan akhirmu setelah menyelesaikan seluruh misi belajar!',
+        status: props.posttest_done ? 'completed' : 'not_started',
+    };
     showModal.value = true;
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -88,18 +127,57 @@ const closeModal = () => {
     setTimeout(() => {
         showModal.value = false;
         selectedMission.value = null;
+        selectedType.value = 'mission';
     }, 320);
 };
 
 const startMission = () => {
     if (!selectedMission.value) return;
-    proceedMission();
+    handlePrimaryAction();
 };
 
-const proceedMission = () => {
-    const id = selectedMission.value.id;
-    closeModal();
-    setTimeout(() => router.visit(route("playground.missions.show", id)), 150);
+const handlePrimaryAction = () => {
+    if (selectedType.value === 'pretest') {
+        closeModal();
+        setTimeout(() => router.visit(route("playground.pretest.show", props.module.id)), 150);
+    } else if (selectedType.value === 'posttest') {
+        closeModal();
+        setTimeout(() => router.visit(route("playground.posttest.show", props.module.id)), 150);
+    } else {
+        const id = selectedMission.value.id;
+        closeModal();
+        setTimeout(() => router.visit(route("playground.missions.show", id)), 150);
+    }
+};
+
+const handleRestart = () => {
+    if (selectedType.value === 'pretest') {
+        closeModal();
+        setTimeout(() => router.visit(route("playground.pretest.show", { module: props.module.id, restart: 'true' })), 150);
+    } else if (selectedType.value === 'posttest') {
+        closeModal();
+        setTimeout(() => router.visit(route("playground.posttest.show", { module: props.module.id, restart: 'true' })), 150);
+    } else {
+        handlePrimaryAction();
+    }
+};
+
+const handleReset = () => {
+    if (!confirm("Apakah kamu yakin ingin menghapus nilai/progres untuk bagian ini? Tindakan ini permanen.")) return;
+
+    if (selectedType.value === 'pretest') {
+        router.post(route("playground.pretest.reset", props.module.id), {}, {
+            onSuccess: () => closeModal()
+        });
+    } else if (selectedType.value === 'posttest') {
+        router.post(route("playground.posttest.reset", props.module.id), {}, {
+            onSuccess: () => closeModal()
+        });
+    } else {
+        router.post(route("playground.missions.reset", selectedMission.value.id), {}, {
+            onSuccess: () => closeModal()
+        });
+    }
 };
 
 const goToMissionResult = () => {
@@ -355,6 +433,30 @@ const modalAccent = computed(() => {
                 </Transition>
 
                 <div class="mission-path">
+                    <!-- PRE-TEST NODE -->
+                    <div v-if="has_pretest" class="stage-wrapper">
+                        <div class="stage-row" :style="{ '--offset': '-80px' }">
+                            <button
+                                class="stage-btn"
+                                :class="{
+                                    'st-completed': pretest_done,
+                                    'st-current': !pretest_done
+                                }"
+                                :style="pretest_done ? { '--c': '#a855f7', '--s': '#7e22ce' } : { '--c': '#1cb0f6', '--s': '#0284c7' }"
+                                @click="openPretestModal"
+                            >
+                                <RotateCcw v-if="pretest_done" :size="36" color="white" :stroke-width="3" />
+                                <span v-else class="stage-num">P</span>
+                            </button>
+                            <div class="stage-label">Pre-test</div>
+                        </div>
+                        <div v-if="missions.length > 0" class="connector" :style="{ '--off-a': '-80px', '--off-b': getOffset(0) + 'px' }">
+                            <div class="conn-dot" :class="{ 'conn-done': pretest_done }"></div>
+                            <div class="conn-dot" :class="{ 'conn-done': pretest_done }"></div>
+                            <div class="conn-dot" :class="{ 'conn-done': pretest_done }"></div>
+                        </div>
+                    </div>
+
                     <template
                         v-for="(mission, i) in missions"
                         :key="mission.id"
@@ -396,11 +498,11 @@ const modalAccent = computed(() => {
                                               ? {
                                                     '--c': '#a855f7',
                                                     '--s': '#7e22ce',
-                                                }
+                                                 }
                                               : {
                                                     '--c': getColor(i).bg,
                                                     '--s': getColor(i).sh,
-                                                }
+                                                 }
                                     "
                                     :disabled="isMissionLocked(i)"
                                     @click="openModal(mission, i)"
@@ -436,11 +538,11 @@ const modalAccent = computed(() => {
                             </div>
 
                             <div
-                                v-if="i < missions.length - 1"
+                                v-if="i < missions.length - 1 || (i === missions.length - 1 && has_posttest)"
                                 class="connector"
                                 :style="{
                                     '--off-a': getOffset(i) + 'px',
-                                    '--off-b': getOffset(i + 1) + 'px',
+                                    '--off-b': (i < missions.length - 1 ? getOffset(i + 1) : 80) + 'px',
                                 }"
                             >
                                 <div
@@ -467,6 +569,28 @@ const modalAccent = computed(() => {
                             </div>
                         </div>
                     </template>
+
+                    <!-- POST-TEST NODE -->
+                    <div v-if="has_posttest" class="stage-wrapper">
+                        <div class="stage-row" :style="{ '--offset': '80px' }">
+                            <button
+                                class="stage-btn"
+                                :class="{
+                                    'st-completed': posttest_done,
+                                    'st-locked': !all_missions_done && !posttest_done,
+                                    'st-current': all_missions_done && !posttest_done
+                                }"
+                                :style="posttest_done ? { '--c': '#a855f7', '--s': '#7e22ce' } : (all_missions_done ? { '--c': '#ff9600', '--s': '#cc7800' } : {})"
+                                :disabled="!all_missions_done && !posttest_done"
+                                @click="openPosttestModal"
+                            >
+                                <RotateCcw v-if="posttest_done" :size="36" color="white" :stroke-width="3" />
+                                <span v-else-if="all_missions_done" class="stage-num">P</span>
+                                <Lock v-else :size="28" color="#cbd5e1" :stroke-width="3" />
+                            </button>
+                            <div class="stage-label" :class="{ 'stage-label-locked': !all_missions_done && !posttest_done }">Post-test</div>
+                        </div>
+                    </div>
 
                     <div v-if="missions.length === 0" class="empty-state">
                         <BookOpen
@@ -649,7 +773,7 @@ const modalAccent = computed(() => {
                     }}
                 </p>
 
-                <div class="modal-stats">
+                <div v-if="selectedType === 'mission'" class="modal-stats">
                     <div class="mstat">
                         <span class="mstat-val">{{
                             selectedMission?.total_questions || "-"
@@ -677,27 +801,30 @@ const modalAccent = computed(() => {
                 </div>
 
                 <div class="modal-stack-btn">
-                    <button
-                        class="mcta-primary"
-                        :class="{
-                            'mcta-restart':
-                                selectedMission?.status === 'completed',
-                            'mcta-prog':
-                                selectedMission?.status === 'in_progress',
-                            'mcta-start':
-                                selectedMission?.status === 'not_started' ||
-                                !selectedMission?.status,
-                        }"
-                        @click="proceedMission"
-                    >
-                        {{
-                            selectedMission?.status === "completed"
-                                ? "MULAI ULANG"
-                                : selectedMission?.status === "in_progress"
-                                  ? "LANJUTKAN MISI"
-                                  : "MULAI MISI"
-                        }}
-                    </button>
+                    <template v-if="selectedMission?.status === 'completed'">
+                        <button class="mcta-primary mcta-restart" @click="handleRestart">
+                            MULAI ULANG (RESTART)
+                        </button>
+                        <button class="mcta-primary mcta-danger" @click="handleReset">
+                            HAPUS PROGRES (RESET)
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button
+                            class="mcta-primary"
+                            :class="{
+                                'mcta-prog': selectedMission?.status === 'in_progress',
+                                'mcta-start': selectedMission?.status === 'not_started' || !selectedMission?.status,
+                            }"
+                            @click="handlePrimaryAction"
+                        >
+                            {{
+                                selectedMission?.status === "in_progress"
+                                    ? "LANJUTKAN"
+                                    : "MULAI"
+                            }}
+                        </button>
+                    </template>
                     <button class="mcta-secondary" @click="closeModal">
                         NANTI SAJA
                     </button>
@@ -1838,6 +1965,10 @@ const modalAccent = computed(() => {
 .mcta-restart {
     background: #a855f7;
     box-shadow: 0 5px 0 0 #7e22ce;
+}
+.mcta-danger {
+    background: #ef4444;
+    box-shadow: 0 5px 0 0 #b91c1c;
 }
 .mcta-prog {
     background: #ff9600;

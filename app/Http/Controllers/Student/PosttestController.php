@@ -47,12 +47,12 @@ class PosttestController extends Controller
             return redirect()->route('playground.index');
         }
 
-        // Kalau posttest sudah pernah dikerjakan → kembali ke beranda
+        // Kalau posttest sudah pernah dikerjakan → kembali ke beranda (kecuali jika minta restart)
         $alreadyDone = Quiz_attempts::where('quiz_id', $quiz->id)
             ->where('student_id', $player['id'] ?? null)
             ->exists();
 
-        if ($alreadyDone) {
+        if ($alreadyDone && !request()->has('restart')) {
             return redirect()->route('playground.index');
         }
 
@@ -610,5 +610,36 @@ class PosttestController extends Controller
         }
 
         return [false, '', '', [], []];
+    }
+
+    /**
+     * Reset progress posttest.
+     */
+    public function reset(Learning_modules $module)
+    {
+        $player = session('player');
+        if (! $player) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $quiz = Quizzes::where('module_id', $module->id)
+            ->where('category', 'posttest')
+            ->first();
+
+        if ($quiz) {
+            $attempts = Quiz_attempts::where('quiz_id', $quiz->id)
+                ->where('student_id', $player['id'] ?? null)
+                ->get();
+            
+            foreach ($attempts as $attempt) {
+                $attempt->delete(); // cascade deletes user_answers
+            }
+        }
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Progress posttest berhasil direset.');
     }
 }

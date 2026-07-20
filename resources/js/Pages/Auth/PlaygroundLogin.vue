@@ -389,6 +389,42 @@ onUnmounted(() => {
                     <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
                     
                     <div class="changelog-timeline">
+                        <!-- Update Item 15 Juli 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-purple-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">15 Juli 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        Laporan Analisis Belajar Siswa (Student Report) & Pembaruan Tampilan Auth
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Visualisasi Grafik Analisis Nilai (Student Report Dashboard):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Menu Laporan Siswa (Student Report) di Dashboard Admin/Guru.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menambahkan visualisasi grafik interaktif (Grafik Batang skor kuis, Grafik Garis tren perkembangan nilai, dan Grafik Donat distribusi nilai) untuk memudahkan Guru memantau tingkat pemahaman siswa secara sekilas.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Penyaringan Riwayat Pengerjaan Kuis (Module History Tabs):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Detail Laporan Siswa per modul.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Riwayat kuis siswa kini dibagi rapi ke dalam tiga kategori tab: Pretest, Kuis Misi, dan Posttest. Masing-masing tab menyajikan informasi lengkap seperti skor, waktu pengerjaan, dan tanggal penyelesaian kuis.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Detail Jawaban & Penyesuaian Nilai Manual:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Baris tindakan tabel riwayat kuis pada Laporan Siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru sekarang dapat melihat rincian setiap lembar jawaban siswa (tombol "Detail") serta mengubah/menyesuaikan nilai siswa secara manual (tombol "Nilai") apabila diperlukan.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Latar Belakang Ilustrasi Halaman Autentikasi (AuthLayout):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Sisi kiri halaman Login & Registrasi pada perangkat desktop.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Mengganti latar belakang warna biru polos dengan ilustrasi visual yang interaktif (`auth-bg.png` / `auth.png`) untuk memberikan kesan modern dan ramah pengguna.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!-- Update Item 12 Juli 2026 -->
                         <div class="timeline-item">
                             <div class="timeline-dot bg-blue-500"></div>

@@ -82,6 +82,13 @@ class MissionController extends Controller
 
         $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn($m) => $m['status'] === 'completed');
 
+        $pretestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
+            ->where('category', 'pretest')
+            ->first();
+        $pretestDone = $pretestQuiz && Quiz_attempts::where('quiz_id', $pretestQuiz->id)
+            ->where('student_id', $player['id'] ?? null)
+            ->exists();
+
         // Jika posttest sudah pernah dikerjakan, sembunyikan tombol posttest
         // (supaya tidak muncul lagi saat admin tambah misi baru)
         $posttestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
@@ -107,6 +114,10 @@ class MissionController extends Controller
             'all_missions_done' => $allMissionsDone,
             'backsound'         => $backsound,
             'background'        => $background,
+            'has_pretest'       => $pretestQuiz !== null,
+            'pretest_done'      => $pretestDone,
+            'has_posttest'      => $posttestQuiz !== null,
+            'posttest_done'     => $posttestDone,
         ]);
     }
 
@@ -863,5 +874,48 @@ class MissionController extends Controller
             'module' => $learningModule,
             'auth'   => ['user' => $user],
         ]);
+    }
+
+    /**
+     * Reset progress for a mission.
+     */
+    public function reset(Missions $mission)
+    {
+        $player = session('player');
+        if (! $player) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $studentId = $player['id'] ?? null;
+
+        // 1. Delete quiz attempts (cascade deletes user_answers)
+        $quizIds = $mission->quizzes()->pluck('id');
+        if ($quizIds->isNotEmpty()) {
+            $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
+                ->where('student_id', $studentId)
+                ->get();
+            foreach ($attempts as $attempt) {
+                $attempt->delete();
+            }
+        }
+
+        // 2. Delete StudentMissionLog
+        \App\Models\StudentMissionLog::where('mission_id', $mission->id)
+            ->where('user_id', $studentId)
+            ->delete();
+
+        // 3. Delete Reflection_answers
+        $reflectionQuestionIds = \App\Models\Reflection_questions::where('mission_id', $mission->id)->pluck('id');
+        if ($reflectionQuestionIds->isNotEmpty()) {
+            \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
+                ->where('user_id', $studentId)
+                ->delete();
+        }
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Progress misi berhasil direset.');
     }
 }

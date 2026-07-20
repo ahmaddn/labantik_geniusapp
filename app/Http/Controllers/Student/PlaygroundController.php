@@ -131,4 +131,50 @@ class PlaygroundController extends Controller
             ];
         })->toArray();
     }
+
+    /**
+     * Reset progress for the entire module.
+     */
+    public function reset(Learning_modules $module)
+    {
+        $player = session('player');
+        if (! $player) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $studentId = $player['id'] ?? null;
+
+        // 1. Delete all quiz attempts of the module (cascade deletes user_answers)
+        $quizIds = Quizzes::where('module_id', $module->id)->pluck('id');
+        if ($quizIds->isNotEmpty()) {
+            $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
+                ->where('student_id', $studentId)
+                ->get();
+            foreach ($attempts as $attempt) {
+                $attempt->delete();
+            }
+        }
+
+        // 2. Delete StudentMissionLog for all missions of the module
+        \App\Models\StudentMissionLog::where('module_id', $module->id)
+            ->where('user_id', $studentId)
+            ->delete();
+
+        // 3. Delete Reflection_answers for reflection questions of missions in this module
+        $missionIds = Missions::where('module_id', $module->id)->pluck('id');
+        if ($missionIds->isNotEmpty()) {
+            $reflectionQuestionIds = \App\Models\Reflection_questions::whereIn('mission_id', $missionIds)->pluck('id');
+            if ($reflectionQuestionIds->isNotEmpty()) {
+                \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
+                    ->where('user_id', $studentId)
+                    ->delete();
+            }
+        }
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Progress modul berhasil direset.');
+    }
 }
