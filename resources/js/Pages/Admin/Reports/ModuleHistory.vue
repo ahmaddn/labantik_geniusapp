@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import DataTable from "@/Components/UI/DataTable.vue";
-import { router } from "@inertiajs/vue3";
+import { router, useForm } from "@inertiajs/vue3";
 import {
     ArrowLeft,
     Users,
@@ -10,17 +10,21 @@ import {
     Eye,
     Star,
     CheckCircle,
-    Download
+    Download,
+    Trash2
 } from "lucide-vue-next";
 import { ref, computed } from "vue";
 import { h } from "vue";
 import Pagination from "@/Components/UI/Pagination.vue";
+import Modal from "@/Components/UI/Modal.vue";
+import SelectField from "@/Components/UI/Forms/SelectField.vue";
 
 const props = defineProps({
     module: Object,
     students: Array,
     module_summary: Object,
     mission_logs: Array,
+    missions: Array,
 });
 
 const activeTab = ref("summary"); // "summary" atau "history"
@@ -99,10 +103,68 @@ const actions = [
         class: "bg-blue-500 border-blue-600",
         showIf: () => true,
     },
+    {
+        name: "reset",
+        label: "Reset Progres",
+        icon: Trash2,
+        class: "bg-red-500 border-red-600",
+        showIf: (row) => row.quizzes_count > 0,
+    },
 ];
+
+const selectedStudentForReset = ref(null);
+const showResetModal = ref(false);
+const resetForm = useForm({
+    target: "all",
+    mission_id: "",
+});
+
+const targetOptions = computed(() => {
+    const opts = [
+        { value: 'all', label: 'Seluruh Modul (Semua Progres)' },
+        { value: 'pretest', label: 'Hanya Pre-test' },
+        { value: 'posttest', label: 'Hanya Post-test' },
+    ];
+    if (props.missions && props.missions.length > 0) {
+        opts.push({ value: 'mission', label: 'Misi Spesifik' });
+    }
+    return opts;
+});
+
+const openResetModal = (student) => {
+    selectedStudentForReset.value = student;
+    resetForm.target = "all";
+    resetForm.mission_id = "";
+    showResetModal.value = true;
+};
+
+const submitReset = () => {
+    let confirmMsg = "Apakah Anda yakin ingin mereset progres terpilih? Tindakan ini tidak dapat dibatalkan.";
+    if (resetForm.target === 'all') {
+        confirmMsg = `Apakah Anda yakin ingin mereset SELURUH progres modul siswa ${selectedStudentForReset.value.name}? Semua data pengerjaan, nilai kuis, log misi, dan refleksi akan dihapus secara permanen.`;
+    } else if (resetForm.target === 'pretest') {
+        confirmMsg = `Apakah Anda yakin ingin mereset progres Pre-test siswa ${selectedStudentForReset.value.name}?`;
+    } else if (resetForm.target === 'posttest') {
+        confirmMsg = `Apakah Anda yakin ingin mereset progres Post-test siswa ${selectedStudentForReset.value.name}?`;
+    } else if (resetForm.target === 'mission') {
+        const missionName = props.missions.find(m => m.id == resetForm.mission_id)?.name || '';
+        confirmMsg = `Apakah Anda yakin ingin mereset kuis misi "${missionName}" siswa ${selectedStudentForReset.value.name}?`;
+    }
+    
+    if (!confirm(confirmMsg)) return;
+
+    resetForm.post(route('admin.reports.reset_progress', [props.module.id, selectedStudentForReset.value.id]), {
+        onSuccess: () => {
+            showResetModal.value = false;
+            selectedStudentForReset.value = null;
+            resetForm.reset();
+        }
+    });
+};
 
 const handleAction = ({ action, data }) => {
     if (action === "detail") goToStudentReport(data.id);
+    if (action === "reset") openResetModal(data);
 };
 </script>
 
@@ -348,6 +410,54 @@ const handleAction = ({ action, data }) => {
                     <Pagination :meta="paginationMeta" @change="handlePageChange" />
                 </div>
             </div>
+            <!-- Modal Reset Progres -->
+            <Modal :show="showResetModal" @close="showResetModal = false" max-width="md">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Reset Progres Belajar: {{ selectedStudentForReset?.name }}</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih bagian yang ingin direset:</label>
+                            <SelectField
+                                v-model="resetForm.target"
+                                :options="targetOptions"
+                                optionValue="value"
+                                optionLabel="label"
+                                borderColor="blue"
+                                placeholder="Pilih progres yang ingin direset"
+                            />
+                        </div>
+
+                        <div v-if="resetForm.target === 'mission' && missions && missions.length > 0">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Misi:</label>
+                            <SelectField
+                                v-model="resetForm.mission_id"
+                                :options="missions"
+                                optionValue="id"
+                                optionLabel="name"
+                                borderColor="blue"
+                                placeholder="Pilih Misi"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button 
+                            @click="showResetModal = false"
+                            class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                        >
+                            Batal
+                        </button>
+                        <button 
+                            @click="submitReset"
+                            :disabled="resetForm.processing || (resetForm.target === 'mission' && !resetForm.mission_id)"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold rounded-xl transition-colors shadow-sm"
+                        >
+                            Reset Progres
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     </AppLayout>
 </template>

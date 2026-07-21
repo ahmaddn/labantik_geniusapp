@@ -71,16 +71,6 @@ const restartModule = () => {
     router.visit(route("playground.pretest.show", { module: selectedModule.value.id, restart: 'true' }));
 };
 
-const resetModule = () => {
-    if (!selectedModule.value) return;
-    if (confirm("Apakah kamu yakin ingin menghapus seluruh progres belajar di modul ini? Semua nilai akan dihapus secara permanen.")) {
-        router.post(route("playground.reset", selectedModule.value.id), {}, {
-            onSuccess: () => {
-                closeModal();
-            }
-        });
-    }
-};
 
 const handleClickOutside = (e) => {
     if (menuRef.value && !menuRef.value.contains(e.target))
@@ -582,9 +572,6 @@ const filteredModules = computed(() => {
                 <div class="modal-stack-btn">
                     <button class="mcta-primary mcta-restart" @click="restartModule">
                         MULAI ULANG
-                    </button>
-                    <button class="mcta-primary mcta-danger" @click="resetModule">
-                        HAPUS PROGRES (RESET)
                     </button>
                     <button class="mcta-secondary" @click="closeModal">
                         NANTI SAJA

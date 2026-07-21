@@ -403,8 +403,8 @@ onUnmounted(() => {
                                 <ul class="timeline-list font-medium">
                                     <li>
                                         <strong>Pilihan Tindakan Kuis Selesai (Restart vs Reset):</strong>
-                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Misi Pembelajaran (klik kuis/misi yang selesai) & Modal selesai Modul utama.</span>
-                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menyediakan dua opsi baru saat mengulang pengerjaan: **Mulai Ulang (Restart)** untuk berlatih kembali dengan mempertahankan skor lama sebelum submit baru, dan **Hapus Progres (Reset)** untuk menghapus seluruh nilai dan progres lama agar bersih dari awal seperti remedial.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Misi Pembelajaran (sisi siswa - restart) & Detail Laporan / Daftar Siswa (sisi admin - reset).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Siswa dapat berlatih kembali (**Mulai Ulang / Restart**) dengan mempertahankan skor lama sebelum submit baru. Guru/Admin memiliki tombol **Reset** pada halaman Detail Laporan dan tombol **Reset Progres** pada tabel Daftar Siswa (Modul History) yang akan memunculkan modal untuk memilih bagian spesifik (Pretest, Misi tertentu, Posttest, atau Seluruh Modul) yang ingin direset beserta dialog konfirmasi popup.</span>
                                     </li>
                                     <li class="mt-2">
                                         <strong>Visualisasi Node Pre-test & Post-test di Peta Misi:</strong>

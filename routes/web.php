@@ -53,20 +53,16 @@ Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('index');
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
 
-    Route::post('/modules/{module}/reset', [PlaygroundController::class, 'reset'])->name('reset');
-
     // ── Pretest ──────────────────────────────────────────────────
     Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])->name('pretest.show');
     Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
     Route::get('/modules/{module}/pretest/result', [PretestController::class, 'showResult'])->name('pretest.result');
-    Route::post('/modules/{module}/pretest/reset', [PretestController::class, 'reset'])->name('pretest.reset');
 
     // ── Posttest ─────────────────────────────────────────────────
     Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])->name('posttest.show');
     Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
     Route::get('/modules/{module}/posttest/result', [PosttestController::class, 'overallResult'])->name('posttest.result');
     Route::get('/modules/{module}/posttest/quiz-result', [PosttestController::class, 'showQuizResult'])->name('posttest.quiz-result');
-    Route::post('/modules/{module}/posttest/reset', [PosttestController::class, 'reset'])->name('posttest.reset');
 
     // Student mission routes (session-based authentication)
     Route::prefix('missions')->name('missions.')->group(function () {
@@ -74,7 +70,6 @@ Route::prefix('player')->name('playground.')->group(function () {
         Route::get('/{mission}', [StudentMissionController::class, 'showMission'])->name('show');
         Route::post('/{mission}/submit', [StudentMissionController::class, 'submitMissionAnswers'])->name('submit');
         Route::get('/{mission}/result', [StudentMissionController::class, 'showResult'])->name('result');
-        Route::post('/{mission}/reset', [StudentMissionController::class, 'reset'])->name('reset');
     });
 });
 
@@ -120,6 +115,9 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
         Route::get('/reports/modules/{modules}/export', [ReportsController::class, 'exportModuleXlsx'])->name('export');
         Route::get('/reports/modules/{modules}/students/{student}', [ReportsController::class, 'studentReport'])->name('student');
         Route::post('/reports/modules/{modules}/students/{student}/update-score', [ReportsController::class, 'updateScore'])->name('update_score');
+        Route::post('/reports/modules/{modules}/students/{student}/reset-attempt', [ReportsController::class, 'resetAttempt'])->name('reset_attempt');
+        Route::post('/reports/modules/{modules}/students/{student}/reset-all', [ReportsController::class, 'resetAll'])->name('reset_all');
+        Route::post('/reports/modules/{modules}/students/{student}/reset-progress', [ReportsController::class, 'resetProgress'])->name('reset_progress');
     });
 
     // Pengaturan

@@ -173,11 +173,17 @@ class ReportsController extends Controller
             ];
         });
 
+        $missions = \App\Models\Missions::where('module_id', $modules->id)
+            ->select('id', 'name')
+            ->orderBy('order_number')
+            ->get();
+
         return Inertia::render('Admin/Reports/ModuleHistory', [
             'module'        => ['id' => $modules->id, 'name' => $modules->name],
             'students'      => $students,
             'module_summary' => $moduleSummary,
             'mission_logs'  => $missionLogs,
+            'missions'      => $missions,
         ]);
     }
 
@@ -306,6 +312,148 @@ class ReportsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Nilai berhasil diperbarui');
+    }
+
+    /**
+     * Reset pengerjaan kuis tertentu oleh admin.
+     */
+    public function resetAttempt(Request $request, Learning_modules $modules, User $student)
+    {
+        $request->validate([
+            'attempt_id' => 'required|exists:quiz_attempts,id',
+        ]);
+
+        $attempt = Quiz_attempts::where('id', $request->attempt_id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
+
+        $quiz = $attempt->quiz;
+
+        if ($quiz && $quiz->mission_id) {
+            $attempt->delete(); // cascade deletes user_answers
+
+            $missionQuizIds = Quizzes::where('mission_id', $quiz->mission_id)->pluck('id');
+            $hasRemainingAttempts = Quiz_attempts::whereIn('quiz_id', $missionQuizIds)
+                ->where('student_id', $student->id)
+                ->exists();
+
+            if (!$hasRemainingAttempts) {
+                \App\Models\StudentMissionLog::where('mission_id', $quiz->mission_id)
+                    ->where('user_id', $student->id)
+                    ->delete();
+
+                $reflectionQuestionIds = \App\Models\Reflection_questions::where('mission_id', $quiz->mission_id)->pluck('id');
+                if ($reflectionQuestionIds->isNotEmpty()) {
+                    \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
+                        ->where('user_id', $student->id)
+                        ->delete();
+                }
+            }
+        } else {
+            $attempt->delete();
+        }
+
+        return redirect()->back()->with('success', 'Pengerjaan kuis berhasil direset.');
+    }
+
+    /**
+     * Reset seluruh progres modul seorang siswa oleh admin.
+     */
+    public function resetAll(Learning_modules $modules, User $student)
+    {
+        $quizIds = $this->getQuizIdsByModule($modules);
+
+        if ($quizIds->isNotEmpty()) {
+            $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
+                ->where('student_id', $student->id)
+                ->get();
+            foreach ($attempts as $attempt) {
+                $attempt->delete();
+            }
+        }
+
+        \App\Models\StudentMissionLog::where('module_id', $modules->id)
+            ->where('user_id', $student->id)
+            ->delete();
+
+        $missionIds = \App\Models\Missions::where('module_id', $modules->id)->pluck('id');
+        if ($missionIds->isNotEmpty()) {
+            $reflectionQuestionIds = \App\Models\Reflection_questions::whereIn('mission_id', $missionIds)->pluck('id');
+            if ($reflectionQuestionIds->isNotEmpty()) {
+                \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
+                    ->where('user_id', $student->id)
+                    ->delete();
+            }
+        }
+
+        return redirect()->back()->with('success', 'Seluruh progres modul siswa ini berhasil direset.');
+    }
+
+    /**
+     * Reset progres kuis spesifik, pretest, posttest, atau seluruh progres siswa pada suatu modul.
+     */
+    public function resetProgress(Request $request, Learning_modules $modules, User $student)
+    {
+        $request->validate([
+            'target' => 'required|in:pretest,posttest,all,mission',
+            'mission_id' => 'nullable|exists:missions,id'
+        ]);
+
+        $target = $request->target;
+
+        if ($target === 'pretest') {
+            $pretestQuiz = Quizzes::where('module_id', $modules->id)
+                ->where('category', 'pretest')
+                ->first();
+            if ($pretestQuiz) {
+                $attempts = Quiz_attempts::where('quiz_id', $pretestQuiz->id)
+                    ->where('student_id', $student->id)
+                    ->get();
+                foreach ($attempts as $attempt) {
+                    $attempt->delete(); // cascade deletes user_answers
+                }
+            }
+        } elseif ($target === 'posttest') {
+            $posttestQuiz = Quizzes::where('module_id', $modules->id)
+                ->where('category', 'posttest')
+                ->first();
+            if ($posttestQuiz) {
+                $attempts = Quiz_attempts::where('quiz_id', $posttestQuiz->id)
+                    ->where('student_id', $student->id)
+                    ->get();
+                foreach ($attempts as $attempt) {
+                    $attempt->delete(); // cascade deletes user_answers
+                }
+            }
+        } elseif ($target === 'all') {
+            $this->resetAll($modules, $student);
+            return redirect()->back()->with('success', 'Seluruh progres modul siswa ini berhasil direset.');
+        } elseif ($target === 'mission') {
+            $missionId = $request->mission_id;
+            
+            $quizIds = Quizzes::where('mission_id', $missionId)->pluck('id');
+            if ($quizIds->isNotEmpty()) {
+                $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
+                    ->where('student_id', $student->id)
+                    ->get();
+                foreach ($attempts as $attempt) {
+                    $attempt->delete();
+                }
+            }
+
+            \App\Models\StudentMissionLog::where('mission_id', $missionId)
+                ->where('user_id', $student->id)
+                ->delete();
+
+            $reflectionQuestionIds = \App\Models\Reflection_questions::where('mission_id', $missionId)->pluck('id');
+            if ($reflectionQuestionIds->isNotEmpty()) {
+                \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
+                    ->where('user_id', $student->id)
+                    ->delete();
+            }
+        }
+
+        return redirect()->back()->with('success', 'Progres belajar berhasil direset.');
     }    /**
      * Export laporan modul ke XLSX
      */

@@ -162,23 +162,6 @@ const handleRestart = () => {
     }
 };
 
-const handleReset = () => {
-    if (!confirm("Apakah kamu yakin ingin menghapus nilai/progres untuk bagian ini? Tindakan ini permanen.")) return;
-
-    if (selectedType.value === 'pretest') {
-        router.post(route("playground.pretest.reset", props.module.id), {}, {
-            onSuccess: () => closeModal()
-        });
-    } else if (selectedType.value === 'posttest') {
-        router.post(route("playground.posttest.reset", props.module.id), {}, {
-            onSuccess: () => closeModal()
-        });
-    } else {
-        router.post(route("playground.missions.reset", selectedMission.value.id), {}, {
-            onSuccess: () => closeModal()
-        });
-    }
-};
 
 const goToMissionResult = () => {
     if (!selectedMission.value) return;
@@ -804,9 +787,6 @@ const modalAccent = computed(() => {
                     <template v-if="selectedMission?.status === 'completed'">
                         <button class="mcta-primary mcta-restart" @click="handleRestart">
                             MULAI ULANG (RESTART)
-                        </button>
-                        <button class="mcta-primary mcta-danger" @click="handleReset">
-                            HAPUS PROGRES (RESET)
                         </button>
                     </template>
                     <template v-else>

@@ -503,35 +503,4 @@ class PretestController extends Controller
 
         return [false, '', '', [], []];
     }
-
-    /**
-     * Reset progress pretest.
-     */
-    public function reset(Learning_modules $module)
-    {
-        $player = session('player');
-        if (! $player) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $quiz = Quizzes::where('module_id', $module->id)
-            ->where('category', 'pretest')
-            ->first();
-
-        if ($quiz) {
-            $attempts = Quiz_attempts::where('quiz_id', $quiz->id)
-                ->where('student_id', $player['id'] ?? null)
-                ->get();
-            
-            foreach ($attempts as $attempt) {
-                $attempt->delete(); // cascade deletes user_answers
-            }
-        }
-
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return redirect()->back()->with('success', 'Progress pretest berhasil direset.');
-    }
 }

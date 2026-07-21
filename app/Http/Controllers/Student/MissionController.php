@@ -875,47 +875,4 @@ class MissionController extends Controller
             'auth'   => ['user' => $user],
         ]);
     }
-
-    /**
-     * Reset progress for a mission.
-     */
-    public function reset(Missions $mission)
-    {
-        $player = session('player');
-        if (! $player) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $studentId = $player['id'] ?? null;
-
-        // 1. Delete quiz attempts (cascade deletes user_answers)
-        $quizIds = $mission->quizzes()->pluck('id');
-        if ($quizIds->isNotEmpty()) {
-            $attempts = Quiz_attempts::whereIn('quiz_id', $quizIds)
-                ->where('student_id', $studentId)
-                ->get();
-            foreach ($attempts as $attempt) {
-                $attempt->delete();
-            }
-        }
-
-        // 2. Delete StudentMissionLog
-        \App\Models\StudentMissionLog::where('mission_id', $mission->id)
-            ->where('user_id', $studentId)
-            ->delete();
-
-        // 3. Delete Reflection_answers
-        $reflectionQuestionIds = \App\Models\Reflection_questions::where('mission_id', $mission->id)->pluck('id');
-        if ($reflectionQuestionIds->isNotEmpty()) {
-            \App\Models\Reflection_answers::whereIn('reflection_question_id', $reflectionQuestionIds)
-                ->where('user_id', $studentId)
-                ->delete();
-        }
-
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return redirect()->back()->with('success', 'Progress misi berhasil direset.');
-    }
 }

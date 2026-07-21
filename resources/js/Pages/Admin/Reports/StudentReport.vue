@@ -10,7 +10,8 @@ import {
     CheckCircle,
     AlertTriangle,
     Eye,
-    Edit3
+    Edit3,
+    Trash2
 } from "lucide-vue-next";
 import { onMounted, ref, computed } from "vue";
 import Modal from "@/Components/UI/Modal.vue";
@@ -95,6 +96,18 @@ const submitScore = () => {
 
 const goBack = () => {
     router.visit(route("admin.reports.history", props.module.id));
+};
+
+const resetAttempt = (item) => {
+    if (!confirm("Apakah Anda yakin ingin mereset/menghapus hasil kuis ini? Tindakan ini permanen dan tidak dapat dibatalkan.")) return;
+    router.post(route('admin.reports.reset_attempt', [props.module.id, props.student.id]), {
+        attempt_id: item.attempt_id
+    });
+};
+
+const resetAllProgress = () => {
+    if (!confirm("Apakah Anda yakin ingin menghapus seluruh progres modul siswa ini (termasuk pretest, kuis misi, refleksi, dan posttest)? Tindakan ini permanen.")) return;
+    router.post(route('admin.reports.reset_all', [props.module.id, props.student.id]));
 };
 
 const formatDate = (val) => {
@@ -280,20 +293,28 @@ onMounted(() => {
                     >
                         <ArrowLeft class="text-blue-600 w-5 h-5" />
                     </button>
-                    <div class="flex-1">
-                        <p
-                            class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5"
+                    <div class="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <p
+                                class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5"
+                            >
+                                Laporan & Penilaian
+                            </p>
+                            <h1
+                                class="text-2xl md:text-3xl font-heading font-bold text-gray-800 mb-1"
+                            >
+                                {{ student.name }}
+                            </h1>
+                            <p class="text-sm text-gray-500">
+                                {{ module.name }} • Kelas {{ student.class }}
+                            </p>
+                        </div>
+                        <button
+                            @click="resetAllProgress"
+                            class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-2xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-red-200 self-start md:self-center"
                         >
-                            Laporan & Penilaian
-                        </p>
-                        <h1
-                            class="text-2xl md:text-3xl font-heading font-bold text-gray-800 mb-1"
-                        >
-                            {{ student.name }}
-                        </h1>
-                        <p class="text-sm text-gray-500">
-                            {{ module.name }} • Kelas {{ student.class }}
-                        </p>
+                            <Trash2 class="w-4 h-4" /> Reset Semua Progres Modul
+                        </button>
                     </div>
 
                     <!-- Overall score badge -->
@@ -531,6 +552,12 @@ onMounted(() => {
                                 >
                                     <Edit3 class="w-4 h-4" /> Nilai
                                 </button>
+                                <button
+                                    @click="resetAttempt(row)"
+                                    class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-red-200"
+                                >
+                                    <Trash2 class="w-4 h-4" /> Reset
+                                </button>
                             </div>
                         </template>
                     </DataTable>
@@ -596,6 +623,12 @@ onMounted(() => {
                                 >
                                     <Edit3 class="w-4 h-4" /> Nilai
                                 </button>
+                                <button
+                                    @click="resetAttempt(row)"
+                                    class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-red-200"
+                                >
+                                    <Trash2 class="w-4 h-4" /> Reset
+                                </button>
                             </div>
                         </template>
                     </DataTable>
@@ -660,6 +693,12 @@ onMounted(() => {
                                     class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-yellow-200"
                                 >
                                     <Edit3 class="w-4 h-4" /> Nilai
+                                </button>
+                                <button
+                                    @click="resetAttempt(row)"
+                                    class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors border border-red-200"
+                                >
+                                    <Trash2 class="w-4 h-4" /> Reset
                                 </button>
                             </div>
                         </template>
