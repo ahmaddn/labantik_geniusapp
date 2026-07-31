@@ -24,6 +24,10 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+Route::get('/jamika', function () {
+    return response()->file(public_path('jamika.html'));
+});
+
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
