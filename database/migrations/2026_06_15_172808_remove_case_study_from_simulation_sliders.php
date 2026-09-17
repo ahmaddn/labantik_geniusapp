@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('simulation_sliders', function (Blueprint $table) {
-            $table->dropColumn([
-                'case_study_scenario',
-                'case_study_options',
-                'case_study_answer',
-                'case_study_feedback'
-            ]);
-        });
+        if (Schema::hasTable('simulation_sliders')) {
+            $cols = ['case_study_scenario', 'case_study_options', 'case_study_answer', 'case_study_feedback'];
+            foreach ($cols as $col) {
+                if (Schema::hasColumn('simulation_sliders', $col)) {
+                    Schema::table('simulation_sliders', function (Blueprint $table) use ($col) {
+                        $table->dropColumn($col);
+                    });
+                }
+            }
+        }
     }
 
     /**

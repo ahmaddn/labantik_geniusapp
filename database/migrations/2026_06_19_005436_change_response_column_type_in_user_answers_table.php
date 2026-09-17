@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('user_answers', function (Blueprint $table) {
-            $table->longText('response')->nullable()->change();
-        });
+        if (Schema::hasTable('user_answers') && Schema::hasColumn('user_answers', 'response')) {
+            Schema::table('user_answers', function (Blueprint $table) {
+                $table->longText('response')->nullable()->change();
+            });
+        }
     }
 
     /**
