@@ -12,14 +12,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('simulation_sliders', function (Blueprint $table) {
-            $table->dropColumn([
-                'slider1_name',
-                'slider1_min_label',
-                'slider1_max_label',
-                'slider2_name',
-                'slider2_min_label',
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'slider1_name')) { $table->dropColumn('
+                'slider1_name'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'slider1_min_label')) { $table->dropColumn('
+                'slider1_min_label'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'slider1_max_label')) { $table->dropColumn('
+                'slider1_max_label'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'slider2_name')) { $table->dropColumn('
+                'slider2_name'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'slider2_min_label')) { $table->dropColumn('
+                'slider2_min_label'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
                 'slider2_max_label'
-            ]);
+')) { $table->dropColumn('
+                'slider2_max_label'
+'); }
             $table->json('variables')->nullable();
         });
 
@@ -34,7 +47,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('simulation_sliders', function (Blueprint $table) {
-            $table->dropColumn('variables');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'variables')) { $table->dropColumn('variables'); }
             $table->string('slider1_name')->nullable();
             $table->string('slider1_min_label')->nullable();
             $table->string('slider1_max_label')->nullable();

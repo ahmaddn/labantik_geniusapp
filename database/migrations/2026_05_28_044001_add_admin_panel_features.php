@@ -119,15 +119,22 @@ return new class extends Migration
         Schema::dropIfExists('simulation_sliders');
 
         Schema::table('missions', function (Blueprint $table) {
-            $table->dropColumn(['objective', 'content', 'image', 'youtube_link', 'is_active']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'objective')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'objective')) { $table->dropColumn('objective'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'content')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'content')) { $table->dropColumn('content'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'image')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'image')) { $table->dropColumn('image'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'youtube_link')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'youtube_link')) { $table->dropColumn('youtube_link'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'is_active')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'is_active')) { $table->dropColumn('is_active'); } }
         });
 
         Schema::table('questions', function (Blueprint $table) {
-            $table->dropColumn(['type', 'expected_keywords']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'type')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'type')) { $table->dropColumn('type'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'expected_keywords')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'expected_keywords')) { $table->dropColumn('expected_keywords'); } }
         });
 
         Schema::table('quizzes', function (Blueprint $table) {
-            $table->dropColumn('duration_minutes');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'duration_minutes')) { $table->dropColumn('duration_minutes'); }
         });
     }
 };

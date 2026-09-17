@@ -25,7 +25,7 @@ return new class extends Migration
     {
         Schema::table('simulation_scenarios', function (Blueprint $table) {
             $table->dropForeign(['module_id']);
-            $table->dropColumn('module_id');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'module_id')) { $table->dropColumn('module_id'); }
             $table->uuid('mission_id')->nullable(false)->change();
         });
     }

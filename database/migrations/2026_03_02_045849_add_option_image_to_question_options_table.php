@@ -19,7 +19,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('question_options', function (Blueprint $table) {
-            $table->dropColumn('option_image');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'option_image')) { $table->dropColumn('option_image'); }
         });
     }
 };

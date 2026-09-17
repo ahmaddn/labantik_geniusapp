@@ -12,7 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('simulation_comparisons', function (Blueprint $table) {
-            $table->dropColumn(['left_label', 'right_label', 'left_narration', 'right_narration', 'left_image', 'right_image']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_label')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_label')) { $table->dropColumn('left_label'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_label')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_label')) { $table->dropColumn('right_label'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_narration')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_narration')) { $table->dropColumn('left_narration'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_narration')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_narration')) { $table->dropColumn('right_narration'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_image')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'left_image')) { $table->dropColumn('left_image'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_image')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'right_image')) { $table->dropColumn('right_image'); } }
             $table->json('items')->nullable()->after('title');
         });
     }
@@ -23,7 +29,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('simulation_comparisons', function (Blueprint $table) {
-            $table->dropColumn('items');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'items')) { $table->dropColumn('items'); }
             $table->string('left_label')->nullable();
             $table->string('right_label')->nullable();
             $table->text('left_narration')->nullable();

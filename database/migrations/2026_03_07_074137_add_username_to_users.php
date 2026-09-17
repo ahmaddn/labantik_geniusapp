@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('username');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'username')) { $table->dropColumn('username'); }
         });
     }
 };

@@ -19,7 +19,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('materials', function (Blueprint $table) {
-            $table->dropColumn('youtube_link');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'youtube_link')) { $table->dropColumn('youtube_link'); }
         });
     }
 };

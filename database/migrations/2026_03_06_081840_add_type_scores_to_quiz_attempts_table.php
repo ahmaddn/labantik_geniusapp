@@ -19,12 +19,23 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('quiz_attempts', function (Blueprint $table) {
-            $table->dropColumn([
-                'score_multiple_choice',
-                'score_true_false',
-                'score_case_study',
-                'score_drag_drop',
-            ]);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'score_multiple_choice')) { $table->dropColumn('
+                'score_multiple_choice'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'score_true_false')) { $table->dropColumn('
+                'score_true_false'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'score_case_study')) { $table->dropColumn('
+                'score_case_study'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'score_drag_drop')) { $table->dropColumn('
+                'score_drag_drop'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+')) { $table->dropColumn('
+'); } }
         });
     }
 };

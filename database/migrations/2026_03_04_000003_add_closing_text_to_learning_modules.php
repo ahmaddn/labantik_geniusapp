@@ -16,7 +16,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('learning_modules', function (Blueprint $table) {
-            $table->dropColumn('closing_text');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_text')) { $table->dropColumn('closing_text'); }
         });
     }
 };

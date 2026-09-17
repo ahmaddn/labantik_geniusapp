@@ -69,27 +69,56 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->dropColumn(['badge_label', 'mascot_pose', 'feedback_correct', 'feedback_incorrect']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'badge_label')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'badge_label')) { $table->dropColumn('badge_label'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'mascot_pose')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'mascot_pose')) { $table->dropColumn('mascot_pose'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'feedback_correct')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'feedback_correct')) { $table->dropColumn('feedback_correct'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'feedback_incorrect')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'feedback_incorrect')) { $table->dropColumn('feedback_incorrect'); } }
         });
 
         Schema::table('materials', function (Blueprint $table) {
-            $table->dropColumn(['layout_type', 'emoji_icon', 'secondary_image', 'speech_bubble', 'button_text', 'order_number']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'layout_type')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'layout_type')) { $table->dropColumn('layout_type'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'emoji_icon')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'emoji_icon')) { $table->dropColumn('emoji_icon'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'secondary_image')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'secondary_image')) { $table->dropColumn('secondary_image'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'speech_bubble')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'speech_bubble')) { $table->dropColumn('speech_bubble'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'button_text')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'button_text')) { $table->dropColumn('button_text'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'order_number')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'order_number')) { $table->dropColumn('order_number'); } }
         });
 
         Schema::table('missions', function (Blueprint $table) {
-            $table->dropColumn(['pos_x', 'pos_y', 'icon']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'pos_x')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'pos_x')) { $table->dropColumn('pos_x'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'pos_y')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'pos_y')) { $table->dropColumn('pos_y'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'icon')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'icon')) { $table->dropColumn('icon'); } }
         });
 
         Schema::table('learning_modules', function (Blueprint $table) {
-            $table->dropColumn([
-                'adventure_title', 'adventure_objective', 'intro_speech_bubble', 'intro_cta_text',
-                'closing_title', 'closing_subtitle', 'closing_speech_bubble', 'closing_tagline',
-                'map_mascot_x_1', 'map_mascot_y_1', 'map_mascot_x_2', 'map_mascot_y_2'
-            ]);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'adventure_title')) { $table->dropColumn('
+                'adventure_title'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'adventure_objective')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'adventure_objective')) { $table->dropColumn('adventure_objective'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'intro_speech_bubble')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'intro_speech_bubble')) { $table->dropColumn('intro_speech_bubble'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'intro_cta_text')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'intro_cta_text')) { $table->dropColumn('intro_cta_text'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'closing_title')) { $table->dropColumn('
+                'closing_title'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_subtitle')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_subtitle')) { $table->dropColumn('closing_subtitle'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_speech_bubble')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_speech_bubble')) { $table->dropColumn('closing_speech_bubble'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_tagline')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'closing_tagline')) { $table->dropColumn('closing_tagline'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), '
+                'map_mascot_x_1')) { $table->dropColumn('
+                'map_mascot_x_1'); }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'map_mascot_y_1')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'map_mascot_y_1')) { $table->dropColumn('map_mascot_y_1'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'map_mascot_x_2')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'map_mascot_x_2')) { $table->dropColumn('map_mascot_x_2'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'map_mascot_y_2'
+')) { $table->dropColumn('map_mascot_y_2'
+'); }
         });
 
         Schema::table('backgrounds', function (Blueprint $table) {
-            $table->dropColumn('context_key');
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'context_key')) { $table->dropColumn('context_key'); }
         });
 
         Schema::dropIfExists('settings');

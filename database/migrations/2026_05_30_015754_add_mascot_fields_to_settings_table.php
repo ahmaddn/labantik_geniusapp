@@ -24,7 +24,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn(['platform_mascot', 'platform_mascot_pose', 'platform_mascot_dialog']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot')) { $table->dropColumn('platform_mascot'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot_pose')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot_pose')) { $table->dropColumn('platform_mascot_pose'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot_dialog')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'platform_mascot_dialog')) { $table->dropColumn('platform_mascot_dialog'); } }
         });
     }
 };

@@ -23,7 +23,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('missions', function (Blueprint $table) {
-            $table->dropColumn(['conclusion_speech', 'conclusion_body']);
+            // Safe drop columns
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'conclusion_speech')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'conclusion_speech')) { $table->dropColumn('conclusion_speech'); } }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'conclusion_body')) { if (\Illuminate\Support\Facades\Schema::hasColumn($table->getTable(), 'conclusion_body')) { $table->dropColumn('conclusion_body'); } }
         });
     }
 };
