@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('scientific_reflections', function (Blueprint $table) {
-            $table->integer('order_number')->default(0)->after('mission_id');
-        });
+        if (Schema::hasTable('scientific_reflections') && ! Schema::hasColumn('scientific_reflections', 'order_number')) {
+            Schema::table('scientific_reflections', function (Blueprint $table) {
+                $table->integer('order_number')->default(0)->after('mission_id');
+            });
+        }
 
-        Schema::table('simulation_decisions', function (Blueprint $table) {
-            $table->integer('order_number')->default(0)->after('mission_id');
-        });
+        if (Schema::hasTable('simulation_decisions') && ! Schema::hasColumn('simulation_decisions', 'order_number')) {
+            Schema::table('simulation_decisions', function (Blueprint $table) {
+                $table->integer('order_number')->default(0)->after('mission_id');
+            });
+        }
     }
 
     /**

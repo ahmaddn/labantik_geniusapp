@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('simulation_slider_levels', function (Blueprint $table) {
-            $table->string('image_transition')->nullable()->default('none');
-        });
+        if (Schema::hasTable('simulation_slider_levels') && ! Schema::hasColumn('simulation_slider_levels', 'image_transition')) {
+            Schema::table('simulation_slider_levels', function (Blueprint $table) {
+                $table->string('image_transition')->nullable()->default('none');
+            });
+        }
     }
 
     /**

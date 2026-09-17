@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('quizzes', function (Blueprint $table) {
-            $table->boolean('is_randomized')->default(false)->after('type');
-        });
+        if (Schema::hasTable('quizzes') && ! Schema::hasColumn('quizzes', 'is_randomized')) {
+            Schema::table('quizzes', function (Blueprint $table) {
+                $table->boolean('is_randomized')->default(false)->after('type');
+            });
+        }
     }
 
     /**
