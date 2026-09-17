@@ -429,6 +429,33 @@ const goToShowQuiz = (quizId) => {
     );
 };
 
+const toggleMissionQuizRetake = (quiz) => {
+    if (!quiz) return;
+    router.patch(
+        route("admin.modules.missions.quizzes.toggle_retake", [props.module.id, props.mission.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const toggleMissionQuizRandomized = (quiz) => {
+    if (!quiz) return;
+    router.patch(
+        route("admin.modules.missions.quizzes.toggle_randomized", [props.module.id, props.mission.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const updateMissionQuizMaxRetakes = (quiz, maxRetakes) => {
+    if (!quiz) return;
+    router.patch(
+        route("admin.modules.missions.quizzes.update_max_retakes", [props.module.id, props.mission.id, quiz.id]),
+        { max_retakes: parseInt(maxRetakes) || 0 },
+        { preserveScroll: true }
+    );
+};
+
 const confirmDeleteMaterial = (materialId) => {
     deleteType.value = "material";
     selectedItemId.value = materialId;
@@ -918,11 +945,9 @@ const getLayoutTypeLabel = (type) => {
                                             item.itemType === 'quiz' &&
                                             item.type !== 'case_study'
                                         "
-                                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                        class="flex flex-col gap-4"
                                     >
-                                        <div
-                                            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0"
-                                        >
+                                        <div class="flex items-start gap-4">
                                             <div
                                                 class="bg-orange-100 p-3 rounded-2xl border-2 border-orange-300 shrink-0"
                                             >
@@ -935,7 +960,7 @@ const getLayoutTypeLabel = (type) => {
                                                     class="flex items-center gap-2 mb-2"
                                                 >
                                                     <span
-                                                        class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-medium"
+                                                        class="text-xs px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-300 font-bold"
                                                         >QUIZ</span
                                                     >
                                                     <h3
@@ -945,11 +970,11 @@ const getLayoutTypeLabel = (type) => {
                                                     </h3>
                                                 </div>
                                                 <div
-                                                    class="flex flex-wrap items-center gap-3 mb-3"
+                                                    class="flex flex-wrap items-center gap-3 mb-2"
                                                 >
                                                     <span
                                                         :class="[
-                                                            'text-xs px-3 py-1 rounded-full border font-medium',
+                                                            'text-xs px-3 py-1 rounded-full border font-bold',
                                                             item.type ===
                                                             'multiple_choices'
                                                                 ? 'bg-blue-100 text-blue-700 border-blue-300'
@@ -982,17 +1007,17 @@ const getLayoutTypeLabel = (type) => {
                                                         }}
                                                     </span>
                                                     <span
-                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        class="text-xs text-gray-500 flex items-center gap-1 font-medium"
                                                         ><Clock
-                                                            class="w-3 h-3"
+                                                            class="w-3.5 h-3.5"
                                                         />
                                                         {{ item.time_limit }}
                                                         menit</span
                                                     >
                                                     <span
-                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        class="text-xs text-gray-500 flex items-center gap-1 font-medium"
                                                         ><Calendar
-                                                            class="w-3 h-3"
+                                                            class="w-3.5 h-3.5"
                                                         />
                                                         {{
                                                             formatDate(
@@ -1003,17 +1028,17 @@ const getLayoutTypeLabel = (type) => {
                                                 </div>
                                                 <p
                                                     v-if="item.description"
-                                                    class="text-sm text-gray-600 line-clamp-2"
+                                                    class="text-sm text-gray-600 line-clamp-2 mb-2"
                                                 >
                                                     {{ item.description }}
                                                 </p>
                                                 <div
-                                                    class="flex flex-wrap gap-4 mt-3"
+                                                    class="flex flex-wrap gap-4 mt-2"
                                                 >
                                                     <span
-                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        class="text-xs text-gray-500 flex items-center gap-1 font-medium"
                                                         ><List
-                                                            class="w-3 h-3"
+                                                            class="w-3.5 h-3.5"
                                                         />
                                                         {{
                                                             item.questions_count ||
@@ -1023,17 +1048,17 @@ const getLayoutTypeLabel = (type) => {
                                                     >
                                                     <span
                                                         v-if="item.category"
-                                                        class="text-xs text-gray-500 flex items-center gap-1"
-                                                        ><Tag class="w-3 h-3" />
+                                                        class="text-xs text-gray-500 flex items-center gap-1 font-medium"
+                                                        ><Tag class="w-3.5 h-3.5" />
                                                         {{
                                                             item.category
                                                         }}</span
                                                     >
                                                     <span
                                                         v-if="item.created_by"
-                                                        class="text-xs text-gray-500 flex items-center gap-1"
+                                                        class="text-xs text-gray-500 flex items-center gap-1 font-medium"
                                                         ><User
-                                                            class="w-3 h-3"
+                                                            class="w-3.5 h-3.5"
                                                         />
                                                         {{
                                                             item.created_by
@@ -1042,41 +1067,95 @@ const getLayoutTypeLabel = (type) => {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Footer Settings & Action Bar -->
                                         <div
-                                            class="flex flex-col sm:flex-row gap-2 shrink-0 items-center"
+                                            class="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3"
                                         >
-                                            <button
-                                                type="button"
-                                                class="w-full sm:w-auto px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 font-bold rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5"
-                                                @click="openMascotDialogModal(item)"
-                                                title="Dialog Maskot"
-                                            >
-                                                <MessageSquare class="w-4 h-4 text-indigo-600" />
-                                                <span>Dialog Maskot</span>
-                                            </button>
-                                            <Button
-                                                class="w-full sm:w-auto"
-                                                variant="info"
-                                                size="md"
-                                                :icon="Eye"
-                                                @click="goToShowQuiz(item.id)"
-                                            />
-                                            <Button
-                                                class="w-full sm:w-auto"
-                                                variant="warning"
-                                                size="md"
-                                                :icon="Pencil"
-                                                @click="goToEditQuiz(item.id)"
-                                            />
-                                            <Button
-                                                class="w-full sm:w-auto"
-                                                variant="danger"
-                                                size="md"
-                                                :icon="Trash2"
-                                                @click="
-                                                    confirmDeleteQuiz(item.id)
-                                                "
-                                            />
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <!-- Toggle Retake -->
+                                                <button
+                                                    type="button"
+                                                    @click="toggleMissionQuizRetake(item)"
+                                                    :title="item.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
+                                                    :class="[
+                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
+                                                        item.allow_retake !== false 
+                                                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-300' 
+                                                            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-300'
+                                                    ]"
+                                                >
+                                                    <RotateCcw v-if="item.allow_retake !== false" class="w-3.5 h-3.5" />
+                                                    <Lock v-else class="w-3.5 h-3.5" />
+                                                    <span>{{ item.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}</span>
+                                                </button>
+
+                                                <!-- Max Retakes Select -->
+                                                <select
+                                                    v-if="item.allow_retake !== false"
+                                                    :value="item.max_retakes ?? 0"
+                                                    @change="updateMissionQuizMaxRetakes(item, $event.target.value)"
+                                                    title="Batas berapa kali kuis bisa diulang"
+                                                    class="h-9 px-2.5 text-xs font-bold rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm"
+                                                >
+                                                    <option :value="0">∞ Tanpa Batas</option>
+                                                    <option :value="1">Max 1x Ulang</option>
+                                                    <option :value="2">Max 2x Ulang</option>
+                                                    <option :value="3">Max 3x Ulang</option>
+                                                    <option :value="5">Max 5x Ulang</option>
+                                                </select>
+
+                                                <!-- Toggle Randomized -->
+                                                <button
+                                                    type="button"
+                                                    @click="toggleMissionQuizRandomized(item)"
+                                                    :title="item.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
+                                                    :class="[
+                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
+                                                        item.is_randomized
+                                                            ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
+                                                    ]"
+                                                >
+                                                    <Shuffle class="w-3.5 h-3.5" />
+                                                    <span>{{ item.is_randomized ? 'Acak Soal' : 'Urut Soal' }}</span>
+                                                </button>
+
+                                                <!-- Dialog Maskot -->
+                                                <button
+                                                    type="button"
+                                                    class="h-9 px-3 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                                    @click="openMascotDialogModal(item)"
+                                                    title="Dialog Maskot"
+                                                >
+                                                    <MessageSquare class="w-3.5 h-3.5 text-indigo-600" />
+                                                    <span>Dialog Maskot</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Actions -->
+                                            <div class="flex items-center gap-2">
+                                                <Button
+                                                    variant="info"
+                                                    size="md"
+                                                    :icon="Eye"
+                                                    @click="goToShowQuiz(item.id)"
+                                                />
+                                                <Button
+                                                    variant="warning"
+                                                    size="md"
+                                                    :icon="Pencil"
+                                                    @click="goToEditQuiz(item.id)"
+                                                />
+                                                <Button
+                                                    variant="danger"
+                                                    size="md"
+                                                    :icon="Trash2"
+                                                    @click="
+                                                        confirmDeleteQuiz(item.id)
+                                                    "
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 

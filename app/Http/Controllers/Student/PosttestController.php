@@ -38,8 +38,8 @@ class PosttestController extends Controller
             ->first();
         $background = null;
         $backsound = null;
-        if (!empty($module->template?->backsound)) {
-            $backsound = asset('storage/' . $module->template->backsound);
+        if (! empty($module->template?->backsound)) {
+            $backsound = asset('storage/'.$module->template->backsound);
         }
 
         // Kalau tidak ada posttest → kembali ke beranda
@@ -47,13 +47,17 @@ class PosttestController extends Controller
             return redirect()->route('playground.index');
         }
 
-        // Kalau posttest sudah pernah dikerjakan → kembali ke beranda (kecuali jika minta restart)
-        $alreadyDone = Quiz_attempts::where('quiz_id', $quiz->id)
+        $attemptCount = Quiz_attempts::where('quiz_id', $quiz->id)
             ->where('student_id', $player['id'] ?? null)
-            ->exists();
+            ->count();
 
-        if ($alreadyDone && !request()->has('restart')) {
-            return redirect()->route('playground.index');
+        $alreadyDone = $attemptCount > 0;
+
+        if ($alreadyDone) {
+            $maxRetakesExceeded = $quiz->max_retakes > 0 && $attemptCount >= $quiz->max_retakes;
+            if (! $quiz->allow_retake || ! request()->has('restart') || $maxRetakesExceeded) {
+                return redirect()->route('playground.posttest.result', $module->id);
+            }
         }
 
         $questionsCollection = $quiz->questions;
@@ -65,49 +69,52 @@ class PosttestController extends Controller
 
         // Format sama persis dengan MissionController
         $formattedQuiz = [
-            'id'         => $quiz->id,
-            'type'       => $quiz->type,
-            'title'      => $quiz->title,
+            'id' => $quiz->id,
+            'type' => $quiz->type,
+            'title' => $quiz->title,
             'time_limit' => $quiz->time_limit,
-            'image'      => $quiz->image,
-            'questions'  => $questionsCollection->map(function ($question) {
+            'image' => $quiz->image,
+            'allow_retake' => $quiz->allow_retake ?? true,
+            'questions' => $questionsCollection->map(function ($question) {
                 $formatted = [
-                    'id'            => $question->id,
+                    'id' => $question->id,
                     'question_text' => $question->question_text,
-                    'quiz_id'       => $question->quiz_id,
-                    'feedback_correct'   => $question->feedback_correct,
+                    'quiz_id' => $question->quiz_id,
+                    'image' => $question->image,
+                    'feedback_correct' => $question->feedback_correct,
                     'feedback_incorrect' => $question->feedback_incorrect,
-                    'explanation'        => $question->explanation,
+                    'explanation' => $question->explanation,
                     'mascot' => $question->mascot ? [
-                        'id'        => $question->mascot->id,
+                        'id' => $question->mascot->id,
                         'name_pose' => $question->mascot->name_pose,
-                        'image'     => $question->mascot->image
-                            ? asset('storage/' . $question->mascot->image)
+                        'image' => $question->mascot->image
+                            ? asset('storage/'.$question->mascot->image)
                             : null,
                     ] : null,
                 ];
 
                 if ($question->options->count() > 0) {
-                    $formatted['options'] = $question->options->sortBy('created_at')->values()->map(fn($opt) => [
-                        'id'           => $opt->id,
-                        'text'         => $opt->option_text,
-                        'option_text'  => $opt->option_text,
+                    $formatted['options'] = $question->options->sortBy('created_at')->values()->map(fn ($opt) => [
+                        'id' => $opt->id,
+                        'text' => $opt->option_text,
+                        'option_text' => $opt->option_text,
                         'option_image' => $opt->option_image,
-                        'is_correct'   => (bool) $opt->is_correct,
+                        'is_correct' => (bool) $opt->is_correct,
                     ])->toArray();
                 }
 
                 if ($question->dragDropGroups->count() > 0) {
-                    $formatted['drag_drop_items']  = [];
+                    $formatted['drag_drop_items'] = [];
                     $formatted['drag_drop_groups'] = $question->dragDropGroups->map(function ($group) use (&$formatted) {
                         foreach ($group->items as $item) {
                             $formatted['drag_drop_items'][] = [
-                                'id'               => $item->id,
-                                'item_text'        => $item->item_text,
-                                'item_image'       => $item->item_image,
+                                'id' => $item->id,
+                                'item_text' => $item->item_text,
+                                'item_image' => $item->item_image,
                                 'correct_group_id' => $group->id,
                             ];
                         }
+
                         return ['id' => $group->id, 'group_name' => $group->group_name];
                     })->toArray();
                 }
@@ -117,15 +124,15 @@ class PosttestController extends Controller
         ];
 
         return Inertia::render('Playground/Mission/TemplatePosttest', [
-            'quiz'   => $formattedQuiz,
+            'quiz' => $formattedQuiz,
             'module' => [
-                'id'          => $module->id,
-                'name'        => $module->name,
+                'id' => $module->id,
+                'name' => $module->name,
                 'description' => $module->description,
-                'template'    => $module->template,
+                'template' => $module->template,
             ],
             'user' => [
-                'name'  => $player['nama'] ?? 'Siswa',
+                'name' => $player['nama'] ?? 'Siswa',
                 'class' => $player['nama_kelas'] ?? '-',
             ],
             'backsound' => $backsound,
@@ -154,16 +161,16 @@ class PosttestController extends Controller
         }
 
         $request->validate([
-            'quiz_id'               => 'required|exists:quizzes,id',
-            'module_id'             => 'required|exists:learning_modules,id',
-            'time_taken'            => 'nullable|integer|min:0',
-            'answers'               => 'required|array',
+            'quiz_id' => 'required|exists:quizzes,id',
+            'module_id' => 'required|exists:learning_modules,id',
+            'time_taken' => 'nullable|integer|min:0',
+            'answers' => 'required|array',
             'answers.*.question_id' => 'required',
-            'answers.*.value'       => 'nullable',
+            'answers.*.value' => 'nullable',
         ]);
 
         $studentId = $player['id'] ?? null;
-        $quizId    = $request->quiz_id;
+        $quizId = $request->quiz_id;
 
         // Buat / update attempt
         $attempt = Quiz_attempts::updateOrCreate(
@@ -174,11 +181,11 @@ class PosttestController extends Controller
         // Simpan tiap jawaban
         $quizQuestionIds = Questions::where('quiz_id', $quizId)
             ->pluck('id')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->toArray();
 
         foreach ($request->answers as $ans) {
-            $questionId  = $ans['question_id'];
+            $questionId = $ans['question_id'];
             $answerValue = $ans['value'];
 
             if (! in_array((string) $questionId, $quizQuestionIds)) {
@@ -190,8 +197,8 @@ class PosttestController extends Controller
                     ['attempt_id' => $attempt->id, 'question_id' => $questionId],
                     [
                         'selected_option_id' => null,
-                        'selected_group_id'  => null,
-                        'response'           => json_encode($answerValue),
+                        'selected_group_id' => null,
+                        'response' => json_encode($answerValue),
                     ]
                 );
             } else {
@@ -199,8 +206,8 @@ class PosttestController extends Controller
                     ['attempt_id' => $attempt->id, 'question_id' => $questionId],
                     [
                         'selected_option_id' => $answerValue,
-                        'selected_group_id'  => null,
-                        'response'           => (string) $answerValue,
+                        'selected_group_id' => null,
+                        'response' => (string) $answerValue,
                     ]
                 );
             }
@@ -234,18 +241,22 @@ class PosttestController extends Controller
             return redirect()->route('playground.index');
         }
 
-        $studentId      = $player['id'] ?? null;
-        $totalCorrect   = 0;
+        $studentId = $player['id'] ?? null;
+        $attemptCount = Quiz_attempts::where('quiz_id', $quiz->id)
+            ->where('student_id', $studentId)
+            ->count();
+
+        $totalCorrect = 0;
         $totalIncorrect = 0;
         $totalQuestions = 0;
         $questionsResult = [];
 
         $byType = [
             'multiple_choices' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
-            'true_false'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
-            'case_study'       => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
-            'drag_drop'        => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
-            'short_answer'     => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'true_false' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'case_study' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'drag_drop' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
+            'short_answer' => ['correct' => 0, 'incorrect' => 0, 'total' => 0],
         ];
 
         $attempt = Quiz_attempts::where('quiz_id', $quiz->id)
@@ -294,15 +305,15 @@ class PosttestController extends Controller
                 }
 
                 $questionsResult[] = [
-                    'question_id'         => $question->id,
-                    'question_text'       => $question->question_text,
-                    'quiz_type'           => $qType,
-                    'quiz_title'          => $quiz->title,
-                    'is_correct'          => $isCorrect,
-                    'user_answer_text'    => $userAnswerText,
+                    'question_id' => $question->id,
+                    'question_text' => $question->question_text,
+                    'quiz_type' => $qType,
+                    'quiz_title' => $quiz->title,
+                    'is_correct' => $isCorrect,
+                    'user_answer_text' => $userAnswerText,
                     'correct_answer_text' => $correctAnswerText,
-                    'user_answer_map'     => $userAnswerMap,
-                    'correct_answer_map'  => $correctAnswerMap,
+                    'user_answer_map' => $userAnswerMap,
+                    'correct_answer_map' => $correctAnswerMap,
                 ];
             }
         }
@@ -312,27 +323,27 @@ class PosttestController extends Controller
             : 0;
 
         $breakdown = collect($byType)
-            ->filter(fn($d) => $d['total'] > 0)
-            ->map(fn($d, $type) => [
-                'type'      => $type,
-                'correct'   => $d['correct'],
+            ->filter(fn ($d) => $d['total'] > 0)
+            ->map(fn ($d, $type) => [
+                'type' => $type,
+                'correct' => $d['correct'],
                 'incorrect' => $d['incorrect'],
-                'total'     => $d['total'],
-                'score'     => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
+                'total' => $d['total'],
+                'score' => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
             ])->values()->toArray();
 
         return Inertia::render('Playground/Mission/Result', [
-            'mission'           => ['id' => null, 'name' => 'Posttest ' . $module->name, 'title' => 'Posttest'],
-            'next_mission'      => null,
-            'results'           => [
-                'score'            => $score,
-                'correct'          => $totalCorrect,
-                'incorrect'        => $totalIncorrect,
-                'total'            => $totalQuestions,
-                'correct_answers'  => $totalCorrect,
-                'total_questions'  => $totalQuestions,
-                'breakdown'        => $breakdown,
-                'details'          => collect($questionsResult)->map(fn($q) => [
+            'mission' => ['id' => null, 'name' => 'Posttest '.$module->name, 'title' => 'Posttest'],
+            'next_mission' => null,
+            'results' => [
+                'score' => $score,
+                'correct' => $totalCorrect,
+                'incorrect' => $totalIncorrect,
+                'total' => $totalQuestions,
+                'correct_answers' => $totalCorrect,
+                'total_questions' => $totalQuestions,
+                'breakdown' => $breakdown,
+                'details' => collect($questionsResult)->map(fn ($q) => [
                     'question_id' => $q['question_id'],
                     'question' => [
                         'id' => $q['question_id'],
@@ -347,10 +358,14 @@ class PosttestController extends Controller
                     'correct_answer_map' => $q['correct_answer_map'],
                 ])->toArray(),
             ],
-            'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'module'            => ['id' => $module->id, 'name' => $module->name],
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module' => ['id' => $module->id, 'name' => $module->name],
             'all_missions_done' => false,
-            'is_posttest'       => true,
+            'is_posttest' => true,
+            'can_retake' => (bool) ($quiz->allow_retake && ($quiz->max_retakes == 0 || $attemptCount < $quiz->max_retakes)),
+            'max_retakes' => $quiz->max_retakes ?? 0,
+            'attempts_count' => $attemptCount ?? 0,
+            'allow_retake' => (bool) ($quiz->allow_retake ?? true),
         ]);
     }
 
@@ -380,35 +395,39 @@ class PosttestController extends Controller
             $answersByQuestion = $attempt->answers()->get()->keyBy('question_id');
 
             $correct = 0;
-            $total   = 0;
+            $total = 0;
             foreach ($quiz->questions as $question) {
                 $answer = $answersByQuestion->get($question->id);
-                if (! $answer) continue;
+                if (! $answer) {
+                    continue;
+                }
                 $total++;
                 [$isCorrect] = $this->checkAnswer($answer, $question);
-                if ($isCorrect) $correct++;
+                if ($isCorrect) {
+                    $correct++;
+                }
             }
 
             return [
-                'correct'   => $correct,
+                'correct' => $correct,
                 'incorrect' => $total - $correct,
-                'total'     => $total,
-                'score'     => $total > 0 ? (int) round(($correct / $total) * 100) : 0,
+                'total' => $total,
+                'score' => $total > 0 ? (int) round(($correct / $total) * 100) : 0,
             ];
         };
 
         // ── Pretest ────────────────────────────────────────────────────────
-        $pretestQuiz  = Quizzes::where('module_id', $module->id)->where('category', 'pretest')->first();
+        $pretestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'pretest')->first();
         $pretestStats = $pretestQuiz ? $calcQuizStats($pretestQuiz) : ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
 
         // ── Misi (gabungan semua quiz category=mission di modul ini) ───────
         $missionQuizzes = Quizzes::where('module_id', $module->id)->where('category', 'mission')->get();
-        $missionStats   = ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
+        $missionStats = ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
         foreach ($missionQuizzes as $mQuiz) {
             $s = $calcQuizStats($mQuiz);
-            $missionStats['correct']   += $s['correct'];
+            $missionStats['correct'] += $s['correct'];
             $missionStats['incorrect'] += $s['incorrect'];
-            $missionStats['total']     += $s['total'];
+            $missionStats['total'] += $s['total'];
         }
         $missionStats['score'] = $missionStats['total'] > 0
             ? (int) round(($missionStats['correct'] / $missionStats['total']) * 100)
@@ -426,45 +445,45 @@ class PosttestController extends Controller
             $mTotal = 0;
             foreach ($mQuizzes as $mQuiz) {
                 $s = $calcQuizStats($mQuiz);
-                $mCorrect   += $s['correct'];
+                $mCorrect += $s['correct'];
                 $mIncorrect += $s['incorrect'];
-                $mTotal     += $s['total'];
+                $mTotal += $s['total'];
             }
             $missionsBreakdown[] = [
-                'id'        => $mission->id,
-                'name'      => $mission->name,
-                'correct'   => $mCorrect,
+                'id' => $mission->id,
+                'name' => $mission->name,
+                'correct' => $mCorrect,
                 'incorrect' => $mIncorrect,
-                'total'     => $mTotal,
-                'score'     => $mTotal > 0 ? (int) round(($mCorrect / $mTotal) * 100) : 0,
+                'total' => $mTotal,
+                'score' => $mTotal > 0 ? (int) round(($mCorrect / $mTotal) * 100) : 0,
             ];
         }
 
         // ── Posttest ───────────────────────────────────────────────────────
-        $posttestQuiz  = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
+        $posttestQuiz = Quizzes::where('module_id', $module->id)->where('category', 'posttest')->first();
         $posttestStats = $posttestQuiz ? $calcQuizStats($posttestQuiz) : ['correct' => 0, 'incorrect' => 0, 'total' => 0, 'score' => 0];
 
         // ── Skor akhir (rata-rata ketiga bagian) ───────────────────────────
-        $totalAll   = $pretestStats['total'] + $missionStats['total'] + $posttestStats['total'];
+        $totalAll = $pretestStats['total'] + $missionStats['total'] + $posttestStats['total'];
         $correctAll = $pretestStats['correct'] + $missionStats['correct'] + $posttestStats['correct'];
         $finalScore = $totalAll > 0 ? (int) round(($correctAll / $totalAll) * 100) : 0;
 
         return Inertia::render('Playground/Mission/Result', [
             'is_overall' => true,
-            'module'     => ['id' => $module->id, 'name' => $module->name],
-            'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'mission'    => ['id' => null, 'name' => 'Hasil Akhir Modul'],
-            'results'    => [
-                'score'              => $finalScore,
-                'correct_answers'    => $correctAll,
-                'total_questions'    => $totalAll,
-                'overall_score'      => $finalScore,
-                'overall_correct'    => $correctAll,
-                'overall_total'      => $totalAll,
-                'pretest'            => $pretestStats,
-                'missions'           => $missionStats,
+            'module' => ['id' => $module->id, 'name' => $module->name],
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'mission' => ['id' => null, 'name' => 'Hasil Akhir Modul'],
+            'results' => [
+                'score' => $finalScore,
+                'correct_answers' => $correctAll,
+                'total_questions' => $totalAll,
+                'overall_score' => $finalScore,
+                'overall_correct' => $correctAll,
+                'overall_total' => $totalAll,
+                'pretest' => $pretestStats,
+                'missions' => $missionStats,
                 'missions_breakdown' => $missionsBreakdown,
-                'posttest'           => $posttestStats,
+                'posttest' => $posttestStats,
             ],
             'all_missions_done' => true,
         ]);
@@ -478,23 +497,31 @@ class PosttestController extends Controller
             ->where('student_id', $studentId)
             ->latest()->first();
 
-        if (! $attempt) return 0;
+        if (! $attempt) {
+            return 0;
+        }
 
         $quiz = Quizzes::with(['questions.options', 'questions.dragDropGroups.items'])
             ->find($quizId);
-        if (! $quiz) return 0;
+        if (! $quiz) {
+            return 0;
+        }
 
         $answersByQuestion = $attempt->answers()->get()->keyBy('question_id');
         $totalCorrect = 0;
-        $totalCount   = 0;
+        $totalCount = 0;
 
         foreach ($quiz->questions as $question) {
             $answer = $answersByQuestion->get($question->id);
-            if (! $answer) continue;
+            if (! $answer) {
+                continue;
+            }
 
             $totalCount++;
             [$isCorrect] = $this->checkAnswer($answer, $question);
-            if ($isCorrect) $totalCorrect++;
+            if ($isCorrect) {
+                $totalCorrect++;
+            }
         }
 
         return $totalCount > 0 ? (int) round(($totalCorrect / $totalCount) * 100) : 0;
@@ -505,24 +532,25 @@ class PosttestController extends Controller
      */
     private function checkAnswer(User_answers $answer, $question): array
     {
-        $userText    = '';
+        $userText = '';
         $correctText = '';
-        $userMap     = [];
-        $correctMap  = [];
+        $userMap = [];
+        $correctMap = [];
 
         $quizType = $question->quiz?->type ?? '';
 
         if ($quizType === 'reflection') {
             $responseStr = trim($answer->response ?? '');
+
             return [true, $responseStr, '', [], []];
         }
 
         if ($quizType === 'short_answer') {
             $responseStr = trim($answer->response ?? '');
             $correctText = $question->expected_keywords ?? '';
-            
+
             $isCorrect = false;
-            if (!empty($correctText)) {
+            if (! empty($correctText)) {
                 $keywords = array_map('trim', explode(',', strtolower($correctText)));
                 $userAnsLower = strtolower($responseStr);
                 foreach ($keywords as $kw) {
@@ -534,25 +562,25 @@ class PosttestController extends Controller
             } else {
                 $isCorrect = true;
             }
-            
+
             return [$isCorrect, $responseStr, $correctText, [], []];
         }
 
         // Options-based (multiple_choices, true_false, case_study)
         if ($question->options && $question->options->count() > 0) {
-            $allOptions  = $question->options->keyBy('id');
+            $allOptions = $question->options->keyBy('id');
             $correctOpts = $question->options->where('is_correct', true);
-            $correctIds  = $correctOpts->pluck('id')->map(fn($id) => (string) $id)->sort()->values()->toArray();
+            $correctIds = $correctOpts->pluck('id')->map(fn ($id) => (string) $id)->sort()->values()->toArray();
             $correctText = $correctOpts->pluck('option_text')->implode(', ');
 
             $responseStr = trim($answer->response ?? '');
 
             if (str_starts_with($responseStr, '[')) {
                 $selectedIds = collect(json_decode($responseStr, true) ?? [])
-                    ->map(fn($id) => (string) $id)->sort()->values()->toArray();
+                    ->map(fn ($id) => (string) $id)->sort()->values()->toArray();
 
                 $userText = collect($selectedIds)
-                    ->map(fn($id) => $allOptions->get($id)?->option_text ?? $id)
+                    ->map(fn ($id) => $allOptions->get($id)?->option_text ?? $id)
                     ->implode(', ');
 
                 return [$selectedIds === $correctIds, $userText, $correctText, [], []];
@@ -562,7 +590,7 @@ class PosttestController extends Controller
                 ? (string) $answer->selected_option_id
                 : $responseStr;
 
-            $userText  = $allOptions->get($selectedId)?->option_text ?? $selectedId;
+            $userText = $allOptions->get($selectedId)?->option_text ?? $selectedId;
             $isCorrect = count($correctIds) === 1 && $selectedId === $correctIds[0];
 
             return [$isCorrect, $userText, $correctText, [], []];
@@ -580,15 +608,15 @@ class PosttestController extends Controller
             }
 
             $itemToCorrectGroup = [];
-            $itemLabels         = [];
-            $groupLabels        = [];
+            $itemLabels = [];
+            $groupLabels = [];
 
             foreach ($question->dragDropGroups as $group) {
                 $groupLabels[(string) $group->id] = $group->group_name;
                 foreach ($group->items as $item) {
-                    $itemLabels[(string) $item->id]         = $item->item_text;
+                    $itemLabels[(string) $item->id] = $item->item_text;
                     $itemToCorrectGroup[(string) $item->id] = (string) $group->id;
-                    $correctMap[$item->item_text]           = $group->group_name;
+                    $correctMap[$item->item_text] = $group->group_name;
                 }
             }
 

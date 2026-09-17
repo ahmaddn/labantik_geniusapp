@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { CheckCircle2 } from 'lucide-vue-next'
+import { CheckCircle2, Lock } from 'lucide-vue-next'
 
 const props = defineProps({
   question: {
@@ -10,6 +10,10 @@ const props = defineProps({
   modelValue: {
     type: [String, Number],
     default: null,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -22,6 +26,7 @@ const selectedAnim   = ref(null)
 watch(() => props.modelValue, (v) => { selectedOption.value = v })
 
 const handleSelect = (optionId) => {
+  if (props.disabled) return
   selectedOption.value = optionId
   selectedAnim.value   = optionId
   setTimeout(() => { selectedAnim.value = null }, 400)

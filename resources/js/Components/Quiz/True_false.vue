@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { CheckCircle2, XCircle, Circle } from 'lucide-vue-next'
+import { CheckCircle2, XCircle, Circle, Lock } from 'lucide-vue-next'
 import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
@@ -11,6 +11,10 @@ const props = defineProps({
   modelValue: {
     type: [String, Boolean, Number],
     default: null,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -29,6 +33,7 @@ const isTrue = (opt) => {
 }
 
 const handleSelect = (optionId) => {
+  if (props.disabled) return
   playPop()
   selectedAnswer.value = optionId
   emit('update-answer', {
@@ -40,6 +45,19 @@ const handleSelect = (optionId) => {
 
 <template>
   <div class="tf-container">
+    <div v-if="question?.image" class="tf-qimg-wrap">
+      <img
+        :src="question.image.startsWith('http') || question.image.startsWith('/') ? question.image : `/storage/${question.image}`"
+        alt="Gambar Soal"
+        class="tf-qimg"
+      />
+    </div>
+
+    <div v-if="disabled" class="tf-lock-badge">
+      <Lock :size="13" />
+      <span>Jawaban Terkunci</span>
+    </div>
+
     <div class="tf-options">
       <button
         v-for="option in props.question?.options || []"
@@ -48,8 +66,10 @@ const handleSelect = (optionId) => {
         :class="{
           selected: selectedAnswer === option.id,
           'tf-true': isTrue(option),
-          'tf-false': !isTrue(option)
+          'tf-false': !isTrue(option),
+          'tf-disabled': disabled
         }"
+        :disabled="disabled"
         @click="handleSelect(option.id)"
       >
         <!-- Image if exists -->

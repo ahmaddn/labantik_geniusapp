@@ -1,11 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { PencilLine } from 'lucide-vue-next'
+import { PencilLine, Lock } from 'lucide-vue-next'
 
 const props = defineProps({
   question:   { type: Object, required: true },
   quiz:       { type: Object, required: false },
   modelValue: { type: String, default: '' },
+  disabled:   { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update-answer'])
@@ -15,6 +16,7 @@ const answerText = ref(props.modelValue || '')
 watch(() => props.modelValue, (v) => { answerText.value = v || '' })
 
 const handleInput = () => {
+  if (props.disabled) return
   emit('update-answer', { questionId: props.question.id, value: answerText.value })
 }
 </script>
@@ -29,11 +31,15 @@ const handleInput = () => {
           <PencilLine :size="20" stroke-width="3" color="#a855f7" />
         </div>
         <h2 class="sa-title">UJI PEMAHAMAN SINGKAT</h2>
+        <div v-if="disabled" class="sa-lock-badge ms-auto">
+          <Lock :size="13" />
+          <span>Jawaban Terkunci</span>
+        </div>
       </div>
 
       <!-- Gambar Opsional -->
       <div v-if="question?.image" class="sa-image-wrap">
-        <img :src="`/storage/${question.image}`" class="sa-image" alt="Pertanyaan" />
+        <img :src="question.image.startsWith('http') || question.image.startsWith('/') ? question.image : `/storage/${question.image}`" class="sa-image" alt="Pertanyaan" />
       </div>
 
       <!-- Teks Pertanyaan -->
@@ -43,9 +49,11 @@ const handleInput = () => {
       <div class="sa-input-group">
         <textarea 
           v-model="answerText" 
+          :disabled="disabled"
           @input="handleInput" 
           placeholder="Ketik jawabanmu di sini..." 
           class="sa-input"
+          :class="{ 'sa-disabled': disabled }"
           rows="2"
         ></textarea>
       </div>

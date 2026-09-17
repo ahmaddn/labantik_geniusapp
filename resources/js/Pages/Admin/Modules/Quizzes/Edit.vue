@@ -300,16 +300,37 @@ const prevStep = () => {
 };
 
 // --- PILIHAN GANDA Methods ---
+const currentOptionImageFile = ref(null);
+const currentOptionImagePreview = ref(null);
+
+const handleOptionImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        currentOptionImageFile.value = file;
+        currentOptionImagePreview.value = URL.createObjectURL(file);
+    }
+};
+
+const removeOptionImage = () => {
+    currentOptionImageFile.value = null;
+    currentOptionImagePreview.value = null;
+};
+
 const addOption = () => {
-    if (!currentOption.value.option_text.trim()) {
-        showToast("Teks opsi harus diisi!", "warning");
+    if (!currentOption.value.option_text.trim() && !currentOptionImageFile.value) {
+        showToast("Teks opsi atau gambar harus diisi!", "warning");
         return;
     }
     questionOptions.value.push({
         ...currentOption.value,
         id: Date.now() + Math.random(),
+        option_image_file: currentOptionImageFile.value,
+        option_image_preview: currentOptionImagePreview.value,
+        has_new_image: !!currentOptionImageFile.value,
     });
     currentOption.value = { option_text: "", is_correct: false, feedback: "" };
+    currentOptionImageFile.value = null;
+    currentOptionImagePreview.value = null;
 };
 const removeOption = (id) => {
     questionOptions.value = questionOptions.value.filter((o) => o.id !== id);
@@ -979,6 +1000,40 @@ const toggleCardVariant = () => {
                                         placeholder="Teks opsi jawaban"
                                         border-color="green"
                                     />
+
+                                    <!-- Upload Gambar Opsi (Opsional) -->
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                            Gambar Opsi (Opsional)
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <div v-if="currentOptionImagePreview" class="relative">
+                                                <img
+                                                    :src="currentOptionImagePreview"
+                                                    alt="Preview"
+                                                    class="h-16 w-16 object-cover rounded-lg border-2 border-emerald-300"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    @click="removeOptionImage"
+                                                    class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+                                                >
+                                                    <X class="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                            <label class="cursor-pointer inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 border border-emerald-300">
+                                                <ImageIcon class="w-4 h-4 mr-1.5" />
+                                                {{ currentOptionImagePreview ? "Ganti Gambar" : "Pilih Gambar Opsi" }}
+                                                <input
+                                                    type="file"
+                                                    @change="handleOptionImageChange"
+                                                    accept="image/*"
+                                                    class="hidden"
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+
                                     <TextareaField
                                         v-if="quizForm.type === 'case_study'"
                                         v-model="currentOption.feedback"
@@ -1021,13 +1076,18 @@ const toggleCardVariant = () => {
                                             : 'bg-gray-50 border-gray-200',
                                     ]"
                                 >
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-3">
                                         <CheckCircle
                                             v-if="option.is_correct"
                                             class="text-green-600 w-4 h-4 shrink-0"
                                         />
+                                        <img
+                                            v-if="option.option_image_preview || option.option_image"
+                                            :src="option.option_image_preview || (option.option_image.startsWith('/') ? option.option_image : `/storage/${option.option_image}`)"
+                                            class="w-10 h-10 object-cover rounded-lg border border-gray-300 shrink-0"
+                                        />
                                         <div>
-                                            <span class="text-sm">{{
+                                            <span class="text-sm font-semibold">{{
                                                 option.option_text
                                             }}</span>
                                             <p

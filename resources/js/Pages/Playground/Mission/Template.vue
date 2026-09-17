@@ -689,10 +689,21 @@ const updateAnswer = (payload) => {
     if (payload?.questionId !== undefined) answers[payload.questionId] = payload.value;
 };
 
+// ── Locked Questions Tracking (No answer changes on Back) ───
+const lockedQuestionIds = ref(new Set());
+const isCurrentQuestionLocked = computed(() => {
+    const qId = step.value?.question?.id;
+    return qId ? lockedQuestionIds.value.has(qId) : false;
+});
+
 const goNext = () => {
     if (isCheckable.value && !isAnswerChecked.value) {
         onCheckAnswer();
         return;
+    }
+
+    if (step.value?.question?.id) {
+        lockedQuestionIds.value.add(step.value.question.id);
     }
 
     isAnswerChecked.value = false;
@@ -1160,7 +1171,7 @@ onUnmounted(() => {
                                                 :question="step.question"
                                                 :quiz="step.quiz"
                                                 :modelValue="answers[step.question?.id]"
-                                                :disabled="timedOutQuizzes.has(step.quiz?.id)"
+                                                :disabled="timedOutQuizzes.has(step.quiz?.id) || isCurrentQuestionLocked"
                                                 @update-answer="updateAnswer"
                                             />
                                             

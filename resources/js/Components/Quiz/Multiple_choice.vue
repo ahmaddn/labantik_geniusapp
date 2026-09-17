@@ -1,11 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { CheckCircle2 } from 'lucide-vue-next'
+import { CheckCircle2, Lock } from 'lucide-vue-next'
 import { useSfx } from '@/Composable/useSfx'
 
 const props = defineProps({
   question:   { type: Object, required: true },
   modelValue: { type: [String, Number], default: null },
+  disabled:   { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update-answer'])
@@ -19,6 +20,7 @@ watch(() => props.modelValue, (v) => { selected.value = v })
 const isSelected = (optionId) => selected.value === optionId
 
 const handleSelect = (optionId) => {
+  if (props.disabled) return
   playPop()
   selected.value     = optionId
   selectedAnim.value = optionId
@@ -32,6 +34,20 @@ const OPT_VARIANTS = ['a', 'b', 'c', 'd', 'e']
 
 <template>
   <div class="mc">
+    <!-- Gambar Soal Opsional -->
+    <div v-if="question?.image" class="mc-qimg-wrap">
+      <img
+        :src="question.image.startsWith('http') || question.image.startsWith('/') ? question.image : `/storage/${question.image}`"
+        alt="Gambar Soal"
+        class="mc-qimg"
+      />
+    </div>
+
+    <div v-if="disabled" class="mc-lock-badge">
+      <Lock :size="13" />
+      <span>Jawaban Terkunci</span>
+    </div>
+
     <div class="mc-opts">
       <button
         v-for="(option, i) in (question?.options || [])"
@@ -39,15 +55,20 @@ const OPT_VARIANTS = ['a', 'b', 'c', 'd', 'e']
         class="opt"
         :class="[
           `opt--${OPT_VARIANTS[i] ?? 'a'}`,
-          { 'opt--sel': isSelected(option.id), 'opt--pop': selectedAnim === option.id }
+          { 
+            'opt--sel': isSelected(option.id), 
+            'opt--pop': selectedAnim === option.id,
+            'opt--dis': disabled 
+          }
         ]"
+        :disabled="disabled"
         @click="handleSelect(option.id)"
       >
         <span class="opt-key">{{ OPT_LABELS[i] ?? String(i + 1) }}</span>
         <span class="opt-body">
           <img
             v-if="option.option_image"
-            :src="`/storage/${option.option_image}`"
+            :src="option.option_image.startsWith('http') || option.option_image.startsWith('/') ? option.option_image : `/storage/${option.option_image}`"
             :alt="option.option_text || option.text"
             class="opt-img"
           />
@@ -194,6 +215,43 @@ const OPT_VARIANTS = ['a', 'b', 'c', 'd', 'e']
 .opt--sel .opt-chk { 
   opacity: 1; 
   transform: scale(1) rotate(0); 
+}
+
+.mc-qimg-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.mc-qimg {
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 2px solid #e2e8f0;
+}
+.mc-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 20px;
+  align-self: flex-start;
+  margin-bottom: 6px;
+}
+.opt--dis {
+  cursor: not-allowed !important;
+  opacity: 0.82;
+}
+.opt--dis:hover {
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
 }
 
 /* ── Mobile ── */

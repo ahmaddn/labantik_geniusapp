@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Student;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Http\Controllers\Controller;
 use App\Models\Learning_modules;
-use App\Models\Missions;
 use App\Models\Quiz_attempts;
 use App\Models\Quizzes;
-use App\Http\Controllers\Controller;
+use Inertia\Inertia;
 
 class PlaygroundController extends Controller
 {
@@ -17,15 +15,15 @@ class PlaygroundController extends Controller
      */
     public function index()
     {
-        if (!session()->has('player')) {
+        if (! session()->has('player')) {
             return redirect()->route('playground.login');
         }
 
         $player = session('player');
 
         $userData = [
-            'name'  => $player['nama']  ?? 'Siswa',
-            'email' => $player['email'] ?? ($player['nama'] ?? 'siswa') . '@example.com',
+            'name' => $player['nama'] ?? 'Siswa',
+            'email' => $player['email'] ?? ($player['nama'] ?? 'siswa').'@example.com',
             'class' => [
                 'name' => $player['nama_kelas'] ?? '-',
             ],
@@ -33,7 +31,7 @@ class PlaygroundController extends Controller
         $learningModules = $this->getLearningModules($player['id'] ?? null, $player['kelas'] ?? null);
 
         return Inertia::render('Playground/Index', [
-            'user'            => $userData,
+            'user' => $userData,
             'learningModules' => $learningModules,
         ]);
     }
@@ -51,7 +49,7 @@ class PlaygroundController extends Controller
         $modules = Learning_modules::where('is_active', true)
             ->where(function ($query) use ($classId) {
                 if ($classId) {
-                    $query->whereHas('classes', function($q) use ($classId) {
+                    $query->whereHas('classes', function ($q) use ($classId) {
                         $q->where('classes.id', $classId);
                     });
                 }
@@ -61,73 +59,71 @@ class PlaygroundController extends Controller
             ->with(['missions.quizzes', 'classes:id,name'])
             ->get();
 
-        return $modules->map(function ($module) use ($studentId) {
+        $allQuizzes = Quizzes::whereIn('module_id', $modules->pluck('id'))->get();
+        $allQuizIds = $allQuizzes->pluck('id');
+
+        $attemptsByQuiz = Quiz_attempts::whereIn('quiz_id', $allQuizIds)
+            ->where('student_id', $studentId)
+            ->get()
+            ->groupBy('quiz_id');
+
+        return $modules->map(function ($module) use ($allQuizzes, $attemptsByQuiz) {
+            $moduleQuizzes = $allQuizzes->where('module_id', $module->id);
 
             // ── 1. Pretest ──────────────────────────────────────────
-            $pretestQuiz = Quizzes::where('module_id', $module->id)
-                ->where('category', 'pretest')
-                ->first();
-
-            $pretestDone = $pretestQuiz
-                ? Quiz_attempts::where('quiz_id', $pretestQuiz->id)
-                    ->where('student_id', $studentId)
-                    ->exists()
-                : true; // kalau tidak ada pretest, anggap sudah lewat
+            $pretestQuiz = $moduleQuizzes->firstWhere('category', 'pretest');
+            $pretestDone = $pretestQuiz ? $attemptsByQuiz->has($pretestQuiz->id) : true;
 
             // ── 2. Semua misi ───────────────────────────────────────
-            $missions        = $module->missions;
-            
+            $missions = $module->missions;
+
             if ($missions->isEmpty()) {
                 $allMissionsDone = true;
             } else {
-                $allMissionsDone = $missions->every(function ($mission) use ($studentId) {
-                    $quizzes = $mission->quizzes->where('category', 'mission');
-                    if ($quizzes->isEmpty()) return true;
-                    
-                    return $quizzes->every(fn ($quiz) =>
-                        Quiz_attempts::where('quiz_id', $quiz->id)
-                            ->where('student_id', $studentId)
-                            ->exists()
-                    );
+                $allMissionsDone = $missions->every(function ($mission) use ($attemptsByQuiz) {
+                    $quizzes = $mission->quizzes;
+                    if ($quizzes->isEmpty()) {
+                        return true;
+                    }
+
+                    return $quizzes->every(fn ($quiz) => $attemptsByQuiz->has($quiz->id));
                 });
             }
 
             // ── 3. Posttest ─────────────────────────────────────────
-            $posttestQuiz = Quizzes::where('module_id', $module->id)
-                ->where('category', 'posttest')
-                ->first();
-
-            $posttestDone = $posttestQuiz
-                ? Quiz_attempts::where('quiz_id', $posttestQuiz->id)
-                    ->where('student_id', $studentId)
-                    ->exists()
-                : true; // kalau tidak ada posttest, anggap sudah lewat
+            $posttestQuiz = $moduleQuizzes->firstWhere('category', 'posttest');
+            $posttestDone = $posttestQuiz ? $attemptsByQuiz->has($posttestQuiz->id) : true;
 
             // ── has_attempt & best_score (dari semua quiz di modul) ─
-            $allQuizIds = Quizzes::where('module_id', $module->id)->pluck('id');
+            $modQuizIds = $moduleQuizzes->pluck('id');
+            $hasAttempt = false;
+            $bestScore = 0;
 
-            $attempts = Quiz_attempts::whereIn('quiz_id', $allQuizIds)
-                ->where('student_id', $studentId)
-                ->get();
-
-            $hasAttempt = $attempts->isNotEmpty();
-            $bestScore  = $hasAttempt ? (int) $attempts->max('score') : 0;
+            foreach ($modQuizIds as $qId) {
+                if ($attemptsByQuiz->has($qId)) {
+                    $hasAttempt = true;
+                    $maxScore = $attemptsByQuiz->get($qId)->max('score');
+                    if ($maxScore > $bestScore) {
+                        $bestScore = $maxScore;
+                    }
+                }
+            }
 
             // ── Fully completed ─────────────────────────────────────
             $fullyCompleted = $pretestDone && $allMissionsDone && $posttestDone && $hasAttempt;
 
             return [
-                'id'               => $module->id,
-                'name'             => $module->name,
-                'description'      => $module->description,
-                'thumbnail'        => $module->thumbnail
-                                        ? asset('storage/' . $module->thumbnail)
+                'id' => $module->id,
+                'name' => $module->name,
+                'description' => $module->description,
+                'thumbnail' => $module->thumbnail
+                                        ? asset('storage/'.$module->thumbnail)
                                         : null,
-                'has_attempt'      => $hasAttempt,
-                'best_score'       => $bestScore,
-                'finished'         => $fullyCompleted, // dipakai Vue untuk styling lama
-                'fully_completed'  => $fullyCompleted, // flag eksplisit untuk tombol
-                'is_general'       => $module->classes->isEmpty(), // flag modul umum / general
+                'has_attempt' => $hasAttempt,
+                'best_score' => $bestScore,
+                'finished' => $fullyCompleted, // dipakai Vue untuk styling lama
+                'fully_completed' => $fullyCompleted, // flag eksplisit untuk tombol
+                'is_general' => $module->classes->isEmpty(), // flag modul umum / general
             ];
         })->toArray();
     }

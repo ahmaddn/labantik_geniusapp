@@ -3,29 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Drag_drop_groups;
+use App\Models\Drag_drop_items;
 use App\Models\Learning_modules;
 use App\Models\Missions;
-use App\Models\Quizzes;
-use App\Models\Questions;
 use App\Models\Question_options;
-use App\Models\Drag_drop_items;
-use App\Models\Drag_drop_groups;
+use App\Models\Questions;
+use App\Models\Quizzes;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class QuizController extends Controller
 {
     /**
      * Safely combine header and row values even when counts differ.
      * Pads missing values with empty strings or trims extra values.
-     *
-     * @param array $header
-     * @param array $row
-     * @return array
      */
     protected function safeCombine(array $header, array $row): array
     {
@@ -41,6 +37,7 @@ class QuizController extends Controller
         }
 
         $combined = @array_combine($h, $r);
+
         return $combined === false ? [] : $combined;
     }
 
@@ -48,8 +45,7 @@ class QuizController extends Controller
      * Parse CSV/XLSX file and return array of rows keyed by header.
      * Returns ['error' => string] on failure, or ['rows' => array] on success.
      *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @return array
+     * @param  \Illuminate\Http\UploadedFile  $file
      */
     protected function parseImportFile($file): array
     {
@@ -77,18 +73,19 @@ class QuizController extends Controller
                     continue;
                 }
                 if ($header === null) {
-                    $header = array_map(fn($h) => trim(strtolower(str_replace(["\xEF\xBB\xBF", "\r", "\n"], '', $h))), $row);
+                    $header = array_map(fn ($h) => trim(strtolower(str_replace(["\xEF\xBB\xBF", "\r", "\n"], '', $h))), $row);
+
                     continue;
                 }
                 $combined = $this->safeCombine($header, $row);
-                if (!empty($combined)) {
+                if (! empty($combined)) {
                     $rows[] = $combined;
                 }
                 $rowIndex++;
             }
             fclose($handle);
         } elseif (in_array($ext, ['xlsx', 'xls'])) {
-            if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+            if (! class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
                 return ['error' => 'Dukungan XLSX tidak ditemukan. Jalankan: composer require phpoffice/phpspreadsheet'];
             }
             try {
@@ -99,20 +96,21 @@ class QuizController extends Controller
                 foreach ($data as $r) {
                     $values = array_values($r);
                     // Skip baris kosong
-                    if (empty(array_filter($values, fn($v) => $v !== null && trim((string)$v) !== ''))) {
+                    if (empty(array_filter($values, fn ($v) => $v !== null && trim((string) $v) !== ''))) {
                         continue;
                     }
                     if ($header === null) {
-                        $header = array_map(fn($h) => trim(strtolower((string)$h)), $values);
+                        $header = array_map(fn ($h) => trim(strtolower((string) $h)), $values);
+
                         continue;
                     }
                     $combined = $this->safeCombine($header, $values);
-                    if (!empty($combined)) {
+                    if (! empty($combined)) {
                         $rows[] = $combined;
                     }
                 }
             } catch (\Exception $e) {
-                return ['error' => 'Gagal membaca file XLSX: ' . $e->getMessage()];
+                return ['error' => 'Gagal membaca file XLSX: '.$e->getMessage()];
             }
         } else {
             return ['error' => 'Silakan unggah file CSV atau XLSX.'];
@@ -128,24 +126,21 @@ class QuizController extends Controller
     /**
      * Validate and build quiz groups from parsed rows.
      * Returns ['error' => string] or ['groups' => array].
-     *
-     * @param array $rows
-     * @return array
      */
     protected function buildQuizGroups(array $rows): array
     {
         $groups = [];
         foreach ($rows as $idx => $r) {
             // Pastikan ada quiz_title
-            if (!$r || !isset($r['quiz_title']) || trim((string)$r['quiz_title']) === '') {
-                return ['error' => "Baris ke-" . ($idx + 2) . " tidak memiliki kolom quiz_title."];
+            if (! $r || ! isset($r['quiz_title']) || trim((string) $r['quiz_title']) === '') {
+                return ['error' => 'Baris ke-'.($idx + 2).' tidak memiliki kolom quiz_title.'];
             }
             // Pastikan ada question_text
-            if (!isset($r['question_text']) || trim((string)$r['question_text']) === '') {
-                return ['error' => "Baris ke-" . ($idx + 2) . " tidak memiliki kolom question_text."];
+            if (! isset($r['question_text']) || trim((string) $r['question_text']) === '') {
+                return ['error' => 'Baris ke-'.($idx + 2).' tidak memiliki kolom question_text.'];
             }
 
-            $title = trim((string)$r['quiz_title']);
+            $title = trim((string) $r['quiz_title']);
             $groups[$title][] = $r;
         }
 
@@ -159,11 +154,9 @@ class QuizController extends Controller
     /**
      * Persist quiz groups to DB. Reusable by importMission and importModule.
      *
-     * @param array  $groups
-     * @param int    $moduleId
-     * @param int|null $missionId
-     * @param string|null $defaultCategory
-     * @param bool   $requireCategory  Whether category must be pretest/posttest
+     * @param  int  $moduleId
+     * @param  int|null  $missionId
+     * @param  bool  $requireCategory  Whether category must be pretest/posttest
      * @return array ['success' => true] or ['error' => string]
      */
     protected function persistQuizGroups(
@@ -180,83 +173,85 @@ class QuizController extends Controller
                 : 10;
 
             // Tentukan kategori
-            $category = isset($first['category']) && trim((string)$first['category']) !== ''
-                ? trim((string)$first['category'])
+            $category = isset($first['category']) && trim((string) $first['category']) !== ''
+                ? trim((string) $first['category'])
                 : $defaultCategory;
 
-            if ($requireCategory && !in_array($category, ['pretest', 'posttest'], true)) {
+            if ($requireCategory && ! in_array($category, ['pretest', 'posttest'], true)) {
                 return ['error' => "Kategori quiz '{$quizTitle}' harus 'pretest' atau 'posttest'. Ditemukan: '{$category}'."];
             }
 
             $quiz = Quizzes::create([
-                'mission_id'  => $missionId,
-                'module_id'   => $moduleId,
-                'title'       => $quizTitle,
-                'description' => isset($first['quiz_description']) ? trim((string)$first['quiz_description']) : null,
-                'type'        => 'multiple_choices',
-                'time_limit'  => $timeLimit,
-                'category'    => $category ?: null,
-                'created_by'  => Auth::id(),
+                'mission_id' => $missionId,
+                'module_id' => $moduleId,
+                'title' => $quizTitle,
+                'description' => isset($first['quiz_description']) ? trim((string) $first['quiz_description']) : null,
+                'type' => 'multiple_choices',
+                'time_limit' => $timeLimit,
+                'category' => $category ?: null,
+                'created_by' => Auth::id(),
             ]);
 
             Log::info('Quiz import created', [
-                'quiz_id'    => $quiz->id,
-                'title'      => $quiz->title,
-                'module_id'  => $moduleId,
+                'quiz_id' => $quiz->id,
+                'title' => $quiz->title,
+                'module_id' => $moduleId,
                 'mission_id' => $missionId,
-                'category'   => $category,
+                'category' => $category,
             ]);
 
             foreach ($groupRows as $qIdx => $qr) {
                 // Resolve mascot
-                $rawMascot = isset($qr['mascot_id']) ? trim((string)$qr['mascot_id']) : '';
+                $rawMascot = isset($qr['mascot_id']) ? trim((string) $qr['mascot_id']) : '';
                 $resolvedMascot = null;
                 if ($rawMascot !== '') {
                     $m = \App\Models\Mascots::where('id', $rawMascot)->first();
-                    if (!$m) {
+                    if (! $m) {
                         $basename = pathinfo($rawMascot, PATHINFO_BASENAME);
                         $m = \App\Models\Mascots::where('image', 'like', "%{$basename}%")->first();
                     }
-                    if ($m) $resolvedMascot = $m->id;
+                    if ($m) {
+                        $resolvedMascot = $m->id;
+                    }
                 }
 
                 $question = Questions::create([
-                    'quiz_id'       => $quiz->id,
-                    'mascot_id'     => $resolvedMascot,
-                    'question_text' => trim((string)$qr['question_text']),
-                    'order_number'  => $qIdx + 1,
+                    'quiz_id' => $quiz->id,
+                    'mascot_id' => $resolvedMascot,
+                    'question_text' => trim((string) $qr['question_text']),
+                    'order_number' => $qIdx + 1,
                 ]);
 
                 // Kumpulkan opsi (option_1 s/d option_10)
                 $options = [];
                 for ($i = 1; $i <= 10; $i++) {
-                    $optKey  = 'option_' . $i;
-                    $corrKey = 'option_' . $i . '_is_correct';
+                    $optKey = 'option_'.$i;
+                    $corrKey = 'option_'.$i.'_is_correct';
                     // Hentikan jika kolom option_N tidak ada sama sekali di header
-                    if (!array_key_exists($optKey, $qr)) {
+                    if (! array_key_exists($optKey, $qr)) {
                         break;
                     }
                     $optText = $qr[$optKey];
-                    if ($optText === null || $optText === '' || trim((string)$optText) === '') {
+                    if ($optText === null || $optText === '' || trim((string) $optText) === '') {
                         continue; // Lewati opsi kosong
                     }
                     // Ambil is_correct — CSV tanpa quotes bisa menghasilkan int 1/0 langsung
                     $rawCorrect = array_key_exists($corrKey, $qr) ? $qr[$corrKey] : 0;
-                    $isCorrect  = ($rawCorrect === 1 || $rawCorrect === true || $rawCorrect === '1')
+                    $isCorrect = ($rawCorrect === 1 || $rawCorrect === true || $rawCorrect === '1')
                         ? 1
-                        : (in_array(strtolower(trim((string)$rawCorrect)), ['true', 'yes', 'y']) ? 1 : 0);
+                        : (in_array(strtolower(trim((string) $rawCorrect)), ['true', 'yes', 'y']) ? 1 : 0);
                     $options[] = [
-                        'option_text' => trim((string)$optText),
-                        'is_correct'  => $isCorrect,
+                        'option_text' => trim((string) $optText),
+                        'is_correct' => $isCorrect,
                     ];
                 }
 
                 if (count($options) < 2) {
-                    return ['error' => "Pertanyaan \"{$qr['question_text']}\" pada quiz \"{$quizTitle}\" harus memiliki minimal 2 opsi. Ditemukan: " . count($options) . " opsi."];
+                    return ['error' => "Pertanyaan \"{$qr['question_text']}\" pada quiz \"{$quizTitle}\" harus memiliki minimal 2 opsi. Ditemukan: ".count($options).' opsi.'];
                 }
 
                 $hasCorrect = collect($options)->pluck('is_correct')->contains(1);
-                if (!$hasCorrect) {
+                if (! $hasCorrect) {
                     return ['error' => "Pertanyaan \"{$qr['question_text']}\" pada quiz \"{$quizTitle}\" harus memiliki minimal 1 jawaban benar (is_correct = 1/true/yes)."];
                 }
 
@@ -264,13 +259,13 @@ class QuizController extends Controller
                     Question_options::create([
                         'question_id' => $question->id,
                         'option_text' => $opt['option_text'],
-                        'is_correct'  => $opt['is_correct'],
+                        'is_correct' => $opt['is_correct'],
                     ]);
                 }
 
                 Log::info('Quiz import question+options created', [
-                    'question_id'   => $question->id,
-                    'quiz_id'       => $quiz->id,
+                    'question_id' => $question->id,
+                    'quiz_id' => $quiz->id,
                     'options_count' => count($options),
                 ]);
             }
@@ -292,12 +287,12 @@ class QuizController extends Controller
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [
-                'id'       => $modules->id,
-                'name'     => $modules->name,
+                'id' => $modules->id,
+                'name' => $modules->name,
             ],
             'mission' => [
-                'id'           => $missions->id,
-                'name'         => $missions->name,
+                'id' => $missions->id,
+                'name' => $missions->name,
                 'order_number' => $missions->order_number,
             ],
             'mascots' => $mascots,
@@ -309,7 +304,7 @@ class QuizController extends Controller
      */
     public function createModule(Learning_modules $modules, string $category)
     {
-        if (!in_array($category, ['pretest', 'posttest', 'case_study'])) {
+        if (! in_array($category, ['pretest', 'posttest', 'case_study'])) {
             abort(404);
         }
 
@@ -317,11 +312,11 @@ class QuizController extends Controller
 
         return Inertia::render('Admin/Modules/Quizzes/Create', [
             'module' => [
-                'id'       => $modules->id,
-                'name'     => $modules->name,
+                'id' => $modules->id,
+                'name' => $modules->name,
             ],
-            'mission'        => null,
-            'mascots'        => $mascots,
+            'mission' => null,
+            'mascots' => $mascots,
             'presetCategory' => $category,
         ]);
     }
@@ -336,25 +331,26 @@ class QuizController extends Controller
         }
 
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type'        => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
-            'time_limit'  => 'required|integer|min:1',
-            'category'    => 'nullable|string|max:100',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'type' => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
+            'time_limit' => 'required|integer|min:1',
+            'category' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_randomized' => 'nullable|boolean',
+            'allow_retake' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
 
         if ($request->input('type') === 'true_false') {
             $request->validate([
-                'tf_question'        => 'required|string',
+                'tf_question' => 'required|string',
                 'tf_option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
         } elseif ($request->input('type') === 'drag_drop') {
             $request->validate([
-                'questions'          => 'required|string',
+                'questions' => 'required|string',
                 'drag_item_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
@@ -362,6 +358,8 @@ class QuizController extends Controller
         } else {
             $request->validate([
                 'questions' => 'required|string',
+                'question_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
             ]);
@@ -377,35 +375,37 @@ class QuizController extends Controller
             $missionId = in_array($validated['category'], ['pretest', 'posttest']) ? null : $missions->id;
 
             $quiz = Quizzes::create([
-                'mission_id'  => $missionId,
-                'module_id'   => $modules->id,
-                'title'       => $validated['title'],
+                'mission_id' => $missionId,
+                'module_id' => $modules->id,
+                'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
-                'type'        => $validated['type'],
-                'time_limit'  => $validated['time_limit'],
-                'category'    => $validated['category'] ?? null,
-                'image'       => $imagePath,
+                'type' => $validated['type'],
+                'time_limit' => $validated['time_limit'],
+                'category' => $validated['category'] ?? null,
+                'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
-                'created_by'  => Auth::id(),
+                'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'created_by' => Auth::id(),
             ]);
 
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
 
-                if (!$tfData || empty($tfData['question_text'])) {
+                if (! $tfData || empty($tfData['question_text'])) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan true/false tidak valid.');
                 }
 
                 $question = Questions::create([
-                    'quiz_id'       => $quiz->id,
-                    'mascot_id'     => $tfData['mascot_id'] ?? null,
+                    'quiz_id' => $quiz->id,
+                    'mascot_id' => $tfData['mascot_id'] ?? null,
                     'question_text' => $tfData['question_text'],
                     'feedback_correct' => $tfData['feedback_correct'] ?? null,
                     'feedback_incorrect' => $tfData['feedback_incorrect'] ?? null,
-                    'image'         => null,
-                    'order_number'  => 1,
-                    'type'          => 'true_false',
+                    'image' => null,
+                    'order_number' => 1,
+                    'type' => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -419,31 +419,39 @@ class QuizController extends Controller
                     }
 
                     Question_options::create([
-                        'question_id'  => $question->id,
-                        'option_text'  => $optionMeta['option_text'] ?? '',
+                        'question_id' => $question->id,
+                        'option_text' => $optionMeta['option_text'] ?? '',
                         'option_image' => $optionImagePath,
-                        'is_correct'   => (bool) ($optionMeta['is_correct'] ?? false),
-                        'feedback'     => null,
+                        'is_correct' => (bool) ($optionMeta['is_correct'] ?? false),
+                        'feedback' => null,
                     ]);
                 }
             } else {
                 $questions = json_decode($request->input('questions'), true);
 
-                if (!$questions || count($questions) === 0) {
+                if (! $questions || count($questions) === 0) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan tidak valid.');
                 }
 
                 foreach ($questions as $index => $questionData) {
+                    $qImagePath = $questionData['image'] ?? null;
+                    if (isset($questionData['has_new_image']) && $questionData['has_new_image']) {
+                        if (isset($questionData['image_index']) && $request->hasFile("question_images.{$questionData['image_index']}")) {
+                            $qImagePath = $request->file("question_images.{$questionData['image_index']}")->store('questions/images', 'public');
+                        }
+                    }
+
                     $question = Questions::create([
-                        'quiz_id'       => $quiz->id,
-                        'mascot_id'     => $questionData['mascot_id'] ?? null,
+                        'quiz_id' => $quiz->id,
+                        'mascot_id' => $questionData['mascot_id'] ?? null,
                         'question_text' => $questionData['question_text'],
                         'feedback_correct' => $questionData['feedback_correct'] ?? null,
                         'feedback_incorrect' => $questionData['feedback_incorrect'] ?? null,
-                        'image'         => $questionData['image'] ?? null,
-                        'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
+                        'image' => $qImagePath,
+                        'order_number' => $index + 1,
+                        'type' => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -452,11 +460,19 @@ class QuizController extends Controller
                         && isset($questionData['options'])
                     ) {
                         foreach ($questionData['options'] as $optionData) {
+                            $optImagePath = $optionData['option_image'] ?? null;
+                            if (isset($optionData['has_new_image']) && $optionData['has_new_image']) {
+                                if (isset($optionData['image_index']) && $request->hasFile("option_images.{$optionData['image_index']}")) {
+                                    $optImagePath = $request->file("option_images.{$optionData['image_index']}")->store('questions/options', 'public');
+                                }
+                            }
+
                             Question_options::create([
                                 'question_id' => $question->id,
-                                'option_text' => $optionData['option_text'],
-                                'is_correct'  => $optionData['is_correct'],
-                                'feedback'    => $optionData['feedback'] ?? null,
+                                'option_text' => $optionData['option_text'] ?? '',
+                                'option_image' => $optImagePath,
+                                'is_correct' => $optionData['is_correct'],
+                                'feedback' => $optionData['feedback'] ?? null,
                             ]);
                         }
                     }
@@ -467,7 +483,7 @@ class QuizController extends Controller
                             foreach ($questionData['drag_drop_groups'] as $groupIndex => $groupData) {
                                 $group = Drag_drop_groups::create([
                                     'question_id' => $question->id,
-                                    'group_name'  => $groupData['group_name'],
+                                    'group_name' => $groupData['group_name'],
                                 ]);
                                 $groupMap[$groupIndex] = $group->id;
                             }
@@ -483,10 +499,10 @@ class QuizController extends Controller
                                 }
 
                                 Drag_drop_items::create([
-                                    'question_id'        => $question->id,
+                                    'question_id' => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
-                                    'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath,
+                                    'item_text' => $itemData['item_text'],
+                                    'item_image' => $storedPath,
                                 ]);
                             }
                         }
@@ -501,7 +517,8 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal menambahkan quiz: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Gagal menambahkan quiz: '.$e->getMessage());
         }
     }
 
@@ -511,25 +528,26 @@ class QuizController extends Controller
     public function storeModule(Learning_modules $modules, Request $request)
     {
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type'        => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
-            'time_limit'  => 'required|integer|min:1',
-            'category'    => 'required|in:pretest,posttest,case_study',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'type' => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
+            'time_limit' => 'required|integer|min:1',
+            'category' => 'required|in:pretest,posttest,case_study',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_randomized' => 'nullable|boolean',
+            'allow_retake' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
 
         if ($request->input('type') === 'true_false') {
             $request->validate([
-                'tf_question'        => 'required|string',
+                'tf_question' => 'required|string',
                 'tf_option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
         } elseif ($request->input('type') === 'drag_drop') {
             $request->validate([
-                'questions'          => 'required|string',
+                'questions' => 'required|string',
                 'drag_item_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
@@ -537,6 +555,8 @@ class QuizController extends Controller
         } else {
             $request->validate([
                 'questions' => 'required|string',
+                'question_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
             ]);
@@ -550,35 +570,37 @@ class QuizController extends Controller
             }
 
             $quiz = Quizzes::create([
-                'mission_id'  => null,
-                'module_id'   => $modules->id,
-                'title'       => $validated['title'],
+                'mission_id' => null,
+                'module_id' => $modules->id,
+                'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
-                'type'        => $validated['type'],
-                'time_limit'  => $validated['time_limit'],
-                'category'    => $validated['category'] ?? null,
-                'image'       => $imagePath,
+                'type' => $validated['type'],
+                'time_limit' => $validated['time_limit'],
+                'category' => $validated['category'] ?? null,
+                'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
-                'created_by'  => Auth::id(),
+                'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'created_by' => Auth::id(),
             ]);
 
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
 
-                if (!$tfData || empty($tfData['question_text'])) {
+                if (! $tfData || empty($tfData['question_text'])) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan true/false tidak valid.');
                 }
 
                 $question = Questions::create([
-                    'quiz_id'       => $quiz->id,
-                    'mascot_id'     => $tfData['mascot_id'] ?? null,
+                    'quiz_id' => $quiz->id,
+                    'mascot_id' => $tfData['mascot_id'] ?? null,
                     'question_text' => $tfData['question_text'],
                     'feedback_correct' => $tfData['feedback_correct'] ?? null,
                     'feedback_incorrect' => $tfData['feedback_incorrect'] ?? null,
-                    'image'         => null,
-                    'order_number'  => 1,
-                    'type'          => 'true_false',
+                    'image' => null,
+                    'order_number' => 1,
+                    'type' => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -592,31 +614,39 @@ class QuizController extends Controller
                     }
 
                     Question_options::create([
-                        'question_id'  => $question->id,
-                        'option_text'  => $optionMeta['option_text'] ?? '',
+                        'question_id' => $question->id,
+                        'option_text' => $optionMeta['option_text'] ?? '',
                         'option_image' => $optionImagePath,
-                        'is_correct'   => (bool) ($optionMeta['is_correct'] ?? false),
-                        'feedback'     => null,
+                        'is_correct' => (bool) ($optionMeta['is_correct'] ?? false),
+                        'feedback' => null,
                     ]);
                 }
             } else {
                 $questions = json_decode($request->input('questions'), true);
 
-                if (!$questions || count($questions) === 0) {
+                if (! $questions || count($questions) === 0) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan tidak valid.');
                 }
 
                 foreach ($questions as $index => $questionData) {
+                    $qImagePath = $questionData['image'] ?? null;
+                    if (isset($questionData['has_new_image']) && $questionData['has_new_image']) {
+                        if (isset($questionData['image_index']) && $request->hasFile("question_images.{$questionData['image_index']}")) {
+                            $qImagePath = $request->file("question_images.{$questionData['image_index']}")->store('questions/images', 'public');
+                        }
+                    }
+
                     $question = Questions::create([
-                        'quiz_id'       => $quiz->id,
-                        'mascot_id'     => $questionData['mascot_id'] ?? null,
+                        'quiz_id' => $quiz->id,
+                        'mascot_id' => $questionData['mascot_id'] ?? null,
                         'question_text' => $questionData['question_text'],
                         'feedback_correct' => $questionData['feedback_correct'] ?? null,
                         'feedback_incorrect' => $questionData['feedback_incorrect'] ?? null,
-                        'image'         => $questionData['image'] ?? null,
-                        'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
+                        'image' => $qImagePath,
+                        'order_number' => $index + 1,
+                        'type' => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -625,12 +655,19 @@ class QuizController extends Controller
                         && isset($questionData['options'])
                     ) {
                         foreach ($questionData['options'] as $optionData) {
+                            $optImagePath = $optionData['option_image'] ?? null;
+                            if (isset($optionData['has_new_image']) && $optionData['has_new_image']) {
+                                if (isset($optionData['image_index']) && $request->hasFile("option_images.{$optionData['image_index']}")) {
+                                    $optImagePath = $request->file("option_images.{$optionData['image_index']}")->store('questions/options', 'public');
+                                }
+                            }
+
                             Question_options::create([
-                                'question_id'  => $question->id,
-                                'option_text'  => $optionData['option_text'] ?? '',
-                                'option_image' => $optionData['option_image'] ?? null,
-                                'is_correct'   => $optionData['is_correct'],
-                                'feedback'     => $optionData['feedback'] ?? null,
+                                'question_id' => $question->id,
+                                'option_text' => $optionData['option_text'] ?? '',
+                                'option_image' => $optImagePath,
+                                'is_correct' => $optionData['is_correct'],
+                                'feedback' => $optionData['feedback'] ?? null,
                             ]);
                         }
                     }
@@ -641,7 +678,7 @@ class QuizController extends Controller
                             foreach ($questionData['drag_drop_groups'] as $groupIndex => $groupData) {
                                 $group = Drag_drop_groups::create([
                                     'question_id' => $question->id,
-                                    'group_name'  => $groupData['group_name'],
+                                    'group_name' => $groupData['group_name'],
                                 ]);
                                 $groupMap[$groupIndex] = $group->id;
                             }
@@ -657,10 +694,10 @@ class QuizController extends Controller
                                 }
 
                                 Drag_drop_items::create([
-                                    'question_id'        => $question->id,
+                                    'question_id' => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
-                                    'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath,
+                                    'item_text' => $itemData['item_text'],
+                                    'item_image' => $storedPath,
                                 ]);
                             }
                         }
@@ -675,7 +712,8 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal menambahkan quiz: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Gagal menambahkan quiz: '.$e->getMessage());
         }
     }
 
@@ -699,8 +737,8 @@ class QuizController extends Controller
             'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ], [
             'file.required' => 'File wajib diunggah.',
-            'file.mimes'    => 'Format file harus CSV atau XLSX.',
-            'file.max'      => 'Ukuran file maksimal 10MB.',
+            'file.mimes' => 'Format file harus CSV atau XLSX.',
+            'file.max' => 'Ukuran file maksimal 10MB.',
         ]);
 
         // 1. Parse file
@@ -728,6 +766,7 @@ class QuizController extends Controller
 
             if (isset($result['error'])) {
                 DB::rollBack();
+
                 return back()->with('error', $result['error']);
             }
 
@@ -740,7 +779,8 @@ class QuizController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Quiz mission import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal import: '.$e->getMessage());
         }
     }
 
@@ -751,12 +791,12 @@ class QuizController extends Controller
     public function importModule(Learning_modules $modules, Request $request)
     {
         $request->validate([
-            'file'     => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
             'category' => 'nullable|string',
         ], [
             'file.required' => 'File wajib diunggah.',
-            'file.mimes'    => 'Format file harus CSV atau XLSX.',
-            'file.max'      => 'Ukuran file maksimal 10MB.',
+            'file.mimes' => 'Format file harus CSV atau XLSX.',
+            'file.max' => 'Ukuran file maksimal 10MB.',
         ]);
 
         // 1. Parse file
@@ -784,6 +824,7 @@ class QuizController extends Controller
 
             if (isset($result['error'])) {
                 DB::rollBack();
+
                 return back()->with('error', $result['error']);
             }
 
@@ -796,7 +837,8 @@ class QuizController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Quiz module import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal import: '.$e->getMessage());
         }
     }
 
@@ -810,7 +852,7 @@ class QuizController extends Controller
         }
 
         $quizzes->load([
-            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions' => fn ($q) => $q->orderBy('order_number'),
             'questions.mascot',
             'questions.options',
             'questions.dragDropGroups',
@@ -819,9 +861,9 @@ class QuizController extends Controller
         ]);
 
         return Inertia::render('Admin/Modules/Quizzes/Show', [
-            'module'  => ['id' => $modules->id, 'name' => $modules->name],
+            'module' => ['id' => $modules->id, 'name' => $modules->name],
             'mission' => ['id' => $missions->id, 'name' => $missions->name],
-            'quiz'    => $quizzes,
+            'quiz' => $quizzes,
         ]);
     }
 
@@ -835,7 +877,7 @@ class QuizController extends Controller
         }
 
         $quizzes->load([
-            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions' => fn ($q) => $q->orderBy('order_number'),
             'questions.mascot',
             'questions.options',
             'questions.dragDropGroups',
@@ -844,9 +886,9 @@ class QuizController extends Controller
         ]);
 
         return Inertia::render('Admin/Modules/Quizzes/Show', [
-            'module'  => ['id' => $modules->id, 'name' => $modules->name],
+            'module' => ['id' => $modules->id, 'name' => $modules->name],
             'mission' => null,
-            'quiz'    => $quizzes,
+            'quiz' => $quizzes,
         ]);
     }
 
@@ -860,7 +902,7 @@ class QuizController extends Controller
         }
 
         $quizzes->load([
-            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions' => fn ($q) => $q->orderBy('order_number'),
             'questions.mascot',
             'questions.options',
             'questions.dragDropGroups',
@@ -871,12 +913,12 @@ class QuizController extends Controller
 
         return Inertia::render('Admin/Modules/Quizzes/Edit', [
             'module' => [
-                'id'       => $modules->id,
-                'name'     => $modules->name,
+                'id' => $modules->id,
+                'name' => $modules->name,
                 'template' => $modules->template,
             ],
             'mission' => null,
-            'quiz'    => $quizzes,
+            'quiz' => $quizzes,
             'mascots' => $mascots,
         ]);
     }
@@ -891,7 +933,7 @@ class QuizController extends Controller
         }
 
         $quizzes->load([
-            'questions' => fn($q) => $q->orderBy('order_number'),
+            'questions' => fn ($q) => $q->orderBy('order_number'),
             'questions.mascot',
             'questions.options',
             'questions.dragDropGroups',
@@ -902,15 +944,15 @@ class QuizController extends Controller
 
         return Inertia::render('Admin/Modules/Quizzes/Edit', [
             'module' => [
-                'id'       => $modules->id,
-                'name'     => $modules->name,
+                'id' => $modules->id,
+                'name' => $modules->name,
                 'template' => $modules->template,
             ],
             'mission' => [
-                'id'   => $missions->id,
+                'id' => $missions->id,
                 'name' => $missions->name,
             ],
-            'quiz'    => $quizzes,
+            'quiz' => $quizzes,
             'mascots' => $mascots,
         ]);
     }
@@ -925,26 +967,29 @@ class QuizController extends Controller
         }
 
         $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'type'         => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
-            'time_limit'   => 'required|integer|min:1',
-            'category'     => 'nullable|string|max:100',
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
+            'time_limit' => 'required|integer|min:1',
+            'category' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'remove_image' => 'nullable|string',
             'is_randomized' => 'nullable|boolean',
+            'allow_retake' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
 
         if ($request->input('type') === 'true_false') {
             $request->validate([
-                'tf_question'        => 'required|string',
+                'tf_question' => 'required|string',
                 'tf_option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
         } else {
             $request->validate([
                 'questions' => 'required|string',
+                'question_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
             ]);
@@ -954,53 +999,75 @@ class QuizController extends Controller
         try {
             $imagePath = $quizzes->image;
             if ($request->input('remove_image') === '1') {
-                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                if ($imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                }
                 $imagePath = null;
             }
             if ($request->hasFile('image')) {
-                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                if ($imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                }
                 $imagePath = $request->file('image')->store('quizzes/images', 'public');
             }
 
             $quizzes->update([
-                'title'       => $validated['title'],
+                'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
-                'type'        => $validated['type'],
-                'time_limit'  => $validated['time_limit'],
-                'category'    => $validated['category'] ?? null,
-                'image'       => $imagePath,
+                'type' => $validated['type'],
+                'time_limit' => $validated['time_limit'],
+                'category' => $validated['category'] ?? null,
+                'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
+                'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
             ]);
 
             $retainedImages = [];
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
-                if ($tfData && !empty($tfData['options'])) {
+                if ($tfData && ! empty($tfData['options'])) {
                     foreach ($tfData['options'] as $opt) {
-                        if (empty($opt['has_new_image']) && !empty($opt['existing_image'])) {
+                        if (empty($opt['has_new_image']) && ! empty($opt['existing_image'])) {
                             $retainedImages[] = $opt['existing_image'];
                         }
                     }
                 }
-            } elseif ($validated['type'] === 'drag_drop') {
+            } else {
                 $questions = json_decode($request->input('questions'), true);
-                if ($questions && !empty($questions[0]['drag_drop_items'])) {
-                    foreach ($questions[0]['drag_drop_items'] as $item) {
-                        if (empty($item['has_new_image']) && !empty($item['existing_image'])) {
-                            $retainedImages[] = $item['existing_image'];
+                if ($questions) {
+                    foreach ($questions as $q) {
+                        if (empty($q['has_new_image']) && ! empty($q['existing_image'])) {
+                            $retainedImages[] = $q['existing_image'];
+                        }
+                        if (! empty($q['options'])) {
+                            foreach ($q['options'] as $opt) {
+                                if (empty($opt['has_new_image']) && ! empty($opt['existing_image'])) {
+                                    $retainedImages[] = $opt['existing_image'];
+                                }
+                            }
+                        }
+                        if (! empty($q['drag_drop_items'])) {
+                            foreach ($q['drag_drop_items'] as $item) {
+                                if (empty($item['has_new_image']) && ! empty($item['existing_image'])) {
+                                    $retainedImages[] = $item['existing_image'];
+                                }
+                            }
                         }
                     }
                 }
             }
 
             foreach ($quizzes->questions as $oldQuestion) {
+                if ($oldQuestion->image && ! in_array($oldQuestion->image, $retainedImages)) {
+                    Storage::disk('public')->delete($oldQuestion->image);
+                }
                 foreach ($oldQuestion->options as $oldOption) {
-                    if ($oldOption->option_image && !in_array($oldOption->option_image, $retainedImages)) {
+                    if ($oldOption->option_image && ! in_array($oldOption->option_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldOption->option_image);
                     }
                 }
                 foreach ($oldQuestion->dragDropItems as $oldItem) {
-                    if ($oldItem->item_image && !in_array($oldItem->item_image, $retainedImages)) {
+                    if ($oldItem->item_image && ! in_array($oldItem->item_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldItem->item_image);
                     }
                 }
@@ -1010,20 +1077,21 @@ class QuizController extends Controller
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
 
-                if (!$tfData || empty($tfData['question_text'])) {
+                if (! $tfData || empty($tfData['question_text'])) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan true/false tidak valid.');
                 }
 
                 $question = Questions::create([
-                    'quiz_id'       => $quizzes->id,
-                    'mascot_id'     => $tfData['mascot_id'] ?? null,
+                    'quiz_id' => $quizzes->id,
+                    'mascot_id' => $tfData['mascot_id'] ?? null,
                     'question_text' => $tfData['question_text'],
                     'feedback_correct' => $tfData['feedback_correct'] ?? null,
                     'feedback_incorrect' => $tfData['feedback_incorrect'] ?? null,
-                    'image'         => null,
-                    'order_number'  => 1,
-                    'type'          => 'true_false',
+                    'image' => null,
+                    'order_number' => 1,
+                    'type' => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -1034,36 +1102,46 @@ class QuizController extends Controller
                             $optionImagePath = $request->file("tf_option_images.{$optionMeta['image_index']}")
                                 ->store('questions/options', 'public');
                         }
-                    } elseif (!empty($optionMeta['existing_image'])) {
+                    } elseif (! empty($optionMeta['existing_image'])) {
                         $optionImagePath = $optionMeta['existing_image'];
                     }
 
                     Question_options::create([
-                        'question_id'  => $question->id,
-                        'option_text'  => $optionMeta['option_text'] ?? '',
+                        'question_id' => $question->id,
+                        'option_text' => $optionMeta['option_text'] ?? '',
                         'option_image' => $optionImagePath,
-                        'is_correct'   => (bool) ($optionMeta['is_correct'] ?? false),
-                        'feedback'     => null,
+                        'is_correct' => (bool) ($optionMeta['is_correct'] ?? false),
+                        'feedback' => null,
                     ]);
                 }
             } else {
                 $questions = json_decode($request->input('questions'), true);
 
-                if (!$questions || count($questions) === 0) {
+                if (! $questions || count($questions) === 0) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan tidak valid.');
                 }
 
                 foreach ($questions as $index => $questionData) {
+                    $qImagePath = null;
+                    if (isset($questionData['has_new_image']) && $questionData['has_new_image']) {
+                        if (isset($questionData['image_index']) && $request->hasFile("question_images.{$questionData['image_index']}")) {
+                            $qImagePath = $request->file("question_images.{$questionData['image_index']}")->store('questions/images', 'public');
+                        }
+                    } elseif (! empty($questionData['existing_image'])) {
+                        $qImagePath = $questionData['existing_image'];
+                    }
+
                     $question = Questions::create([
-                        'quiz_id'       => $quizzes->id,
-                        'mascot_id'     => $questionData['mascot_id'] ?? null,
+                        'quiz_id' => $quizzes->id,
+                        'mascot_id' => $questionData['mascot_id'] ?? null,
                         'question_text' => $questionData['question_text'],
                         'feedback_correct' => $questionData['feedback_correct'] ?? null,
                         'feedback_incorrect' => $questionData['feedback_incorrect'] ?? null,
-                        'image'         => $questionData['image'] ?? null,
-                        'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
+                        'image' => $qImagePath,
+                        'order_number' => $index + 1,
+                        'type' => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -1072,12 +1150,21 @@ class QuizController extends Controller
                         && isset($questionData['options'])
                     ) {
                         foreach ($questionData['options'] as $optionData) {
+                            $optImagePath = null;
+                            if (isset($optionData['has_new_image']) && $optionData['has_new_image']) {
+                                if (isset($optionData['image_index']) && $request->hasFile("option_images.{$optionData['image_index']}")) {
+                                    $optImagePath = $request->file("option_images.{$optionData['image_index']}")->store('questions/options', 'public');
+                                }
+                            } elseif (! empty($optionData['existing_image'])) {
+                                $optImagePath = $optionData['existing_image'];
+                            }
+
                             Question_options::create([
-                                'question_id'  => $question->id,
-                                'option_text'  => $optionData['option_text'] ?? '',
-                                'option_image' => $optionData['option_image'] ?? null,
-                                'is_correct'   => $optionData['is_correct'],
-                                'feedback'     => $optionData['feedback'] ?? null,
+                                'question_id' => $question->id,
+                                'option_text' => $optionData['option_text'] ?? '',
+                                'option_image' => $optImagePath,
+                                'is_correct' => $optionData['is_correct'],
+                                'feedback' => $optionData['feedback'] ?? null,
                             ]);
                         }
                     }
@@ -1088,7 +1175,7 @@ class QuizController extends Controller
                             foreach ($questionData['drag_drop_groups'] as $groupIndex => $groupData) {
                                 $group = Drag_drop_groups::create([
                                     'question_id' => $question->id,
-                                    'group_name'  => $groupData['group_name'],
+                                    'group_name' => $groupData['group_name'],
                                 ]);
                                 $groupMap[$groupIndex] = $group->id;
                             }
@@ -1100,15 +1187,15 @@ class QuizController extends Controller
                                     if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
                                         $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
                                     }
-                                } elseif (!empty($itemData['existing_image'])) {
+                                } elseif (! empty($itemData['existing_image'])) {
                                     $storedPath = $itemData['existing_image'];
                                 }
 
                                 Drag_drop_items::create([
-                                    'question_id'        => $question->id,
+                                    'question_id' => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
-                                    'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath,
+                                    'item_text' => $itemData['item_text'],
+                                    'item_image' => $storedPath,
                                 ]);
                             }
                         }
@@ -1123,7 +1210,8 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal memperbarui quiz: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Gagal memperbarui quiz: '.$e->getMessage());
         }
     }
 
@@ -1158,7 +1246,8 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menghapus quiz: '.$e->getMessage());
         }
     }
 
@@ -1172,26 +1261,29 @@ class QuizController extends Controller
         }
 
         $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'type'         => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
-            'time_limit'   => 'required|integer|min:1',
-            'category'     => 'nullable|string|max:100',
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|in:multiple_choices,drag_drop,true_false,case_study,short_answer',
+            'time_limit' => 'required|integer|min:1',
+            'category' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'remove_image' => 'nullable|string',
             'is_randomized' => 'nullable|boolean',
+            'allow_retake' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
 
         if ($request->input('type') === 'true_false') {
             $request->validate([
-                'tf_question'        => 'required|string',
+                'tf_question' => 'required|string',
                 'tf_option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
         } else {
             $request->validate([
                 'questions' => 'required|string',
+                'question_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'questions.required' => 'Quiz harus memiliki minimal 1 pertanyaan.',
             ]);
@@ -1201,53 +1293,75 @@ class QuizController extends Controller
         try {
             $imagePath = $quizzes->image;
             if ($request->input('remove_image') === '1') {
-                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                if ($imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                }
                 $imagePath = null;
             }
             if ($request->hasFile('image')) {
-                if ($imagePath) Storage::disk('public')->delete($imagePath);
+                if ($imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                }
                 $imagePath = $request->file('image')->store('quizzes/images', 'public');
             }
 
             $quizzes->update([
-                'title'       => $validated['title'],
+                'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
-                'type'        => $validated['type'],
-                'time_limit'  => $validated['time_limit'],
-                'category'    => $validated['category'] ?? null,
-                'image'       => $imagePath,
+                'type' => $validated['type'],
+                'time_limit' => $validated['time_limit'],
+                'category' => $validated['category'] ?? null,
+                'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
+                'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
             ]);
 
             $retainedImages = [];
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
-                if ($tfData && !empty($tfData['options'])) {
+                if ($tfData && ! empty($tfData['options'])) {
                     foreach ($tfData['options'] as $opt) {
-                        if (empty($opt['has_new_image']) && !empty($opt['existing_image'])) {
+                        if (empty($opt['has_new_image']) && ! empty($opt['existing_image'])) {
                             $retainedImages[] = $opt['existing_image'];
                         }
                     }
                 }
-            } elseif ($validated['type'] === 'drag_drop') {
+            } else {
                 $questions = json_decode($request->input('questions'), true);
-                if ($questions && !empty($questions[0]['drag_drop_items'])) {
-                    foreach ($questions[0]['drag_drop_items'] as $item) {
-                        if (empty($item['has_new_image']) && !empty($item['existing_image'])) {
-                            $retainedImages[] = $item['existing_image'];
+                if ($questions) {
+                    foreach ($questions as $q) {
+                        if (empty($q['has_new_image']) && ! empty($q['existing_image'])) {
+                            $retainedImages[] = $q['existing_image'];
+                        }
+                        if (! empty($q['options'])) {
+                            foreach ($q['options'] as $opt) {
+                                if (empty($opt['has_new_image']) && ! empty($opt['existing_image'])) {
+                                    $retainedImages[] = $opt['existing_image'];
+                                }
+                            }
+                        }
+                        if (! empty($q['drag_drop_items'])) {
+                            foreach ($q['drag_drop_items'] as $item) {
+                                if (empty($item['has_new_image']) && ! empty($item['existing_image'])) {
+                                    $retainedImages[] = $item['existing_image'];
+                                }
+                            }
                         }
                     }
                 }
             }
 
             foreach ($quizzes->questions as $oldQuestion) {
+                if ($oldQuestion->image && ! in_array($oldQuestion->image, $retainedImages)) {
+                    Storage::disk('public')->delete($oldQuestion->image);
+                }
                 foreach ($oldQuestion->options as $oldOption) {
-                    if ($oldOption->option_image && !in_array($oldOption->option_image, $retainedImages)) {
+                    if ($oldOption->option_image && ! in_array($oldOption->option_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldOption->option_image);
                     }
                 }
                 foreach ($oldQuestion->dragDropItems as $oldItem) {
-                    if ($oldItem->item_image && !in_array($oldItem->item_image, $retainedImages)) {
+                    if ($oldItem->item_image && ! in_array($oldItem->item_image, $retainedImages)) {
                         Storage::disk('public')->delete($oldItem->item_image);
                     }
                 }
@@ -1257,20 +1371,21 @@ class QuizController extends Controller
             if ($validated['type'] === 'true_false') {
                 $tfData = json_decode($request->input('tf_question'), true);
 
-                if (!$tfData || empty($tfData['question_text'])) {
+                if (! $tfData || empty($tfData['question_text'])) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan true/false tidak valid.');
                 }
 
                 $question = Questions::create([
-                    'quiz_id'       => $quizzes->id,
-                    'mascot_id'     => $tfData['mascot_id'] ?? null,
+                    'quiz_id' => $quizzes->id,
+                    'mascot_id' => $tfData['mascot_id'] ?? null,
                     'question_text' => $tfData['question_text'],
                     'feedback_correct' => $tfData['feedback_correct'] ?? null,
                     'feedback_incorrect' => $tfData['feedback_incorrect'] ?? null,
-                    'image'         => null,
-                    'order_number'  => 1,
-                    'type'          => 'true_false',
+                    'image' => null,
+                    'order_number' => 1,
+                    'type' => 'true_false',
                 ]);
 
                 foreach ($tfData['options'] as $idx => $optionMeta) {
@@ -1281,36 +1396,46 @@ class QuizController extends Controller
                             $optionImagePath = $request->file("tf_option_images.{$optionMeta['image_index']}")
                                 ->store('questions/options', 'public');
                         }
-                    } elseif (!empty($optionMeta['existing_image'])) {
+                    } elseif (! empty($optionMeta['existing_image'])) {
                         $optionImagePath = $optionMeta['existing_image'];
                     }
 
                     Question_options::create([
-                        'question_id'  => $question->id,
-                        'option_text'  => $optionMeta['option_text'] ?? '',
+                        'question_id' => $question->id,
+                        'option_text' => $optionMeta['option_text'] ?? '',
                         'option_image' => $optionImagePath,
-                        'is_correct'   => (bool) ($optionMeta['is_correct'] ?? false),
-                        'feedback'     => null,
+                        'is_correct' => (bool) ($optionMeta['is_correct'] ?? false),
+                        'feedback' => null,
                     ]);
                 }
             } else {
                 $questions = json_decode($request->input('questions'), true);
 
-                if (!$questions || count($questions) === 0) {
+                if (! $questions || count($questions) === 0) {
                     DB::rollBack();
+
                     return back()->withInput()->with('error', 'Data pertanyaan tidak valid.');
                 }
 
                 foreach ($questions as $index => $questionData) {
+                    $qImagePath = null;
+                    if (isset($questionData['has_new_image']) && $questionData['has_new_image']) {
+                        if (isset($questionData['image_index']) && $request->hasFile("question_images.{$questionData['image_index']}")) {
+                            $qImagePath = $request->file("question_images.{$questionData['image_index']}")->store('questions/images', 'public');
+                        }
+                    } elseif (! empty($questionData['existing_image'])) {
+                        $qImagePath = $questionData['existing_image'];
+                    }
+
                     $question = Questions::create([
-                        'quiz_id'       => $quizzes->id,
-                        'mascot_id'     => $questionData['mascot_id'] ?? null,
+                        'quiz_id' => $quizzes->id,
+                        'mascot_id' => $questionData['mascot_id'] ?? null,
                         'question_text' => $questionData['question_text'],
                         'feedback_correct' => $questionData['feedback_correct'] ?? null,
                         'feedback_incorrect' => $questionData['feedback_incorrect'] ?? null,
-                        'image'         => $questionData['image'] ?? null,
-                        'order_number'  => $index + 1,
-                        'type'          => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
+                        'image' => $qImagePath,
+                        'order_number' => $index + 1,
+                        'type' => $validated['type'] === 'multiple_choices' ? 'multiple_choice' : $validated['type'],
                         'expected_keywords' => $questionData['expected_keywords'] ?? null,
                     ]);
 
@@ -1319,12 +1444,21 @@ class QuizController extends Controller
                         && isset($questionData['options'])
                     ) {
                         foreach ($questionData['options'] as $optionData) {
+                            $optImagePath = null;
+                            if (isset($optionData['has_new_image']) && $optionData['has_new_image']) {
+                                if (isset($optionData['image_index']) && $request->hasFile("option_images.{$optionData['image_index']}")) {
+                                    $optImagePath = $request->file("option_images.{$optionData['image_index']}")->store('questions/options', 'public');
+                                }
+                            } elseif (! empty($optionData['existing_image'])) {
+                                $optImagePath = $optionData['existing_image'];
+                            }
+
                             Question_options::create([
-                                'question_id'  => $question->id,
-                                'option_text'  => $optionData['option_text'] ?? '',
-                                'option_image' => $optionData['option_image'] ?? null,
-                                'is_correct'   => $optionData['is_correct'],
-                                'feedback'     => $optionData['feedback'] ?? null,
+                                'question_id' => $question->id,
+                                'option_text' => $optionData['option_text'] ?? '',
+                                'option_image' => $optImagePath,
+                                'is_correct' => $optionData['is_correct'],
+                                'feedback' => $optionData['feedback'] ?? null,
                             ]);
                         }
                     }
@@ -1335,7 +1469,7 @@ class QuizController extends Controller
                             foreach ($questionData['drag_drop_groups'] as $groupIndex => $groupData) {
                                 $group = Drag_drop_groups::create([
                                     'question_id' => $question->id,
-                                    'group_name'  => $groupData['group_name'],
+                                    'group_name' => $groupData['group_name'],
                                 ]);
                                 $groupMap[$groupIndex] = $group->id;
                             }
@@ -1347,15 +1481,15 @@ class QuizController extends Controller
                                     if (isset($itemData['image_index']) && $request->hasFile("drag_item_images.{$itemData['image_index']}")) {
                                         $storedPath = $request->file("drag_item_images.{$itemData['image_index']}")->store('questions/drag_items', 'public');
                                     }
-                                } elseif (!empty($itemData['existing_image'])) {
+                                } elseif (! empty($itemData['existing_image'])) {
                                     $storedPath = $itemData['existing_image'];
                                 }
 
                                 Drag_drop_items::create([
-                                    'question_id'        => $question->id,
+                                    'question_id' => $question->id,
                                     'drag_drop_group_id' => $groupMap[$itemData['group_index']] ?? null,
-                                    'item_text'          => $itemData['item_text'],
-                                    'item_image'         => $storedPath,
+                                    'item_text' => $itemData['item_text'],
+                                    'item_image' => $storedPath,
                                 ]);
                             }
                         }
@@ -1370,8 +1504,42 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal memperbarui quiz: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Gagal memperbarui quiz: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Quick update for module-level or mission-level quiz (Category, Allow Retake, etc.)
+     */
+    public function quickUpdateModule(Learning_modules $modules, Quizzes $quizzes, Request $request)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'category' => 'nullable|string|in:pretest,posttest,mission,case_study,general',
+            'allow_retake' => 'nullable|boolean',
+        ]);
+
+        $updateData = [];
+        if ($request->has('category')) {
+            $cat = $request->input('category');
+            $updateData['category'] = $cat === 'mission' ? null : $cat;
+            if (in_array($cat, ['pretest', 'posttest'])) {
+                $updateData['mission_id'] = null;
+            }
+        }
+        if ($request->has('allow_retake')) {
+            $updateData['allow_retake'] = $request->boolean('allow_retake');
+        }
+
+        if (! empty($updateData)) {
+            $quizzes->update($updateData);
+        }
+
+        return back()->with('success', 'Pengaturan kuis berhasil diperbarui.');
     }
 
     /**
@@ -1405,7 +1573,8 @@ class QuizController extends Controller
                 ->with('success', 'Quiz berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menghapus quiz: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menghapus quiz: '.$e->getMessage());
         }
     }
 
@@ -1419,14 +1588,91 @@ class QuizController extends Controller
         }
 
         $quizzes->update([
-            'is_randomized' => !$quizzes->is_randomized
+            'is_randomized' => ! $quizzes->is_randomized,
         ]);
 
         return back()->with('success', 'Pengaturan acak soal berhasil diperbarui.');
     }
+
+    /**
+     * Toggle retake status for a module-level quiz
+     */
+    public function toggleRetakeModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $quizzes->update([
+            'allow_retake' => ! $quizzes->allow_retake,
+        ]);
+
+        return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
+    }
+
+    /**
+     * Update max retakes count for a module-level quiz
+     */
+    public function updateMaxRetakesModule(Learning_modules $modules, Quizzes $quizzes, Request $request)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'max_retakes' => 'nullable|integer|min:0',
+        ]);
+
+        $quizzes->update([
+            'max_retakes' => $request->max_retakes ?? 0,
+        ]);
+
+        return back()->with('success', 'Batas mengulang kuis berhasil diperbarui.');
+    }
+
+    /**
+     * Toggle randomized status for a mission-level quiz
+     */
+    public function toggleRandomized(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
+    {
+        $quizzes->update([
+            'is_randomized' => ! $quizzes->is_randomized,
+        ]);
+
+        return back()->with('success', 'Pengaturan acak soal berhasil diperbarui.');
+    }
+
+    /**
+     * Toggle retake status for a mission-level quiz
+     */
+    public function toggleRetake(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
+    {
+        $quizzes->update([
+            'allow_retake' => ! $quizzes->allow_retake,
+        ]);
+
+        return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
+    }
+
+    /**
+     * Update max retakes count for a mission-level quiz
+     */
+    public function updateMaxRetakes(Learning_modules $modules, Missions $missions, Quizzes $quizzes, Request $request)
+    {
+        $request->validate([
+            'max_retakes' => 'nullable|integer|min:0',
+        ]);
+
+        $quizzes->update([
+            'max_retakes' => $request->max_retakes ?? 0,
+        ]);
+
+        return back()->with('success', 'Batas mengulang kuis berhasil diperbarui.');
+    }
+
     public function downloadTemplate(Request $request)
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header
@@ -1479,7 +1725,7 @@ class QuizController extends Controller
         $fileName = 'Template_Import_Kuis.xlsx';
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        header('Content-Disposition: attachment; filename="'.urlencode($fileName).'"');
         $writer->save('php://output');
         exit;
     }

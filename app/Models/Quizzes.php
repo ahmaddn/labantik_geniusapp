@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class Quizzes extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -24,8 +25,19 @@ class Quizzes extends Model
         'category',
         'order_number',
         'is_randomized',
+        'allow_retake',
+        'max_retakes',
         'custom_dialogues',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_randomized' => 'boolean',
+            'allow_retake' => 'boolean',
+            'max_retakes' => 'integer',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -39,7 +51,7 @@ class Quizzes extends Model
         // Use model deletes to ensure child model deleting events run
         static::deleting(function ($model) {
             // Delete quiz cover image if present
-            if (!empty($model->image)) {
+            if (! empty($model->image)) {
                 Storage::disk('public')->delete($model->image);
             }
 

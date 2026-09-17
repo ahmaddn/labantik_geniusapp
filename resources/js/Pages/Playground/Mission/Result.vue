@@ -28,6 +28,7 @@ import {
     ToggleLeft,
     Check,
     X,
+    RotateCcw,
 } from "lucide-vue-next";
 import { useSfx } from "@/Composable/useSfx";
 
@@ -41,7 +42,21 @@ const props = defineProps({
     is_overall: { type: Boolean, default: false },
     is_pretest: { type: Boolean, default: false },
     is_posttest: { type: Boolean, default: false },
+    can_retake: { type: Boolean, default: true },
+    max_retakes: { type: Number, default: 0 },
+    attempts_count: { type: Number, default: 1 },
+    allow_retake: { type: Boolean, default: true },
 });
+
+const restartQuiz = () => {
+    if (props.is_pretest) {
+        router.visit(route("playground.pretest.show", props.module.id) + "?restart=1");
+    } else if (props.is_posttest) {
+        router.visit(route("playground.posttest.show", props.module.id) + "?restart=1");
+    } else if (props.mission?.id) {
+        router.visit(route("playground.missions.show", props.mission.id) + "?restart=1");
+    }
+};
 
 const { playPop, playSuccess, playClick } = useSfx();
 
@@ -462,6 +477,11 @@ onUnmounted(() => {
                                     : `Misi ${mission.name || mission.title} Selesai`
                         }}
                     </p>
+                    <div v-if="!is_overall && allow_retake !== undefined" class="retake-info-badge">
+                        <span v-if="!allow_retake" class="badge-tag badge-tag-disabled">1x Kerjakan (Tidak Bisa Diulang)</span>
+                        <span v-else-if="max_retakes > 0" class="badge-tag badge-tag-info">Percobaan {{ attempts_count }}/{{ max_retakes }}</span>
+                        <span v-else class="badge-tag badge-tag-success">Dapat Diulang (Tanpa Batas)</span>
+                    </div>
                     <div v-if="score >= 90" class="genius-badge-wrap">
                         <div class="genius-badge">
                             <Sparkles :size="16" />
@@ -902,6 +922,14 @@ onUnmounted(() => {
                         <span>{{
                             is_overall ? "Tutup Evaluasi" : "Kembali"
                         }}</span>
+                    </button>
+                    <button
+                        v-if="!is_overall && can_retake"
+                        class="btn-duo btn-duo-warning"
+                        @click="restartQuiz"
+                    >
+                        <RotateCcw :size="18" :stroke-width="3" />
+                        <span>Ulangi</span>
                     </button>
                 </div>
 
@@ -1550,6 +1578,53 @@ onUnmounted(() => {
 .btn-duo-secondary:active:not(:disabled) {
     transform: translateY(3px);
     border-bottom-width: 2px;
+}
+
+.btn-duo-warning {
+    background-color: #ff9600;
+    border: 2px solid #ff9600;
+    border-bottom: 5px solid #d97706;
+    color: #ffffff;
+}
+.btn-duo-warning:hover:not(:disabled) {
+    filter: brightness(1.04);
+}
+.btn-duo-warning:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+}
+
+.footer-left {
+    gap: 10px;
+}
+
+.retake-info-badge {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.badge-tag {
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    letter-spacing: 0.3px;
+}
+
+.badge-tag-disabled {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.badge-tag-info {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.badge-tag-success {
+    background-color: #dcfce7;
+    color: #16a34a;
 }
 
 /* ─── ANIMATIONS ─── */

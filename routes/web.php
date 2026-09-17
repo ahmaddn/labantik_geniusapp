@@ -6,18 +6,18 @@ use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\Admin\MissionController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\QuizController;
-use App\Http\Controllers\Admin\TemplatesController;
-use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SimulationConfigController;
+use App\Http\Controllers\Admin\TemplatesController;
+use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\PlaygroundLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DragDropController;
-use App\Http\Controllers\Student\PlaygroundController;
-use App\Http\Controllers\Student\PretestController;
-use App\Http\Controllers\Student\PosttestController;
 use App\Http\Controllers\Student\MissionController as StudentMissionController;
-use App\Http\Controllers\Admin\SimulationConfigController;
+use App\Http\Controllers\Student\PlaygroundController;
+use App\Http\Controllers\Student\PosttestController;
+use App\Http\Controllers\Student\PretestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -44,8 +44,6 @@ Route::get('/posttest/preview', [PosttestController::class, 'preview'])
 Route::post('/posttest/submit', [PosttestController::class, 'submit'])
     ->name('posttest.submit');
 
-
-
 // ── Route asli dengan middleware ─────────────────────────────
 Route::middleware(['auth', 'player'])->prefix('student')->name('student.')->group(function () {
     Route::get('/missions/{mission}/dragdrop', [DragDropController::class, 'show'])
@@ -58,13 +56,13 @@ Route::prefix('player')->name('playground.')->group(function () {
     Route::get('/playground/quiz', [PlaygroundController::class, 'quiz'])->name('quiz');
 
     // ── Pretest ──────────────────────────────────────────────────
-    Route::get('/modules/{module}/pretest',  [PretestController::class, 'show'])->name('pretest.show');
-    Route::post('/pretest/submit',           [PretestController::class, 'submit'])->name('pretest.submit');
+    Route::get('/modules/{module}/pretest', [PretestController::class, 'show'])->name('pretest.show');
+    Route::post('/pretest/submit', [PretestController::class, 'submit'])->name('pretest.submit');
     Route::get('/modules/{module}/pretest/result', [PretestController::class, 'showResult'])->name('pretest.result');
 
     // ── Posttest ─────────────────────────────────────────────────
     Route::get('/modules/{module}/posttest', [PosttestController::class, 'show'])->name('posttest.show');
-    Route::post('/posttest/submit',          [PosttestController::class, 'submit'])->name('posttest.submit');
+    Route::post('/posttest/submit', [PosttestController::class, 'submit'])->name('posttest.submit');
     Route::get('/modules/{module}/posttest/result', [PosttestController::class, 'overallResult'])->name('posttest.result');
     Route::get('/modules/{module}/posttest/quiz-result', [PosttestController::class, 'showQuizResult'])->name('posttest.quiz-result');
 
@@ -88,7 +86,6 @@ Route::name('playground.')->group(function () {
 Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin.')->group(function () {
 
     // Panduan
-
 
     // Kelas
     Route::name('classes.')->group(function () {
@@ -166,6 +163,9 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::get('/{quizzes}/edit', [QuizController::class, 'editModule'])->name('edit');
             Route::put('/{quizzes}', [QuizController::class, 'updateModule'])->name('update');
             Route::patch('/{quizzes}/toggle-randomized', [QuizController::class, 'toggleRandomizedModule'])->name('toggle_randomized');
+            Route::patch('/{quizzes}/toggle-retake', [QuizController::class, 'toggleRetakeModule'])->name('toggle_retake');
+            Route::patch('/{quizzes}/update-max-retakes', [QuizController::class, 'updateMaxRetakesModule'])->name('update_max_retakes');
+            Route::patch('/{quizzes}/quick-update', [QuizController::class, 'quickUpdateModule'])->name('quick_update');
             Route::delete('/{quizzes}', [QuizController::class, 'destroyModule'])->name('destroy');
             // Note: creation of quizzes for pretest/posttest is available here
         });
@@ -202,6 +202,9 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
                 Route::get('/{quizzes}', [QuizController::class, 'show'])->name('show');
                 Route::get('/{quizzes}/edit', [QuizController::class, 'edit'])->name('edit');
                 Route::put('/{quizzes}', [QuizController::class, 'update'])->name('update');
+                Route::patch('/{quizzes}/toggle-randomized', [QuizController::class, 'toggleRandomized'])->name('toggle_randomized');
+                Route::patch('/{quizzes}/toggle-retake', [QuizController::class, 'toggleRetake'])->name('toggle_retake');
+                Route::patch('/{quizzes}/update-max-retakes', [QuizController::class, 'updateMaxRetakes'])->name('update_max_retakes');
                 Route::delete('/{quizzes}', [QuizController::class, 'destroy'])->name('destroy');
             });
 
@@ -225,4 +228,4 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

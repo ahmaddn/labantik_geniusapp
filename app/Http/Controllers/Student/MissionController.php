@@ -28,7 +28,7 @@ class MissionController extends Controller
         }
 
         $module->load([
-            'missions'                  => fn($q) => $q->orderBy('order_number', 'asc'),
+            'missions' => fn ($q) => $q->orderBy('order_number', 'asc'),
             'missions.quizzes',
             'missions.quizzes.questions',
             'missions.materials',
@@ -37,87 +37,110 @@ class MissionController extends Controller
         $missions = $module->missions
             ->filter(function ($mission) {
                 // Tampilkan misi hanya jika ada minimal 1 soal ATAU minimal 1 materi
-                $hasQuestions = $mission->quizzes->sum(fn($q) => $q->questions->count()) > 0;
+                $hasQuestions = $mission->quizzes->sum(fn ($q) => $q->questions->count()) > 0;
+                $hasMaterials = $mission->materials->count() > 0;
+
+                return $hasQuestions || $hasMaterials;
+            });
+
+        $studentId = $player['id'] ?? null;
+
+        // Fetch all attempts for this module in 1 single query to prevent N+1 queries
+        $allModuleQuizIds = Quizzes::where('module_id', $module->id)->pluck('id');
+        $attemptsByQuiz = Quiz_attempts::whereIn('quiz_id', $allModuleQuizIds)
+            ->where('student_id', $studentId)
+            ->get()
+            ->groupBy('quiz_id');
+
+        $completedMissionIds = \App\Models\StudentMissionLog::where('user_id', $studentId)
+            ->whereIn('mission_id', $module->missions->pluck('id'))
+            ->pluck('mission_id')
+            ->flip();
+
+        $missions = $module->missions
+            ->filter(function ($mission) {
+                $hasQuestions = $mission->quizzes->sum(fn ($q) => $q->questions->count()) > 0;
                 $hasMaterials = $mission->materials->count() > 0;
 
                 return $hasQuestions || $hasMaterials;
             })
-            ->map(function ($mission) use ($player) {
-                $totalQuestions = $mission->quizzes->sum(fn($q) => $q->questions->count());
-                $totalQuizzes   = $mission->quizzes->count();
+            ->map(function ($mission) use ($attemptsByQuiz, $completedMissionIds) {
+                $totalQuestions = $mission->quizzes->sum(fn ($q) => $q->questions->count());
+                $totalQuizzes = $mission->quizzes->count();
 
                 $completedQuizzes = $mission->quizzes->filter(
-                    fn($q) => Quiz_attempts::where('quiz_id', $q->id)
-                        ->where('student_id', $player['id'] ?? null)
-                        ->exists()
+                    fn ($q) => $attemptsByQuiz->has($q->id) && $attemptsByQuiz->get($q->id)->isNotEmpty()
                 )->count();
 
                 $status = 'not_started';
-                $isCompletedInLogs = \App\Models\StudentMissionLog::where('user_id', $player['id'] ?? null)
-                    ->where('mission_id', $mission->id)
-                    ->exists();
+                $isCompletedInLogs = $completedMissionIds->has($mission->id);
 
                 if ($isCompletedInLogs) {
                     $status = 'completed';
-                } else if ($completedQuizzes > 0) {
+                } elseif ($completedQuizzes > 0) {
                     $status = $completedQuizzes >= $totalQuizzes ? 'completed' : 'in_progress';
                 }
 
-                $bestScore = Quiz_attempts::whereIn('quiz_id', $mission->quizzes->pluck('id'))
-                    ->where('student_id', $player['id'] ?? null)
-                    ->max('score') ?? 0;
+                $missionQuizIds = $mission->quizzes->pluck('id');
+                $bestScore = 0;
+                foreach ($missionQuizIds as $qId) {
+                    if ($attemptsByQuiz->has($qId)) {
+                        $maxForQ = $attemptsByQuiz->get($qId)->max('score');
+                        if ($maxForQ > $bestScore) {
+                            $bestScore = $maxForQ;
+                        }
+                    }
+                }
+
+                // Check retake permission for quizzes in this mission
+                $allowRetake = $mission->quizzes->every(fn ($q) => $q->allow_retake ?? true);
 
                 return [
-                    'id'                => $mission->id,
-                    'name'              => $mission->name,
-                    'description'       => $mission->hint ?? '',
-                    'status'            => $status,
-                    'total_questions'   => $totalQuestions,
+                    'id' => $mission->id,
+                    'name' => $mission->name,
+                    'description' => $mission->hint ?? '',
+                    'status' => $status,
+                    'total_questions' => $totalQuestions,
                     'completed_quizzes' => $completedQuizzes,
-                    'total_quizzes'     => $totalQuizzes,
-                    'best_score'        => $bestScore,
+                    'total_quizzes' => $totalQuizzes,
+                    'best_score' => (int) $bestScore,
+                    'allow_retake' => $allowRetake,
                 ];
             })
-            ->values(); // reset index array
+            ->values();
 
-        $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn($m) => $m['status'] === 'completed');
+        $allMissionsDone = $missions->isNotEmpty() && $missions->every(fn ($m) => $m['status'] === 'completed');
 
         $pretestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
             ->where('category', 'pretest')
             ->first();
-        $pretestDone = $pretestQuiz && Quiz_attempts::where('quiz_id', $pretestQuiz->id)
-            ->where('student_id', $player['id'] ?? null)
-            ->exists();
+        $pretestDone = $pretestQuiz && $attemptsByQuiz->has($pretestQuiz->id);
 
-        // Jika posttest sudah pernah dikerjakan, sembunyikan tombol posttest
-        // (supaya tidak muncul lagi saat admin tambah misi baru)
         $posttestQuiz = \App\Models\Quizzes::where('module_id', $module->id)
             ->where('category', 'posttest')
             ->first();
-        $posttestDone = $posttestQuiz && Quiz_attempts::where('quiz_id', $posttestQuiz->id)
-            ->where('student_id', $player['id'] ?? null)
-            ->exists();
+        $posttestDone = $posttestQuiz && $attemptsByQuiz->has($posttestQuiz->id);
 
-        // Kalau posttest sudah selesai, paksa all_missions_done = false
-        // agar tombol "Mulai Posttest" tidak muncul lagi
         if ($posttestDone) {
             $allMissionsDone = false;
         }
 
-        $backsound  = null;
+        $backsound = null;
         $background = null;
 
         return Inertia::render('Playground/Missions/Index', [
-            'module'            => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
-            'missions'          => $missions,
-            'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module' => ['id' => $module->id, 'name' => $module->name, 'description' => $module->description],
+            'missions' => $missions,
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
             'all_missions_done' => $allMissionsDone,
-            'backsound'         => $backsound,
-            'background'        => $background,
-            'has_pretest'       => $pretestQuiz !== null,
-            'pretest_done'      => $pretestDone,
-            'has_posttest'      => $posttestQuiz !== null,
-            'posttest_done'     => $posttestDone,
+            'backsound' => $backsound,
+            'background' => $background,
+            'has_pretest' => $pretestQuiz !== null,
+            'pretest_done' => $pretestDone,
+            'pretest_allow_retake' => $pretestQuiz->allow_retake ?? true,
+            'has_posttest' => $posttestQuiz !== null,
+            'posttest_done' => $posttestDone,
+            'posttest_allow_retake' => $posttestQuiz->allow_retake ?? true,
         ]);
     }
 
@@ -145,8 +168,25 @@ class MissionController extends Controller
             'reflections.questions',
         ]);
 
+        $studentId = $player['id'] ?? null;
+        $missionQuiz = $mission->quizzes->firstWhere('type', '!=', 'materials');
+        if ($missionQuiz && $studentId) {
+            $attemptCount = \App\Models\StudentMissionLog::where('user_id', $studentId)
+                ->where('mission_id', $mission->id)
+                ->count();
+            if ($attemptCount > 0) {
+                $allowRetake = (bool) ($missionQuiz->allow_retake ?? true);
+                $maxRetakes = (int) ($missionQuiz->max_retakes ?? 0);
+                $maxRetakesExceeded = $maxRetakes > 0 && $attemptCount >= $maxRetakes;
+
+                if (! $allowRetake || ! request()->has('restart') || $maxRetakesExceeded) {
+                    return redirect()->route('playground.missions.result', $mission->id);
+                }
+            }
+        }
+
         // Format quizzes
-        $quizzes = $mission->quizzes->map(function($quiz) {
+        $quizzes = $mission->quizzes->map(function ($quiz) {
             $questionsCollection = $quiz->questions;
             if ($quiz->is_randomized) {
                 $questionsCollection = $questionsCollection->shuffle();
@@ -155,112 +195,113 @@ class MissionController extends Controller
             }
 
             return [
-                'id'               => $quiz->id,
-                'type'             => $quiz->type,
-                'title'            => $quiz->title,
-                'time_limit'       => $quiz->time_limit,
-                'order_number'     => $quiz->order_number ?? 0,
-                'created_at'       => $quiz->created_at,
-                'image'            => $quiz->image,
+                'id' => $quiz->id,
+                'type' => $quiz->type,
+                'title' => $quiz->title,
+                'time_limit' => $quiz->time_limit,
+                'order_number' => $quiz->order_number ?? 0,
+                'created_at' => $quiz->created_at,
+                'image' => $quiz->image,
                 'custom_dialogues' => $quiz->custom_dialogues,
-                'questions'    => $questionsCollection->map(function ($question) {
-                $formatted = [
-                    'id'            => $question->id,
-                    'question_text' => $question->question_text,
-                    'quiz_id'       => $question->quiz_id,
-                    'feedback_correct'   => $question->feedback_correct,
-                    'feedback_incorrect' => $question->feedback_incorrect,
-                    'explanation'        => $question->explanation,
-                    'mascot'        => $question->mascot ? [
-                        'id'        => $question->mascot->id,
-                        'name_pose' => $question->mascot->name_pose,
-                        'image'     => $question->mascot->image,
-                    ] : null,
-                ];
+                'questions' => $questionsCollection->map(function ($question) {
+                    $formatted = [
+                        'id' => $question->id,
+                        'question_text' => $question->question_text,
+                        'quiz_id' => $question->quiz_id,
+                        'feedback_correct' => $question->feedback_correct,
+                        'feedback_incorrect' => $question->feedback_incorrect,
+                        'explanation' => $question->explanation,
+                        'mascot' => $question->mascot ? [
+                            'id' => $question->mascot->id,
+                            'name_pose' => $question->mascot->name_pose,
+                            'image' => $question->mascot->image,
+                        ] : null,
+                    ];
 
-                if ($question->options->count() > 0) {
-                    $formatted['options'] = $question->options->sortBy('created_at')->values()->map(fn($opt) => [
-                        'id'           => $opt->id,
-                        'text'         => $opt->option_text,
-                        'option_text'  => $opt->option_text,
-                        'option_image' => $opt->option_image,
-                        'is_correct'   => (bool) $opt->is_correct,
-                        'feedback'     => $opt->feedback,
-                    ])->toArray();
-                }
+                    if ($question->options->count() > 0) {
+                        $formatted['options'] = $question->options->sortBy('created_at')->values()->map(fn ($opt) => [
+                            'id' => $opt->id,
+                            'text' => $opt->option_text,
+                            'option_text' => $opt->option_text,
+                            'option_image' => $opt->option_image,
+                            'is_correct' => (bool) $opt->is_correct,
+                            'feedback' => $opt->feedback,
+                        ])->toArray();
+                    }
 
-                if ($question->dragDropGroups->count() > 0) {
-                    $formatted['drag_drop_items']  = [];
-                    $formatted['drag_drop_groups'] = $question->dragDropGroups->map(function ($group) use (&$formatted) {
-                        foreach ($group->items as $item) {
-                            $formatted['drag_drop_items'][] = [
-                                'id'               => $item->id,
-                                'item_text'        => $item->item_text,
-                                'item_image'       => $item->item_image,
-                                'correct_group_id' => $group->id,
-                            ];
-                        }
-                        return ['id' => $group->id, 'group_name' => $group->group_name];
-                    })->toArray();
-                }
+                    if ($question->dragDropGroups->count() > 0) {
+                        $formatted['drag_drop_items'] = [];
+                        $formatted['drag_drop_groups'] = $question->dragDropGroups->map(function ($group) use (&$formatted) {
+                            foreach ($group->items as $item) {
+                                $formatted['drag_drop_items'][] = [
+                                    'id' => $item->id,
+                                    'item_text' => $item->item_text,
+                                    'item_image' => $item->item_image,
+                                    'correct_group_id' => $group->id,
+                                ];
+                            }
 
-                return $formatted;
-            })->toArray(),
+                            return ['id' => $group->id, 'group_name' => $group->group_name];
+                        })->toArray();
+                    }
+
+                    return $formatted;
+                })->toArray(),
             ];
         })->toArray();
 
         // Format materials
-        $materials = $mission->materials->map(fn($material) => [
-            'id'               => $material->id,
-            'type'             => 'materials',
-            'image'            => $material->image,
-            'title'            => $material->title,
-            'subtitle'         => $material->description,
-            'speech_bubble'    => $material->speech_bubble,
+        $materials = $mission->materials->map(fn ($material) => [
+            'id' => $material->id,
+            'type' => 'materials',
+            'image' => $material->image,
+            'title' => $material->title,
+            'subtitle' => $material->description,
+            'speech_bubble' => $material->speech_bubble,
             'custom_dialogues' => $material->custom_dialogues,
-            'order_number'     => $material->order_number ?? 0,
-            'created_at'       => $material->created_at,
-            'mascot'     => $material->mascot ? [
-                'id'        => $material->mascot->id,
+            'order_number' => $material->order_number ?? 0,
+            'created_at' => $material->created_at,
+            'mascot' => $material->mascot ? [
+                'id' => $material->mascot->id,
                 'name_pose' => $material->mascot->name_pose,
-                'image'     => $material->mascot->image,
+                'image' => $material->mascot->image,
             ] : null,
-            'questions'  => [
+            'questions' => [
                 [
-                    'id'            => $material->id,
-                    'image'         => $material->image,
-                    'title'         => $material->title,
-                    'subtitle'      => $material->description,
-                    'content'       => $material->content,
+                    'id' => $material->id,
+                    'image' => $material->image,
+                    'title' => $material->title,
+                    'subtitle' => $material->description,
+                    'content' => $material->content,
                     'material_type' => 'text',
-                    'layout_type'   => $material->layout_type,
-                    'youtube_link'  => $material->youtube_link,
+                    'layout_type' => $material->layout_type,
+                    'youtube_link' => $material->youtube_link,
                     'speech_bubble' => $material->speech_bubble,
-                    'mascot'        => $material->mascot ? [
-                        'id'        => $material->mascot->id,
+                    'mascot' => $material->mascot ? [
+                        'id' => $material->mascot->id,
                         'name_pose' => $material->mascot->name_pose,
-                        'image'     => $material->mascot->image,
+                        'image' => $material->mascot->image,
                     ] : null,
                 ],
             ],
         ])->toArray();
 
-        $backsound  = null;
+        $backsound = null;
         $background = null;
 
         $clickables = [];
         if ($mission->simulation_clickable_objects->isNotEmpty()) {
             $first = $mission->simulation_clickable_objects->sortBy('order_number')->first();
             $clickables[] = [
-                'id'           => 'sim_clickable_' . $mission->id,
-                'type'         => 'simulation_clickable',
-                'title'        => $first->title ?? 'Simulasi Objek Klik',
+                'id' => 'sim_clickable_'.$mission->id,
+                'type' => 'simulation_clickable',
+                'title' => $first->title ?? 'Simulasi Objek Klik',
                 'order_number' => $first->order_number ?? 0,
-                'created_at'   => $first->created_at,
-                'objects'      => $mission->simulation_clickable_objects->map(fn($obj) => [
-                    'id'          => $obj->id,
-                    'name'        => $obj->name,
-                    'image'       => $obj->image,
+                'created_at' => $first->created_at,
+                'objects' => $mission->simulation_clickable_objects->map(fn ($obj) => [
+                    'id' => $obj->id,
+                    'name' => $obj->name,
+                    'image' => $obj->image,
                     'impact_text' => $obj->impact_text,
                     'is_positive' => $obj->is_positive,
                 ])->toArray(),
@@ -271,21 +312,21 @@ class MissionController extends Controller
         if ($mission->simulation_sliders->isNotEmpty()) {
             $firstSlider = $mission->simulation_sliders->sortBy('order_number')->first();
             $sliders[] = [
-                'id'           => 'sim_slider_' . $mission->id,
-                'type'         => 'simulation_slider',
-                'title'        => $firstSlider->title ?? 'Simulasi Interaktif',
-                'variables'    => $firstSlider->variables ?? [],
+                'id' => 'sim_slider_'.$mission->id,
+                'type' => 'simulation_slider',
+                'title' => $firstSlider->title ?? 'Simulasi Interaktif',
+                'variables' => $firstSlider->variables ?? [],
                 'order_number' => $firstSlider->order_number ?? 0,
-                'created_at'   => $firstSlider->created_at,
-                'levels'       => $firstSlider->levels->map(fn($lvl) => [
-                    'id'          => $lvl->id,
-                    'level_name'       => $lvl->level_name,
-                    'narration'        => $lvl->narration,
-                    'metric_value'     => $lvl->metric_value,
-                    'image'            => $lvl->image,
+                'created_at' => $firstSlider->created_at,
+                'levels' => $firstSlider->levels->map(fn ($lvl) => [
+                    'id' => $lvl->id,
+                    'level_name' => $lvl->level_name,
+                    'narration' => $lvl->narration,
+                    'metric_value' => $lvl->metric_value,
+                    'image' => $lvl->image,
                     'animation_effect' => $lvl->animation_effect,
                     'image_transition' => $lvl->image_transition,
-                    'status'           => $lvl->status,
+                    'status' => $lvl->status,
                 ])->toArray(),
             ];
         }
@@ -294,15 +335,15 @@ class MissionController extends Controller
         if ($mission->simulation_comparisons->isNotEmpty()) {
             $firstComp = $mission->simulation_comparisons->sortBy('order_number')->first();
             $comparisons[] = [
-                'id'           => 'sim_comparison_' . $mission->id,
-                'type'         => 'simulation_comparison',
-                'title'        => $firstComp->title ?? 'Simulasi Perbandingan',
+                'id' => 'sim_comparison_'.$mission->id,
+                'type' => 'simulation_comparison',
+                'title' => $firstComp->title ?? 'Simulasi Perbandingan',
                 'order_number' => $firstComp->order_number ?? 0,
-                'created_at'   => $firstComp->created_at,
-                'items'        => $mission->simulation_comparisons->sortBy('order_number')->map(fn($comp) => [
-                    'id'          => $comp->id,
+                'created_at' => $firstComp->created_at,
+                'items' => $mission->simulation_comparisons->sortBy('order_number')->map(fn ($comp) => [
+                    'id' => $comp->id,
                     'explanation' => $comp->explanation,
-                    'items'       => $comp->items ?? [],
+                    'items' => $comp->items ?? [],
                 ])->toArray(),
             ];
         }
@@ -312,20 +353,20 @@ class MissionController extends Controller
             // Note: Since we didn't add order_number to decisions, we'll assume it defaults to 0
             $firstDec = $mission->simulation_decisions->first();
             $decisions[] = [
-                'id'                  => 'sim_decision_' . $mission->id,
-                'type'                => 'simulation_decision',
-                'title'               => $firstDec->title ?? 'Simulasi Keputusan',
+                'id' => 'sim_decision_'.$mission->id,
+                'type' => 'simulation_decision',
+                'title' => $firstDec->title ?? 'Simulasi Keputusan',
                 'initial_state_title' => $firstDec->initial_state_title,
                 'initial_state_image' => $firstDec->initial_state_image,
-                'future_state_title'  => $firstDec->future_state_title,
-                'character_image'     => $firstDec->character_image,
-                'order_number'        => $firstDec->order_number ?? 0,
-                'created_at'          => $firstDec->created_at,
-                'options'             => $firstDec->options->map(fn($opt) => [
-                    'id'                 => $opt->id,
-                    'button_label'       => $opt->button_label,
-                    'button_color'       => $opt->button_color,
-                    'feedback_message'   => $opt->feedback_message,
+                'future_state_title' => $firstDec->future_state_title,
+                'character_image' => $firstDec->character_image,
+                'order_number' => $firstDec->order_number ?? 0,
+                'created_at' => $firstDec->created_at,
+                'options' => $firstDec->options->map(fn ($opt) => [
+                    'id' => $opt->id,
+                    'button_label' => $opt->button_label,
+                    'button_color' => $opt->button_color,
+                    'feedback_message' => $opt->feedback_message,
                     'future_state_image' => $opt->future_state_image,
                 ])->toArray(),
             ];
@@ -335,18 +376,18 @@ class MissionController extends Controller
         if ($mission->reflections->isNotEmpty()) {
             foreach ($mission->reflections as $reflection) {
                 $reflections[] = [
-                    'id'                => 'reflection_' . $reflection->id,
-                    'type'              => 'reflection',
-                    'title'             => $reflection->title ?? 'Refleksi Ilmiah',
-                    'mascot_left_text'  => $reflection->mascot_left_text,
+                    'id' => 'reflection_'.$reflection->id,
+                    'type' => 'reflection',
+                    'title' => $reflection->title ?? 'Refleksi Ilmiah',
+                    'mascot_left_text' => $reflection->mascot_left_text,
                     'mascot_right_text' => $reflection->mascot_right_text,
-                    'flowchart_data'    => $reflection->flowchart_data,
-                    'created_at'        => $reflection->created_at,
-                    'order_number'      => $reflection->order_number ?? 0,
-                    'questions'         => $reflection->questions->map(fn($q) => [
-                        'id'            => $q->id,
+                    'flowchart_data' => $reflection->flowchart_data,
+                    'created_at' => $reflection->created_at,
+                    'order_number' => $reflection->order_number ?? 0,
+                    'questions' => $reflection->questions->map(fn ($q) => [
+                        'id' => $q->id,
                         'question_text' => $q->question_text,
-                        'order_number'  => $q->order_number,
+                        'order_number' => $q->order_number,
                     ])->toArray(),
                 ];
             }
@@ -356,13 +397,14 @@ class MissionController extends Controller
             ->sort(function ($a, $b) {
                 $aOrder = $a['order_number'] ?? 0;
                 $bOrder = $b['order_number'] ?? 0;
-                
+
                 if ($aOrder !== 0 || $bOrder !== 0) {
                     return $aOrder <=> $bOrder;
                 }
-                
+
                 $aTime = \Carbon\Carbon::parse($a['created_at'] ?? 'now')->timestamp;
                 $bTime = \Carbon\Carbon::parse($b['created_at'] ?? 'now')->timestamp;
+
                 return $bTime <=> $aTime;
             })
             ->values()
@@ -374,22 +416,22 @@ class MissionController extends Controller
             ->first();
 
         $formattedMission = [
-            'id'                => $mission->id,
-            'name'              => $mission->name,
-            'order_number'      => $mission->order_number,
-            'has_next_mission'  => $nextMission !== null,
-            'next_mission_id'   => $nextMission ? $nextMission->id : null,
+            'id' => $mission->id,
+            'name' => $mission->name,
+            'order_number' => $mission->order_number,
+            'has_next_mission' => $nextMission !== null,
+            'next_mission_id' => $nextMission ? $nextMission->id : null,
             'conclusion_speech' => $mission->conclusion_speech,
-            'conclusion_body'   => $mission->conclusion_body,
-            'voiceover_url'     => $mission->voiceover_url ? Storage::url($mission->voiceover_url) : null,
-            'quizzes'           => $allItems,
+            'conclusion_body' => $mission->conclusion_body,
+            'voiceover_url' => $mission->voiceover_url ? Storage::url($mission->voiceover_url) : null,
+            'quizzes' => $allItems,
         ];
 
         return Inertia::render('Playground/Mission/Template', [
-            'mission'    => $formattedMission,
-            'user'       => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'module'     => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? '', 'template' => $mission->module?->template],
-            'backsound'  => $backsound,
+            'mission' => $formattedMission,
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module' => ['id' => $mission->module_id, 'name' => $mission->module?->name ?? 'Module', 'description' => $mission->module?->description ?? '', 'template' => $mission->module?->template],
+            'backsound' => $backsound,
             'background' => $background,
         ]);
     }
@@ -406,18 +448,18 @@ class MissionController extends Controller
             'quizzes.questions.dragDropGroups.items',
         ]);
 
-        $studentId      = $player['id'] ?? null;
-        $totalCorrect   = 0;
+        $studentId = $player['id'] ?? null;
+        $totalCorrect = 0;
         $totalIncorrect = 0;
         $totalQuestions = 0;
-        $byType         = [];
+        $byType = [];
         $questionsResult = [];
 
         $nextMission = Missions::where('module_id', $mission->module_id)
             ->where('order_number', '>', $mission->order_number)
             ->where(function ($q) {
                 $q->whereHas('quizzes')
-                  ->orWhereHas('materials');
+                    ->orWhereHas('materials');
             })
             ->orderBy('order_number', 'asc')
             ->first();
@@ -469,15 +511,15 @@ class MissionController extends Controller
                 }
 
                 $questionsResult[] = [
-                    'question_id'         => $question->id,
-                    'question_text'       => $question->question_text,
-                    'quiz_type'           => $quiz->type,
-                    'quiz_title'          => $quiz->title,
-                    'is_correct'          => $isCorrect,
-                    'user_answer_text'    => $userAnswerText,
+                    'question_id' => $question->id,
+                    'question_text' => $question->question_text,
+                    'quiz_type' => $quiz->type,
+                    'quiz_title' => $quiz->title,
+                    'is_correct' => $isCorrect,
+                    'user_answer_text' => $userAnswerText,
                     'correct_answer_text' => $correctAnswerText,
-                    'user_answer_map'     => $userAnswerMap,
-                    'correct_answer_map'  => $correctAnswerMap,
+                    'user_answer_map' => $userAnswerMap,
+                    'correct_answer_map' => $correctAnswerMap,
                 ];
             }
         }
@@ -486,22 +528,22 @@ class MissionController extends Controller
             ? (int) round(($totalCorrect / $totalQuestions) * 100)
             : 0;
 
-        $breakdown = collect($byType)->map(fn($d, $type) => [
-            'type'      => $type,
-            'correct'   => $d['correct'],
+        $breakdown = collect($byType)->map(fn ($d, $type) => [
+            'type' => $type,
+            'correct' => $d['correct'],
             'incorrect' => $d['incorrect'],
-            'total'     => $d['total'],
-            'score'     => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
+            'total' => $d['total'],
+            'score' => $d['total'] > 0 ? (int) round(($d['correct'] / $d['total']) * 100) : 0,
         ])->values()->toArray();
 
         $moduleId = $mission->module_id;
-        $module   = $mission->module;
+        $module = $mission->module;
 
         // Cek apakah semua misi sudah selesai menggunakan StudentMissionLog
         // (dibuat saat submitMissionAnswers dipanggil — sumber kebenaran yang andal)
-        $allMissionIds   = Missions::where('module_id', $moduleId)->pluck('id');
+        $allMissionIds = Missions::where('module_id', $moduleId)->pluck('id');
         $allMissionsDone = $allMissionIds->isNotEmpty() && $allMissionIds->every(
-            fn($missionId) => \App\Models\StudentMissionLog::where('mission_id', $missionId)
+            fn ($missionId) => \App\Models\StudentMissionLog::where('mission_id', $missionId)
                 ->where('user_id', $studentId)
                 ->exists()
         );
@@ -518,17 +560,30 @@ class MissionController extends Controller
             $allMissionsDone = false;
         }
 
+        $missionQuiz = $mission->quizzes->firstWhere('type', '!=', 'materials');
+        $attemptsCount = \App\Models\StudentMissionLog::where('user_id', $studentId)
+            ->where('mission_id', $mission->id)
+            ->count();
+
+        $allowRetake = $missionQuiz ? (bool) ($missionQuiz->allow_retake ?? true) : true;
+        $maxRetakes = $missionQuiz ? ($missionQuiz->max_retakes ?? 0) : 0;
+        $canRetake = (bool) ($allowRetake && ($maxRetakes == 0 || $attemptsCount < $maxRetakes));
+
         return Inertia::render('Playground/Mission/Result', [
-            'mission'           => ['id' => $mission->id, 'name' => $mission->name],
-            'next_mission'      => $nextMission ? ['id' => $nextMission->id, 'name' => $nextMission->name] : null,
-            'results'           => [
-                'score'            => $score,
-                'correct'          => $totalCorrect,
-                'incorrect'        => $totalIncorrect,
-                'total'            => $totalQuestions,
-                'breakdown'        => $breakdown,
+            'mission' => ['id' => $mission->id, 'name' => $mission->name],
+            'next_mission' => $nextMission ? ['id' => $nextMission->id, 'name' => $nextMission->name] : null,
+            'can_retake' => $canRetake,
+            'max_retakes' => $maxRetakes,
+            'attempts_count' => $attemptsCount,
+            'allow_retake' => $allowRetake,
+            'results' => [
+                'score' => $score,
+                'correct' => $totalCorrect,
+                'incorrect' => $totalIncorrect,
+                'total' => $totalQuestions,
+                'breakdown' => $breakdown,
                 'questions_result' => $questionsResult,
-                'details'          => collect($questionsResult)->map(fn($q) => [
+                'details' => collect($questionsResult)->map(fn ($q) => [
                     'question_id' => $q['question_id'],
                     'question' => [
                         'id' => $q['question_id'],
@@ -543,10 +598,10 @@ class MissionController extends Controller
                     'correct_answer_map' => $q['correct_answer_map'],
                 ])->toArray(),
             ],
-            'user'              => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
-            'module'            => ['id' => $moduleId, 'name' => $module?->name ?? 'Modul'],
+            'user' => ['name' => $player['nama'] ?? 'Siswa', 'class' => $player['nama_kelas'] ?? '-'],
+            'module' => ['id' => $moduleId, 'name' => $module?->name ?? 'Modul'],
             'all_missions_done' => $allMissionsDone,
-            'posttest_done'     => $posttestDone,
+            'posttest_done' => $posttestDone,
         ]);
     }
 
@@ -562,8 +617,8 @@ class MissionController extends Controller
         }
 
         $validated = $request->validated();
-        $answers   = $validated['answers'] ?? [];
-        $quizIds   = $validated['quiz_ids'] ?? [];
+        $answers = $validated['answers'] ?? [];
+        $quizIds = $validated['quiz_ids'] ?? [];
         $studentId = $player['id'] ?? null;
 
         try {
@@ -591,7 +646,7 @@ class MissionController extends Controller
 
                 $quizQuestionIds = Questions::where('quiz_id', $quizId)
                     ->pluck('id')
-                    ->map(fn($id) => (string) $id)
+                    ->map(fn ($id) => (string) $id)
                     ->toArray();
 
                 $attempt = Quiz_attempts::updateOrCreate(
@@ -614,9 +669,9 @@ class MissionController extends Controller
                         User_answers::updateOrCreate(
                             ['attempt_id' => $attempt->id, 'question_id' => $questionId],
                             [
-                                'selected_option_id' => $isUuid ? $answerValue : null, 
-                                'selected_group_id' => null, 
-                                'response' => (string) $answerValue
+                                'selected_option_id' => $isUuid ? $answerValue : null,
+                                'selected_group_id' => null,
+                                'response' => (string) $answerValue,
                             ]
                         );
                     }
@@ -624,16 +679,16 @@ class MissionController extends Controller
 
                 $scores = $this->calcQuizScoreWithTypes($quizId, $studentId);
                 \Log::info('Quiz Score Calculation', [
-                    'quiz_id'    => $quizId,
+                    'quiz_id' => $quizId,
                     'student_id' => $studentId,
-                    'scores'     => $scores,
+                    'scores' => $scores,
                 ]);
                 $attempt->update([
-                    'score'                 => $scores['overall'],
+                    'score' => $scores['overall'],
                     'score_multiple_choice' => $scores['multiple_choices'],
-                    'score_true_false'      => $scores['true_false'],
-                    'score_case_study'      => $scores['case_study'],
-                    'score_drag_drop'       => $scores['drag_drop'],
+                    'score_true_false' => $scores['true_false'],
+                    'score_case_study' => $scores['case_study'],
+                    'score_drag_drop' => $scores['drag_drop'],
                 ]);
             }
 
@@ -644,7 +699,7 @@ class MissionController extends Controller
                     ->where('mission_id', $mission->id)
                     ->orderBy('attempt_number', 'desc')
                     ->first();
-                
+
                 $attemptNum = $lastAttempt ? $lastAttempt->attempt_number + 1 : 1;
 
                 \App\Models\StudentMissionLog::create([
@@ -684,21 +739,21 @@ class MissionController extends Controller
         $answersByQuestion = $attempt->answers()->get()->keyBy('question_id');
 
         \Log::info('Quiz Score Debug', [
-            'quiz_id'         => $quizId,
-            'quiz_type'       => $quiz->type,
+            'quiz_id' => $quizId,
+            'quiz_type' => $quiz->type,
             'total_questions' => count($quiz->questions),
-            'total_answers'   => $answersByQuestion->count(),
+            'total_answers' => $answersByQuestion->count(),
         ]);
 
         $scoresByType = [
             'multiple_choices' => ['correct' => 0, 'total' => 0],
-            'true_false'       => ['correct' => 0, 'total' => 0],
-            'case_study'       => ['correct' => 0, 'total' => 0],
-            'drag_drop'        => ['correct' => 0, 'total' => 0],
-            'short_answer'     => ['correct' => 0, 'total' => 0],
+            'true_false' => ['correct' => 0, 'total' => 0],
+            'case_study' => ['correct' => 0, 'total' => 0],
+            'drag_drop' => ['correct' => 0, 'total' => 0],
+            'short_answer' => ['correct' => 0, 'total' => 0],
         ];
 
-        $totalCorrect   = 0;
+        $totalCorrect = 0;
         $totalQuestions = 0;
 
         foreach ($quiz->questions as $question) {
@@ -744,24 +799,25 @@ class MissionController extends Controller
 
     private function checkAnswer(User_answers $answer, $question): array
     {
-        $userText    = '';
+        $userText = '';
         $correctText = '';
-        $userMap     = [];
-        $correctMap  = [];
+        $userMap = [];
+        $correctMap = [];
 
         $quizType = $question->quiz?->type ?? '';
 
         if ($quizType === 'reflection') {
             $responseStr = trim($answer->response ?? '');
+
             return [true, $responseStr, '', [], []];
         }
 
         if ($quizType === 'short_answer') {
             $responseStr = trim($answer->response ?? '');
             $correctText = $question->expected_keywords ?? '';
-            
+
             $isCorrect = false;
-            if (!empty($correctText)) {
+            if (! empty($correctText)) {
                 $keywords = array_map('trim', explode(',', strtolower($correctText)));
                 $userAnsLower = strtolower($responseStr);
                 foreach ($keywords as $kw) {
@@ -773,25 +829,25 @@ class MissionController extends Controller
             } else {
                 $isCorrect = true;
             }
-            
+
             return [$isCorrect, $responseStr, $correctText, [], []];
         }
 
         // ── Options-based questions ───────────────────────────────
         if ($question->options && $question->options->count() > 0) {
-            $allOptions  = $question->options->keyBy('id');
+            $allOptions = $question->options->keyBy('id');
             $correctOpts = $question->options->where('is_correct', true);
-            $correctIds  = $correctOpts->pluck('id')->map(fn($id) => (string) $id)->sort()->values()->toArray();
+            $correctIds = $correctOpts->pluck('id')->map(fn ($id) => (string) $id)->sort()->values()->toArray();
             $correctText = $correctOpts->pluck('option_text')->implode(', ');
 
             $responseStr = trim($answer->response ?? '');
 
             if (str_starts_with($responseStr, '[')) {
                 $selectedIds = collect(json_decode($responseStr, true) ?? [])
-                    ->map(fn($id) => (string) $id)->sort()->values()->toArray();
+                    ->map(fn ($id) => (string) $id)->sort()->values()->toArray();
 
                 $userText = collect($selectedIds)
-                    ->map(fn($id) => $allOptions->get($id)?->option_text ?? $id)
+                    ->map(fn ($id) => $allOptions->get($id)?->option_text ?? $id)
                     ->implode(', ');
 
                 return [$selectedIds === $correctIds, $userText, $correctText, [], []];
@@ -801,7 +857,7 @@ class MissionController extends Controller
                 ? (string) $answer->selected_option_id
                 : $responseStr;
 
-            $userText  = $allOptions->get($selectedId)?->option_text ?? $selectedId;
+            $userText = $allOptions->get($selectedId)?->option_text ?? $selectedId;
             $isCorrect = count($correctIds) === 1 && $selectedId === $correctIds[0];
 
             return [$isCorrect, $userText, $correctText, [], []];
@@ -819,15 +875,15 @@ class MissionController extends Controller
             }
 
             $itemToCorrectGroup = [];
-            $itemLabels         = [];
-            $groupLabels        = [];
+            $itemLabels = [];
+            $groupLabels = [];
 
             foreach ($question->dragDropGroups as $group) {
                 $groupLabels[(string) $group->id] = $group->group_name;
                 foreach ($group->items as $item) {
-                    $itemLabels[(string) $item->id]         = $item->item_text;
+                    $itemLabels[(string) $item->id] = $item->item_text;
                     $itemToCorrectGroup[(string) $item->id] = (string) $group->id;
-                    $correctMap[$item->item_text]           = $group->group_name;
+                    $correctMap[$item->item_text] = $group->group_name;
                 }
             }
 
@@ -872,7 +928,7 @@ class MissionController extends Controller
 
         return Inertia::render('Playground/MissionShow', [
             'module' => $learningModule,
-            'auth'   => ['user' => $user],
+            'auth' => ['user' => $user],
         ]);
     }
 }

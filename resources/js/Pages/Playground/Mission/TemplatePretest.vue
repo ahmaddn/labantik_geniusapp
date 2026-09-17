@@ -220,8 +220,13 @@ function onCheckAnswer() {
     }
 }
 
+const lockedQuestionIds = ref(new Set());
+const isCurrentQuestionLocked = computed(() => {
+    return currentQ.value ? lockedQuestionIds.value.has(currentQ.value.id) : false;
+});
+
 function updateAnswer({ questionId, value }) {
-    if (isAnswerChecked.value) return;
+    if (isAnswerChecked.value || lockedQuestionIds.value.has(questionId)) return;
     answers.value = { ...answers.value, [questionId]: value };
 }
 
@@ -233,6 +238,9 @@ function goPrev() {
     }
 }
 function goNext() {
+    if (currentQ.value?.id) {
+        lockedQuestionIds.value.add(currentQ.value.id);
+    }
     if (!isLast.value) {
         currentIdx.value++;
         isAnswerChecked.value = false;
@@ -700,6 +708,7 @@ onUnmounted(() => {
                                     :is="COMPONENT_MAP[quizType]"
                                     :question="currentQ"
                                     :modelValue="answers[currentQ.id]"
+                                    :disabled="isCurrentQuestionLocked"
                                     @update-answer="updateAnswer"
                                 />
                             </div>
