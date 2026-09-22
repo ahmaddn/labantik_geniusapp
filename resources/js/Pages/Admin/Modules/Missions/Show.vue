@@ -434,8 +434,22 @@ const goToShowQuiz = (quizId) => {
     );
 };
 
+const isRetakeAllowed = (quiz) => {
+    return Boolean(quiz && quiz.allow_retake !== false && quiz.allow_retake !== 0 && quiz.allow_retake !== "0");
+};
+
+const isShowAnswersAllowed = (quiz) => {
+    return Boolean(quiz && quiz.show_answers !== false && quiz.show_answers !== 0 && quiz.show_answers !== "0");
+};
+
+const isRandomized = (quiz) => {
+    return Boolean(quiz && (quiz.is_randomized === true || quiz.is_randomized === 1 || quiz.is_randomized === "1"));
+};
+
 const toggleMissionQuizRetake = (quiz) => {
     if (!quiz) return;
+    const nextState = !isRetakeAllowed(quiz);
+    quiz.allow_retake = nextState;
     router.patch(
         route("admin.modules.missions.quizzes.toggle_retake", [props.module.id, props.mission.id, quiz.id]),
         {},
@@ -445,6 +459,8 @@ const toggleMissionQuizRetake = (quiz) => {
 
 const toggleMissionQuizRandomized = (quiz) => {
     if (!quiz) return;
+    const nextState = !isRandomized(quiz);
+    quiz.is_randomized = nextState;
     router.patch(
         route("admin.modules.missions.quizzes.toggle_randomized", [props.module.id, props.mission.id, quiz.id]),
         {},
@@ -454,6 +470,7 @@ const toggleMissionQuizRandomized = (quiz) => {
 
 const updateMissionQuizMaxRetakes = (quiz, maxRetakes) => {
     if (!quiz) return;
+    quiz.max_retakes = parseInt(maxRetakes) || 0;
     router.patch(
         route("admin.modules.missions.quizzes.update_max_retakes", [props.module.id, props.mission.id, quiz.id]),
         { max_retakes: parseInt(maxRetakes) || 0 },
@@ -463,6 +480,8 @@ const updateMissionQuizMaxRetakes = (quiz, maxRetakes) => {
 
 const toggleMissionQuizShowAnswers = (quiz) => {
     if (!quiz) return;
+    const nextState = !isShowAnswersAllowed(quiz);
+    quiz.show_answers = nextState;
     router.patch(
         route("admin.modules.missions.quizzes.toggle_show_answers", [props.module.id, props.mission.id, quiz.id]),
         {},
@@ -1086,31 +1105,25 @@ const getLayoutTypeLabel = (type) => {
                                         <div
                                             class="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3"
                                         >
-                                            <div class="flex flex-wrap items-center gap-2">
+                                            <div class="flex flex-wrap items-center gap-2 max-w-full">
                                                 <!-- Toggle Retake -->
-                                                <button
-                                                    type="button"
+                                                <Button
+                                                    size="sm"
+                                                    :variant="isRetakeAllowed(item) ? 'success' : 'warning'"
+                                                    :icon="isRetakeAllowed(item) ? RotateCcw : Lock"
                                                     @click="toggleMissionQuizRetake(item)"
-                                                    :title="item.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
-                                                    :class="[
-                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
-                                                        item.allow_retake !== false 
-                                                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-300' 
-                                                            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-300'
-                                                    ]"
+                                                    :title="isRetakeAllowed(item) ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
                                                 >
-                                                    <RotateCcw v-if="item.allow_retake !== false" class="w-3.5 h-3.5" />
-                                                    <Lock v-else class="w-3.5 h-3.5" />
-                                                    <span>{{ item.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}</span>
-                                                </button>
+                                                    {{ isRetakeAllowed(item) ? 'Bisa Diulang' : '1x Kerjakan' }}
+                                                </Button>
 
                                                 <!-- Max Retakes Select -->
                                                 <select
-                                                    v-if="item.allow_retake !== false"
+                                                    v-if="isRetakeAllowed(item)"
                                                     :value="item.max_retakes ?? 0"
                                                     @change="updateMissionQuizMaxRetakes(item, $event.target.value)"
                                                     title="Batas berapa kali kuis bisa diulang"
-                                                    class="h-9 px-2.5 text-xs font-bold rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm"
+                                                    class="h-9 px-3 text-xs font-bold rounded-xl border-4 border-emerald-400 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
                                                 >
                                                     <option :value="0">∞ Tanpa Batas</option>
                                                     <option :value="1">Max 1x Ulang</option>
@@ -1120,49 +1133,37 @@ const getLayoutTypeLabel = (type) => {
                                                 </select>
 
                                                 <!-- Toggle Randomized -->
-                                                <button
-                                                    type="button"
+                                                <Button
+                                                    size="sm"
+                                                    :variant="isRandomized(item) ? 'purple' : 'light'"
+                                                    :icon="isRandomized(item) ? Shuffle : ListOrdered"
                                                     @click="toggleMissionQuizRandomized(item)"
-                                                    :title="item.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
-                                                    :class="[
-                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
-                                                        item.is_randomized
-                                                            ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300'
-                                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
-                                                    ]"
+                                                    :title="isRandomized(item) ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
                                                 >
-                                                    <Shuffle v-if="item.is_randomized" class="w-3.5 h-3.5 shrink-0" />
-                                                    <ListOrdered v-else class="w-3.5 h-3.5 shrink-0" />
-                                                    <span>{{ item.is_randomized ? 'Acak Soal' : 'Urut Soal' }}</span>
-                                                </button>
+                                                    {{ isRandomized(item) ? 'Acak Soal' : 'Urut Soal' }}
+                                                </Button>
 
                                                 <!-- Toggle Show Answers -->
-                                                <button
-                                                    type="button"
+                                                <Button
+                                                    size="sm"
+                                                    :variant="isShowAnswersAllowed(item) ? 'secondary' : 'light'"
+                                                    :icon="isShowAnswersAllowed(item) ? Eye : EyeOff"
                                                     @click="toggleMissionQuizShowAnswers(item)"
-                                                    :title="item.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
-                                                    :class="[
-                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
-                                                        item.show_answers !== false 
-                                                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300' 
-                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-300'
-                                                    ]"
+                                                    :title="isShowAnswersAllowed(item) ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
                                                 >
-                                                    <Eye v-if="item.show_answers !== false" class="w-3.5 h-3.5 shrink-0" />
-                                                    <EyeOff v-else class="w-3.5 h-3.5 shrink-0" />
-                                                    <span>{{ item.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}</span>
-                                                </button>
+                                                    {{ isShowAnswersAllowed(item) ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
+                                                </Button>
 
                                                 <!-- Dialog Maskot -->
-                                                <button
-                                                    type="button"
-                                                    class="h-9 px-3 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    :icon="MessageSquare"
                                                     @click="openMascotDialogModal(item)"
                                                     title="Dialog Maskot"
                                                 >
-                                                    <MessageSquare class="w-3.5 h-3.5 text-indigo-600" />
-                                                    <span>Dialog Maskot</span>
-                                                </button>
+                                                    Dialog Maskot
+                                                </Button>
                                             </div>
 
                                             <!-- Actions -->

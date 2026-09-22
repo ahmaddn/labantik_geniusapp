@@ -191,8 +191,23 @@ const goToShowMission = (missionId) => {
         route("admin.modules.missions.show", [props.module.id, missionId]),
     );
 };
-const toggleQuizRetake = (quiz) => {
+const isRetakeAllowed = (quiz) => {
+    return Boolean(quiz && quiz.allow_retake !== false && quiz.allow_retake !== 0 && quiz.allow_retake !== "0");
+};
+
+const isShowAnswersAllowed = (quiz) => {
+    return Boolean(quiz && quiz.show_answers !== false && quiz.show_answers !== 0 && quiz.show_answers !== "0");
+};
+
+const isRandomized = (quiz) => {
+    return Boolean(quiz && (quiz.is_randomized === true || quiz.is_randomized === 1 || quiz.is_randomized === "1"));
+};
+
+// Pretest Handlers
+const togglePretestRetake = (quiz) => {
     if (!quiz) return;
+    const nextState = !isRetakeAllowed(quiz);
+    quiz.allow_retake = nextState;
     router.patch(
         route("admin.modules.quizzes.toggle_retake", [props.module.id, quiz.id]),
         {},
@@ -200,8 +215,10 @@ const toggleQuizRetake = (quiz) => {
     );
 };
 
-const toggleQuizShowAnswers = (quiz) => {
+const togglePretestShowAnswers = (quiz) => {
     if (!quiz) return;
+    const nextState = !isShowAnswersAllowed(quiz);
+    quiz.show_answers = nextState;
     router.patch(
         route("admin.modules.quizzes.toggle_show_answers", [props.module.id, quiz.id]),
         {},
@@ -209,8 +226,10 @@ const toggleQuizShowAnswers = (quiz) => {
     );
 };
 
-const toggleQuizRandomized = (quiz) => {
+const togglePretestRandomized = (quiz) => {
     if (!quiz) return;
+    const nextState = !isRandomized(quiz);
+    quiz.is_randomized = nextState;
     router.patch(
         route("admin.modules.quizzes.toggle_randomized", [props.module.id, quiz.id]),
         {},
@@ -218,8 +237,53 @@ const toggleQuizRandomized = (quiz) => {
     );
 };
 
-const updateQuizMaxRetakes = (quiz, maxRetakes) => {
+const updatePretestMaxRetakes = (quiz, maxRetakes) => {
     if (!quiz) return;
+    quiz.max_retakes = parseInt(maxRetakes) || 0;
+    router.patch(
+        route("admin.modules.quizzes.update_max_retakes", [props.module.id, quiz.id]),
+        { max_retakes: parseInt(maxRetakes) || 0 },
+        { preserveScroll: true }
+    );
+};
+
+// Posttest Handlers
+const togglePosttestRetake = (quiz) => {
+    if (!quiz) return;
+    const nextState = !isRetakeAllowed(quiz);
+    quiz.allow_retake = nextState;
+    router.patch(
+        route("admin.modules.quizzes.toggle_retake", [props.module.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const togglePosttestShowAnswers = (quiz) => {
+    if (!quiz) return;
+    const nextState = !isShowAnswersAllowed(quiz);
+    quiz.show_answers = nextState;
+    router.patch(
+        route("admin.modules.quizzes.toggle_show_answers", [props.module.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const togglePosttestRandomized = (quiz) => {
+    if (!quiz) return;
+    const nextState = !isRandomized(quiz);
+    quiz.is_randomized = nextState;
+    router.patch(
+        route("admin.modules.quizzes.toggle_randomized", [props.module.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const updatePosttestMaxRetakes = (quiz, maxRetakes) => {
+    if (!quiz) return;
+    quiz.max_retakes = parseInt(maxRetakes) || 0;
     router.patch(
         route("admin.modules.quizzes.update_max_retakes", [props.module.id, quiz.id]),
         { max_retakes: parseInt(maxRetakes) || 0 },
@@ -494,19 +558,19 @@ const deleteQuiz = () => {
                                     <!-- Retake Toggle -->
                                     <Button
                                         size="sm"
-                                        :variant="quiz.allow_retake !== false ? 'success' : 'warning'"
-                                        :icon="quiz.allow_retake !== false ? RotateCcw : Lock"
-                                        @click="toggleQuizRetake(quiz)"
-                                        :title="quiz.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
+                                        :variant="isRetakeAllowed(quiz) ? 'success' : 'warning'"
+                                        :icon="isRetakeAllowed(quiz) ? RotateCcw : Lock"
+                                        @click="togglePretestRetake(quiz)"
+                                        :title="isRetakeAllowed(quiz) ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
                                     >
-                                        {{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}
+                                        {{ isRetakeAllowed(quiz) ? 'Bisa Diulang' : '1x Kerjakan' }}
                                     </Button>
 
                                     <!-- Max Retakes Select -->
                                     <select
-                                        v-if="quiz.allow_retake !== false"
+                                        v-if="isRetakeAllowed(quiz)"
                                         :value="quiz.max_retakes ?? 0"
-                                        @change="updateQuizMaxRetakes(quiz, $event.target.value)"
+                                        @change="updatePretestMaxRetakes(quiz, $event.target.value)"
                                         title="Batas berapa kali kuis bisa diulang"
                                         class="h-9 px-3 text-xs font-bold rounded-xl border-4 border-emerald-400 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
                                     >
@@ -520,23 +584,23 @@ const deleteQuiz = () => {
                                     <!-- Order Toggle -->
                                     <Button
                                         size="sm"
-                                        :variant="quiz.is_randomized ? 'purple' : 'light'"
-                                        :icon="quiz.is_randomized ? Shuffle : ListOrdered"
-                                        @click="toggleQuizRandomized(quiz)"
-                                        :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
+                                        :variant="isRandomized(quiz) ? 'purple' : 'light'"
+                                        :icon="isRandomized(quiz) ? Shuffle : ListOrdered"
+                                        @click="togglePretestRandomized(quiz)"
+                                        :title="isRandomized(quiz) ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
                                     >
-                                        {{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}
+                                        {{ isRandomized(quiz) ? 'Acak Soal' : 'Urut Soal' }}
                                     </Button>
 
                                     <!-- Show Answers Toggle -->
                                     <Button
                                         size="sm"
-                                        :variant="quiz.show_answers !== false ? 'secondary' : 'light'"
-                                        :icon="quiz.show_answers !== false ? Eye : EyeOff"
-                                        @click="toggleQuizShowAnswers(quiz)"
-                                        :title="quiz.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
+                                        :variant="isShowAnswersAllowed(quiz) ? 'secondary' : 'light'"
+                                        :icon="isShowAnswersAllowed(quiz) ? Eye : EyeOff"
+                                        @click="togglePretestShowAnswers(quiz)"
+                                        :title="isShowAnswersAllowed(quiz) ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
                                     >
-                                        {{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
+                                        {{ isShowAnswersAllowed(quiz) ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
                                     </Button>
                                 </div>
 
@@ -712,19 +776,19 @@ const deleteQuiz = () => {
                                         <!-- Retake Toggle -->
                                         <Button
                                             size="sm"
-                                            :variant="quiz.allow_retake !== false ? 'success' : 'warning'"
-                                            :icon="quiz.allow_retake !== false ? RotateCcw : Lock"
-                                            @click="toggleQuizRetake(quiz)"
-                                            :title="quiz.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
+                                            :variant="isRetakeAllowed(quiz) ? 'success' : 'warning'"
+                                            :icon="isRetakeAllowed(quiz) ? RotateCcw : Lock"
+                                            @click="togglePosttestRetake(quiz)"
+                                            :title="isRetakeAllowed(quiz) ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
                                         >
-                                            {{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}
+                                            {{ isRetakeAllowed(quiz) ? 'Bisa Diulang' : '1x Kerjakan' }}
                                         </Button>
 
                                         <!-- Max Retakes Select -->
                                         <select
-                                            v-if="quiz.allow_retake !== false"
+                                            v-if="isRetakeAllowed(quiz)"
                                             :value="quiz.max_retakes ?? 0"
-                                            @change="updateQuizMaxRetakes(quiz, $event.target.value)"
+                                            @change="updatePosttestMaxRetakes(quiz, $event.target.value)"
                                             title="Batas berapa kali kuis bisa diulang"
                                             class="h-9 px-3 text-xs font-bold rounded-xl border-4 border-emerald-400 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
                                         >
@@ -738,23 +802,23 @@ const deleteQuiz = () => {
                                         <!-- Order Toggle -->
                                         <Button
                                             size="sm"
-                                            :variant="quiz.is_randomized ? 'purple' : 'light'"
-                                            :icon="quiz.is_randomized ? Shuffle : ListOrdered"
-                                            @click="toggleQuizRandomized(quiz)"
-                                            :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
+                                            :variant="isRandomized(quiz) ? 'purple' : 'light'"
+                                            :icon="isRandomized(quiz) ? Shuffle : ListOrdered"
+                                            @click="togglePosttestRandomized(quiz)"
+                                            :title="isRandomized(quiz) ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
                                         >
-                                            {{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}
+                                            {{ isRandomized(quiz) ? 'Acak Soal' : 'Urut Soal' }}
                                         </Button>
 
                                         <!-- Show Answers Toggle -->
                                         <Button
                                             size="sm"
-                                            :variant="quiz.show_answers !== false ? 'secondary' : 'light'"
-                                            :icon="quiz.show_answers !== false ? Eye : EyeOff"
-                                            @click="toggleQuizShowAnswers(quiz)"
-                                            :title="quiz.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
+                                            :variant="isShowAnswersAllowed(quiz) ? 'secondary' : 'light'"
+                                            :icon="isShowAnswersAllowed(quiz) ? Eye : EyeOff"
+                                            @click="togglePosttestShowAnswers(quiz)"
+                                            :title="isShowAnswersAllowed(quiz) ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
                                         >
-                                            {{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
+                                            {{ isShowAnswersAllowed(quiz) ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
                                         </Button>
                                     </div>
 
