@@ -490,31 +490,26 @@ const deleteQuiz = () => {
                                 class="flex flex-col gap-2 pt-3 border-t-2 border-gray-100"
                                 @click.stop
                             >
-                                <!-- Row 1: Quiz Settings (Retake & Shuffle) -->
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <!-- Retake & Show Answers Group -->
-                                    <div class="flex items-center gap-1.5 shrink-0">
-                                        <button
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                                    <div class="flex flex-wrap items-center gap-2 max-w-full">
+                                        <!-- Retake Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.allow_retake !== false ? 'success' : 'warning'"
+                                            :icon="quiz.allow_retake !== false ? RotateCcw : Lock"
                                             @click="toggleQuizRetake(quiz)"
                                             :title="quiz.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
-                                            :class="[
-                                                'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs',
-                                                quiz.allow_retake !== false 
-                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-300' 
-                                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-300'
-                                            ]"
                                         >
-                                            <RotateCcw v-if="quiz.allow_retake !== false" class="w-3.5 h-3.5 shrink-0" />
-                                            <Lock v-else class="w-3.5 h-3.5 shrink-0" />
-                                            <span>{{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}</span>
-                                        </button>
+                                            {{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}
+                                        </Button>
 
+                                        <!-- Max Retakes Select -->
                                         <select
                                             v-if="quiz.allow_retake !== false"
                                             :value="quiz.max_retakes ?? 0"
                                             @change="updateQuizMaxRetakes(quiz, $event.target.value)"
                                             title="Batas berapa kali kuis bisa diulang"
-                                            class="h-8 px-2 text-xs font-semibold rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer shadow-sm"
+                                            class="h-9 px-3 text-xs font-bold rounded-xl border-4 border-emerald-400 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
                                         >
                                             <option :value="0">∞ Tanpa Batas</option>
                                             <option :value="1">Max 1x</option>
@@ -523,58 +518,50 @@ const deleteQuiz = () => {
                                             <option :value="5">Max 5x</option>
                                         </select>
 
-                                        <button
+                                        <!-- Order Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.is_randomized ? 'purple' : 'light'"
+                                            :icon="quiz.is_randomized ? Shuffle : ListOrdered"
+                                            @click="toggleQuizRandomized(quiz)"
+                                            :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
+                                        >
+                                            {{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}
+                                        </Button>
+
+                                        <!-- Show Answers Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.show_answers !== false ? 'secondary' : 'light'"
+                                            :icon="quiz.show_answers !== false ? Eye : EyeOff"
                                             @click="toggleQuizShowAnswers(quiz)"
                                             :title="quiz.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
-                                            :class="[
-                                                'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs',
-                                                quiz.show_answers !== false 
-                                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300' 
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-300'
-                                            ]"
                                         >
-                                            <Eye v-if="quiz.show_answers !== false" class="w-3.5 h-3.5 shrink-0" />
-                                            <EyeOff v-else class="w-3.5 h-3.5 shrink-0" />
-                                            <span>{{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}</span>
-                                        </button>
+                                            {{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
+                                        </Button>
                                     </div>
 
-                                    <!-- Shuffle Button -->
-                                    <button
-                                        @click="toggleQuizRandomized(quiz)"
-                                        :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
-                                        :class="[
-                                            'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs shrink-0',
-                                            quiz.is_randomized 
-                                                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300' 
-                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
-                                        ]"
-                                    >
-                                        <Shuffle v-if="quiz.is_randomized" class="w-3.5 h-3.5 shrink-0" />
-                                        <ListOrdered v-else class="w-3.5 h-3.5 shrink-0" />
-                                        <span>{{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}</span>
-                                    </button>
-                                </div>
-
-                                <!-- Row 2: Action Buttons (Edit & Delete) -->
-                                <div class="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
-                                    <button
-                                        @click="goToEditQuiz(quiz)"
-                                        title="Edit Tes Awal"
-                                        class="h-8 px-3 flex items-center justify-center gap-1 rounded-xl bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300 font-medium text-xs transition-all shadow-sm"
-                                    >
-                                        <Pencil class="w-3.5 h-3.5" />
-                                        <span>Edit</span>
-                                    </button>
-
-                                    <button
-                                        @click="confirmDeleteQuiz(quiz)"
-                                        title="Hapus Tes Awal"
-                                        class="h-8 px-3 flex items-center justify-center gap-1 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 font-medium text-xs transition-all shadow-sm"
-                                    >
-                                        <Trash2 class="w-3.5 h-3.5" />
-                                        <span>Hapus</span>
-                                    </button>
+                                    <!-- Edit & Delete -->
+                                    <div class="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="warning"
+                                            :icon="Pencil"
+                                            @click="goToEditQuiz(quiz)"
+                                            title="Edit Tes Awal"
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="danger"
+                                            :icon="Trash2"
+                                            @click="confirmDeleteQuiz(quiz)"
+                                            title="Hapus Tes Awal"
+                                        >
+                                            Hapus
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -725,29 +712,26 @@ const deleteQuiz = () => {
                                 >
                                     <!-- Row 1: Quiz Settings (Retake & Shuffle) -->
                                     <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <!-- Retake & Show Answers Group -->
-                                    <div class="flex items-center gap-1.5 shrink-0">
-                                        <button
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                                    <div class="flex flex-wrap items-center gap-2 max-w-full">
+                                        <!-- Retake Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.allow_retake !== false ? 'success' : 'warning'"
+                                            :icon="quiz.allow_retake !== false ? RotateCcw : Lock"
                                             @click="toggleQuizRetake(quiz)"
                                             :title="quiz.allow_retake !== false ? 'Matikan fitur mengulang kuis' : 'Aktifkan fitur mengulang kuis'"
-                                            :class="[
-                                                'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs',
-                                                quiz.allow_retake !== false 
-                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-300' 
-                                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-300'
-                                            ]"
                                         >
-                                            <RotateCcw v-if="quiz.allow_retake !== false" class="w-3.5 h-3.5 shrink-0" />
-                                            <Lock v-else class="w-3.5 h-3.5 shrink-0" />
-                                            <span>{{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}</span>
-                                        </button>
+                                            {{ quiz.allow_retake !== false ? 'Bisa Diulang' : '1x Kerjakan' }}
+                                        </Button>
 
+                                        <!-- Max Retakes Select -->
                                         <select
                                             v-if="quiz.allow_retake !== false"
                                             :value="quiz.max_retakes ?? 0"
                                             @change="updateQuizMaxRetakes(quiz, $event.target.value)"
                                             title="Batas berapa kali kuis bisa diulang"
-                                            class="h-8 px-2 text-xs font-semibold rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer shadow-sm"
+                                            class="h-9 px-3 text-xs font-bold rounded-xl border-4 border-emerald-400 bg-emerald-50 text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
                                         >
                                             <option :value="0">∞ Tanpa Batas</option>
                                             <option :value="1">Max 1x</option>
@@ -756,59 +740,51 @@ const deleteQuiz = () => {
                                             <option :value="5">Max 5x</option>
                                         </select>
 
-                                        <button
+                                        <!-- Order Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.is_randomized ? 'purple' : 'light'"
+                                            :icon="quiz.is_randomized ? Shuffle : ListOrdered"
+                                            @click="toggleQuizRandomized(quiz)"
+                                            :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
+                                        >
+                                            {{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}
+                                        </Button>
+
+                                        <!-- Show Answers Toggle -->
+                                        <Button
+                                            size="sm"
+                                            :variant="quiz.show_answers !== false ? 'secondary' : 'light'"
+                                            :icon="quiz.show_answers !== false ? Eye : EyeOff"
                                             @click="toggleQuizShowAnswers(quiz)"
                                             :title="quiz.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
-                                            :class="[
-                                                'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs',
-                                                quiz.show_answers !== false 
-                                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300' 
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-300'
-                                            ]"
                                         >
-                                            <Eye v-if="quiz.show_answers !== false" class="w-3.5 h-3.5 shrink-0" />
-                                            <EyeOff v-else class="w-3.5 h-3.5 shrink-0" />
-                                            <span>{{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}</span>
-                                        </button>
+                                            {{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}
+                                        </Button>
                                     </div>
 
-                                    <!-- Shuffle Button -->
-                                    <button
-                                        @click="toggleQuizRandomized(quiz)"
-                                        :title="quiz.is_randomized ? 'Urutan soal diacak' : 'Urutan soal sesuai nomor'"
-                                        :class="[
-                                            'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs shrink-0',
-                                            quiz.is_randomized 
-                                                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300' 
-                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
-                                        ]"
-                                    >
-                                        <Shuffle v-if="quiz.is_randomized" class="w-3.5 h-3.5 shrink-0" />
-                                        <ListOrdered v-else class="w-3.5 h-3.5 shrink-0" />
-                                        <span>{{ quiz.is_randomized ? 'Acak Soal' : 'Urut Soal' }}</span>
-                                    </button>
-                                </div>
-
-                                    <!-- Row 2: Action Buttons (Edit & Delete) -->
-                                    <div class="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
-                                        <button
+                                    <!-- Edit & Delete -->
+                                    <div class="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="warning"
+                                            :icon="Pencil"
                                             @click="goToEditQuiz(quiz)"
                                             title="Edit Tes Akhir"
-                                            class="h-8 px-3 flex items-center justify-center gap-1 rounded-xl bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300 font-medium text-xs transition-all shadow-sm"
                                         >
-                                            <Pencil class="w-3.5 h-3.5" />
-                                            <span>Edit</span>
-                                        </button>
-
-                                        <button
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="danger"
+                                            :icon="Trash2"
                                             @click="confirmDeleteQuiz(quiz)"
                                             title="Hapus Tes Akhir"
-                                            class="h-8 px-3 flex items-center justify-center gap-1 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 border border-red-300 font-medium text-xs transition-all shadow-sm"
                                         >
-                                            <Trash2 class="w-3.5 h-3.5" />
-                                            <span>Hapus</span>
-                                        </button>
+                                            Hapus
+                                        </Button>
                                     </div>
+                                </div>
                                 </div>
                             </template>
                         </Card>

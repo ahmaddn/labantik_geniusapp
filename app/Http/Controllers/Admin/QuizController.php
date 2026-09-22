@@ -1621,7 +1621,7 @@ class QuizController extends Controller
         }
 
         $quizzes->update([
-            'is_randomized' => ! $quizzes->is_randomized,
+            'is_randomized' => ! ((bool) $quizzes->is_randomized),
         ]);
 
         return back()->with('success', 'Pengaturan acak soal berhasil diperbarui.');
@@ -1637,7 +1637,7 @@ class QuizController extends Controller
         }
 
         $quizzes->update([
-            'allow_retake' => ! $quizzes->allow_retake,
+            'allow_retake' => $quizzes->allow_retake === false ? true : false,
         ]);
 
         return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
@@ -1653,7 +1653,7 @@ class QuizController extends Controller
         }
 
         $quizzes->update([
-            'show_answers' => ! ($quizzes->show_answers ?? true),
+            'show_answers' => $quizzes->show_answers === false ? true : false,
         ]);
 
         return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');
@@ -1685,7 +1685,7 @@ class QuizController extends Controller
     public function toggleRandomized(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
         $quizzes->update([
-            'is_randomized' => ! $quizzes->is_randomized,
+            'is_randomized' => ! ((bool) $quizzes->is_randomized),
         ]);
 
         return back()->with('success', 'Pengaturan acak soal berhasil diperbarui.');
@@ -1697,7 +1697,7 @@ class QuizController extends Controller
     public function toggleRetake(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
         $quizzes->update([
-            'allow_retake' => ! $quizzes->allow_retake,
+            'allow_retake' => $quizzes->allow_retake === false ? true : false,
         ]);
 
         return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
@@ -1709,7 +1709,7 @@ class QuizController extends Controller
     public function toggleShowAnswers(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
         $quizzes->update([
-            'show_answers' => ! ($quizzes->show_answers ?? true),
+            'show_answers' => $quizzes->show_answers === false ? true : false,
         ]);
 
         return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');
