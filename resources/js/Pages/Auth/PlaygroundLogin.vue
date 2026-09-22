@@ -383,12 +383,95 @@ onUnmounted(() => {
                     <div class="changelog-header-badge">
                         <span class="inline-flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            Catatan Pembaruan (Sejak 26 Juni 2026)
+                            Catatan Pembaruan (Sejak 22 Juni 2026)
                         </span>
                     </div>
                     <h3 class="changelog-subtitle">Detail perubahan dan pembaruan sistem interaktif pada aplikasi Labantik Genius:</h3>
                     
                     <div class="changelog-timeline">
+                        <!-- Update Item 22 September 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-emerald-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">22 September 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        Pengaturan Tampilan Kuis, Mengulang Tes (Retake), & Penguncian Soal Terdahulu
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Opsi Tampilkan / Sembunyikan Rincian Jawaban Benar-Salah:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Form Tambah/Edit Kuis & Detail Modul Admin (sisi admin/guru) & Halaman Hasil Tes (sisi siswa).</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru/Admin dapat menentukan apakah rincian Benar/Salah ditampilkan atau disembunyikan di halaman hasil pengerjaan tes siswa melalui toggle switch.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Mengulang Tes dari Awal (Clean Retake):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Hasil Tes & Modal Misi Pembelajaran.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Siswa yang sudah menyelesaikan Pretest, Posttest, atau Kuis Misi dapat mengulangi tes dari soal nomor 1 secara bersih.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Penguncian Jawaban Soal Terdahulu saat Navigasi Kembali:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman pengerjaan Pretest, Posttest, dan Kuis Misi siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Soal yang telah dikerjakan dan dilewati oleh siswa akan otomatis dikunci. Jika siswa kembali ke soal sebelumnya, pilihan jawaban dinonaktifkan (read-only) dilengkapi dengan banner peringatan yang ramah pengguna.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 17 September 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-blue-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">17 September 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                        Batas Mengulang Kuis (Max Retakes Limit), Unggah Gambar Opsi, & Proteksi Database
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pengaturan Batas Maksimal Mengulang Kuis (Max Retakes):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Detail Modul & Modal Kuis di Dashboard Admin.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru/Admin dapat membatasi berapa kali siswa dapat mengulang kuis tertentu (misalnya Max 1x, 2x, 3x, 5x, atau tanpa batas) untuk menyesuaikan dengan aturan ujian.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Dukungan Gambar pada Opsi Jawaban Pilihan Ganda:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Form Tambah & Edit Kuis di Panel Admin.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru/Admin kini dapat mengunggah file gambar langsung pada setiap pilihan jawaban (opsi A-E) untuk mendukung soal berbasis pengenalan objek/visual.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Keamanan Migrasi Server (Idempotent Schema Guards):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Sistem database backend aplikasi.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Menambahkan proteksi pengecekan struktur tabel pada seluruh file migrasi agar proses pembaruan database di server berjalan aman tanpa konflik kolom.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 29 Juli 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-purple-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">29 Juli 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                        Fleksibilitas Panduan Suara Misi (Optional Voiceover Audio)
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Audio Panduan Suara Fleksibel / Opsional:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Form Pengaturan Misi & Layar Misi Pembelajaran Siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> File rekaman suara arahan (*voiceover*) kini bersifat opsional. Misi tetap dapat disimpan tanpa audio, dan tombol pemutar suara pada layar siswa hanya akan aktif jika file audio tersedia.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!-- Update Item 20 Juli 2026 -->
                         <div class="timeline-item">
                             <div class="timeline-dot bg-amber-500"></div>
@@ -683,6 +766,74 @@ onUnmounted(() => {
                                         <strong>Tanda Penilaian Instan di Soal Geser Gambar (Drag & Drop):</strong>
                                         <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman kuis tarik-lepas (mengelompokkan gambar).</span>
                                         <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Ketika gambar diletakkan di kotak jawaban, otomatis akan muncul tanda centang hijau (benar) atau tanda silang merah (salah) di atas gambar tersebut untuk respon cepat.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 25 Juni 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-blue-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">25 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+                                        Fitur Pengacakan Urutan Soal Kuis & Struktur Jawaban
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pengacakan Urutan Soal (Is Randomized):</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Pengaturan kuis admin & sesi pengerjaan kuis siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Guru/Admin dapat mengaktifkan acak soal agar urutan pertanyaan tampil secara acak untuk setiap siswa guna mencegah saling meniru.</span>
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Optimasi Relasi Kunci Database Jawaban:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Sistem penyimpanan jawaban kuis.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Memperbarui relasi data jawaban siswa untuk mendukung pengubahan format soal dan penghapusan kuis tanpa mengganggu integritas laporan.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 24 Juni 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-indigo-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">24 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                        Restorasi Templat Warna & Latar Belakang Modul
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Templat Tema Warna & Gambar Latar Modul:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Halaman Misi Pembelajaran dan Playground Siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Mengembalikan sistem templat visual yang memungkinkan setiap modul pembelajaran memiliki tema warna latar dan gambar suasana yang unik.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Update Item 23 Juni 2026 -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot bg-teal-500"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">23 Juni 2026</div>
+                                <h4 class="timeline-title">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+                                        Sistem Log Riwayat Pengerjaan Misi (Student Mission Logs)
+                                    </span>
+                                </h4>
+                                <ul class="timeline-list font-medium">
+                                    <li>
+                                        <strong>Pelacakan Log Penyelesaian Misi Siswa:</strong>
+                                        <br><span class="text-gray-600 font-normal"><em>Di mana letaknya:</em> Database & Sistem Validasi Kelulusan Misi Siswa.</span>
+                                        <br><span class="text-gray-600 font-normal"><em>Penjelasan:</em> Setiap kali siswa menyelesaikan sebuah misi, sistem mencatat log pengerjaan spesifik (user ID, mission ID, tanggal penyelesaian) sebagai sumber kebenaran status kelulusan yang andal.</span>
                                     </li>
                                 </ul>
                             </div>
