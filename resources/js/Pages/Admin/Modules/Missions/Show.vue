@@ -22,6 +22,11 @@ import {
     Trash2,
     Pencil,
     Eye,
+    EyeOff,
+    RotateCcw,
+    Lock,
+    Shuffle,
+    ListOrdered,
     GripVertical,
     SlidersHorizontal,
     GitCompare,
@@ -452,6 +457,15 @@ const updateMissionQuizMaxRetakes = (quiz, maxRetakes) => {
     router.patch(
         route("admin.modules.missions.quizzes.update_max_retakes", [props.module.id, props.mission.id, quiz.id]),
         { max_retakes: parseInt(maxRetakes) || 0 },
+        { preserveScroll: true }
+    );
+};
+
+const toggleMissionQuizShowAnswers = (quiz) => {
+    if (!quiz) return;
+    router.patch(
+        route("admin.modules.missions.quizzes.toggle_show_answers", [props.module.id, props.mission.id, quiz.id]),
+        {},
         { preserveScroll: true }
     );
 };
@@ -1114,11 +1128,29 @@ const getLayoutTypeLabel = (type) => {
                                                         'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
                                                         item.is_randomized
                                                             ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300'
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
+                                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
                                                     ]"
                                                 >
-                                                    <Shuffle class="w-3.5 h-3.5" />
+                                                    <Shuffle v-if="item.is_randomized" class="w-3.5 h-3.5 shrink-0" />
+                                                    <ListOrdered v-else class="w-3.5 h-3.5 shrink-0" />
                                                     <span>{{ item.is_randomized ? 'Acak Soal' : 'Urut Soal' }}</span>
+                                                </button>
+
+                                                <!-- Toggle Show Answers -->
+                                                <button
+                                                    type="button"
+                                                    @click="toggleMissionQuizShowAnswers(item)"
+                                                    :title="item.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
+                                                    :class="[
+                                                        'h-9 px-3 flex items-center justify-center gap-1.5 rounded-xl transition-all shadow-sm hover:shadow-md border-2 active:scale-95 font-bold text-xs',
+                                                        item.show_answers !== false 
+                                                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300' 
+                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-300'
+                                                    ]"
+                                                >
+                                                    <Eye v-if="item.show_answers !== false" class="w-3.5 h-3.5 shrink-0" />
+                                                    <EyeOff v-else class="w-3.5 h-3.5 shrink-0" />
+                                                    <span>{{ item.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}</span>
                                                 </button>
 
                                                 <!-- Dialog Maskot -->
