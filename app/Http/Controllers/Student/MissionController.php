@@ -182,6 +182,10 @@ class MissionController extends Controller
                 if (! $allowRetake || ! request()->has('restart') || $maxRetakesExceeded) {
                     return redirect()->route('playground.missions.result', $mission->id);
                 }
+                $existingAttempt = Quiz_attempts::where('quiz_id', $missionQuiz->id)->where('student_id', $studentId)->latest()->first();
+                if ($existingAttempt) {
+                    User_answers::where('attempt_id', $existingAttempt->id)->delete();
+                }
             }
         }
 
@@ -576,6 +580,7 @@ class MissionController extends Controller
             'max_retakes' => $maxRetakes,
             'attempts_count' => $attemptsCount,
             'allow_retake' => $allowRetake,
+            'show_answers' => $missionQuiz ? (bool) ($missionQuiz->show_answers ?? true) : true,
             'results' => [
                 'score' => $score,
                 'correct' => $totalCorrect,

@@ -164,6 +164,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
             Route::put('/{quizzes}', [QuizController::class, 'updateModule'])->name('update');
             Route::patch('/{quizzes}/toggle-randomized', [QuizController::class, 'toggleRandomizedModule'])->name('toggle_randomized');
             Route::patch('/{quizzes}/toggle-retake', [QuizController::class, 'toggleRetakeModule'])->name('toggle_retake');
+            Route::patch('/{quizzes}/toggle-show-answers', [QuizController::class, 'toggleShowAnswersModule'])->name('toggle_show_answers');
             Route::patch('/{quizzes}/update-max-retakes', [QuizController::class, 'updateMaxRetakesModule'])->name('update_max_retakes');
             Route::patch('/{quizzes}/quick-update', [QuizController::class, 'quickUpdateModule'])->name('quick_update');
             Route::delete('/{quizzes}', [QuizController::class, 'destroyModule'])->name('destroy');
@@ -204,6 +205,7 @@ Route::middleware(['auth', 'role:admin,guru'])->prefix('geniAdmin')->name('admin
                 Route::put('/{quizzes}', [QuizController::class, 'update'])->name('update');
                 Route::patch('/{quizzes}/toggle-randomized', [QuizController::class, 'toggleRandomized'])->name('toggle_randomized');
                 Route::patch('/{quizzes}/toggle-retake', [QuizController::class, 'toggleRetake'])->name('toggle_retake');
+                Route::patch('/{quizzes}/toggle-show-answers', [QuizController::class, 'toggleShowAnswers'])->name('toggle_show_answers');
                 Route::patch('/{quizzes}/update-max-retakes', [QuizController::class, 'updateMaxRetakes'])->name('update_max_retakes');
                 Route::delete('/{quizzes}', [QuizController::class, 'destroy'])->name('destroy');
             });

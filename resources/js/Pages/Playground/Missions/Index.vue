@@ -157,8 +157,9 @@ const handleRestart = () => {
     } else if (selectedType.value === 'posttest') {
         closeModal();
         setTimeout(() => router.visit(route("playground.posttest.show", { module: props.module.id, restart: 'true' })), 150);
-    } else {
-        handlePrimaryAction();
+    } else if (selectedMission.value?.id) {
+        closeModal();
+        setTimeout(() => router.visit(route("playground.missions.show", { mission: selectedMission.value.id, restart: 'true' })), 150);
     }
 };
 

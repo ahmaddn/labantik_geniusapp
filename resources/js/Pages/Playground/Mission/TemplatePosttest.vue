@@ -27,6 +27,7 @@ import {
     Music2,
     Volume2,
     VolumeX,
+    Lock,
 } from "lucide-vue-next";
 import { useSfx } from "@/Composable/useSfx";
 
@@ -700,17 +701,22 @@ onUnmounted(() => {
                                 class="question-bubble"
                                 v-html="currentQ?.question_text"
                             ></div>
+                            <div v-if="isCurrentQuestionLocked" style="background-color: #fff3cd; border: 2px solid #ffeeba; color: #856404; border-radius: 14px; padding: 10px 16px; margin-bottom: 14px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                <Lock :size="16" style="color: #d39e00; shrink: 0;" />
+                                <span>Soal ini telah dikerjakan dan dikunci. Jawaban tidak dapat diubah lagi.</span>
+                            </div>
+
                             <div
                                 class="component-box"
                                 :class="{ 'opts--shake': shakeActive }"
-                                :style="{ pointerEvents: isAnswerChecked ? 'none' : 'auto', opacity: isAnswerChecked ? 0.8 : 1 }"
+                                :style="{ pointerEvents: (isAnswerChecked || isCurrentQuestionLocked) ? 'none' : 'auto', opacity: (isAnswerChecked || isCurrentQuestionLocked) ? 0.75 : 1 }"
                             >
                                 <component
                                     v-if="currentQ"
                                     :is="COMPONENT_MAP[quizType]"
                                     :question="currentQ"
                                     :modelValue="answers[currentQ.id]"
-                                    :disabled="isCurrentQuestionLocked"
+                                    :disabled="isCurrentQuestionLocked || isAnswerChecked"
                                     @update-answer="updateAnswer"
                                 />
                             </div>

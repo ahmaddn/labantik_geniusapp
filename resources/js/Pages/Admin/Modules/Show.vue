@@ -23,6 +23,8 @@ import {
     ListOrdered,
     RotateCcw,
     Lock,
+    Eye,
+    EyeOff,
 } from "lucide-vue-next";
 
 const page = usePage();
@@ -193,6 +195,15 @@ const toggleQuizRetake = (quiz) => {
     if (!quiz) return;
     router.patch(
         route("admin.modules.quizzes.toggle_retake", [props.module.id, quiz.id]),
+        {},
+        { preserveScroll: true }
+    );
+};
+
+const toggleQuizShowAnswers = (quiz) => {
+    if (!quiz) return;
+    router.patch(
+        route("admin.modules.quizzes.toggle_show_answers", [props.module.id, quiz.id]),
         {},
         { preserveScroll: true }
     );
@@ -511,6 +522,20 @@ const deleteQuiz = () => {
                                             <option :value="3">Max 3x</option>
                                             <option :value="5">Max 5x</option>
                                         </select>
+                                        <button
+                                            @click="toggleQuizShowAnswers(quiz)"
+                                            :title="quiz.show_answers !== false ? 'Sembunyikan rincian kunci jawaban dari siswa' : 'Tampilkan rincian kunci jawaban untuk siswa'"
+                                            :class="[
+                                                'h-8 px-2.5 flex items-center justify-center gap-1 rounded-xl transition-all shadow-sm border font-medium text-xs',
+                                                quiz.show_answers !== false 
+                                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300' 
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-300'
+                                            ]"
+                                        >
+                                            <Eye v-if="quiz.show_answers !== false" class="w-3.5 h-3.5 shrink-0" />
+                                            <EyeOff v-else class="w-3.5 h-3.5 shrink-0" />
+                                            <span>{{ quiz.show_answers !== false ? 'Jawaban Tampil' : 'Jawaban Sembunyi' }}</span>
+                                        </button>
                                     </div>
 
                                     <!-- Shuffle Button -->

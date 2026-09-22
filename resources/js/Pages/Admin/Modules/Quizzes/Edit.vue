@@ -50,6 +50,8 @@ const quizForm = ref({
     type: props.quiz.type || "multiple_choices",
     category: props.quiz.category || "mission",
     is_randomized: props.quiz.is_randomized === 1 || props.quiz.is_randomized === true,
+    allow_retake: props.quiz.allow_retake !== false,
+    show_answers: props.quiz.show_answers !== false,
 });
 
 watch(() => quizForm.value.category, (newVal) => {
@@ -502,6 +504,8 @@ const finalSave = () => {
     formData.append("time_limit", quizForm.value.time_limit);
     formData.append("category", quizForm.value.category);
     formData.append("is_randomized", quizForm.value.is_randomized ? "1" : "0");
+    formData.append("allow_retake", quizForm.value.allow_retake ? "1" : "0");
+    formData.append("show_answers", quizForm.value.show_answers ? "1" : "0");
     formData.append("remove_image", removeExistingImage.value ? "1" : "0");
     if (quizImageFile.value) formData.append("image", quizImageFile.value);
 
@@ -836,16 +840,40 @@ const toggleCardVariant = () => {
                                 border-color="orange"
                             />
                         </div>
-                        <div class="flex items-center gap-2 mt-2">
-                            <input 
-                                type="checkbox" 
-                                id="isRandomized" 
-                                v-model="quizForm.is_randomized" 
-                                class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500" 
-                            />
-                            <label for="isRandomized" class="text-sm font-medium text-gray-700 cursor-pointer">
-                                Acak Soal (Soal akan ditampilkan secara acak saat dikerjakan)
-                            </label>
+                        <div class="space-y-3 mt-3 pt-3 border-t border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="isRandomized" 
+                                    v-model="quizForm.is_randomized" 
+                                    class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500" 
+                                />
+                                <label for="isRandomized" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                    Acak Soal (Soal akan ditampilkan secara acak saat dikerjakan)
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="allowRetake" 
+                                    v-model="quizForm.allow_retake" 
+                                    class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500" 
+                                />
+                                <label for="allowRetake" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                    Izinkan Mengulang Tes (Siswa dapat mengulang kuis ini dari awal)
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="showAnswers" 
+                                    v-model="quizForm.show_answers" 
+                                    class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500" 
+                                />
+                                <label for="showAnswers" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                    Tampilkan Rincian Jawaban Benar/Salah (Siswa dapat melihat kunci jawaban di halaman hasil)
+                                </label>
+                            </div>
                         </div>
                         <div
                             v-if="isTrueFalse"

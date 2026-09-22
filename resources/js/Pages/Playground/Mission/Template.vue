@@ -37,7 +37,7 @@ import {
     LayoutGrid,
     ToggleLeft,
     FileSearch,
-    GripHorizontal,
+    Lock,
 } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
 import axios from "axios";
@@ -685,7 +685,7 @@ function onCheckAnswer() {
 
 // ── Navigation ─────────────────────────────────────────────────
 const updateAnswer = (payload) => {
-    if (isAnswerChecked.value) return;
+    if (isAnswerChecked.value || isCurrentQuestionLocked.value) return;
     if (payload?.questionId !== undefined) answers[payload.questionId] = payload.value;
 };
 
@@ -1165,6 +1165,11 @@ onUnmounted(() => {
 
                                     <Transition name="slide-fade" mode="out-in">
                                         <div :key="'step-' + currentStep + '-' + resetKey" style="width: 100%;">
+                                            <div v-if="isCurrentQuestionLocked" style="background-color: #fff3cd; border: 2px solid #ffeeba; color: #856404; border-radius: 14px; padding: 10px 16px; margin-bottom: 14px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                                <Lock :size="16" style="color: #d39e00; shrink: 0;" />
+                                                <span>Soal ini telah dikerjakan dan dikunci. Jawaban tidak dapat diubah lagi.</span>
+                                            </div>
+
                                             <component
                                                 v-if="step.question || step.isMaterial || step.isReflection"
                                                 :is="COMPONENT_MAP[step.quiz.type]"
@@ -1176,7 +1181,7 @@ onUnmounted(() => {
                                             />
                                             
                                             <!-- Global Retry Button -->
-                                            <div v-if="(step.question || step.isReflection) && step.quiz.type !== 'materials'" class="global-actions">
+                                            <div v-if="(step.question || step.isReflection) && step.quiz.type !== 'materials' && !isCurrentQuestionLocked" class="global-actions">
                                                 <button class="global-reset-btn" @click="handleGlobalRetry">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                                                     Ulangi Soal Ini

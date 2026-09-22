@@ -58,6 +58,10 @@ class PosttestController extends Controller
             if (! $quiz->allow_retake || ! request()->has('restart') || $maxRetakesExceeded) {
                 return redirect()->route('playground.posttest.result', $module->id);
             }
+            $existingAttempt = Quiz_attempts::where('quiz_id', $quiz->id)->where('student_id', $player['id'] ?? null)->latest()->first();
+            if ($existingAttempt) {
+                User_answers::where('attempt_id', $existingAttempt->id)->delete();
+            }
         }
 
         $questionsCollection = $quiz->questions;
@@ -366,6 +370,7 @@ class PosttestController extends Controller
             'max_retakes' => $quiz->max_retakes ?? 0,
             'attempts_count' => $attemptCount ?? 0,
             'allow_retake' => (bool) ($quiz->allow_retake ?? true),
+            'show_answers' => (bool) ($quiz->show_answers ?? true),
         ]);
     }
 

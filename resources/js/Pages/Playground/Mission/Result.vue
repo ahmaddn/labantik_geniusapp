@@ -29,6 +29,7 @@ import {
     Check,
     X,
     RotateCcw,
+    Lock,
 } from "lucide-vue-next";
 import { useSfx } from "@/Composable/useSfx";
 
@@ -46,6 +47,7 @@ const props = defineProps({
     max_retakes: { type: Number, default: 0 },
     attempts_count: { type: Number, default: 1 },
     allow_retake: { type: Boolean, default: true },
+    show_answers: { type: Boolean, default: true },
 });
 
 const restartQuiz = () => {
@@ -672,17 +674,22 @@ onUnmounted(() => {
                 </div>
 
                 <div class="review-section" v-if="!is_overall">
-                    <button
-                        class="btn-toggle-details"
-                        @click="showDetails = !showDetails"
-                    >
-                        <span>Lihat Detail Jawaban</span>
-                        <ChevronUp v-if="showDetails" :size="20" />
-                        <ChevronDown v-else :size="20" />
-                    </button>
+                    <div v-if="!show_answers" style="background-color: #fff8e6; border: 2px solid #ffe082; color: #8c6d00; border-radius: 16px; padding: 16px; text-align: center; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px;">
+                        <Lock :size="18" style="color: #d97706; flex-shrink: 0;" />
+                        <span>Detail rincian jawaban (Benar / Salah) disembunyikan oleh pengajar untuk kuis ini.</span>
+                    </div>
+                    <template v-else>
+                        <button
+                            class="btn-toggle-details"
+                            @click="showDetails = !showDetails"
+                        >
+                            <span>Lihat Detail Jawaban</span>
+                            <ChevronUp v-if="showDetails" :size="20" />
+                            <ChevronDown v-else :size="20" />
+                        </button>
 
-                    <Transition name="slide-fade">
-                        <div v-if="showDetails" class="details-list">
+                        <Transition name="slide-fade">
+                            <div v-if="showDetails" class="details-list">
                             <div
                                 v-for="(detail, index) in results.details"
                                 :key="index"
@@ -908,8 +915,9 @@ onUnmounted(() => {
                                     ></div>
                                 </div>
                             </div>
-                        </div>
-                    </Transition>
+                            </div>
+                        </Transition>
+                    </template>
                 </div>
             </div>
         </main>
@@ -929,7 +937,7 @@ onUnmounted(() => {
                         @click="restartQuiz"
                     >
                         <RotateCcw :size="18" :stroke-width="3" />
-                        <span>Ulangi</span>
+                        <span>Ulangi Tes</span>
                     </button>
                 </div>
 

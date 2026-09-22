@@ -155,16 +155,19 @@ class QuizController extends Controller
      * Persist quiz groups to DB. Reusable by importMission and importModule.
      *
      * @param  int  $moduleId
-     * @param  int|null  $missionId
-     * @param  bool  $requireCategory  Whether category must be pretest/posttest
+     * @param  array  $groups
+     * @param  \App\Models\Learning_modules  $modules
+     * @param  \App\Models\Missions|null  $missions
+     * @param  string|null  $category
+     * @param  bool  $overrideExisting
      * @return array ['success' => true] or ['error' => string]
      */
     protected function persistQuizGroups(
         array $groups,
-        int|string $moduleId,
-        int|string|null $missionId,
-        ?string $defaultCategory,
-        bool $requireCategory = false
+        Learning_modules $modules,
+        ?Missions $missions,
+        ?string $category,
+        bool $overrideExisting
     ): array {
         foreach ($groups as $quizTitle => $groupRows) {
             $first = $groupRows[0];
@@ -173,31 +176,40 @@ class QuizController extends Controller
                 : 10;
 
             // Tentukan kategori
-            $category = isset($first['category']) && trim((string) $first['category']) !== ''
+            $qCategory = isset($first['category']) && trim((string) $first['category']) !== ''
                 ? trim((string) $first['category'])
-                : $defaultCategory;
+                : $category;
 
-            if ($requireCategory && ! in_array($category, ['pretest', 'posttest'], true)) {
-                return ['error' => "Kategori quiz '{$quizTitle}' harus 'pretest' atau 'posttest'. Ditemukan: '{$category}'."];
+            if ($overrideExisting && ! in_array($qCategory, ['pretest', 'posttest'], true)) {
+                return ['error' => "Kategori quiz '{$quizTitle}' harus 'pretest' atau 'posttest'. Ditemukan: '{$qCategory}'."];
             }
 
+            $qIsRandomized = isset($first['is_randomized']) ? filter_var($first['is_randomized'], FILTER_VALIDATE_BOOLEAN) : false;
+            $qAllowRetake = isset($first['allow_retake']) ? filter_var($first['allow_retake'], FILTER_VALIDATE_BOOLEAN) : true;
+            $qShowAnswers = isset($first['show_answers']) ? filter_var($first['show_answers'], FILTER_VALIDATE_BOOLEAN) : true;
+            $qMaxRetakes = isset($first['max_retakes']) && is_numeric($first['max_retakes']) ? (int) $first['max_retakes'] : 0;
+
             $quiz = Quizzes::create([
-                'mission_id' => $missionId,
-                'module_id' => $moduleId,
+                'mission_id' => $missions?->id,
+                'module_id' => $modules->id,
                 'title' => $quizTitle,
                 'description' => isset($first['quiz_description']) ? trim((string) $first['quiz_description']) : null,
                 'type' => 'multiple_choices',
                 'time_limit' => $timeLimit,
-                'category' => $category ?: null,
+                'category' => $qCategory ?: null,
+                'is_randomized' => $qIsRandomized,
+                'allow_retake' => $qAllowRetake,
+                'show_answers' => $qShowAnswers,
+                'max_retakes' => $qMaxRetakes,
                 'created_by' => Auth::id(),
             ]);
 
             Log::info('Quiz import created', [
                 'quiz_id' => $quiz->id,
                 'title' => $quiz->title,
-                'module_id' => $moduleId,
-                'mission_id' => $missionId,
-                'category' => $category,
+                'module_id' => $modules->id,
+                'mission_id' => $missions?->id,
+                'category' => $qCategory,
             ]);
 
             foreach ($groupRows as $qIdx => $qr) {
@@ -339,6 +351,7 @@ class QuizController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_randomized' => 'nullable|boolean',
             'allow_retake' => 'nullable|boolean',
+            'show_answers' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -385,6 +398,7 @@ class QuizController extends Controller
                 'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
                 'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'show_answers' => $request->has('show_answers') ? $request->boolean('show_answers') : true,
                 'created_by' => Auth::id(),
             ]);
 
@@ -536,6 +550,7 @@ class QuizController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_randomized' => 'nullable|boolean',
             'allow_retake' => 'nullable|boolean',
+            'show_answers' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -580,6 +595,7 @@ class QuizController extends Controller
                 'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
                 'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'show_answers' => $request->has('show_answers') ? $request->boolean('show_answers') : true,
                 'created_by' => Auth::id(),
             ]);
 
@@ -758,8 +774,8 @@ class QuizController extends Controller
         try {
             $result = $this->persistQuizGroups(
                 $built['groups'],
-                $modules->id,
-                $missions->id,
+                $modules,
+                $missions,
                 null,  // defaultCategory — ambil dari CSV kolom "category"
                 false  // tidak wajib pretest/posttest untuk mission-level
             );
@@ -816,7 +832,7 @@ class QuizController extends Controller
         try {
             $result = $this->persistQuizGroups(
                 $built['groups'],
-                $modules->id,
+                $modules,
                 null,                          // module-level: tidak ada mission
                 $request->input('category'),   // fallback category dari form
                 true                           // wajib pretest/posttest
@@ -976,6 +992,7 @@ class QuizController extends Controller
             'remove_image' => 'nullable|string',
             'is_randomized' => 'nullable|boolean',
             'allow_retake' => 'nullable|boolean',
+            'show_answers' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -1020,6 +1037,7 @@ class QuizController extends Controller
                 'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
                 'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'show_answers' => $request->has('show_answers') ? $request->boolean('show_answers') : true,
             ]);
 
             $retainedImages = [];
@@ -1270,6 +1288,7 @@ class QuizController extends Controller
             'remove_image' => 'nullable|string',
             'is_randomized' => 'nullable|boolean',
             'allow_retake' => 'nullable|boolean',
+            'show_answers' => 'nullable|boolean',
         ], [
             'title.required' => 'Judul quiz wajib diisi.',
         ]);
@@ -1314,6 +1333,7 @@ class QuizController extends Controller
                 'image' => $imagePath,
                 'is_randomized' => $request->boolean('is_randomized'),
                 'allow_retake' => $request->has('allow_retake') ? $request->boolean('allow_retake') : true,
+                'show_answers' => $request->has('show_answers') ? $request->boolean('show_answers') : true,
             ]);
 
             $retainedImages = [];
@@ -1521,6 +1541,7 @@ class QuizController extends Controller
         $request->validate([
             'category' => 'nullable|string|in:pretest,posttest,mission,case_study,general',
             'allow_retake' => 'nullable|boolean',
+            'show_answers' => 'nullable|boolean',
         ]);
 
         $updateData = [];
@@ -1531,8 +1552,20 @@ class QuizController extends Controller
                 $updateData['mission_id'] = null;
             }
         }
+        if ($request->has('title')) {
+            $updateData['title'] = $request->title;
+        }
+        if ($request->has('time_limit')) {
+            $updateData['time_limit'] = $request->time_limit;
+        }
+        if ($request->has('is_randomized')) {
+            $updateData['is_randomized'] = $request->boolean('is_randomized');
+        }
         if ($request->has('allow_retake')) {
             $updateData['allow_retake'] = $request->boolean('allow_retake');
+        }
+        if ($request->has('show_answers')) {
+            $updateData['show_answers'] = $request->boolean('show_answers');
         }
 
         if (! empty($updateData)) {
@@ -1611,6 +1644,22 @@ class QuizController extends Controller
     }
 
     /**
+     * Toggle show_answers status for a module-level quiz
+     */
+    public function toggleShowAnswersModule(Learning_modules $modules, Quizzes $quizzes)
+    {
+        if ($quizzes->module_id !== $modules->id) {
+            abort(404);
+        }
+
+        $quizzes->update([
+            'show_answers' => ! ($quizzes->show_answers ?? true),
+        ]);
+
+        return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');
+    }
+
+    /**
      * Update max retakes count for a module-level quiz
      */
     public function updateMaxRetakesModule(Learning_modules $modules, Quizzes $quizzes, Request $request)
@@ -1652,6 +1701,18 @@ class QuizController extends Controller
         ]);
 
         return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
+    }
+
+    /**
+     * Toggle show_answers status for a mission-level quiz
+     */
+    public function toggleShowAnswers(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
+    {
+        $quizzes->update([
+            'show_answers' => ! ($quizzes->show_answers ?? true),
+        ]);
+
+        return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');
     }
 
     /**

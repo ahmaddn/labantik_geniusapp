@@ -27,6 +27,7 @@ class Quizzes extends Model
         'is_randomized',
         'allow_retake',
         'max_retakes',
+        'show_answers',
         'custom_dialogues',
     ];
 
@@ -35,6 +36,7 @@ class Quizzes extends Model
         return [
             'is_randomized' => 'boolean',
             'allow_retake' => 'boolean',
+            'show_answers' => 'boolean',
             'max_retakes' => 'integer',
         ];
     }
