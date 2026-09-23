@@ -875,6 +875,7 @@ onUnmounted(() => {
                                                 </div>
                                                 <div
                                                     v-else-if="
+                                                        show_answers &&
                                                         !detail.is_correct &&
                                                         detail.question.type !==
                                                             'short_answer' &&
@@ -903,7 +904,7 @@ onUnmounted(() => {
                                 </div>
 
                                 <div
-                                    v-if="getQuizExplanation(detail)"
+                                    v-if="show_answers && getQuizExplanation(detail)"
                                     class="dc-explanation"
                                 >
                                     <div class="expl-title">

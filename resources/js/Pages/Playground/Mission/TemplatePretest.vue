@@ -902,13 +902,13 @@ onUnmounted(() => {
                             <h4 class="feedback-title">
                                 {{ quizType === 'short_answer' ? 'Jawabanmu Berhasil Dikirim!' : (isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!') }}
                             </h4>
-                            <div v-if="!isCurrentCorrect && quizType !== 'short_answer'" class="feedback-correct-answer">
+                            <div v-if="(quiz?.show_answers !== false) && !isCurrentCorrect && quizType !== 'short_answer'" class="feedback-correct-answer">
                                 <span class="font-bold">Jawaban Benar:</span> {{ correctText }}
                             </div>
-                            <div v-if="quizType === 'short_answer' && correctText" class="feedback-correct-answer">
+                            <div v-if="(quiz?.show_answers !== false) && quizType === 'short_answer' && correctText" class="feedback-correct-answer">
                                 <span class="font-bold">Referensi Jawaban:</span> {{ correctText }}
                             </div>
-                            <div v-if="currentQ?.explanation" class="feedback-explanation">
+                            <div v-if="(quiz?.show_answers !== false) && currentQ?.explanation" class="feedback-explanation">
                                 <div class="explanation-title">Pembahasan:</div>
                                 <div class="explanation-body" v-html="currentQ.explanation"></div>
                             </div>

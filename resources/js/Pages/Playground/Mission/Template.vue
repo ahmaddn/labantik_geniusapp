@@ -1309,13 +1309,13 @@ onUnmounted(() => {
                             <h4 class="feedback-title">
                                 {{ step?.quiz?.type === 'short_answer' ? 'Jawabanmu Berhasil Dikirim!' : (isCurrentCorrect ? 'Luar Biasa! Jawabanmu Benar' : 'Kurang Tepat!') }}
                             </h4>
-                            <div v-if="!isCurrentCorrect && step?.quiz?.type !== 'short_answer'" class="feedback-correct-answer">
+                            <div v-if="(step?.quiz?.show_answers !== false) && !isCurrentCorrect && step?.quiz?.type !== 'short_answer'" class="feedback-correct-answer">
                                 <span class="font-bold">Jawaban Benar:</span> {{ correctText }}
                             </div>
-                            <div v-if="step?.quiz?.type === 'short_answer' && correctText" class="feedback-correct-answer">
+                            <div v-if="(step?.quiz?.show_answers !== false) && step?.quiz?.type === 'short_answer' && correctText" class="feedback-correct-answer">
                                 <span class="font-bold">Referensi Jawaban:</span> {{ correctText }}
                             </div>
-                            <div v-if="step?.question?.explanation" class="feedback-explanation">
+                            <div v-if="(step?.quiz?.show_answers !== false) && step?.question?.explanation" class="feedback-explanation">
                                 <div class="explanation-title">Pembahasan:</div>
                                 <div class="explanation-body" v-html="step.question.explanation"></div>
                             </div>
