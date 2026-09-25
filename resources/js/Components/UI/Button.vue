@@ -18,6 +18,7 @@ const props = defineProps({
                 "light",
                 "dark",
                 "purple",
+                "outline",
             ].includes(value),
     },
     size: {
@@ -78,6 +79,7 @@ const getVariantClass = computed(() => {
         light: "bg-white text-blue-700 border-blue-200 hover:bg-blue-50 active:bg-blue-100",
         dark: "bg-blue-800 text-white border-blue-900 hover:bg-blue-900 active:bg-blue-950",
         purple: "bg-indigo-500 text-white border-indigo-600 hover:bg-indigo-600 active:bg-indigo-700",
+        outline: "bg-transparent text-blue-600 border-blue-400 hover:bg-blue-50 active:bg-blue-100",
     };
     return variants[props.variant];
 });

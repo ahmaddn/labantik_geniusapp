@@ -94,6 +94,10 @@ class MissionController extends Controller
                     'category' => $quiz->category,
                     'order_number' => $quiz->order_number,
                     'questions_count' => $quiz->questions_count,
+                    'is_randomized' => (bool) $quiz->is_randomized,
+                    'allow_retake' => (bool) $quiz->allow_retake,
+                    'show_answers' => (bool) $quiz->show_answers,
+                    'max_retakes' => (int) $quiz->max_retakes,
                     'created_at' => $quiz->created_at,
                     'created_by' => $quiz->createdBy ? $quiz->createdBy->name : null,
                 ];

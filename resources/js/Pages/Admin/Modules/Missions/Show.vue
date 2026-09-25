@@ -450,9 +450,13 @@ const toggleMissionQuizRetake = (quiz) => {
     if (!quiz) return;
     const nextState = !isRetakeAllowed(quiz);
     quiz.allow_retake = nextState;
+    const foundInProps = props.quizzes.find((q) => q.id === quiz.id);
+    if (foundInProps) {
+        foundInProps.allow_retake = nextState;
+    }
     router.patch(
         route("admin.modules.missions.quizzes.toggle_retake", [props.module.id, props.mission.id, quiz.id]),
-        {},
+        { allow_retake: nextState },
         { preserveScroll: true }
     );
 };
@@ -461,19 +465,28 @@ const toggleMissionQuizRandomized = (quiz) => {
     if (!quiz) return;
     const nextState = !isRandomized(quiz);
     quiz.is_randomized = nextState;
+    const foundInProps = props.quizzes.find((q) => q.id === quiz.id);
+    if (foundInProps) {
+        foundInProps.is_randomized = nextState;
+    }
     router.patch(
         route("admin.modules.missions.quizzes.toggle_randomized", [props.module.id, props.mission.id, quiz.id]),
-        {},
+        { is_randomized: nextState },
         { preserveScroll: true }
     );
 };
 
 const updateMissionQuizMaxRetakes = (quiz, maxRetakes) => {
     if (!quiz) return;
-    quiz.max_retakes = parseInt(maxRetakes) || 0;
+    const val = parseInt(maxRetakes) || 0;
+    quiz.max_retakes = val;
+    const foundInProps = props.quizzes.find((q) => q.id === quiz.id);
+    if (foundInProps) {
+        foundInProps.max_retakes = val;
+    }
     router.patch(
         route("admin.modules.missions.quizzes.update_max_retakes", [props.module.id, props.mission.id, quiz.id]),
-        { max_retakes: parseInt(maxRetakes) || 0 },
+        { max_retakes: val },
         { preserveScroll: true }
     );
 };
@@ -482,9 +495,13 @@ const toggleMissionQuizShowAnswers = (quiz) => {
     if (!quiz) return;
     const nextState = !isShowAnswersAllowed(quiz);
     quiz.show_answers = nextState;
+    const foundInProps = props.quizzes.find((q) => q.id === quiz.id);
+    if (foundInProps) {
+        foundInProps.show_answers = nextState;
+    }
     router.patch(
         route("admin.modules.missions.quizzes.toggle_show_answers", [props.module.id, props.mission.id, quiz.id]),
-        {},
+        { show_answers: nextState },
         { preserveScroll: true }
     );
 };

@@ -1652,8 +1652,9 @@ class QuizController extends Controller
             abort(404);
         }
 
+        $current = (bool)$quizzes->show_answers;
         $quizzes->update([
-            'show_answers' => $quizzes->show_answers === false ? true : false,
+            'show_answers' => !$current,
         ]);
 
         return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');
@@ -1696,8 +1697,9 @@ class QuizController extends Controller
      */
     public function toggleRetake(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
+        $current = (bool)$quizzes->allow_retake;
         $quizzes->update([
-            'allow_retake' => $quizzes->allow_retake === false ? true : false,
+            'allow_retake' => !$current,
         ]);
 
         return back()->with('success', 'Pengaturan mengulang kuis berhasil diperbarui.');
@@ -1708,8 +1710,9 @@ class QuizController extends Controller
      */
     public function toggleShowAnswers(Learning_modules $modules, Missions $missions, Quizzes $quizzes)
     {
+        $current = (bool)$quizzes->show_answers;
         $quizzes->update([
-            'show_answers' => $quizzes->show_answers === false ? true : false,
+            'show_answers' => !$current,
         ]);
 
         return back()->with('success', 'Pengaturan tampilan rincian jawaban berhasil diperbarui.');

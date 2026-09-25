@@ -140,7 +140,10 @@ class ModulesController extends Controller
                 'title' => $q->title,
                 'questions_count' => $q->questions_count,
                 'time_limit' => $q->time_limit,
-                'is_randomized' => $q->is_randomized,
+                'is_randomized' => (bool) $q->is_randomized,
+                'allow_retake' => (bool) $q->allow_retake,
+                'show_answers' => (bool) $q->show_answers,
+                'max_retakes' => (int) $q->max_retakes,
             ]);
 
         $posttest = $moduleQuizzes
@@ -152,7 +155,10 @@ class ModulesController extends Controller
                 'title' => $q->title,
                 'questions_count' => $q->questions_count,
                 'time_limit' => $q->time_limit,
-                'is_randomized' => $q->is_randomized,
+                'is_randomized' => (bool) $q->is_randomized,
+                'allow_retake' => (bool) $q->allow_retake,
+                'show_answers' => (bool) $q->show_answers,
+                'max_retakes' => (int) $q->max_retakes,
             ]);
 
         return Inertia::render('Admin/Modules/Show', [

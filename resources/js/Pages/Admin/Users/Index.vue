@@ -67,6 +67,7 @@ const roleOptions = isGuru
 // Konfigurasi kolom untuk DataTable
 const columns = [
     { key: "name", label: "Nama", sortable: true },
+    { key: "username", label: "Username", sortable: true },
     { key: "email", label: "Email", sortable: true },
     { key: "role", label: "Peran", sortable: true },
     {
